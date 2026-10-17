@@ -1,0 +1,8 @@
+GameProject {
+ ID "OpenResistance"
+ GUID "6AA282336705EED2"
+ TITLE "Open Resistance"
+ Dependencies {
+  "58D0FB3206B6F859"
+ }
+}
