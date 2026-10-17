@@ -1,0 +1,8 @@
+GenericEntity {
+ ID "6AA282371F731F69"
+ components {
+  AROR_LocationComponent "{6AA28237301A1CF9}" {
+  }
+ }
+ coords 2.237 3.456 2.994
+}
