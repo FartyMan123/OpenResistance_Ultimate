@@ -1,0 +1,18 @@
+# Workbench-generated resource index (rebuilt when the project is opened)
+resourceDatabase.rdb
+
+# Workbench / editor backups and temp files
+*.bak
+*.tmp
+*.autosave
+*~
+
+# Local tooling
+.vs/
+.vscode/
+.idea/
+
+# OS junk
+Thumbs.db
+desktop.ini
+.DS_Store
