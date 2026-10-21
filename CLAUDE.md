@@ -6,22 +6,15 @@ Guidance for Claude Code when working in this repository.
 
 ## Project
 
-**Open Resistance** is an Arma Reforger (Enfusion engine) mod: an Insurgency-style game mode. Players on the occupying/counter-insurgency side hunt hidden weapon caches across a map while an insurgent force (AI, and optionally players) defends them, ambushes patrols, and contests territory. The round is won by destroying the required number of caches, or lost when the counter-insurgency side runs out of tickets/time.
+**Open Resistance** is an Arma Reforger (Enfusion engine) mod: an Insurgency-style game mode. Players are the **Resistance** (default faction: FIA), the only player faction, fighting AI **Occupiers** (default: USSR) and **Invaders** (default: US). Factions are referenced by role and configurable (see ARCHITECTURE.md → Factions). Each playthrough is a persistent campaign that a server admin creates or loads.
 
-The project is at an early stage — only the addon project file exists. Treat the gameplay design below as the intended direction, not as implemented behaviour, and check the code before assuming a system exists.
-
-### Core gameplay loop (target design)
-
-- **Caches**: spawned at randomised, valid locations (buildings/compositions) inside the active area of operations. Destroying one (explosives) advances the game.
-- **Area of Operations (AO)**: only a subset of the map is active at a time; once its caches are cleared, the AO moves on.
-- **Intel**: killed insurgents can drop intel; collecting it reveals approximate cache locations (map markers with an uncertainty radius that shrinks with more intel).
-- **Insurgent AI**: spawns around the AO and the caches, out of player sight, with patrols, garrisons, and reinforcements scaled to player count.
-- **Respawn and tickets**: counter-insurgency players respawn at a FOB or base and use a shared ticket pool; insurgent players (if enabled) respawn near caches or safehouses.
-- **Win/lose**: all caches destroyed → counter-insurgency wins; tickets or time exhausted → insurgents win.
+Systems are being built incrementally; their design and status (Planned / In progress / Implemented) are tracked in [ARCHITECTURE.md](ARCHITECTURE.md). Check the code before assuming a system exists.
 
 ## Architecture
 
 [ARCHITECTURE.md](ARCHITECTURE.md) is used to track the architecture of the mod: its systems and sub-systems, and how the core mod relates to extender mods. Read it before working on a system. Keep it up to date when systems are added, removed, or changed. Unlike this file, you may update it without asking first.
+
+Keep ARCHITECTURE.md **high level**: systems, sub-systems, their responsibilities, how they connect, what runs on server vs client, what is saved, and extension points for extender mods. Do **not** record minor implementation details or small decisions there (e.g. editor debug drawing, log lines, helper methods, default values) — those belong in code comments and commit messages.
 
 ## Repository layout
 
