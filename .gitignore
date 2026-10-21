@@ -22,3 +22,6 @@ _reference/
 
 # Local dedicated server profile (logs, saves)
 server/profile/
+
+# Enfusion MCP Workbench handler scripts (local dev only; remove before publishing)
+AROpenResistance/Open Resistance/Scripts/WorkbenchGame/EnfusionMCP/
