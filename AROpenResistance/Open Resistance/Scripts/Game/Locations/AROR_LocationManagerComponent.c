@@ -1,10 +1,14 @@
+void AROR_OnLocationChanged(AROR_LocationComponent location);
+typedef func AROR_OnLocationChanged;
+typedef ScriptInvokerBase<AROR_OnLocationChanged> AROR_OnLocationChangedInvoker;
+
 [ComponentEditorProps(category: "OpenResistance/Locations", description: "Registry of all map locations. Attach to the game mode entity.")]
 class AROR_LocationManagerComponentClass : SCR_BaseGameModeComponentClass
 {
 }
 
-//! Single source of truth for map locations. Other systems (AO, caches, AI) query locations through this.
-//! Runs on server and clients; locations are static world entities, so nothing is replicated yet.
+//! Single source of truth for map locations. Other systems query locations through this.
+//! Runs on server and clients: world-placed locations (towns) and replicated spawned ones (HQ) register on every machine.
 class AROR_LocationManagerComponent : SCR_BaseGameModeComponent
 {
 	protected static AROR_LocationManagerComponent s_Instance;
@@ -14,10 +18,27 @@ class AROR_LocationManagerComponent : SCR_BaseGameModeComponent
 
 	protected ref array<AROR_LocationComponent> m_aLocations = {};
 
+	protected ref AROR_OnLocationChangedInvoker m_OnLocationRegistered = new AROR_OnLocationChangedInvoker();
+	protected ref AROR_OnLocationChangedInvoker m_OnLocationUnregistered = new AROR_OnLocationChangedInvoker();
+
 	//------------------------------------------------------------------------------------------------
 	static AROR_LocationManagerComponent GetInstance()
 	{
 		return s_Instance;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Invoked on every machine when a location registers, including spawned ones (e.g. the HQ)
+	AROR_OnLocationChangedInvoker GetOnLocationRegistered()
+	{
+		return m_OnLocationRegistered;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Invoked on every machine when a location is deleted
+	AROR_OnLocationChangedInvoker GetOnLocationUnregistered()
+	{
+		return m_OnLocationUnregistered;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -42,8 +63,8 @@ class AROR_LocationManagerComponent : SCR_BaseGameModeComponent
 		if (s_aPendingLocations)
 			s_aPendingLocations.RemoveItem(location);
 
-		if (s_Instance)
-			s_Instance.m_aLocations.RemoveItem(location);
+		if (s_Instance && s_Instance.m_aLocations.RemoveItem(location))
+			s_Instance.m_OnLocationUnregistered.Invoke(location);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -66,6 +87,22 @@ class AROR_LocationManagerComponent : SCR_BaseGameModeComponent
 		}
 
 		return outLocations.Count();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Returns the location with the given stable ID, or null
+	AROR_LocationComponent GetLocationById(string id)
+	{
+		if (id.IsEmpty())
+			return null;
+
+		foreach (AROR_LocationComponent location : m_aLocations)
+		{
+			if (location && location.GetId() == id)
+				return location;
+		}
+
+		return null;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -132,8 +169,16 @@ class AROR_LocationManagerComponent : SCR_BaseGameModeComponent
 	//------------------------------------------------------------------------------------------------
 	protected void AddLocation(notnull AROR_LocationComponent location)
 	{
-		if (!m_aLocations.Contains(location))
-			m_aLocations.Insert(location);
+		if (m_aLocations.Contains(location))
+			return;
+
+		AROR_LocationComponent existing = GetLocationById(location.GetId());
+		if (existing)
+			Print(string.Format("[AROR] Duplicate location ID '%1' on '%2' and '%3'; saves will resolve to the first", location.GetId(), existing.GetName(), location.GetName()), LogLevel.ERROR);
+
+		m_aLocations.Insert(location);
+		Print(string.Format("[AROR] Location manager registered '%1' (%2 total)", location.GetName(), m_aLocations.Count()), LogLevel.NORMAL);
+		m_OnLocationRegistered.Invoke(location);
 	}
 
 	//------------------------------------------------------------------------------------------------

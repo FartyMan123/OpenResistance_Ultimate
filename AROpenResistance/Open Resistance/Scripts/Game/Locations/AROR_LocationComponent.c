@@ -7,6 +7,9 @@ class AROR_LocationComponentClass : ScriptComponentClass
 //! The centre is the owner entity's position; the area is a circle of m_fRadius on the XZ plane.
 class AROR_LocationComponent : ScriptComponent
 {
+	[Attribute("", UIWidgets.EditBox, desc: "Stable unique ID used by saves, e.g. \"everon_provins\". Never change it once saves exist.")]
+	protected string m_sId;
+
 	[Attribute("", UIWidgets.EditBox, desc: "Display name of the location, e.g. the town name")]
 	protected string m_sName;
 
@@ -15,6 +18,12 @@ class AROR_LocationComponent : ScriptComponent
 
 	[Attribute("250", UIWidgets.Slider, desc: "Radius of the location in metres. Set per town in the World Editor.", params: "10 2000 5")]
 	protected float m_fRadius;
+
+	//------------------------------------------------------------------------------------------------
+	string GetId()
+	{
+		return m_sId;
+	}
 
 	//------------------------------------------------------------------------------------------------
 	string GetName()
@@ -60,7 +69,10 @@ class AROR_LocationComponent : ScriptComponent
 		if (!GetGame().InPlayMode())
 			return;
 
-		Print(string.Format("[AROR] Location '%1' initialised (%2, radius %3 m)", m_sName, typename.EnumToString(AROR_ELocationType, m_eType), m_fRadius), LogLevel.NORMAL);
+		if (m_sId.IsEmpty())
+			Print(string.Format("[AROR] Location '%1' has no ID and cannot be referenced by saves", m_sName), LogLevel.WARNING);
+
+		Print(string.Format("[AROR] Location '%1' (%2) initialised (%3, radius %4 m)", m_sName, m_sId, typename.EnumToString(AROR_ELocationType, m_eType), m_fRadius), LogLevel.NORMAL);
 		AROR_LocationManagerComponent.RegisterLocation(this);
 	}
 
@@ -70,13 +82,4 @@ class AROR_LocationComponent : ScriptComponent
 		AROR_LocationManagerComponent.UnregisterLocation(this);
 		super.OnDelete(owner);
 	}
-
-#ifdef WORKBENCH
-	//------------------------------------------------------------------------------------------------
-	//! Draw the radius in the World Editor so it can be sized against the terrain
-	override void _WB_AfterWorldUpdate(IEntity owner, float timeSlice)
-	{
-		Shape.CreateCylinder(ARGB(255, 255, 140, 0), ShapeFlags.WIREFRAME | ShapeFlags.ONCE, owner.GetOrigin(), m_fRadius, 60);
-	}
-#endif
 }
