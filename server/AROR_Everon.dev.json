@@ -1,0 +1,24 @@
+{
+	"bindAddress": "",
+	"bindPort": 2001,
+	"publicAddress": "127.0.0.1",
+	"publicPort": 2001,
+	"game": {
+		"name": "Open Resistance dev",
+		"password": "",
+		"passwordAdmin": "aror",
+		"admins": [],
+		"scenarioId": "{54C4A42201F3F359}Missions/AROR_Everon.conf",
+		"maxPlayers": 4,
+		"visible": false,
+		"crossPlatform": false,
+		"gameProperties": {
+			"serverMaxViewDistance": 2500,
+			"networkViewDistance": 1500,
+			"disableThirdPerson": false,
+			"fastValidation": true,
+			"battlEye": false
+		},
+		"mods": []
+	}
+}

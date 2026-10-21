@@ -1,0 +1,14 @@
+SCR_SpawnPoint : "{E7F4D5562F48DDE4}Prefabs/MP/Spawning/SpawnPoint_Base.et" {
+ ID "544EB04DCBFBD126"
+ components {
+  Persistence "{6AAA8D6DE33E5DA4}" {
+  }
+  AROR_LocationComponent "{6AAA8D6D1C494DAA}" {
+   m_sId "resistance_hq"
+   m_sName "Resistance HQ"
+   m_eType HQ
+   m_fRadius 50
+  }
+ }
+ coords 5601.524 102.318 6236.631
+}
