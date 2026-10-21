@@ -16,3 +16,9 @@ resourceDatabase.rdb
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Local copies of base-game scripts for reference (never commit Bohemia sources)
+_reference/
+
+# Local dedicated server profile (logs, saves)
+server/profile/
