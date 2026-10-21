@@ -1,0 +1,17 @@
+MetaFileClass {
+ Name "{360E2B0E9C588C7E}Worlds/AROR_Everon/AROR_Everon.ent"
+ Configurations {
+  ENTResourceClass PC {
+  }
+  ENTResourceClass XBOX_ONE : PC {
+  }
+  ENTResourceClass XBOX_SERIES : PC {
+  }
+  ENTResourceClass PS4 : PC {
+  }
+  ENTResourceClass PS5 : PC {
+  }
+  ENTResourceClass HEADLESS : PC {
+  }
+ }
+}
