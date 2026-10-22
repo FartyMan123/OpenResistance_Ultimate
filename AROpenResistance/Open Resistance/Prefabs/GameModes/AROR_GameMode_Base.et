@@ -9,6 +9,8 @@ SCR_BaseGameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" 
   }
   AROR_LocationMapIconsComponent "{6AAC8BBFBA047D89}" {
   }
+  AROR_SetupUIComponent "{6AAC8BBC83F0CB25}" {
+  }
  }
  coords 3.116 3.2 3.163
 }
