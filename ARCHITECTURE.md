@@ -76,7 +76,7 @@ Key classes/prefabs/configs:
 - `AROR_LocationManagerComponent`: on the game mode. Registry of all locations; other systems query locations through it.
 - `AROR_ELocationType`: location types (currently `TOWN`).
 - `Prefabs/Locations/AROR_Location_Base.et` → `AROR_Location_Town.et`: town template. `AROR_Location_HQ.et`: a base-game spawn point entity with the location component (type HQ) and Persistence.
-- `AROR_LocationMarkerComponent`: on the game mode; client-side location markers (Map Markers layer 1).
+- Map icons (planned): each location prefab names its own map icon (image in our addon); `AROR_LocationMapIconsComponent` on the game mode draws them (Map Markers layer 1).
 
 Server/client: towns are static world entities and HQs are replicated dynamic entities; both register on server and clients. Location state (control status, active/inactive) will be server-owned and replicated when added.
 
@@ -138,13 +138,15 @@ Purpose: the sides in play, referenced by **role** so the actual factions are co
 
 - Roles: `RESISTANCE`, `OCCUPIERS`, `INVADERS` (role enum, `AROR_` prefixed). Code only ever refers to roles, never to faction keys like "FIA".
 - A role → faction config maps each role to a faction key. Default: Resistance → **FIA**, Occupiers → **USSR**, Invaders → **US**.
-- `Prefabs/Managers/AROR_FactionManager.et` (inherits the base-game `FactionManager_Editor.et`: US, USSR, FIA, CIV) and `AROR_LoadoutManager.et` are placed in every map as part of the map template.
+- `Prefabs/Managers/AROR_FactionManager.et` (inherits the base-game `FactionManager_Editor.et`: US, USSR, FIA, CIV) and `AROR_LoadoutManager.et` (inherits the empty `LoadoutManager_Base.et`; holds only the Resistance loadout) are placed in every map as part of the map template.
+- `Prefabs/Characters/AROR_Character_Resistance_Base.et`: the Resistance player character (inherits the base-game FIA rifleman, which carries a map and compass).
+- Resistance loadouts: the Resistance role's loadouts are the only ones offered; each includes a map and compass.
 - Extension points: extender mods or server admins swap factions by overriding the config.
 
 ### Map Markers — In progress
 Two layers:
-1. **Location markers** (scenario load): name, position, area. Built from world data, drawn locally on each client; no replication or saving. Used on the setup screen for picking the start location.
-2. **State markers** (playthrough load): control status and other playthrough state. Server-owned and replicated (base-game map marker manager or our own replicated state), so late joiners see them.
+1. **Location markers** (scenario load): **our own icon widgets** drawn on any open map (player map, deploy screen, setup screen) by a client-only component that follows the base-game map events (open/close/pan/zoom) and positions icons from world coordinates. Each location prefab chooses its icon image (white on transparent, so it can be tinted). No base-game config overrides, not draggable, no replication or saving. The HQ also keeps its spawn point map descriptor for the deploy screen.
+2. **State** (playthrough load): location state is shown on the **same icon**, e.g. a town icon tinted by its controlling role (the faction's own colour, so it follows the Factions config). The control state is server-owned, replicated and saved on the location; each client re-tints its icon when it changes. Icons can also handle hover and click (used by the setup screen).
 
 ### Map Templates — Planned
 Purpose: per-map setup of the game mode, as a sub-scene of the terrain's world.

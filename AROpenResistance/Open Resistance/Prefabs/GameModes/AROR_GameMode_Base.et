@@ -1,13 +1,11 @@
 SCR_BaseGameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" {
  ID "56B2B479C6B96951"
  components {
-  AROR_LocationManagerComponent "{6AA2823B57AE5CD7}" {
-  }
   AROR_GameFlowComponent "{6AAA8D6D8EB1E454}" {
    m_sHQPrefab "{3EC420BD9621F356}Prefabs/Locations/AROR_Location_HQ.et"
    m_bWorkbenchAutoNewPlaythrough 1
   }
-  AROR_LocationMarkerComponent "{6AAA8D6D834453A3}" {
+  AROR_LocationManagerComponent "{6AA2823B57AE5CD7}" {
   }
  }
  coords 3.116 3.2 3.163
