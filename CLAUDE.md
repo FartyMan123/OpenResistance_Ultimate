@@ -86,7 +86,8 @@ This is a multiplayer game mode; assume a dedicated server with many clients.
 
 ## Git
 
-- Development happens on `master-dev`; PRs target `master`.
+- Each developer works on their own branch (e.g. `rowantrek-dev`, `chicken-dev`). Commit and push to the current developer branch; never commit directly to `master-dev` or `master`.
+- PRs go from a developer branch into **`master-dev`** (integration branch). `master-dev` is merged into `master` by PR.
 - Every commit and PR must be well formatted and carry relevant information:
   - **Commit messages**: a concise imperative subject line (~50 chars, e.g. `Add cache spawning to AO system`), a blank line, then a body explaining *what* changed and *why*, naming the affected systems (as in [ARCHITECTURE.md](ARCHITECTURE.md)). One logical change per commit.
   - **Pull requests**: a clear title and a description with sections for **Summary** (what and why), **Changes** (bullet list by system or file area), **Testing** (what was checked in Workbench, or that it is untested), and **Notes** (replication or performance impact, breaking changes for extender mods, follow-ups). Link related issues.
