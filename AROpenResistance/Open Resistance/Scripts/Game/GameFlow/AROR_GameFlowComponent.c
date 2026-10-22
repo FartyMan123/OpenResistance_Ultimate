@@ -19,8 +19,8 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Resistance HQ prefab spawned at the chosen position", params: "et")]
 	protected ResourceName m_sHQPrefab;
 
-	[Attribute("500", UIWidgets.Slider, desc: "Minimum distance in metres between the HQ and the edge of any town", params: "0 5000 50")]
-	protected float m_fHQMinDistanceFromTown;
+	[Attribute("100", UIWidgets.Slider, desc: "Minimum distance in metres between the HQ and the edge (radius) of any location", params: "0 5000 10")]
+	protected float m_fHQMinDistanceFromLocation;
 
 	//! TODO: replace with the Factions role config (RESISTANCE role)
 	[Attribute("FIA", desc: "Faction key of the Resistance role")]
@@ -209,14 +209,18 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			return false;
 		}
 
-		array<AROR_LocationComponent> towns = {};
-		locationManager.GetLocationsOfType(AROR_ELocationType.TOWN, towns);
-		foreach (AROR_LocationComponent town : towns)
+		array<AROR_LocationComponent> locations = {};
+		locationManager.GetLocations(locations);
+		foreach (AROR_LocationComponent location : locations)
 		{
-			float distanceFromEdge = vector.DistanceXZ(town.GetCenter(), position) - town.GetRadius();
-			if (distanceFromEdge < m_fHQMinDistanceFromTown)
+			// The HQ's own (or a previous) HQ location does not block placement
+			if (!location || location.GetLocationType() == AROR_ELocationType.HQ)
+				continue;
+
+			float distanceFromEdge = vector.DistanceXZ(location.GetCenter(), position) - location.GetRadius();
+			if (distanceFromEdge < m_fHQMinDistanceFromLocation)
 			{
-				reason = string.Format("Too close to %1: the HQ must be at least %2 m from any town", town.GetName(), m_fHQMinDistanceFromTown);
+				reason = string.Format("Too close to %1: the HQ must be at least %2 m outside any location", location.GetName(), m_fHQMinDistanceFromLocation);
 				return false;
 			}
 		}

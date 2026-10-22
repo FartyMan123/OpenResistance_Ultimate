@@ -69,13 +69,13 @@ Sub-systems (Planned):
 - A playable world also needs faction manager, loadout manager and spawn point entities; these will be part of the map template.
 
 ### Locations — In progress
-Purpose: named areas on the map (**Town**, placed in the world; **HQ**, spawned at runtime) that other systems use to decide where things happen (start location, AI, objectives).
+Purpose: named areas on the map that other systems use to decide where things happen (start location, AI, objectives). World-placed types: **Town, City, Airport, Factory, Military Base, Port, Resources**; spawned at runtime: **HQ**.
 
 Key classes/prefabs/configs:
 - `AROR_LocationComponent`: on each placed location. Name, type and a per-location radius set in the World Editor.
 - `AROR_LocationManagerComponent`: on the game mode. Registry of all locations; other systems query locations through it.
-- `AROR_ELocationType`: location types (currently `TOWN`).
-- `Prefabs/Locations/AROR_Location_Base.et` → `AROR_Location_Town.et`: town template. `AROR_Location_HQ.et`: a base-game spawn point entity with the location component (type HQ) and Persistence.
+- `AROR_ELocationType`: location types (`TOWN`, `HQ`, `AIRPORT`, `CITY`, `FACTORY`, `MILITARY_BASE`, `PORT`, `RESOURCES`); new values are appended so existing ones stay stable.
+- `Prefabs/Locations/AROR_Location_Base.et` → one template per world-placed type (`AROR_Location_Town.et`, `_City`, `_Airport`, `_Factory`, `_MilitaryBase`, `_Port`, `_Resources`), each setting only its type and map icon. `AROR_Location_HQ.et`: a base-game spawn point entity with the location component (type HQ) and Persistence.
 - Map icons (planned): each location prefab names its own map icon (image in our addon); `AROR_LocationMapIconsComponent` on the game mode draws them (Map Markers layer 1).
 
 Server/client: towns are static world entities and HQs are replicated dynamic entities; both register on server and clients. Location state (control status, active/inactive) will be server-owned and replicated when added.
@@ -106,7 +106,7 @@ Pre-game is held by `AROR_GameFlowComponent`, our pre-game state component on th
 
 **Staging spawn** (Antistasi-style): each map places one `AROR_StagingSpawn.et` (spawn point + `AROR_StagingSpawnComponent`). While no playthrough exists, players spawn there as the Resistance and can move freely; the admin picks the HQ from there. Once a playthrough exists (new or loaded) the staging spawn is disabled; on a new playthrough every player is teleported to the HQ (keeping their gear).
 
-**Resistance HQ**: the start choice. On "New", the admin picks a spot on the map and the server spawns the Resistance HQ there. Players always spawn at the HQ. The HQ is a **dynamic location** (location type `HQ`): a spawned entity that carries the location component and the Resistance spawn point, so it shows up through the location registry and markers like any town, and is saved through entity persistence (*Register Dynamic*).
+**Resistance HQ**: the start choice. Placement rules (checked on the client for feedback, enforced by the server): on land, and at least a configurable distance (default 100 m) outside the radius of every location. On "New", the admin picks a spot on the map and the server spawns the Resistance HQ there. Players always spawn at the HQ. The HQ is a **dynamic location** (location type `HQ`): a spawned entity that carries the location component and the Resistance spawn point, so it shows up through the location registry and markers like any town, and is saved through entity persistence (*Register Dynamic*).
 
 Settings:
 - Chosen at setup, stored in the save, and **editable mid-playthrough** by the admin.
