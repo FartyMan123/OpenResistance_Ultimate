@@ -4,7 +4,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
    m_vWorkbenchHQPosition 6500 0 6075
   }
  }
- coords 452.821 65.027 785.054
+ coords 451.826 62.247 784.105
 }
 SCR_FactionManager AROR_FactionManager1 : "{906843134C8EF19C}Prefabs/Managers/AROR_FactionManager.et" {
  coords 449.89 63.003 783.61
