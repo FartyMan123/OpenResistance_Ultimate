@@ -1,0 +1,235 @@
+[ComponentEditorProps(category: "OpenResistance/GameFlow", description: "Admin setup UI (new / load campaign). Client only. Attach to the game mode entity next to AROR_GameFlowComponent.")]
+class AROR_SetupUIComponentClass : SCR_BaseGameModeComponentClass
+{
+}
+
+//! Client-side setup UI for the server admin (see ARCHITECTURE.md -> Game Flow -> Setup UI).
+//! Reacts to AROR_GameFlowComponent client events and sends requests through the AROR_ methods on SCR_PlayerController.
+//! New: opens the base-game map menu, the admin clicks the HQ position, a dialog confirms it.
+//! Load: a dialog steps through the save list sent by the server.
+//! Dialog button actions arrive through QueueDialogAction once the dialog has closed (see AROR_SetupDialogs.c).
+class AROR_SetupUIComponent : SCR_BaseGameModeComponent
+{
+	[Attribute("{5BB4D0ED53225DDC}Configs/UI/AROR_SetupDialogs.conf", UIWidgets.ResourceNamePicker, desc: "Setup dialog presets", params: "conf")]
+	protected ResourceName m_sDialogPresets;
+
+	[Attribute("Open Resistance", desc: "Name given to new playthroughs (until a name field exists)")]
+	protected string m_sDefaultPlaythroughName;
+
+	static const string DIALOG_MAIN = "main";
+	static const string DIALOG_HQ_CONFIRM = "hq_confirm";
+	static const string DIALOG_LOAD = "load";
+
+	protected static const string PRESET_MAIN = "aror_setup_main";
+	protected static const string PRESET_HQ_CONFIRM = "aror_setup_hq_confirm";
+	protected static const string PRESET_LOAD = "aror_setup_load";
+
+	protected AROR_GameFlowComponent m_GameFlow;
+	protected bool m_bPickingHQ;
+	protected vector m_vPickedPosition;
+
+	//------------------------------------------------------------------------------------------------
+	void OpenMainDialog()
+	{
+		OpenMainDialogWithMessage(string.Empty);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	void OpenMainDialogWithMessage(string message)
+	{
+		AROR_SetupMainDialog dialog = new AROR_SetupMainDialog(this);
+		SCR_ConfigurableDialogUi.CreateFromPreset(m_sDialogPresets, PRESET_MAIN, dialog);
+
+		if (!message.IsEmpty())
+			dialog.SetMessage(message);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	// Dialog actions
+	//------------------------------------------------------------------------------------------------
+	//! Called by a dialog once it has closed; handled next frame, outside the menu manager's close sequence
+	void QueueDialogAction(string dialogId, string tag, int value)
+	{
+		GetGame().GetCallqueue().CallLater(HandleDialogAction, 0, false, dialogId, tag, value);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void HandleDialogAction(string dialogId, string tag, int value)
+	{
+		if (dialogId == DIALOG_MAIN)
+		{
+			if (tag == "new")
+				StartHQPicking();
+			else if (tag == "load")
+				RequestSaveList();
+		}
+		else if (dialogId == DIALOG_HQ_CONFIRM)
+		{
+			if (tag == "start")
+				ConfirmHQ();
+			else if (tag == "back")
+				CancelHQPicking();
+			// "repick": nothing, the map stays open
+		}
+		else if (dialogId == DIALOG_LOAD)
+		{
+			if (tag == "load")
+				RequestLoad(value);
+			else if (tag == "back")
+				OpenMainDialog();
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------
+	// New campaign: pick the HQ on the map
+	//------------------------------------------------------------------------------------------------
+	protected void StartHQPicking()
+	{
+		if (m_bPickingHQ)
+			return;
+
+		m_bPickingHQ = true;
+		SCR_MapEntity.GetOnSelection().Insert(OnMapSelection);
+		SCR_MapEntity.GetOnMapOpen().Insert(OnHQMapOpened);
+		GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.MapMenu);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Show the whole map when picking the HQ
+	protected void OnHQMapOpened(MapConfiguration config)
+	{
+		SCR_MapEntity.GetOnMapOpen().Remove(OnHQMapOpened);
+
+		SCR_MapEntity mapEntity = SCR_MapEntity.GetMapInstance();
+		if (mapEntity)
+			mapEntity.ZoomOut();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void CancelHQPicking()
+	{
+		StopHQPicking();
+		OpenMainDialog();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void ConfirmHQ()
+	{
+		StopHQPicking();
+
+		SCR_PlayerController playerController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
+		if (playerController)
+			playerController.AROR_RequestNewPlaythrough(m_vPickedPosition, m_sDefaultPlaythroughName);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void StopHQPicking()
+	{
+		m_bPickingHQ = false;
+		SCR_MapEntity.GetOnSelection().Remove(OnMapSelection);
+		SCR_MapEntity.GetOnMapOpen().Remove(OnHQMapOpened);
+		GetGame().GetMenuManager().CloseMenuByPreset(ChimeraMenuPreset.MapMenu);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! The selection event gives screen coordinates, so read the world position under the map cursor instead
+	protected void OnMapSelection(vector screenPosition)
+	{
+		if (!m_bPickingHQ || !m_GameFlow)
+			return;
+
+		// One confirm dialog at a time
+		if (SCR_ConfigurableDialogUi.GetCurrentDialogTag() == PRESET_HQ_CONFIRM && SCR_ConfigurableDialogUi.GetCurrentDialog())
+			return;
+
+		SCR_MapEntity mapEntity = SCR_MapEntity.GetMapInstance();
+		if (!mapEntity)
+			return;
+
+		float worldX, worldZ;
+		mapEntity.GetMapCursorWorldPosition(worldX, worldZ);
+		m_vPickedPosition = Vector(worldX, 0, worldZ);
+
+		string reason;
+		bool valid = m_GameFlow.IsValidHQPosition(m_vPickedPosition, reason);
+
+		AROR_SetupHQConfirmDialog dialog = new AROR_SetupHQConfirmDialog(this);
+		SCR_ConfigurableDialogUi.CreateFromPreset(m_sDialogPresets, PRESET_HQ_CONFIRM, dialog);
+
+		if (valid)
+			dialog.SetPlacementValid(true, "Place the Resistance HQ here?");
+		else
+			dialog.SetPlacementValid(false, reason);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	// Load campaign
+	//------------------------------------------------------------------------------------------------
+	protected void RequestSaveList()
+	{
+		SCR_PlayerController playerController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
+		if (playerController)
+			playerController.AROR_RequestSaveList();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void RequestLoad(int saveIndex)
+	{
+		SCR_PlayerController playerController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
+		if (playerController)
+			playerController.AROR_RequestLoad(saveIndex);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void OnSaveListReceived(array<string> saveLabels)
+	{
+		AROR_SetupLoadDialog dialog = new AROR_SetupLoadDialog(this, saveLabels);
+		SCR_ConfigurableDialogUi.CreateFromPreset(m_sDialogPresets, PRESET_LOAD, dialog);
+		dialog.Refresh();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server rejected a request (e.g. invalid HQ position): back to the main dialog with the reason
+	protected void OnSetupResult(bool success, string message)
+	{
+		if (!success)
+			OpenMainDialogWithMessage(message);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override void OnPostInit(IEntity owner)
+	{
+		super.OnPostInit(owner);
+
+		if (!GetGame().InPlayMode() || RplSession.Mode() == RplMode.Dedicated)
+			return;
+
+		m_GameFlow = AROR_GameFlowComponent.Cast(owner.FindComponent(AROR_GameFlowComponent));
+		if (!m_GameFlow)
+		{
+			Print("[AROR] AROR_SetupUIComponent needs AROR_GameFlowComponent on the same entity", LogLevel.ERROR);
+			return;
+		}
+
+		m_GameFlow.GetOnSetupRequested().Insert(OpenMainDialog);
+		m_GameFlow.GetOnSaveListReceived().Insert(OnSaveListReceived);
+		m_GameFlow.GetOnSetupResult().Insert(OnSetupResult);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override void OnDelete(IEntity owner)
+	{
+		GetGame().GetCallqueue().Remove(HandleDialogAction);
+		SCR_MapEntity.GetOnSelection().Remove(OnMapSelection);
+		SCR_MapEntity.GetOnMapOpen().Remove(OnHQMapOpened);
+
+		if (m_GameFlow)
+		{
+			m_GameFlow.GetOnSetupRequested().Remove(OpenMainDialog);
+			m_GameFlow.GetOnSaveListReceived().Remove(OnSaveListReceived);
+			m_GameFlow.GetOnSetupResult().Remove(OnSetupResult);
+		}
+
+		super.OnDelete(owner);
+	}
+}

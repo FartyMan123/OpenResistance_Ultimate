@@ -1,0 +1,9 @@
+GenericEntity {
+ ID "6AACA42B1A6E3AEF"
+ components {
+  MeshObject "{6AACA42B022505CD}" {
+   Object "{C41BFB78E6FFFBCB}Assets/Structures/Military/Flags/FlagPole_01/FlagPole_01.xob"
+  }
+ }
+ coords 4927.228 14.369 3986.369
+}

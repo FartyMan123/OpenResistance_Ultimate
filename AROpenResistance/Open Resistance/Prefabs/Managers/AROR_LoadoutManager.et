@@ -1,4 +1,11 @@
-SCR_LoadoutManager : "{B54D08AEA74A5354}Prefabs/MP/Managers/Loadouts/LoadoutManager_Editor.et" {
+SCR_LoadoutManager : "{AA4E7419A1FF65B0}Prefabs/MP/Managers/Loadouts/LoadoutManager_Base.et" {
  ID "56B2B47708C4F23A"
  coords 452.104 62.548 782.162
+ m_aPlayerLoadouts {
+  SCR_FactionPlayerLoadout "{6AAC8BBB7DC34043}" {
+   m_sLoadoutName "Resistance "
+   m_sLoadoutResource "{485FC43C18DC1257}Prefabs/Characters/AROR_Character_Resistance_Base.et"
+   m_sAffiliatedFaction "FIA"
+  }
+ }
 }

@@ -1,0 +1,8 @@
+SCR_SpawnPoint {
+ ID "6AAC8BBCA45DD001"
+ components {
+  AROR_StagingSpawnComponent "{6AAC8BBCD573263B}" {
+  }
+ }
+ coords 3412.461 20.827 1601.988
+}

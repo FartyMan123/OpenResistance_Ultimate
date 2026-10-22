@@ -1,13 +1,22 @@
 SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR_GameMode_Base.et" {
  components {
   AROR_GameFlowComponent "{6AAA8D6D8EB1E454}" {
+   m_bWorkbenchAutoNewPlaythrough 0
    m_vWorkbenchHQPosition 6500 0 6075
   }
  }
- coords 452.821 65.027 785.054
+ coords 451.826 62.247 784.105
 }
 SCR_FactionManager AROR_FactionManager1 : "{906843134C8EF19C}Prefabs/Managers/AROR_FactionManager.et" {
  coords 449.89 63.003 783.61
+ Factions {
+  SCR_Faction "{56DEAC40D132400B}" {
+   m_bIsPlayable 1
+  }
+ }
+}
+SCR_SpawnPoint : "{95D749133F568A23}Prefabs/Gameflow/AROR_StagingSpawn.et" {
+ coords 3412.831 20.149 1596.428
 }
 SCR_LoadoutManager : "{DB9B95B4E54CBE08}Prefabs/Managers/AROR_LoadoutManager.et" {
  coords 452.143 62.932 781.845

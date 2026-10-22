@@ -19,6 +19,9 @@ class AROR_LocationComponent : ScriptComponent
 	[Attribute("250", UIWidgets.Slider, desc: "Radius of the location in metres. Set per town in the World Editor.", params: "10 2000 5")]
 	protected float m_fRadius;
 
+	[Attribute("", UIWidgets.ResourcePickerThumbnail, desc: "Icon drawn on the map for this location. White on transparent so it can be tinted.", params: "edds imageset")]
+	protected ResourceName m_sMapIcon;
+
 	//------------------------------------------------------------------------------------------------
 	string GetId()
 	{
@@ -41,6 +44,12 @@ class AROR_LocationComponent : ScriptComponent
 	float GetRadius()
 	{
 		return m_fRadius;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	ResourceName GetMapIcon()
+	{
+		return m_sMapIcon;
 	}
 
 	//------------------------------------------------------------------------------------------------

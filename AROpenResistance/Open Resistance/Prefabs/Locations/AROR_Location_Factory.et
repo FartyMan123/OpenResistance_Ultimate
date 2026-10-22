@@ -1,0 +1,15 @@
+GenericEntity : "{D1387921EE9626CA}Prefabs/Locations/AROR_Location_Base.et" {
+ ID "6AACA42C2EB25EFB"
+ components {
+  AROR_LocationComponent "{6AA28237301A1CF9}" {
+   m_eType FACTORY
+   m_sMapIcon "{F79A2276F1F7E7D2}UI/Textures/Map/factory.edds"
+  }
+ }
+ {
+  GenericEntity : "{AE9B75D00D75366B}Prefabs/Props/Locations/AROR_Prop_CaptureFlag.et" {
+   ID "6AACA42C2C775A3A"
+   coords 0 0 0
+  }
+ }
+}

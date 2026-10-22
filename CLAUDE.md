@@ -47,6 +47,14 @@ When adding content, follow the standard Reforger addon structure inside `AROpen
 - Prefabs, configs, and worlds are text formats and can be edited, but keep diffs minimal — Workbench rewrites them on save, so a round-trip through Workbench may reformat them.
 - Base game sources (Script Editor / "Open Resource" in Workbench) are the reference for any `SCR_` class. When unsure of an API, ask the user to check it or quote the base-game source rather than guessing signatures.
 
+## Enfusion MCP (local development)
+
+- Use the `enfusion-mcp` server for API search (`api_search`), the offline copy of the BI wiki (`wiki_search`; use it instead of fetching the wiki, which blocks bots) and reading project files (`project_browse` / `project_read`).
+- **Do not use the live Workbench tools (`wb_*`).** They proved unreliable (timeouts, dropped connection). Ask the user to do Workbench actions and paste results instead.
+- The `wb_*` tools would need the MCP handler scripts in `Scripts/WorkbenchGame/EnfusionMCP/`. That folder is gitignored and must never be committed.
+- **Before packing or publishing the addon, remove `Scripts/WorkbenchGame/EnfusionMCP/`** (e.g. with `wb_cleanup`) so the handler scripts don't ship with the mod.
+- `game_read` / `game_browse` currently can't read inside the game 1.8 `.pak` archives; read base-game files through Workbench or from `_reference/` instead.
+
 ## Enforce Script conventions
 
 - **Class prefix**: use `AROR_` for all new classes, enums, and globals (e.g. `AROR_CacheComponent`, `AROR_InsurgencyGameMode`). Filenames match class names (`AROR_CacheComponent.c`). The prefix is reserved for the core mod; extender mods should use their own prefix.

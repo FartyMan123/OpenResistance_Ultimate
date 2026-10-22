@@ -19,12 +19,18 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Resistance HQ prefab spawned at the chosen position", params: "et")]
 	protected ResourceName m_sHQPrefab;
 
-	[Attribute("500", UIWidgets.Slider, desc: "Minimum distance in metres between the HQ and the edge of any town", params: "0 5000 50")]
-	protected float m_fHQMinDistanceFromTown;
+	[Attribute("100", UIWidgets.Slider, desc: "Minimum distance in metres between the HQ and the edge (radius) of any location", params: "0 5000 10")]
+	protected float m_fHQMinDistanceFromLocation;
 
 	//! TODO: replace with the Factions role config (RESISTANCE role)
 	[Attribute("FIA", desc: "Faction key of the Resistance role")]
 	protected string m_sResistanceFactionKey;
+
+	[Attribute("1", desc: "Players can move at the staging spawn while the admin sets up the campaign")]
+	protected bool m_bAllowControlsInSetup;
+
+	[Attribute("8", UIWidgets.Slider, desc: "Players are moved to random points within this radius of the HQ when it is created", params: "0 50 1")]
+	protected float m_fHQArrivalRadius;
 
 	[Attribute("1", desc: "Workbench only: treat every player as admin so setup can be tested", category: "Workbench")]
 	protected bool m_bWorkbenchEveryoneIsAdmin;
@@ -36,6 +42,12 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	protected vector m_vWorkbenchHQPosition;
 
 	protected static AROR_GameFlowComponent s_Instance;
+
+	//! Server: staging spawns that initialised before the game flow existed
+	protected static ref array<SCR_SpawnPoint> s_aPendingStagingSpawns;
+
+	//! Server: staging spawn points (enabled only until a playthrough exists)
+	protected ref array<SCR_SpawnPoint> m_aStagingSpawns = {};
 
 	//! Server: true once a playthrough is created or loaded; lets the game mode leave pre-game
 	protected bool m_bPlaythroughReady;
@@ -68,7 +80,66 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	//------------------------------------------------------------------------------------------------
 	override bool GetAllowControls()
 	{
-		return false;
+		return m_bAllowControlsInSetup;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	// Staging spawn (server)
+	//------------------------------------------------------------------------------------------------
+	static void RegisterStagingSpawn(notnull SCR_SpawnPoint spawnPoint)
+	{
+		if (s_Instance)
+		{
+			s_Instance.AddStagingSpawn(spawnPoint);
+			return;
+		}
+
+		if (!s_aPendingStagingSpawns)
+			s_aPendingStagingSpawns = {};
+
+		if (!s_aPendingStagingSpawns.Contains(spawnPoint))
+			s_aPendingStagingSpawns.Insert(spawnPoint);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void AddStagingSpawn(notnull SCR_SpawnPoint spawnPoint)
+	{
+		if (m_aStagingSpawns.Contains(spawnPoint))
+			return;
+
+		m_aStagingSpawns.Insert(spawnPoint);
+		spawnPoint.SetFactionKey(m_sResistanceFactionKey);
+		spawnPoint.SetSpawnPointEnabled_S(!m_bPlaythroughReady);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void DisableStagingSpawns()
+	{
+		foreach (SCR_SpawnPoint spawnPoint : m_aStagingSpawns)
+		{
+			if (spawnPoint)
+				spawnPoint.SetSpawnPointEnabled_S(false);
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Moves every spawned player to random points around the HQ (Antistasi-style start)
+	protected void MovePlayersToHQ(vector hqPosition)
+	{
+		BaseWorld world = GetGame().GetWorld();
+		array<int> playerIds = {};
+		GetGame().GetPlayerManager().GetPlayers(playerIds);
+
+		foreach (int playerId : playerIds)
+		{
+			vector target = hqPosition;
+			target[0] = target[0] + Math.RandomFloatInclusive(-m_fHQArrivalRadius, m_fHQArrivalRadius);
+			target[2] = target[2] + Math.RandomFloatInclusive(-m_fHQArrivalRadius, m_fHQArrivalRadius);
+			target[1] = world.GetSurfaceY(target[0], target[2]);
+
+			if (!SCR_Global.TeleportPlayer(playerId, target))
+				Print(string.Format("[AROR] Could not move player %1 to the HQ (not spawned?)", playerId), LogLevel.NORMAL);
+		}
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -138,14 +209,18 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			return false;
 		}
 
-		array<AROR_LocationComponent> towns = {};
-		locationManager.GetLocationsOfType(AROR_ELocationType.TOWN, towns);
-		foreach (AROR_LocationComponent town : towns)
+		array<AROR_LocationComponent> locations = {};
+		locationManager.GetLocations(locations);
+		foreach (AROR_LocationComponent location : locations)
 		{
-			float distanceFromEdge = vector.DistanceXZ(town.GetCenter(), position) - town.GetRadius();
-			if (distanceFromEdge < m_fHQMinDistanceFromTown)
+			// The HQ's own (or a previous) HQ location does not block placement
+			if (!location || location.GetLocationType() == AROR_ELocationType.HQ)
+				continue;
+
+			float distanceFromEdge = vector.DistanceXZ(location.GetCenter(), position) - location.GetRadius();
+			if (distanceFromEdge < m_fHQMinDistanceFromLocation)
 			{
-				reason = string.Format("Too close to %1: the HQ must be at least %2 m from any town", town.GetName(), m_fHQMinDistanceFromTown);
+				reason = string.Format("Too close to %1: the HQ must be at least %2 m outside any location", location.GetName(), m_fHQMinDistanceFromLocation);
 				return false;
 			}
 		}
@@ -168,7 +243,8 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			return;
 		}
 
-		if (!SpawnHQ(hqPosition))
+		IEntity hq = SpawnHQ(hqPosition);
+		if (!hq)
 		{
 			SendSetupResult(playerId, false, "Failed to spawn the Resistance HQ");
 			return;
@@ -189,7 +265,10 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		}
 
 		m_bPlaythroughReady = true;
-		Print(string.Format("[AROR] New playthrough '%1' started, HQ at %2", playthroughName, hqPosition), LogLevel.NORMAL);
+		DisableStagingSpawns();
+		MovePlayersToHQ(hq.GetOrigin());
+
+		Print(string.Format("[AROR] New playthrough '%1' started, HQ at %2", playthroughName, hq.GetOrigin()), LogLevel.NORMAL);
 		SendSetupResult(playerId, true, string.Empty);
 	}
 
@@ -443,21 +522,33 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			return;
 
 		SaveGameManager saveManager = SaveGameManager.Get();
-		if (!saveManager)
-			return;
-
-		LogSaveState();
+		if (saveManager)
+			LogSaveState();
 
 		// TODO: verify that a loaded save is already active at this point
-		if (saveManager.GetActiveSave())
+		if (saveManager && saveManager.GetActiveSave())
 		{
 			m_bPlaythroughReady = true;
 			Print("[AROR] Active save found: restoring playthrough, skipping setup", LogLevel.NORMAL);
 		}
 		else
 		{
-			saveManager.SetSavingAllowed(false);
+			if (saveManager)
+				saveManager.SetSavingAllowed(false);
+
 			Print("[AROR] No active save: waiting for an admin to create or load a playthrough", LogLevel.NORMAL);
+		}
+
+		// Staging spawns that registered before this component (enabled only while no playthrough exists)
+		if (s_aPendingStagingSpawns)
+		{
+			foreach (SCR_SpawnPoint spawnPoint : s_aPendingStagingSpawns)
+			{
+				if (spawnPoint)
+					AddStagingSpawn(spawnPoint);
+			}
+
+			s_aPendingStagingSpawns.Clear();
 		}
 	}
 
