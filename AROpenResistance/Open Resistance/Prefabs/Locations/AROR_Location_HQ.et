@@ -12,4 +12,10 @@ SCR_SpawnPoint : "{E7F4D5562F48DDE4}Prefabs/MP/Spawning/SpawnPoint_Base.et" {
   }
  }
  coords 5601.524 102.318 6236.631
+ {
+  GenericEntity : "{AE9B75D00D75366B}Prefabs/Props/Locations/AROR_Prop_CaptureFlag.et" {
+   ID "6AACA42C184F38D6"
+   coords 0 0 0
+  }
+ }
 }
