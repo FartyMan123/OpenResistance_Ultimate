@@ -20,6 +20,8 @@ class AROR_LocationManagerComponent : SCR_BaseGameModeComponent
 
 	protected ref AROR_OnLocationChangedInvoker m_OnLocationRegistered = new AROR_OnLocationChangedInvoker();
 	protected ref AROR_OnLocationChangedInvoker m_OnLocationUnregistered = new AROR_OnLocationChangedInvoker();
+	protected ref AROR_OnLocationChangedInvoker m_OnLocationControlChanged = new AROR_OnLocationChangedInvoker();
+	protected ref AROR_OnLocationChangedInvoker m_OnLocationSupportChanged = new AROR_OnLocationChangedInvoker();
 
 	//------------------------------------------------------------------------------------------------
 	static AROR_LocationManagerComponent GetInstance()
@@ -39,6 +41,20 @@ class AROR_LocationManagerComponent : SCR_BaseGameModeComponent
 	AROR_OnLocationChangedInvoker GetOnLocationUnregistered()
 	{
 		return m_OnLocationUnregistered;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Invoked on every machine when a location's controlling role changes (read it with GetControllingRole)
+	AROR_OnLocationChangedInvoker GetOnLocationControlChanged()
+	{
+		return m_OnLocationControlChanged;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Invoked on every machine when a town or city's support changes (read it from AROR_SettlementComponent)
+	AROR_OnLocationChangedInvoker GetOnLocationSupportChanged()
+	{
+		return m_OnLocationSupportChanged;
 	}
 
 	//------------------------------------------------------------------------------------------------

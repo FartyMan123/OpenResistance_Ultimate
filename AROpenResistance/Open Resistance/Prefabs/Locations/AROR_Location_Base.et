@@ -1,7 +1,11 @@
 GenericEntity {
  ID "6AA282371F731F69"
  components {
+  Persistence "{6AAE5E8C0FCC7432}" {
+  }
   AROR_LocationComponent "{6AA28237301A1CF9}" {
+  }
+  RplComponent "{6AAE5E8C34F17D2E}" {
   }
  }
  coords 2.237 3.456 2.994

@@ -1,8 +1,11 @@
 GenericEntity : "{D1387921EE9626CA}Prefabs/Locations/AROR_Location_Base.et" {
+ ID "6AAE72CBC87DBD0C"
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_eType CITY
    m_sMapIcon "{6567ECB8A0329F0D}UI/Textures/Map/city.edds"
+  }
+  AROR_SettlementComponent "{6AAE72CBC3214551}" {
   }
  }
 }
