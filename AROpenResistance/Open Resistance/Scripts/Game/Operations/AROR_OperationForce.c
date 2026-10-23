@@ -16,6 +16,7 @@ class AROR_OperationForce
 	bool m_bArrivalLogged;
 	string m_sLastProgress;
 	bool m_bLogFriendlyDamage;
+	string m_sAssetFactionKey;
 	protected ref array<ref AROR_OperationDamageObserver> m_aDamageObservers = {};
 	int m_iWakeRetryTicks;
 	protected ref array<IEntity> m_aMembers = {};
@@ -29,13 +30,49 @@ class AROR_OperationForce
 		{
 			// Initialize only on first registration. Later faction changes must fail validation,
 			// rather than being silently reset by the periodic member counter.
-			FactionAffiliationComponent affiliation = FactionAffiliationComponent.Cast(entity.FindComponent(FactionAffiliationComponent));
-			if (affiliation && affiliation.GetAffiliatedFactionKey().IsEmpty() && !m_sFactionKey.IsEmpty())
-				affiliation.SetAffiliatedFactionByKey(m_sFactionKey);
+			InitializeSpawnFaction_S(entity);
 			m_aMembers.Insert(entity);
 			TrackDamage_S(entity);
 			m_bSawMembers = true;
 		}
+	}
+
+	//! Pure policy check: permit only this profile's declared asset faction at creation time.
+	bool CanInitializeSpawnFaction(string currentFaction)
+	{
+		return !m_sFactionKey.IsEmpty() && (currentFaction.IsEmpty() || currentFaction == m_sFactionKey || (!m_sAssetFactionKey.IsEmpty() && currentFaction == m_sAssetFactionKey));
+	}
+
+	//! Call once for newly owned entities, never as periodic faction repair.
+	bool InitializeSpawnGroupFaction_S(SCR_AIGroup group)
+	{
+		if (!Replication.IsServer() || !group || !GetGame().GetFactionManager())
+			return false;
+		Faction target = GetGame().GetFactionManager().GetFactionByKey(m_sFactionKey);
+		if (!target)
+			return false;
+		Faction current = group.GetFaction();
+		if (!current)
+			return group.InitFactionKey(m_sFactionKey);
+		if (!CanInitializeSpawnFaction(current.GetFactionKey()))
+			return false;
+		if (current.GetFactionKey() == m_sFactionKey)
+			return true;
+		// InitFactionKey deliberately cannot replace a prefab's existing native faction.
+		return group.SetFaction(target);
+	}
+
+	//! Call once for newly owned characters/vehicles, never as periodic faction repair.
+	bool InitializeSpawnFaction_S(IEntity entity)
+	{
+		if (!Replication.IsServer() || !entity)
+			return false;
+		FactionAffiliationComponent affiliation = FactionAffiliationComponent.Cast(entity.FindComponent(FactionAffiliationComponent));
+		if (!affiliation || !CanInitializeSpawnFaction(affiliation.GetAffiliatedFactionKey()))
+			return false;
+		if (affiliation.GetAffiliatedFactionKey() != m_sFactionKey)
+			affiliation.SetAffiliatedFactionByKey(m_sFactionKey);
+		return affiliation.GetAffiliatedFactionKey() == m_sFactionKey;
 	}
 
 	void TrackDamage_S(IEntity entity)

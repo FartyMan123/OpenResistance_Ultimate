@@ -23,15 +23,15 @@ On Chicken's executor component, select:
 
 | Attribute | Required value |
 |---|---|
-| `m_sOccupiersGroupPrefab` | Base-game infantry group with US faction and US members for the current mapping |
-| `m_sInvadersGroupPrefab` | Base-game infantry group with USSR faction and USSR members for the current mapping |
+| `m_sOccupiersGroupPrefab` | Fallback infantry group matching the shared Occupier campaign faction; native US assets should use a profile declaring their asset faction |
+| `m_sInvadersGroupPrefab` | Fallback infantry group matching the shared Invader campaign faction; native USSR assets should use a profile declaring their asset faction |
 | `m_sAttackWaypointPrefab` | A base-game AI attack/search-and-destroy waypoint prefab |
 | `m_sQRFWaypointPrefab` | A base-game AI defend waypoint prefab |
 | `m_vOccupiersSpawnPosition` | A clear, navigable land position for the Occupier force |
 | `m_vInvadersSpawnPosition` | A separate clear, navigable land position for the Invader force |
 | `m_bEnabled` | Enable after filling the fields above |
 
-Use the resource pickers to select group entities, not individual soldier prefabs. Start with small infantry groups without vehicles, nested subgroups or attached static waypoints. Their member-slot arrays define the reservation cost. Changing commander factions also requires choosing matching group prefabs; the executor rejects a mismatched group or any mismatched member rather than repainting troops from another faction.
+Use the resource pickers to select group entities, not individual soldier prefabs. Start with small infantry groups without vehicles, nested subgroups or attached static waypoints. Their member-slot arrays define the reservation cost. Campaign faction keys come from `AROR_FactionRolesComponent`. A force profile can explicitly declare a native `m_sAssetFactionKey` for first-spawn conversion to its campaign key; unrelated factions and subsequent changes are rejected. The legacy fallback fields have no source-faction declaration and require matching or unassigned entities. See [force pools](FORCE_POOLS.md).
 
 Choose launch points at least 150 m from the objective centre and 100 m from player-controlled characters under default checks. Heights are snapped to terrain. Checks only cover terrain height above zero, objective distance and controlled-player distance; they do not prove water absence at nonzero water levels, obstacle clearance, navmesh coverage or a usable route. Inspect the positions and route in World Editor. The player-distance check does not use the Game Master camera position.
 

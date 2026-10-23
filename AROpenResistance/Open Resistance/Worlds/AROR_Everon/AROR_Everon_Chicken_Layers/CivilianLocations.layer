@@ -2,7 +2,7 @@ $grp SCR_ChimeraCharacter : "{26A9756790131354}Prefabs/Characters/Factions/BLUFO
  AROR_Provins_QRFDefender {
   components {
    AROR_QRFDefenseComponent "{6AAE74BEB126DDB6}" {
-    m_sInitialFactionKey "US"
+    m_bInitializeFromDefendingRole 1
     m_bEnabled 1
     m_eDefendingRole OCCUPIERS
     m_sDefendedLocationId "everon_provins"
@@ -15,7 +15,7 @@ $grp SCR_ChimeraCharacter : "{26A9756790131354}Prefabs/Characters/Factions/BLUFO
  AROR_Provins_ManualQRFDefender {
   components {
    AROR_QRFDefenseComponent {
-    m_sInitialFactionKey "US"
+    m_bInitializeFromDefendingRole 1
     m_bEnabled 1
     m_eDefendingRole OCCUPIERS
     m_sDefendedLocationId "everon_provins"

@@ -417,6 +417,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		force.m_iPackageIndex = packageIndex;
 		force.m_sFactionKey = commander.GetFactionKey();
 		force.m_Profile = profile;
+		force.m_sAssetFactionKey = profile.m_sAssetFactionKey;
 		force.m_bLogFriendlyDamage = m_bLogFriendlyDamage;
 		force.m_iReservedGroups = profile.GetGroupBudget();
 		force.m_iReservedMembers = profile.m_iPersonnelBudget;
@@ -431,12 +432,8 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			FailOperation(operation, "Ground-force vehicle resource failed");
 			return;
 		}
-		FactionAffiliationComponent affiliation = FactionAffiliationComponent.Cast(force.m_Vehicle.FindComponent(FactionAffiliationComponent));
-		// Fresh standalone vehicles may have no runtime affiliation despite their prefab faction.
-		// Assign only an empty affiliation; an explicitly conflicting faction remains an error.
-		if (affiliation && affiliation.GetAffiliatedFactionKey().IsEmpty())
-			affiliation.SetAffiliatedFactionByKey(force.m_sFactionKey);
-		if (!affiliation || affiliation.GetAffiliatedFactionKey() != force.m_sFactionKey)
+		// Assets and campaign factions are distinct; accept only the profile's declared source.
+		if (!force.InitializeSpawnFaction_S(force.m_Vehicle))
 		{
 			FailOperation(operation, "Ground-force vehicle faction mismatch");
 			return;
@@ -451,7 +448,11 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			return;
 		}
 		force.m_CrewGroup.GetOnAgentAdded().Insert(force.OnAgentAdded);
-		force.m_CrewGroup.InitFactionKey(force.m_sFactionKey);
+		if (!force.InitializeSpawnGroupFaction_S(force.m_CrewGroup))
+		{
+			FailOperation(operation, "Crew group cannot adopt the configured campaign faction");
+			return;
+		}
 		if (!force.m_CrewGroup.m_aUnitPrefabSlots)
 			force.m_CrewGroup.m_aUnitPrefabSlots = {};
 		force.m_CrewGroup.m_aUnitPrefabSlots.Clear();
@@ -472,7 +473,11 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			FailOperation(operation, "Ground-force infantry group is invalid");
 			return;
 		}
-		force.m_Group.InitFactionKey(force.m_sFactionKey);
+		if (!force.InitializeSpawnGroupFaction_S(force.m_Group))
+		{
+			FailOperation(operation, "Infantry group cannot adopt the configured campaign faction");
+			return;
+		}
 		int requested = force.m_Group.m_aUnitPrefabSlots.Count();
 		int totalRequested = requested;
 		if (force.m_Group != force.m_CrewGroup)
@@ -584,8 +589,9 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		force.m_iPackageIndex = packageIndex;
 		force.m_sFactionKey = commander.GetFactionKey();
 		force.m_Group = group;
+		if (profile)
+			force.m_sAssetFactionKey = profile.m_sAssetFactionKey;
 		force.m_bLogFriendlyDamage = m_bLogFriendlyDamage;
-		group.InitFactionKey(force.m_sFactionKey);
 		group.GetOnAgentAdded().Insert(force.OnAgentAdded);
 		if (group.m_aUnitPrefabSlots)
 			force.m_iReservedMembers = group.m_aUnitPrefabSlots.Count();
@@ -594,6 +600,11 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			force.m_iReservedMembers = profile.m_iPersonnelBudget;
 		ConvertReservation(reservation, profile);
 		m_aForces.Insert(force);
+		if (!force.InitializeSpawnGroupFaction_S(group))
+		{
+			FailOperation(operation, "Infantry group cannot adopt the configured campaign faction");
+			return;
+		}
 		int reserved = GetReservedMembers();
 		if (requestedMembers < 1 || reserved > m_iMaxMembers || (profile && requestedMembers > profile.m_iPersonnelBudget))
 		{

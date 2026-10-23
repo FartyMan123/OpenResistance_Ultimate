@@ -35,8 +35,14 @@ $profiles = [regex]::Matches($layerText, '(?ms)^\s{4}AROR_ForceProfile\s*\{(.*?)
 if ($profiles.Count -ne 8) { throw "Expected eight Chicken profiles, found $($profiles.Count)" }
 $profileIds = @()
 $airborneCount = 0
+$roleFactions = @{'1' = 'AROR_OCCUPIERS'; '2' = 'AROR_INVADERS'}
+$assetFactions = @{'1' = 'US'; '2' = 'USSR'}
 foreach ($profile in $profiles) {
 	$body = $profile.Groups[1].Value
+	$roleId = [regex]::Match($body, 'm_eRole\s+(\d+)').Groups[1].Value
+	$factionKey = [regex]::Match($body, 'm_sFactionKey\s+"([^"]+)"').Groups[1].Value
+	$assetKey = [regex]::Match($body, 'm_sAssetFactionKey\s+"([^"]+)"').Groups[1].Value
+	if (!$roleFactions.ContainsKey($roleId) -or $factionKey -cne $roleFactions[$roleId] -or $assetKey -cne $assetFactions[$roleId]) { throw 'Chicken profile must match core campaign and native asset factions' }
 	$profileId = [regex]::Match($body, 'm_sId\s+"([^"]+)"').Groups[1].Value
 	if (!$profileId -or $profileIds -contains $profileId) { throw "Empty/duplicate profile ID: $profileId" }
 	$profileIds += $profileId
@@ -50,6 +56,10 @@ foreach ($profile in $profiles) {
 	}
 }
 if ($airborneCount -ne 2) { throw 'Expected one disabled airborne profile per faction' }
+if ($layerText -match 'm_sResistanceFactionKey|m_sOccupiersFactionKey|m_sInvadersFactionKey|m_sAffiliatedFaction\s+"FIA"') { throw 'Chicken must inherit shared role mappings and the Resistance loadout' }
+$defenderPath = Join-Path $repoPath 'AROpenResistance/Open Resistance/Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/CivilianLocations.layer'
+$defenderText = [IO.File]::ReadAllText($defenderPath)
+if ([regex]::Matches($defenderText, 'm_bInitializeFromDefendingRole\s+1').Count -ne 2 -or $defenderText -match 'm_sInitialFactionKey') { throw 'Both Chicken defenders must initialize from the shared defending role' }
 $maxGroups = [int][regex]::Match($layerText, 'm_iMaxGroups\s+(\d+)').Groups[1].Value
 $maxMembers = [int][regex]::Match($layerText, 'm_iMaxMembers\s+(\d+)').Groups[1].Value
 $maxVehicles = [int][regex]::Match($layerText, 'm_iMaxVehicles\s+(\d+)').Groups[1].Value

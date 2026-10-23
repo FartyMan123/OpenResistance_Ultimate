@@ -18,6 +18,8 @@ class AROR_QRFDefenseComponent : ScriptComponent
 	protected bool m_bDebugReports;
 	[Attribute("", desc: "Optional initial faction for an unassigned standalone scenario defender, e.g. US. Applied once on the server, only when affiliation is empty. Empty preserves existing setup; not used for groups.")]
 	protected string m_sInitialFactionKey;
+	[Attribute("0", desc: "Resolve the initial empty standalone defender affiliation from its defending role via AROR_FactionRolesComponent, instead of an explicit faction key.")]
+	protected bool m_bInitializeFromDefendingRole;
 
 	protected ref array<ref AROR_QRFDamageObserver> m_aObservers = {};
 	protected int m_iClock;
@@ -32,7 +34,19 @@ class AROR_QRFDefenseComponent : ScriptComponent
 	//! Explicit scenario initialization, separate from validating damage. Never changes an assigned faction.
 	protected bool InitializeDefenderFaction_S()
 	{
-		if (m_sInitialFactionKey.IsEmpty() || SCR_AIGroup.Cast(GetOwner()))
+		if (SCR_AIGroup.Cast(GetOwner()))
+			return true;
+		string initialFactionKey = m_sInitialFactionKey;
+		if (m_bInitializeFromDefendingRole)
+		{
+			AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.GetInstance();
+			if (!roles)
+				return false;
+			initialFactionKey = roles.GetFactionKey(m_eDefendingRole);
+			if (initialFactionKey.IsEmpty())
+				return false;
+		}
+		if (initialFactionKey.IsEmpty())
 			return true;
 		FactionAffiliationComponent affiliation = FactionAffiliationComponent.Cast(GetOwner().FindComponent(FactionAffiliationComponent));
 		if (!affiliation)
@@ -46,16 +60,16 @@ class AROR_QRFDefenseComponent : ScriptComponent
 		FactionManager factions = GetGame().GetFactionManager();
 		if (!factions)
 			return false;
-		if (!factions.GetFactionByKey(m_sInitialFactionKey))
+		if (!factions.GetFactionByKey(initialFactionKey))
 		{
-			Print(string.Format("[AROR] Scenario defender faction '%1' is missing from the scenario; QRF monitoring stopped", m_sInitialFactionKey), LogLevel.ERROR);
+			Print(string.Format("[AROR] Scenario defender faction '%1' is missing from the scenario; QRF monitoring stopped", initialFactionKey), LogLevel.ERROR);
 			StopMonitoring();
 			return false;
 		}
-		affiliation.SetAffiliatedFactionByKey(m_sInitialFactionKey);
-		if (affiliation.GetAffiliatedFactionKey() != m_sInitialFactionKey)
+		affiliation.SetAffiliatedFactionByKey(initialFactionKey);
+		if (affiliation.GetAffiliatedFactionKey() != initialFactionKey)
 			return false;
-		Print(string.Format("[AROR] Scenario defender faction assigned: owner=%1 faction=%2", GetOwner(), m_sInitialFactionKey), LogLevel.NORMAL);
+		Print(string.Format("[AROR] Scenario defender faction assigned: owner=%1 faction=%2", GetOwner(), initialFactionKey), LogLevel.NORMAL);
 		return true;
 	}
 

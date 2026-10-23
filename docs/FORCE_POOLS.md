@@ -10,6 +10,8 @@ The intended force types are motorized, mechanized, armour and airborne. Airborn
 
 ## Force packages
 
+Campaign faction and native asset identity are separate. Set `m_sFactionKey` to the role component's faction (for example `AROR_OCCUPIERS`) and `m_sAssetFactionKey` to the source assets' faction (for example `US`). The latter authorizes first-spawn conversion only for that source faction; empty, already-matching and declared-source affiliations are accepted, while unrelated factions remain errors. Groups are assigned before requesting members, using `SetFaction` when an inherited group already has a faction. Periodic validation never resets an affiliation that changes later. Chicken now inherits Rowan's core role mappings and Resistance loadout without legacy faction overrides.
+
 Each pool entry should describe a complete force package, rather than just one group prefab.
 
 | Type | Initial test package | Behaviour to implement |

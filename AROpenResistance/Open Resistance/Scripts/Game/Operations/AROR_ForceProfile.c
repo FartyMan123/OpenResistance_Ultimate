@@ -7,8 +7,10 @@ class AROR_ForceProfile
 	bool m_bEnabled;
 	[Attribute("1", UIWidgets.ComboBox, desc: "Campaign role", enums: ParamEnumArray.FromEnum(AROR_EFactionRole))]
 	AROR_EFactionRole m_eRole;
-	[Attribute("US", desc: "Required faction key for this profile")]
+	[Attribute("AROR_OCCUPIERS", desc: "Required campaign faction key from AROR_FactionRolesComponent")]
 	string m_sFactionKey;
+	[Attribute("", desc: "Optional native asset faction allowed to become the campaign faction on first spawn only, e.g. US for AROR_OCCUPIERS. Empty accepts only unassigned or already-matching assets.")]
+	string m_sAssetFactionKey;
 	[Attribute("0", UIWidgets.ComboBox, desc: "Force execution policy", enums: ParamEnumArray.FromEnum(AROR_EForceType))]
 	AROR_EForceType m_eType;
 	[Attribute("1", desc: "Scheduled attack selection weight; zero disables attacks")]

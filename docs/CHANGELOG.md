@@ -6,12 +6,13 @@
 
 - Preserve Rowan's core factions, forced Resistance spawning and setup-flow updates while retaining the commander/scheduler components.
 - Use the shared `AROR_FactionRolesComponent` as the authority for commander faction bindings. Remove the duplicate commander-folder role enum; the canonical definition lives under `Scripts/Game/Factions/`.
-- Preserve Chicken's FIA/US/USSR QRF fixture with explicit shared-role and FIA loadout overrides. Original Everon keeps the core AROR faction keys.
+- Retrofit Chicken onto the same core AROR faction keys and Resistance loadout as original Everon. Its defenders resolve the shared defending role; profiles declare campaign faction separately from native US/USSR assets.
+- Initialize operation-owned vehicle/member affiliations once from an empty, matching, or explicitly declared native asset faction. Initialize empty groups or use the native server `SetFaction` API for assigned groups before requesting members. Unexpected affiliations and later faction changes still fail validation.
 - Extenders must move commander-manager faction attributes to `AROR_FactionRolesComponent`; evaluation interval remains on the commander manager. Recompile and reload prefabs/worlds before testing this integration.
 
 ### Added
 
-- Three configurable role-based commander contexts: player-directed Resistance and AI-directed Occupiers and Invaders. Current bindings are FIA, US and USSR respectively.
+- Three configurable role-based commander contexts: player-directed Resistance and AI-directed Occupiers and Invaders. Bindings come from Rowan's shared role component, defaulting to `AROR_RESISTANCE`, `AROR_OCCUPIERS` and `AROR_INVADERS`, with FIA/US/USSR assets respectively.
 - Server-owned attack and QRF scheduling, independent role cooldowns/capacity, target deduplication, bounded operation history and terminal cleanup.
 - Weighted force pools and response levels 1–5. Each level deploys that many complete packages, with the whole response reserved before spawning.
 - Ground execution for motorized, mechanized and wheeled-armour packages, including queued crew/infantry spawning, boarding, deployment waypoints and individual package-loss handling.

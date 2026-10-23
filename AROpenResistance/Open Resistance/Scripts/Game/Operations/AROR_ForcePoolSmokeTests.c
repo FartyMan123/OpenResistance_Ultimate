@@ -29,6 +29,15 @@ class AROR_ForcePoolSmokeTests
 		AROR_ForceProfile airborne = MakeProfile("test_airborne", AROR_EForceType.AIRBORNE, 100);
 		array<ref AROR_ForceProfile> profiles = {motorized, mechanized, airborne};
 		bool passed = true;
+		// The campaign faction may use another faction's models, but not arbitrary assets.
+		AROR_OperationForce factionPolicy = new AROR_OperationForce();
+		factionPolicy.m_sFactionKey = "AROR_OCCUPIERS";
+		passed = Check(factionPolicy.CanInitializeSpawnFaction(""), "Unassigned spawn can join campaign faction") && passed;
+		passed = Check(factionPolicy.CanInitializeSpawnFaction("AROR_OCCUPIERS"), "Campaign faction preserved") && passed;
+		passed = Check(!factionPolicy.CanInitializeSpawnFaction("US"), "Native faction requires explicit asset declaration") && passed;
+		factionPolicy.m_sAssetFactionKey = "US";
+		passed = Check(factionPolicy.CanInitializeSpawnFaction("US"), "Declared US assets can join Occupiers") && passed;
+		passed = Check(!factionPolicy.CanInitializeSpawnFaction("USSR") && !factionPolicy.CanInitializeSpawnFaction("AROR_INVADERS"), "Wrong native and campaign factions rejected") && passed;
 		passed = Check(AROR_ForcePool.Pick(profiles, AROR_EFactionRole.OCCUPIERS, "US", AROR_EOperationType.QRF, 4, 32, 4, 0) == motorized, "First weight boundary") && passed;
 		passed = Check(AROR_ForcePool.Pick(profiles, AROR_EFactionRole.OCCUPIERS, "US", AROR_EOperationType.QRF, 4, 32, 4, 39) == motorized, "Last motorized ticket") && passed;
 		passed = Check(AROR_ForcePool.Pick(profiles, AROR_EFactionRole.OCCUPIERS, "US", AROR_EOperationType.QRF, 4, 32, 4, 40) == mechanized, "First mechanized ticket") && passed;
