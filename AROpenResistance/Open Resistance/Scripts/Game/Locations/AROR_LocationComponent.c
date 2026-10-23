@@ -31,8 +31,8 @@ class AROR_LocationComponent : ScriptComponent
 	[Attribute("0", desc: "Control can never change (e.g. the Resistance HQ)", category: "Control")]
 	protected bool m_bControlFixed;
 
-	[Attribute("120", UIWidgets.Slider, desc: "After the Resistance takes this location, seconds before it can flip to the Occupiers or Invaders", params: "0 3600 10", category: "Control")]
-	protected float m_fFlipCooldownSeconds;
+	//! After the Resistance takes a location, seconds before it can flip to the Occupiers or Invaders (fixed by design)
+	protected static const float FLIP_COOLDOWN_SECONDS = 300;
 
 	//! True while the post-Resistance-capture flip cooldown runs; server-owned, replicated, not saved
 	[RplProp()]
@@ -120,11 +120,11 @@ class AROR_LocationComponent : ScriptComponent
 		m_eControllingRole = role;
 
 		// Resistance captures lock the location against flipping back for a while
-		if (role == AROR_EFactionRole.RESISTANCE && m_fFlipCooldownSeconds > 0)
+		if (role == AROR_EFactionRole.RESISTANCE)
 		{
 			m_bFlipLocked = true;
 			GetGame().GetCallqueue().Remove(UnlockFlip);
-			GetGame().GetCallqueue().CallLater(UnlockFlip, m_fFlipCooldownSeconds * 1000);
+			GetGame().GetCallqueue().CallLater(UnlockFlip, FLIP_COOLDOWN_SECONDS * 1000);
 		}
 
 		Replication.BumpMe();
