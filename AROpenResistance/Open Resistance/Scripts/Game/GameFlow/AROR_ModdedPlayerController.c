@@ -92,6 +92,25 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Admin menu: add money to a faction's funds, or (selfMoney) to this player's own money
+	void AROR_RequestAdminMoney(AROR_EFactionRole role, bool selfMoney, int amount)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_AdminMoney(role, selfMoney, amount);
+		else
+			Rpc(AROR_RpcAsk_AdminMoney, role, selfMoney, amount);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_AdminMoney(int role, bool selfMoney, int amount)
+	{
+		AROR_AdminMenuComponent adminMenu = AROR_AdminMenuComponent.GetInstance();
+		if (adminMenu)
+			adminMenu.GiveMoney_S(GetPlayerId(), role, selfMoney, amount);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
 	protected void AROR_RpcAsk_NewPlaythrough(vector hqPosition, string playthroughName)
 	{
@@ -225,6 +244,26 @@ modded class SCR_PlayerController
 			color = Color.FromInt(packedColor);
 
 		AROR_NotificationManagerComponent.ShowHint(text, color, sound);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	// Economy: server -> owning client (see AROR_EconomyComponent)
+	//------------------------------------------------------------------------------------------------
+	void AROR_SendPlayerMoney_S(int money)
+	{
+		if (AROR_IsLocal())
+			AROR_RpcDo_PlayerMoney(money);
+		else
+			Rpc(AROR_RpcDo_PlayerMoney, money);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Owner)]
+	protected void AROR_RpcDo_PlayerMoney(int money)
+	{
+		AROR_EconomyComponent economy = AROR_EconomyComponent.GetInstance();
+		if (economy)
+			economy.OnLocalPlayerMoneyReceived(money);
 	}
 
 	//------------------------------------------------------------------------------------------------
