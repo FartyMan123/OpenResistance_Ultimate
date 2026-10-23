@@ -1,0 +1,12 @@
+GenericEntity : "{A744BF492EFD2B54}Prefabs/Locations/AROR_Location_Town.et" {
+ components {
+  AROR_LocationComponent "{6AA28237301A1CF9}" {
+   m_sId "everon_provins"
+   m_sName "Provins"
+  }
+  AROR_SettlementComponent "{6AAE72CBD95477C1}" {
+   m_iPopulation 45
+  }
+ }
+ coords 5503.833 96.354 6081.837
+}
