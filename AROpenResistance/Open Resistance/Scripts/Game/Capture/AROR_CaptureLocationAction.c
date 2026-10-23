@@ -124,10 +124,21 @@ class AROR_CaptureLocationAction : ScriptedUserAction
 		if (!location || !GetUserRole(pUserEntity, role, faction))
 			return;
 
-		// Authoritative re-check without the cache
-		if (HasHostiles(faction, false) || !location.SetControllingRole_S(role))
+		// Authoritative re-check without the cache; the player is told why it failed
+		string rejection;
+		if (HasHostiles(faction, false))
+			rejection = "Can't capture: hostiles in the area";
+		else if (!location.SetControllingRole_S(role))
+			rejection = "Can't capture: recently captured";
+
+		if (!rejection.IsEmpty())
 		{
 			Print(string.Format("[AROR] Capture of '%1' rejected by the server", location.GetName()), LogLevel.NORMAL);
+
+			int playerId = GetGame().GetPlayerManager().GetPlayerIdFromControlledEntity(pUserEntity);
+			if (playerId > 0)
+				AROR_NotificationManagerComponent.SendHint_S(playerId, rejection);
+
 			return;
 		}
 

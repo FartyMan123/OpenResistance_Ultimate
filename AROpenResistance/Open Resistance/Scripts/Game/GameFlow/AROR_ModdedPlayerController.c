@@ -73,6 +73,25 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Admin menu: send test notifications and a test hint
+	void AROR_RequestAdminTestNotifications()
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_AdminTestNotifications();
+		else
+			Rpc(AROR_RpcAsk_AdminTestNotifications);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_AdminTestNotifications()
+	{
+		AROR_AdminMenuComponent adminMenu = AROR_AdminMenuComponent.GetInstance();
+		if (adminMenu)
+			adminMenu.SendTestNotifications_S(GetPlayerId());
+	}
+
+	//------------------------------------------------------------------------------------------------
 	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
 	protected void AROR_RpcAsk_NewPlaythrough(vector hqPosition, string playthroughName)
 	{
@@ -166,6 +185,46 @@ modded class SCR_PlayerController
 		AROR_GameFlowComponent gameFlow = AROR_GameFlowComponent.GetInstance();
 		if (gameFlow)
 			gameFlow.OnSetupResultReceived(success, message);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	// Notifications: server -> owning client (see AROR_NotificationManagerComponent)
+	//------------------------------------------------------------------------------------------------
+	void AROR_ShowNotification_S(int type, string text, string icon, int packedColor, string kicker, string sound)
+	{
+		if (AROR_IsLocal())
+			AROR_RpcDo_Notification(type, text, icon, packedColor, kicker, sound);
+		else
+			Rpc(AROR_RpcDo_Notification, type, text, icon, packedColor, kicker, sound);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	void AROR_ShowHint_S(string text, bool hasColor, int packedColor, string sound)
+	{
+		if (AROR_IsLocal())
+			AROR_RpcDo_Hint(text, hasColor, packedColor, sound);
+		else
+			Rpc(AROR_RpcDo_Hint, text, hasColor, packedColor, sound);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Owner)]
+	protected void AROR_RpcDo_Notification(int type, string text, string icon, int packedColor, string kicker, string sound)
+	{
+		AROR_NotificationManagerComponent notifications = AROR_NotificationManagerComponent.GetInstance();
+		if (notifications)
+			notifications.ReceiveNotification(type, text, icon, packedColor, kicker, sound);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Owner)]
+	protected void AROR_RpcDo_Hint(string text, bool hasColor, int packedColor, string sound)
+	{
+		Color color;
+		if (hasColor)
+			color = Color.FromInt(packedColor);
+
+		AROR_NotificationManagerComponent.ShowHint(text, color, sound);
 	}
 
 	//------------------------------------------------------------------------------------------------

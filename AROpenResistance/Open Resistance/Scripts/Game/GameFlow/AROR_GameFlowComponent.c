@@ -268,6 +268,8 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		DisableStagingSpawns();
 		MovePlayersToHQ(hq.GetOrigin());
 
+		SendHQEstablishedHeadline(hq);
+
 		Print(string.Format("[AROR] New playthrough '%1' started, HQ at %2", playthroughName, hq.GetOrigin()), LogLevel.NORMAL);
 		SendSetupResult(playerId, true, string.Empty);
 	}
@@ -364,6 +366,23 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		}
 
 		return roles.GetFactionKey(AROR_EFactionRole.RESISTANCE);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Headline for everyone, with the HQ's map icon in the Resistance colour
+	protected void SendHQEstablishedHeadline(notnull IEntity hq)
+	{
+		ResourceName icon;
+		AROR_LocationComponent location = AROR_LocationComponent.Cast(hq.FindComponent(AROR_LocationComponent));
+		if (location)
+			icon = location.GetMapIcon();
+
+		Color color;
+		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.GetInstance();
+		if (roles && roles.GetFaction(AROR_EFactionRole.RESISTANCE))
+			color = roles.GetFaction(AROR_EFactionRole.RESISTANCE).GetFactionColor();
+
+		AROR_NotificationManagerComponent.Send_S(new AROR_Notification(AROR_ENotificationType.HEADLINE, "Resistance HQ established", icon, color));
 	}
 
 	//------------------------------------------------------------------------------------------------

@@ -140,6 +140,23 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Server: a headline and a notification for everyone (they queue), and a hint for the requesting player
+	void SendTestNotifications_S(int playerId)
+	{
+		if (!Replication.IsServer() || !m_bEnabled)
+			return;
+
+		Color resistanceColor;
+		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.GetInstance();
+		if (roles && roles.GetFaction(AROR_EFactionRole.RESISTANCE))
+			resistanceColor = roles.GetFaction(AROR_EFactionRole.RESISTANCE).GetFactionColor();
+
+		AROR_NotificationManagerComponent.Send_S(new AROR_Notification(AROR_ENotificationType.NOTIFICATION, "Test notification from the admin menu", string.Empty, resistanceColor, "Admin test"));
+		AROR_NotificationManagerComponent.Send_S(new AROR_Notification(AROR_ENotificationType.HEADLINE, "Test headline", string.Empty, resistanceColor));
+		AROR_NotificationManagerComponent.SendHint_S(playerId, "Test hint: only you can see this");
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! Server: adjust support of the town or city nearest to the requesting player
 	void AdjustNearestSupport_S(int playerId, AROR_EFactionRole role, float delta)
 	{
@@ -179,6 +196,15 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 
 			// Give the server time to grant access, then open the editor locally
 			GetGame().GetCallqueue().CallLater(OpenGameMaster, GAME_MASTER_OPEN_DELAY_MS);
+			return;
+		}
+
+		if (tag == "notifications")
+		{
+			SCR_PlayerController notificationsController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
+			if (notificationsController)
+				notificationsController.AROR_RequestAdminTestNotifications();
+
 			return;
 		}
 

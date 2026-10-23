@@ -1,0 +1,155 @@
+FrameWidgetClass {
+ Name "AROR_Notifications"
+ {
+  FrameWidgetClass "{6AB3D0E1F2A41001}" {
+   Name "Headline"
+   Slot FrameWidgetSlot "{6AB3D0E1F2A41101}" {
+    Anchor 0 0 0 0
+   }
+   {
+    ImageWidgetClass "{6AB3D0E1F2A41002}" {
+     Name "HeadlineBand"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A41102}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB3D0E1F2A41003}" {
+     Name "HeadlineLineTop"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A41103}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB3D0E1F2A41004}" {
+     Name "HeadlineLineBottom"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A41104}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB3D0E1F2A41005}" {
+     Name "HeadlineIcon"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A41105}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB3D0E1F2A41006}" {
+     Name "HeadlineText"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A41106}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB3D0E1F2A41007}" {
+     Name "HeadlineTimer"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A41107}" {
+      Anchor 0 0 0 0
+     }
+    }
+   }
+  }
+  FrameWidgetClass "{6AB3D0E1F2A42001}" {
+   Name "Card"
+   Slot FrameWidgetSlot "{6AB3D0E1F2A42101}" {
+    Anchor 0 0 0 0
+   }
+   {
+    ImageWidgetClass "{6AB3D0E1F2A42002}" {
+     Name "CardBackground"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A42102}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB3D0E1F2A42003}" {
+     Name "CardIconBlock"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A42103}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB3D0E1F2A42004}" {
+     Name "CardIcon"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A42104}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB3D0E1F2A42005}" {
+     Name "CardKicker"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A42105}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB3D0E1F2A42006}" {
+     Name "CardText"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A42106}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB3D0E1F2A42007}" {
+     Name "CardTimer"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A42107}" {
+      Anchor 0 0 0 0
+     }
+    }
+   }
+  }
+  FrameWidgetClass "{6AB3D0E1F2A43001}" {
+   Name "Hint"
+   Slot FrameWidgetSlot "{6AB3D0E1F2A43101}" {
+    Anchor 0 0 0 0
+   }
+   {
+    ImageWidgetClass "{6AB3D0E1F2A43002}" {
+     Name "HintBackground"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A43102}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB3D0E1F2A43003}" {
+     Name "HintBorderTop"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A43103}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB3D0E1F2A43004}" {
+     Name "HintBorderBottom"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A43104}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB3D0E1F2A43005}" {
+     Name "HintBorderLeft"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A43105}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB3D0E1F2A43006}" {
+     Name "HintBorderRight"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A43106}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB3D0E1F2A43007}" {
+     Name "HintIcon"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A43107}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB3D0E1F2A43009}" {
+     Name "HintBadge"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A43109}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB3D0E1F2A4300A}" {
+     Name "HintBadgeText"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A4310A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB3D0E1F2A43008}" {
+     Name "HintText"
+     Slot FrameWidgetSlot "{6AB3D0E1F2A43108}" {
+      Anchor 0 0 0 0
+     }
+    }
+   }
+  }
+ }
+}

@@ -129,7 +129,30 @@ class AROR_LocationComponent : ScriptComponent
 
 		Replication.BumpMe();
 		OnControllingRoleReplicated();
+		SendCapturedNotification_S(role);
 		return true;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Tell everyone who now controls the location (not used when restoring saves)
+	protected void SendCapturedNotification_S(AROR_EFactionRole role)
+	{
+		string factionName = typename.EnumToString(AROR_EFactionRole, role);
+		Color color;
+
+		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.GetInstance();
+		if (roles)
+		{
+			Faction faction = roles.GetFaction(role);
+			if (faction)
+			{
+				factionName = faction.GetFactionName();
+				color = faction.GetFactionColor();
+			}
+		}
+
+		string text = string.Format("%1 captured by %2", m_sName, factionName);
+		AROR_NotificationManagerComponent.Send_S(new AROR_Notification(AROR_ENotificationType.NOTIFICATION, text, m_sMapIcon, color, "Location captured"));
 	}
 
 	//------------------------------------------------------------------------------------------------

@@ -245,6 +245,21 @@ Three parts:
 2. **State** (playthrough load): location state is shown on the **same icon**, e.g. a town icon tinted by its controlling role (the faction's own colour, so it follows the Factions config). The control state is server-owned, replicated and saved on the location; each client re-tints its icon when it changes.
 3. **Info popup and selector**: hovering a location icon shows pulsing corner brackets (steady on the selected icon); clicking it opens an info card next to it with name, type and controlling faction; settlements also show population and support per faction. It follows the icon, updates live when control or support changes, and is suppressed while a map click is used for something else (HQ pick, teleport). Client-only.
 
+### Notifications — In progress
+Purpose: tell players what is happening in the campaign, plus quiet personal feedback. Anything can send: core systems, extender mods, admin tools.
+Key classes: `AROR_NotificationManagerComponent` (on the game mode; static sending API), `AROR_Notification`, `AROR_NotificationDisplay`, `UI/Layouts/Notifications/AROR_Notifications.layout`.
+
+Three kinds:
+1. **Headline**: a full-width strip across the upper third, for major campaign events (e.g. HQ established).
+2. **Notification**: a dispatch card in the top right with a coloured icon block, a small label set by the sender and the text, for routine events (e.g. location captured).
+3. **Hint**: a pill at the bottom centre, for personal feedback (e.g. why an action failed). Its colour is optional (amber by default).
+
+- **Server/client**: headlines and notifications are sent by the server only, to everyone (broadcast) or to one player (through the player controller). Hints are shown locally by a client, or sent by the server to one player when it rejects an action. Drawing is client-only, never on a dedicated server.
+- **Queue**: headlines and notifications share one queue and show one at a time; headlines jump ahead of queued notifications. No cap. Hints skip the queue; a new hint replaces the current one.
+- **Who sees them**: headlines and notifications show for every connected player, alive or dead, and over the map. Hints are dropped while the player is dead or not spawned. No replay for players who join later. Not saved.
+- **Content**: text (English, the same for everyone), an optional icon and accent colour (e.g. the faction's), and a UI sound (one default per kind, which senders can override).
+- Extension points: extender mods call the static API (`Send_S`, `SendHint_S`, `ShowHint`). Audiences beyond everyone and single players (roles, areas) and a notification log come later.
+
 ### Admin Tools — In progress
 Purpose: in-game testing and admin tools, opened with **Ctrl+T** (`AROR_AdminMenuComponent` on the game mode, client only).
 
@@ -252,6 +267,7 @@ Purpose: in-game testing and admin tools, opened with **Ctrl+T** (`AROR_AdminMen
 - **Teleport**: pick a point on the map; the player's own machine moves its character (movement replicates).
 - **Game Master**: the server unlocks the base-game Game Master (Edit) mode for the player.
 - **Support**: adjust the nearest settlement's support per faction (server-side).
+- **Test notifications**: sends a test headline and notification to everyone and a test hint to the player.
 - Built on the same base-game dialogs as the setup UI; no base-game config overrides (the hotkey is read directly from the keyboard).
 
 ### Map Templates — Planned
