@@ -1,6 +1,10 @@
 SCR_BaseGameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" {
  ID "56B2B479C6B96951"
  components {
+  AROR_OperationManagerComponent "{6AAE5D29CAEAABAA}" {
+  }
+  AROR_CommanderManagerComponent "{6AAE5D29CAEAAB97}" {
+  }
   AROR_FactionRolesComponent "{6AAE5E8BB415C942}" {
   }
   AROR_GameFlowComponent "{6AAA8D6D8EB1E454}" {

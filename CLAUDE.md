@@ -16,6 +16,8 @@ Systems are being built incrementally; their design and status (Planned / In pro
 
 Keep ARCHITECTURE.md **high level**: systems, sub-systems, their responsibilities, how they connect, what runs on server vs client, what is saved, and extension points for extender mods. Do **not** record minor implementation details or small decisions there (e.g. editor debug drawing, log lines, helper methods, default values) — those belong in code comments and commit messages.
 
+Keep project guidance in CLAUDE.md and system design/status in ARCHITECTURE.md. Whenever either source changes, refresh its full copy in the root AGENTS.md in the same change. Make substantive updates in the source files first; keep AGENTS.md synchronized rather than maintaining a separate version of those instructions.
+
 ## Repository layout
 
 ```

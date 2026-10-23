@@ -1,0 +1,37 @@
+$grp SCR_ChimeraCharacter : "{26A9756790131354}Prefabs/Characters/Factions/BLUFOR/US_Army/Character_US_Rifleman.et" {
+ AROR_Provins_QRFDefender {
+  components {
+   AROR_QRFDefenseComponent "{6AAE74BEB126DDB6}" {
+    m_bInitializeFromDefendingRole 1
+    m_bEnabled 1
+    m_eDefendingRole OCCUPIERS
+    m_sDefendedLocationId "everon_provins"
+    m_iReportInterval 5
+    m_bDebugReports 1
+   }
+  }
+  coords 5503.833 96.354 6081.837
+ }
+ AROR_Provins_ManualQRFDefender {
+  components {
+   AROR_QRFDefenseComponent {
+    m_bInitializeFromDefendingRole 1
+    m_bEnabled 1
+    m_eDefendingRole OCCUPIERS
+    m_sDefendedLocationId "everon_provins"
+    m_iReportInterval 5
+    m_bDebugReports 1
+   }
+  }
+  coords 5489.166 95.901 6086.587
+ }
+}
+GenericEntity : "{A744BF492EFD2B54}Prefabs/Locations/AROR_Location_Town.et" {
+ components {
+  AROR_LocationComponent "{6AA28237301A1CF9}" {
+   m_sId "everon_provins"
+   m_sName "Provins"
+  }
+ }
+ coords 5503.833 96.354 6081.837
+}
