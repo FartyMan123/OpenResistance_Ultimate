@@ -9,13 +9,9 @@ class AROR_CommanderManagerComponentClass : SCR_BaseGameModeComponentClass
 
 class AROR_CommanderManagerComponent : SCR_BaseGameModeComponent
 {
-	[Attribute("FIA", desc: "Resistance faction key. Must match the scenario faction and player/HQ configuration.")]
+	// Resolved from the shared role component before contexts are created.
 	protected string m_sResistanceFactionKey;
-
-	[Attribute("US", desc: "Occupier faction key. Campaign logic uses the OCCUPIERS role regardless of this faction.")]
 	protected string m_sOccupiersFactionKey;
-
-	[Attribute("USSR", desc: "Invader faction key. Campaign logic uses the INVADERS role regardless of this faction.")]
 	protected string m_sInvadersFactionKey;
 
 	[Attribute("30", UIWidgets.Slider, desc: "Seconds between enemy strategic evaluations after campaign setup", params: "1 600 1")]
@@ -63,6 +59,17 @@ class AROR_CommanderManagerComponent : SCR_BaseGameModeComponent
 
 	protected bool IsConfigurationValid()
 	{
+		// Read our owner's component directly; its singleton may not be initialized yet.
+		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.Cast(GetOwner().FindComponent(AROR_FactionRolesComponent));
+		if (!roles)
+		{
+			Print("[AROR] Commander manager requires AROR_FactionRolesComponent on the game mode", LogLevel.ERROR);
+			return false;
+		}
+		m_sResistanceFactionKey = roles.GetFactionKey(AROR_EFactionRole.RESISTANCE);
+		m_sOccupiersFactionKey = roles.GetFactionKey(AROR_EFactionRole.OCCUPIERS);
+		m_sInvadersFactionKey = roles.GetFactionKey(AROR_EFactionRole.INVADERS);
+
 		if (m_sResistanceFactionKey.IsEmpty() || m_sOccupiersFactionKey.IsEmpty() || m_sInvadersFactionKey.IsEmpty())
 		{
 			Print("[AROR] Commander faction keys must not be empty; commanders disabled", LogLevel.ERROR);

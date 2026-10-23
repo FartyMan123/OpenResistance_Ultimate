@@ -27,6 +27,11 @@ PerceptionManager AROR_PerceptionManager : "{028DAEAD63E056BE}Prefabs/World/Game
 }
 SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR_GameMode_Base.et" {
  components {
+  AROR_FactionRolesComponent "{6AAE5E8BB415C942}" {
+   m_sResistanceFactionKey "FIA"
+   m_sOccupiersFactionKey "US"
+   m_sInvadersFactionKey "USSR"
+  }
   AROR_OperationExecutorComponent {
    m_bEnabled 1
    m_sAttackWaypointPrefab "{1B0E3436C30FA211}Prefabs/AI/Waypoints/AIWaypoint_Attack.et"
@@ -233,4 +238,9 @@ SCR_SpawnPoint : "{95D749133F568A23}Prefabs/Gameflow/AROR_StagingSpawn.et" {
 }
 SCR_LoadoutManager : "{DB9B95B4E54CBE08}Prefabs/Managers/AROR_LoadoutManager.et" {
  coords 452.143 62.932 781.845
+ m_aPlayerLoadouts {
+  SCR_FactionPlayerLoadout "{6AAC8BBB7DC34043}" {
+   m_sAffiliatedFaction "FIA"
+  }
+ }
 }

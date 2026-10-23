@@ -2,6 +2,13 @@
 
 ## Unreleased — Commanders and QRF foundation (2026-10-23)
 
+### Integration with master-dev
+
+- Preserve Rowan's core factions, forced Resistance spawning and setup-flow updates while retaining the commander/scheduler components.
+- Use the shared `AROR_FactionRolesComponent` as the authority for commander faction bindings. Remove the duplicate commander-folder role enum; the canonical definition lives under `Scripts/Game/Factions/`.
+- Preserve Chicken's FIA/US/USSR QRF fixture with explicit shared-role and FIA loadout overrides. Original Everon keeps the core AROR faction keys.
+- Extenders must move commander-manager faction attributes to `AROR_FactionRolesComponent`; evaluation interval remains on the commander manager. Recompile and reload prefabs/worlds before testing this integration.
+
 ### Added
 
 - Three configurable role-based commander contexts: player-directed Resistance and AI-directed Occupiers and Invaders. Current bindings are FIA, US and USSR respectively.
