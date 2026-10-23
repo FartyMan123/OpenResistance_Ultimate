@@ -1,0 +1,31 @@
+{
+    "source":  "Installed base-game resourceDatabase.rdb (read only)",
+    "verification":  "GUID decoder checked against known GameMode_Plain.et GUID 1B76F75A3175E85C",
+    "resources":  {
+                      "Prefabs/AI/SCR_AIWorld_Eden.et":  "{70CCCF16487C927F}Prefabs/AI/SCR_AIWorld_Eden.et",
+                      "Prefabs/World/Game/PerceptionManager.et":  "{028DAEAD63E056BE}Prefabs/World/Game/PerceptionManager.et",
+                      "worlds/GameMaster/Navmeshes/GM_Eden.nmn":  "{AD5F99CD7C59D5E0}worlds/GameMaster/Navmeshes/GM_Eden.nmn",
+                      "worlds/GameMaster/Navmeshes/GM_Eden_vehicles.nmn":  "{C35ECF3276824654}worlds/GameMaster/Navmeshes/GM_Eden_vehicles.nmn",
+                      "worlds/MP/Navmeshes/LowResEden.nmn":  "{5E19E60F26327356}worlds/MP/Navmeshes/LowResEden.nmn",
+                      "Prefabs/MP/Modes/Plain/GameMode_Plain.et":  "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et",
+                      "Prefabs/AI/Waypoints/AIWaypoint_Attack.et":  "{1B0E3436C30FA211}Prefabs/AI/Waypoints/AIWaypoint_Attack.et",
+                      "Prefabs/AI/Waypoints/AIWaypoint_Defend.et":  "{93291E72AC23930F}Prefabs/AI/Waypoints/AIWaypoint_Defend.et",
+                      "Prefabs/AI/Waypoints/AIWaypoint_Move.et":  "{750A8D1695BD6998}Prefabs/AI/Waypoints/AIWaypoint_Move.et",
+                      "Prefabs/AI/Groups/Group_Base.et":  "{000CD338713F2B5A}Prefabs/AI/Groups/Group_Base.et",
+                      "Prefabs/Groups/BLUFOR/Group_US_FireTeam.et":  "{84E5BBAB25EA23E5}Prefabs/Groups/BLUFOR/Group_US_FireTeam.et",
+                      "Prefabs/Characters/Factions/BLUFOR/US_Army/Character_US_Crew.et":  "{E1CB513B8B9B08F4}Prefabs/Characters/Factions/BLUFOR/US_Army/Character_US_Crew.et",
+                      "Prefabs/Vehicles/Wheeled/M923A1/M923A1_transport.et":  "{F1FBD0972FA5FE09}Prefabs/Vehicles/Wheeled/M923A1/M923A1_transport.et",
+                      "Prefabs/Vehicles/Wheeled/LAV25/LAV25.et":  "{0FBF8F010F81A4E5}Prefabs/Vehicles/Wheeled/LAV25/LAV25.et",
+                      "Prefabs/Characters/Factions/BLUFOR/US_Army/Character_US_HeliPilot.et":  "{42A502E3BB727CEB}Prefabs/Characters/Factions/BLUFOR/US_Army/Character_US_HeliPilot.et",
+                      "Prefabs/Vehicles/Helicopters/UH1H/UH1H.et":  "{70BAEEFC2D3FEE64}Prefabs/Vehicles/Helicopters/UH1H/UH1H.et",
+                      "Prefabs/Vehicles/Helicopters/UH1H/UH1H_armed_gunship_HE.et":  "{21E9A875C0A3C409}Prefabs/Vehicles/Helicopters/UH1H/UH1H_armed_gunship_HE.et",
+                      "Prefabs/Groups/OPFOR/Group_USSR_LightFireTeam.et":  "{657590C1EC9E27D3}Prefabs/Groups/OPFOR/Group_USSR_LightFireTeam.et",
+                      "Prefabs/Characters/Factions/OPFOR/USSR_Army/Character_USSR_Crew.et":  "{9FFEF10757E742EB}Prefabs/Characters/Factions/OPFOR/USSR_Army/Character_USSR_Crew.et",
+                      "Prefabs/Vehicles/Wheeled/Ural4320/Ural4320_transport.et":  "{16C1F16C9B053801}Prefabs/Vehicles/Wheeled/Ural4320/Ural4320_transport.et",
+                      "Prefabs/Vehicles/Wheeled/BTR70/BTR70.et":  "{C012BB3488BEA0C2}Prefabs/Vehicles/Wheeled/BTR70/BTR70.et",
+                      "Prefabs/Vehicles/Wheeled/BRDM2/BRDM2.et":  "{254289B9C09904AB}Prefabs/Vehicles/Wheeled/BRDM2/BRDM2.et",
+                      "Prefabs/Characters/Factions/OPFOR/USSR_Army/Character_USSR_HeliPilot.et":  "{A62FA97C4EC64F14}Prefabs/Characters/Factions/OPFOR/USSR_Army/Character_USSR_HeliPilot.et",
+                      "Prefabs/Vehicles/Helicopters/Mi8MT/Mi8MT_unarmed_transport.et":  "{DF5CCB7C0FF049F4}Prefabs/Vehicles/Helicopters/Mi8MT/Mi8MT_unarmed_transport.et",
+                      "Prefabs/Vehicles/Helicopters/Mi8MT/Mi8MT_armed_gunship_HE.et":  "{3C6B3ED0C3AC30D5}Prefabs/Vehicles/Helicopters/Mi8MT/Mi8MT_armed_gunship_HE.et"
+                  }
+}
