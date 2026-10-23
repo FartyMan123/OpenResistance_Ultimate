@@ -35,6 +35,25 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Admin menu: unlock Game Master for this player
+	void AROR_RequestAdminGameMaster()
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_AdminGameMaster();
+		else
+			Rpc(AROR_RpcAsk_AdminGameMaster);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_AdminGameMaster()
+	{
+		AROR_AdminMenuComponent adminMenu = AROR_AdminMenuComponent.GetInstance();
+		if (adminMenu)
+			adminMenu.GrantGameMaster_S(GetPlayerId());
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! Admin menu: change support of the town or city nearest to this player
 	void AROR_RequestAdminSupport(AROR_EFactionRole role, float delta)
 	{

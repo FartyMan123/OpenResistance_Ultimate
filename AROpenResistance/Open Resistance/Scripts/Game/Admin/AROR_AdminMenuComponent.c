@@ -19,6 +19,9 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//! Support change per admin button press (percentage points)
 	protected static const float SUPPORT_STEP = 10;
 
+	//! Wait for the server to grant Game Master before opening the editor locally
+	protected static const int GAME_MASTER_OPEN_DELAY_MS = 1000;
+
 	protected static AROR_AdminMenuComponent s_Instance;
 
 	protected bool m_bPickingTeleport;
@@ -99,6 +102,44 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Client: open the local editor once the server has granted Game Master
+	protected void OpenGameMaster()
+	{
+		if (SCR_EditorManagerEntity.CanOpenInstance())
+			SCR_EditorManagerEntity.OpenInstance();
+		else
+			Print("[AROR] Admin: Game Master granted but the editor cannot be opened yet", LogLevel.WARNING);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server: unlock the Game Master (Edit) editor mode for the requesting player
+	void GrantGameMaster_S(int playerId)
+	{
+		if (!Replication.IsServer() || !m_bEnabled)
+			return;
+
+		SCR_EditorManagerCore editorCore = SCR_EditorManagerCore.Cast(SCR_EditorManagerCore.GetInstance(SCR_EditorManagerCore));
+		if (!editorCore)
+		{
+			Print("[AROR] Admin: Game Master unavailable (no editor manager core)", LogLevel.WARNING);
+			return;
+		}
+
+		SCR_EditorManagerEntity editorManager = editorCore.GetEditorManager(playerId);
+		if (!editorManager)
+		{
+			Print(string.Format("[AROR] Admin: no editor manager for player %1", playerId), LogLevel.WARNING);
+			return;
+		}
+
+		// Adding the mode is not enough: opening is a separate permission
+		editorManager.AddEditorModes(EEditorModeAccess.BASE, EEditorMode.EDIT);
+		editorManager.SetCanOpen(true, EEditorCanOpen.SCRIPT);
+		editorManager.SetCurrentMode(EEditorMode.EDIT);
+		Print(string.Format("[AROR] Admin: Game Master granted to player %1", playerId), LogLevel.NORMAL);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! Server: adjust support of the town or city nearest to the requesting player
 	void AdjustNearestSupport_S(int playerId, AROR_EFactionRole role, float delta)
 	{
@@ -127,6 +168,17 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 		if (tag == "teleport")
 		{
 			StartTeleportPicking();
+			return;
+		}
+
+		if (tag == "gamemaster")
+		{
+			SCR_PlayerController gmController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
+			if (gmController)
+				gmController.AROR_RequestAdminGameMaster();
+
+			// Give the server time to grant access, then open the editor locally
+			GetGame().GetCallqueue().CallLater(OpenGameMaster, GAME_MASTER_OPEN_DELAY_MS);
 			return;
 		}
 
@@ -239,6 +291,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	{
 		GetGame().GetCallqueue().Remove(CheckHotkey);
 		GetGame().GetCallqueue().Remove(HandleAction);
+		GetGame().GetCallqueue().Remove(OpenGameMaster);
 		StopTeleportPicking();
 
 		if (s_Instance == this)

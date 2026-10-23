@@ -102,7 +102,7 @@ Purpose: how a location's controlling role changes. Rules depend on the location
 - **Military locations** (airport, factory, military base, port, resources): captured through an **interaction on the location's flag** (the capture flag prop gets collision and an interaction), only when **all hostiles within the location's radius have been eliminated**.
 - **Flip cooldown**: after the Resistance captures a location it cannot flip back to the Occupiers or Invaders for **5 minutes** (fixed).
 - **Resistance captures** of military locations require **every hostile** in the radius to be dead.
-- **AI recapture** (planned, with enemy AI): when the Occupiers or Invaders try to retake a location, forces in the radius are weighed with **each player counting ×2 and each AI ×1**.
+- **AI recapture** (`AROR_RecaptureComponent`, server, on the game mode): every few seconds, forces inside each military location's radius are weighed. **Defenders** (the controlling role's players and AI) count **×2**, **attacking AI** count **×1**. An attacking AI role (Occupiers or Invaders) with more weight than the defenders takes the location, subject to the flip cooldown. Applies AI vs AI too.
 
 Military capture (in progress): `AROR_CaptureLocationAction` is a user action on the capture flag prop (`AROR_Prop_CaptureFlag.et`, a child of the location). Clients check the rules for feedback ("Hostiles in the area", "Recently captured"); the server re-checks and changes control. The flip-cooldown lock is replicated but not saved.
 
@@ -250,6 +250,8 @@ Purpose: in-game testing and admin tools, opened with **Ctrl+T** (`AROR_AdminMen
 
 - Currently available to **every player** (an Enabled switch on the component turns it off; restricting it to admins comes later).
 - **Teleport**: pick a point on the map; the player's own machine moves its character (movement replicates).
+- **Game Master**: the server unlocks the base-game Game Master (Edit) mode for the player.
+- **Support**: adjust the nearest settlement's support per faction (server-side).
 - Built on the same base-game dialogs as the setup UI; no base-game config overrides (the hotkey is read directly from the keyboard).
 
 ### Map Templates — Planned
