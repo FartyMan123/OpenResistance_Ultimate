@@ -255,6 +255,18 @@ Key classes: `AROR_EconomyComponent` (on the game mode), `AROR_EconomyComponentS
 - **Rules**: balances never go below zero; spending only succeeds if the balance covers it. All changes happen on the server.
 - Extension points: other systems and extender mods call the server API to add, spend and read balances (`AddFactionFunds_S`, `SpendFactionFunds_S`, `AddPlayerMoney_S`, `SpendPlayerMoney_S`).
 
+### Phone — In progress
+Purpose: an in-game phone that hosts player-facing apps. Client only.
+Key classes: `AROR_PhoneMenu` (menu, preset `AROR_PhoneMenu`), `AROR_PhoneComponent` (game mode; keybind), `UI/Layouts/Phone/AROR_PhoneMenu.layout`, textures in `UI/Textures/Phone/`.
+
+- **Opening**: a rebindable input action (`AROR_OpenPhone` in its own `AROR_PhoneContext`) opens and closes it (Ctrl+Y by default), for every living player, when no other menu is open.
+- **Menu**: registered through `chimeraMenus.conf` and the input config via **Override in addon**, which layers our entries on top of the base configs rather than replacing them.
+- **Look**: a phone frame image over a wallpaper, with a status bar (in-game clock, signal, battery). It slides up from the bottom when opened.
+- **Orientation**: apps open in portrait or landscape. Landscape apps turn the whole phone 90 degrees and scale it up, with the frame staying on; app content is hidden while it turns and laid out for the new size afterwards.
+- **Apps**: launched from tiles on the home screen; the frame's home button returns to the home screen. **Bank** (portrait) shows the account holder, the player's personal money and the Resistance funds live from the Economy; transfers are planned. A landscape test app exercises the turn.
+- **Esc** closes the phone from any screen.
+- Extension points: planned app registration so extender mods can add apps.
+
 ### Notifications — In progress
 Purpose: tell players what is happening in the campaign, plus quiet personal feedback. Anything can send: core systems, extender mods, admin tools.
 Key classes: `AROR_NotificationManagerComponent` (on the game mode; static sending API), `AROR_Notification`, `AROR_NotificationDisplay`, `UI/Layouts/Notifications/AROR_Notifications.layout`.
