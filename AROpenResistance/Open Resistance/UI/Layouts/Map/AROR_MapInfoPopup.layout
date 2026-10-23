@@ -1,0 +1,119 @@
+FrameWidgetClass {
+ Name "AROR_MapInfoPopup"
+ {
+  ImageWidgetClass "{6AB2C0D1E2F31001}" {
+   Name "Background"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31101}" {
+    Anchor 0 0 0 0
+   }
+  }
+  ImageWidgetClass "{6AB2C0D1E2F31002}" {
+   Name "Accent"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31102}" {
+    Anchor 0 0 0 0
+   }
+  }
+  RichTextWidgetClass "{6AB2C0D1E2F31003}" {
+   Name "Title"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31103}" {
+    Anchor 0 0 0 0
+   }
+  }
+  RichTextWidgetClass "{6AB2C0D1E2F31004}" {
+   Name "Subtitle"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31104}" {
+    Anchor 0 0 0 0
+   }
+  }
+  RichTextWidgetClass "{6AB2C0D1E2F31005}" {
+   Name "Control"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31105}" {
+    Anchor 0 0 0 0
+   }
+  }
+  ImageWidgetClass "{6AB2C0D1E2F31006}" {
+   Name "Divider"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31106}" {
+    Anchor 0 0 0 0
+   }
+  }
+  RichTextWidgetClass "{6AB2C0D1E2F31007}" {
+   Name "Population"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31107}" {
+    Anchor 0 0 0 0
+   }
+  }
+  RichTextWidgetClass "{6AB2C0D1E2F31010}" {
+   Name "SupportLabel0"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31110}" {
+    Anchor 0 0 0 0
+   }
+  }
+  ImageWidgetClass "{6AB2C0D1E2F31011}" {
+   Name "SupportTrack0"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31111}" {
+    Anchor 0 0 0 0
+   }
+  }
+  ImageWidgetClass "{6AB2C0D1E2F31012}" {
+   Name "SupportFill0"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31112}" {
+    Anchor 0 0 0 0
+   }
+  }
+  RichTextWidgetClass "{6AB2C0D1E2F31013}" {
+   Name "SupportValue0"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31113}" {
+    Anchor 0 0 0 0
+   }
+  }
+  RichTextWidgetClass "{6AB2C0D1E2F31020}" {
+   Name "SupportLabel1"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31120}" {
+    Anchor 0 0 0 0
+   }
+  }
+  ImageWidgetClass "{6AB2C0D1E2F31021}" {
+   Name "SupportTrack1"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31121}" {
+    Anchor 0 0 0 0
+   }
+  }
+  ImageWidgetClass "{6AB2C0D1E2F31022}" {
+   Name "SupportFill1"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31122}" {
+    Anchor 0 0 0 0
+   }
+  }
+  RichTextWidgetClass "{6AB2C0D1E2F31023}" {
+   Name "SupportValue1"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31123}" {
+    Anchor 0 0 0 0
+   }
+  }
+  RichTextWidgetClass "{6AB2C0D1E2F31030}" {
+   Name "SupportLabel2"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31130}" {
+    Anchor 0 0 0 0
+   }
+  }
+  ImageWidgetClass "{6AB2C0D1E2F31031}" {
+   Name "SupportTrack2"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31131}" {
+    Anchor 0 0 0 0
+   }
+  }
+  ImageWidgetClass "{6AB2C0D1E2F31032}" {
+   Name "SupportFill2"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31132}" {
+    Anchor 0 0 0 0
+   }
+  }
+  RichTextWidgetClass "{6AB2C0D1E2F31033}" {
+   Name "SupportValue2"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F31133}" {
+    Anchor 0 0 0 0
+   }
+  }
+ }
+}

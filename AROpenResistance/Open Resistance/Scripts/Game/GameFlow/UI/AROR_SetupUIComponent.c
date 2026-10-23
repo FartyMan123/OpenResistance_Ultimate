@@ -100,6 +100,7 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 			return;
 
 		m_bPickingHQ = true;
+		AROR_LocationMapIconsComponent.SetInfoPopupSuppressed(true);
 		SCR_MapEntity.GetOnSelection().Insert(OnMapSelection);
 		SCR_MapEntity.GetOnMapOpen().Insert(OnHQMapOpened);
 		GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.MapMenu);
@@ -137,6 +138,7 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 	protected void StopHQPicking()
 	{
 		m_bPickingHQ = false;
+		AROR_LocationMapIconsComponent.SetInfoPopupSuppressed(false);
 		SCR_MapEntity.GetOnSelection().Remove(OnMapSelection);
 		SCR_MapEntity.GetOnMapOpen().Remove(OnHQMapOpened);
 		GetGame().GetMenuManager().CloseMenuByPreset(ChimeraMenuPreset.MapMenu);

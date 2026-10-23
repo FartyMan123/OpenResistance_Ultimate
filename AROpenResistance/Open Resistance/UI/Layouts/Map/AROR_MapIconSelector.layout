@@ -1,0 +1,53 @@
+FrameWidgetClass {
+ Name "AROR_MapIconSelector"
+ {
+  ImageWidgetClass "{6AB2C0D1E2F32001}" {
+   Name "TopLeftH"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F32101}" {
+    Anchor 0 0 0 0
+   }
+  }
+  ImageWidgetClass "{6AB2C0D1E2F32002}" {
+   Name "TopLeftV"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F32102}" {
+    Anchor 0 0 0 0
+   }
+  }
+  ImageWidgetClass "{6AB2C0D1E2F32003}" {
+   Name "TopRightH"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F32103}" {
+    Anchor 0 0 0 0
+   }
+  }
+  ImageWidgetClass "{6AB2C0D1E2F32004}" {
+   Name "TopRightV"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F32104}" {
+    Anchor 0 0 0 0
+   }
+  }
+  ImageWidgetClass "{6AB2C0D1E2F32005}" {
+   Name "BottomLeftH"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F32105}" {
+    Anchor 0 0 0 0
+   }
+  }
+  ImageWidgetClass "{6AB2C0D1E2F32006}" {
+   Name "BottomLeftV"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F32106}" {
+    Anchor 0 0 0 0
+   }
+  }
+  ImageWidgetClass "{6AB2C0D1E2F32007}" {
+   Name "BottomRightH"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F32107}" {
+    Anchor 0 0 0 0
+   }
+  }
+  ImageWidgetClass "{6AB2C0D1E2F32008}" {
+   Name "BottomRightV"
+   Slot FrameWidgetSlot "{6AB2C0D1E2F32108}" {
+    Anchor 0 0 0 0
+   }
+  }
+ }
+}

@@ -16,6 +16,7 @@ SCR_BaseGameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" 
   AROR_LocationManagerComponent "{6AA2823B57AE5CD7}" {
   }
   AROR_LocationMapIconsComponent "{6AAC8BBFBA047D89}" {
+   m_sSelectorLayout "{9B65C8ACFFEE4DD6}UI/Layouts/Map/AROR_MapIconSelector.layout"
   }
   AROR_SetupUIComponent "{6AAC8BBC83F0CB25}" {
   }

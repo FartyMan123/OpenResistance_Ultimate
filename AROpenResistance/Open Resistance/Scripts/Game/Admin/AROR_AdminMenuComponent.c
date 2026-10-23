@@ -154,6 +154,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 			return;
 
 		m_bPickingTeleport = true;
+		AROR_LocationMapIconsComponent.SetInfoPopupSuppressed(true);
 		SCR_MapEntity.GetOnSelection().Insert(OnMapSelection);
 		SCR_MapEntity.GetOnMapOpen().Insert(OnMapOpened);
 		SCR_MapEntity.GetOnMapClose().Insert(OnMapClosed);
@@ -204,6 +205,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	protected void StopTeleportPicking()
 	{
 		m_bPickingTeleport = false;
+		AROR_LocationMapIconsComponent.SetInfoPopupSuppressed(false);
 		SCR_MapEntity.GetOnSelection().Remove(OnMapSelection);
 		SCR_MapEntity.GetOnMapOpen().Remove(OnMapOpened);
 		SCR_MapEntity.GetOnMapClose().Remove(OnMapClosed);

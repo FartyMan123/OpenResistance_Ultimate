@@ -100,7 +100,9 @@ Purpose: how a location's controlling role changes. Rules depend on the location
 
 - **Towns & Cities**: held by the role with **more than 50% support** in that location (see Settlements).
 - **Military locations** (airport, factory, military base, port, resources): captured through an **interaction on the location's flag** (the capture flag prop gets collision and an interaction), only when **all hostiles within the location's radius have been eliminated**.
-- **Flip cooldown**: after the Resistance captures a location it cannot flip back to the Occupiers or Invaders for a configurable time (default 2 minutes).
+- **Flip cooldown**: after the Resistance captures a location it cannot flip back to the Occupiers or Invaders for **5 minutes** (fixed).
+- **Resistance captures** of military locations require **every hostile** in the radius to be dead.
+- **AI recapture** (planned, with enemy AI): when the Occupiers or Invaders try to retake a location, forces in the radius are weighed with **each player counting ×2 and each AI ×1**.
 
 Military capture (in progress): `AROR_CaptureLocationAction` is a user action on the capture flag prop (`AROR_Prop_CaptureFlag.et`, a child of the location). Clients check the rules for feedback ("Hostiles in the area", "Recently captured"); the server re-checks and changes control. The flip-cooldown lock is replicated but not saved.
 
@@ -238,9 +240,10 @@ Development validation: Everon_Chicken has an `AROR_OperationTestComponent` for 
 Airborne investigation: inspected base-game movement/controller/transport-waypoint interfaces do not establish an end-to-end landing/escort executor. A mission waypoint coordinator and verified flight adapter are still required; ordinary ground waypoints and cinematic movement are insufficient evidence. External helicopter-mod integration, if pursued, belongs in an optional extender so the core retains its base-game-only dependency. Findings and a proposed takeoff/transit/landing/unload/escort/return sequence are documented in `docs/AIR_OPERATIONS_RESEARCH.md`.
 
 ### Map Markers — In progress
-Two layers:
+Three parts:
 1. **Location markers** (scenario load): **our own icon widgets** drawn on any open map (player map, deploy screen, setup screen) by a client-only component that follows the base-game map events (open/close/pan/zoom) and positions icons from world coordinates. Each location prefab chooses its icon image (white on transparent, so it can be tinted). No base-game config overrides, not draggable, no replication or saving. The HQ also keeps its spawn point map descriptor for the deploy screen.
-2. **State** (playthrough load): location state is shown on the **same icon**, e.g. a town icon tinted by its controlling role (the faction's own colour, so it follows the Factions config). The control state is server-owned, replicated and saved on the location; each client re-tints its icon when it changes. Icons can also handle hover and click (used by the setup screen).
+2. **State** (playthrough load): location state is shown on the **same icon**, e.g. a town icon tinted by its controlling role (the faction's own colour, so it follows the Factions config). The control state is server-owned, replicated and saved on the location; each client re-tints its icon when it changes.
+3. **Info popup and selector**: hovering a location icon shows pulsing corner brackets (steady on the selected icon); clicking it opens an info card next to it with name, type and controlling faction; settlements also show population and support per faction. It follows the icon, updates live when control or support changes, and is suppressed while a map click is used for something else (HQ pick, teleport). Client-only.
 
 ### Admin Tools — In progress
 Purpose: in-game testing and admin tools, opened with **Ctrl+T** (`AROR_AdminMenuComponent` on the game mode, client only).
