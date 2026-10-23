@@ -78,7 +78,11 @@ Key classes/prefabs/configs:
 - `Prefabs/Locations/AROR_Location_Base.et` → one template per world-placed type (`AROR_Location_Town.et`, `_City`, `_Airport`, `_Factory`, `_MilitaryBase`, `_Port`, `_Resources`), each setting only its type and map icon. `AROR_Location_HQ.et`: a base-game spawn point entity with the location component (type HQ) and Persistence.
 - Map icons (planned): each location prefab names its own map icon (image in our addon); `AROR_LocationMapIconsComponent` on the game mode draws them (Map Markers layer 1).
 
-Server/client: towns are static world entities and HQs are replicated dynamic entities; both register on server and clients. Location state (control status, active/inactive) will be server-owned and replicated when added.
+Server/client: towns are static world entities and HQs are replicated dynamic entities; both register on server and clients.
+
+**Control**: every location is always controlled by a role (Resistance, Occupiers or Invaders). Each placed location sets its initial controlling role; a loaded campaign restores the saved one. Control is server-owned, replicated to all clients (location prefabs carry an `RplComponent`), raised as a "control changed" event, saved per location, and shown on the map by tinting the location icon with the controlling faction's colour. The Resistance HQ is fixed to the Resistance.
+
+**Population**: towns and cities carry a population count (set per placed location).
 
 Depends on: Map Templates (for placement).
 
@@ -87,10 +91,18 @@ Extension points:
 - Extender maps place `AROR_Location_*` prefabs in their own sub-scene.
 
 Sub-systems (Planned):
-- Town state (e.g. who controls the town).
 - Optional hand-placed child points (spawn, garrison, objective); fall back to scanning buildings inside the radius.
 - Default name from the nearest base-game map descriptor.
 - Workbench plugin to auto-place towns on a terrain.
+
+### Location Capture — Planned
+Purpose: how a location's controlling role changes. Rules depend on the location type; all changes are made by the server through the location's control (see Locations → Control). The HQ cannot be captured.
+
+- **Towns & Cities**: held by the role with **more than 50% support** in that location. Needs a per-location **Support** system (support per role; how it changes is still to be designed).
+- **Military locations** (airport, factory, military base, port, resources): captured through an **interaction on the location's flag** (the capture flag prop gets collision and an interaction), only when **all hostiles within the location's radius have been eliminated**.
+- **Flip cooldown**: after the Resistance captures a location it cannot flip back to the Occupiers or Invaders for a configurable time (default 2 minutes).
+
+Depends on: Locations, Factions; Support (planned) for towns and cities.
 
 ### Game Flow — In progress
 Purpose: the lifecycle from world boot to play, separating **scenario data** (from the world, never saved) from **playthrough data** (from a save).
@@ -129,7 +141,7 @@ Purpose: unlimited, persistent playthrough saves.
 - **Saving must be enabled for the scenario**: running the bare world in Workbench reports saving disabled. It is expected to come from the mission header (Save Types) and/or the world systems config (under investigation).
 - **Where our data lives: inside the base-game save, via entity persistence. No separate save files.** Entities with the engine `Persistence` component are saved; the game mode already has it.
   - **Playthrough-wide state** (settings, start location, etc.) lives in our components on the game mode.
-  - **Per-location state** (e.g. who controls a town) lives on the location entities, which get a `Persistence` component when they need it.
+  - **Per-location state** (controlling role) lives on the location entities, which carry a `Persistence` component; `AROR_LocationComponentSerializer` saves it only when it differs from the initial role (first serializer).
   - Each `AROR_` component with saved state has a matching serializer (`ScriptedComponentSerializer`, as base-game components do). Serializers write a version number first, so older saves keep loading after the data changes.
 - Locations are referenced by a **stable location ID**, never by list position or entity reference. Saved data for a location that no longer exists is skipped with a warning.
 - **Each system owns its save section** via three hooks: initialise fresh / restore from save / write to save. Extender mods add saved data the same way.

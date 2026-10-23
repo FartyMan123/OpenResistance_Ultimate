@@ -5,6 +5,9 @@ class AROR_LocationComponentClass : ScriptComponentClass
 
 //! A named area on the map. Registers itself with AROR_LocationManagerComponent when play starts.
 //! The centre is the owner entity's position; the area is a circle of m_fRadius on the XZ plane.
+//! Control: always held by a role. Starts as the initial role set on the placed location; the server changes it,
+//! it replicates to clients and is saved (AROR_LocationComponentSerializer), so a loaded campaign restores it.
+//! Replicated control needs an RplComponent on the location prefab.
 class AROR_LocationComponent : ScriptComponent
 {
 	[Attribute("", UIWidgets.EditBox, desc: "Stable unique ID used by saves, e.g. \"everon_provins\". Never change it once saves exist.")]
@@ -21,6 +24,19 @@ class AROR_LocationComponent : ScriptComponent
 
 	[Attribute("", UIWidgets.ResourcePickerThumbnail, desc: "Icon drawn on the map for this location. White on transparent so it can be tinted.", params: "edds imageset")]
 	protected ResourceName m_sMapIcon;
+
+	[Attribute("1", UIWidgets.ComboBox, desc: "Role controlling this location when a new campaign starts. Set per placed location.", enums: ParamEnumArray.FromEnum(AROR_EFactionRole), category: "Control")]
+	protected AROR_EFactionRole m_eInitialControllingRole;
+
+	[Attribute("0", desc: "Control can never change (e.g. the Resistance HQ)", category: "Control")]
+	protected bool m_bControlFixed;
+
+	[Attribute("0", UIWidgets.Slider, desc: "Number of inhabitants (used by towns and cities)", params: "0 100000 10")]
+	protected int m_iPopulation;
+
+	//! Current controlling role; server-owned, replicated, saved
+	[RplProp(onRplName: "OnControllingRoleReplicated")]
+	protected AROR_EFactionRole m_eControllingRole;
 
 	//------------------------------------------------------------------------------------------------
 	string GetId()
@@ -53,6 +69,64 @@ class AROR_LocationComponent : ScriptComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	int GetPopulation()
+	{
+		return m_iPopulation;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	AROR_EFactionRole GetControllingRole()
+	{
+		return m_eControllingRole;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	AROR_EFactionRole GetInitialControllingRole()
+	{
+		return m_eInitialControllingRole;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	bool IsControlFixed()
+	{
+		return m_bControlFixed;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server only. Returns false if the location's control is fixed or nothing changed.
+	bool SetControllingRole_S(AROR_EFactionRole role)
+	{
+		if (!Replication.IsServer() || m_bControlFixed || role == m_eControllingRole)
+			return false;
+
+		m_eControllingRole = role;
+		Replication.BumpMe();
+		OnControllingRoleReplicated();
+		return true;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server only: restore saved control, bypassing the fixed-control rule (used by the serializer)
+	void RestoreControllingRole_S(AROR_EFactionRole role)
+	{
+		if (!Replication.IsServer() || role == m_eControllingRole)
+			return;
+
+		m_eControllingRole = role;
+		Replication.BumpMe();
+		OnControllingRoleReplicated();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Runs on clients when the replicated value arrives, and on the server when it changes
+	protected void OnControllingRoleReplicated()
+	{
+		AROR_LocationManagerComponent locationManager = AROR_LocationManagerComponent.GetInstance();
+		if (locationManager)
+			locationManager.GetOnLocationControlChanged().Invoke(this);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	vector GetCenter()
 	{
 		return GetOwner().GetOrigin();
@@ -70,6 +144,9 @@ class AROR_LocationComponent : ScriptComponent
 	{
 		super.OnPostInit(owner);
 		SetEventMask(owner, EntityEvent.INIT);
+
+		// Every machine starts from the placed location's initial role; replication and saves override it
+		m_eControllingRole = m_eInitialControllingRole;
 	}
 
 	//------------------------------------------------------------------------------------------------

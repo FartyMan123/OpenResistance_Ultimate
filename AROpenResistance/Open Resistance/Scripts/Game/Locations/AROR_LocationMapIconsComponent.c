@@ -45,6 +45,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 
 		locationManager.GetOnLocationRegistered().Insert(CreateIcon);
 		locationManager.GetOnLocationUnregistered().Insert(RemoveIcon);
+		locationManager.GetOnLocationControlChanged().Insert(OnLocationControlChanged);
 
 		// Per frame only while a map is open, so icons follow pan and zoom interpolation
 		UpdateIconPositions();
@@ -61,6 +62,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		{
 			locationManager.GetOnLocationRegistered().Remove(CreateIcon);
 			locationManager.GetOnLocationUnregistered().Remove(RemoveIcon);
+			locationManager.GetOnLocationControlChanged().Remove(OnLocationControlChanged);
 		}
 
 		ClearIcons();
@@ -89,6 +91,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		}
 
 		image.LoadImageTexture(0, icon);
+		ApplyControlColor(image, location);
 		FrameSlot.SetSize(root, m_fIconSize, m_fIconSize);
 		FrameSlot.SetAlignment(root, 0.5, 0.5);
 
@@ -122,6 +125,31 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		m_aIconLocations.Clear();
 		m_aIconWidgets.Clear();
 		m_wIconParent = null;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Tint the icon with the controlling role's faction colour (icons must be white to show the tint)
+	protected void ApplyControlColor(notnull ImageWidget image, notnull AROR_LocationComponent location)
+	{
+		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.GetInstance();
+		if (!roles)
+			return;
+
+		Faction faction = roles.GetFaction(location.GetControllingRole());
+		if (faction)
+			image.SetColor(faction.GetFactionColor());
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void OnLocationControlChanged(AROR_LocationComponent location)
+	{
+		int index = m_aIconLocations.Find(location);
+		if (index < 0 || !m_aIconWidgets[index])
+			return;
+
+		ImageWidget image = ImageWidget.Cast(m_aIconWidgets[index].FindAnyWidget(ICON_WIDGET_NAME));
+		if (image)
+			ApplyControlColor(image, location);
 	}
 
 	//------------------------------------------------------------------------------------------------
