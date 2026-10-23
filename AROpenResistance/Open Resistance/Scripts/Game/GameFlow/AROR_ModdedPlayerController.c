@@ -35,6 +35,25 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Admin menu: change support of the town or city nearest to this player
+	void AROR_RequestAdminSupport(AROR_EFactionRole role, float delta)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_AdminSupport(role, delta);
+		else
+			Rpc(AROR_RpcAsk_AdminSupport, role, delta);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_AdminSupport(int role, float delta)
+	{
+		AROR_AdminMenuComponent adminMenu = AROR_AdminMenuComponent.GetInstance();
+		if (adminMenu)
+			adminMenu.AdjustNearestSupport_S(GetPlayerId(), role, delta);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
 	protected void AROR_RpcAsk_NewPlaythrough(vector hqPosition, string playthroughName)
 	{

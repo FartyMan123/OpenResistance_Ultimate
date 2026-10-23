@@ -16,6 +16,11 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 
 	protected static const string PRESET_ADMIN = "aror_admin";
 
+	//! Support change per admin button press (percentage points)
+	protected static const float SUPPORT_STEP = 10;
+
+	protected static AROR_AdminMenuComponent s_Instance;
+
 	protected bool m_bPickingTeleport;
 
 	//------------------------------------------------------------------------------------------------
@@ -42,6 +47,71 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	{
 		AROR_AdminDialog dialog = new AROR_AdminDialog(this);
 		SCR_ConfigurableDialogUi.CreateFromPreset(m_sDialogPresets, PRESET_ADMIN, dialog);
+		dialog.SetMessage(GetNearestSupportText());
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Client: support of the town or city nearest to the local player (shown in the dialog)
+	protected string GetNearestSupportText()
+	{
+		AROR_SettlementComponent support = FindNearestSupport(GetGame().GetPlayerController().GetControlledEntity());
+		if (!support)
+			return "No town or city nearby.";
+
+		return string.Format("Nearest: %1\nResistance %2 | Occupiers %3 | Invaders %4",
+			support.GetLocation().GetName(),
+			Math.Round(support.GetSupport(AROR_EFactionRole.RESISTANCE)),
+			Math.Round(support.GetSupport(AROR_EFactionRole.OCCUPIERS)),
+			Math.Round(support.GetSupport(AROR_EFactionRole.INVADERS)));
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Nearest location to the entity that has support (towns and cities)
+	static AROR_SettlementComponent FindNearestSupport(IEntity entity)
+	{
+		AROR_LocationManagerComponent locationManager = AROR_LocationManagerComponent.GetInstance();
+		if (!entity || !locationManager)
+			return null;
+
+		array<AROR_LocationComponent> locations = {};
+		locationManager.GetLocations(locations);
+
+		AROR_SettlementComponent nearest;
+		float nearestDistance = float.MAX;
+		foreach (AROR_LocationComponent location : locations)
+		{
+			if (!location)
+				continue;
+
+			AROR_SettlementComponent support = AROR_SettlementComponent.Cast(location.GetOwner().FindComponent(AROR_SettlementComponent));
+			if (!support)
+				continue;
+
+			float distance = vector.DistanceXZ(location.GetCenter(), entity.GetOrigin());
+			if (distance < nearestDistance)
+			{
+				nearestDistance = distance;
+				nearest = support;
+			}
+		}
+
+		return nearest;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server: adjust support of the town or city nearest to the requesting player
+	void AdjustNearestSupport_S(int playerId, AROR_EFactionRole role, float delta)
+	{
+		if (!Replication.IsServer() || !m_bEnabled)
+			return;
+
+		IEntity player = GetGame().GetPlayerManager().GetPlayerControlledEntity(playerId);
+		AROR_SettlementComponent support = FindNearestSupport(player);
+		if (!support)
+			return;
+
+		support.AddSupport_S(role, delta);
+		Print(string.Format("[AROR] Admin: %1 support at '%2' %3 by %4 (player %5)", typename.EnumToString(AROR_EFactionRole, role), support.GetLocation().GetName(), "changed", delta, playerId), LogLevel.NORMAL);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -55,7 +125,24 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	protected void HandleAction(string tag)
 	{
 		if (tag == "teleport")
+		{
 			StartTeleportPicking();
+			return;
+		}
+
+		AROR_EFactionRole role;
+		if (tag == "support_resistance")
+			role = AROR_EFactionRole.RESISTANCE;
+		else if (tag == "support_occupiers")
+			role = AROR_EFactionRole.OCCUPIERS;
+		else if (tag == "support_invaders")
+			role = AROR_EFactionRole.INVADERS;
+		else
+			return;
+
+		SCR_PlayerController playerController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
+		if (playerController)
+			playerController.AROR_RequestAdminSupport(role, SUPPORT_STEP);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -123,11 +210,23 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	static AROR_AdminMenuComponent GetInstance()
+	{
+		return s_Instance;
+	}
+
+	//------------------------------------------------------------------------------------------------
 	override void OnPostInit(IEntity owner)
 	{
 		super.OnPostInit(owner);
 
-		if (!m_bEnabled || !GetGame().InPlayMode() || RplSession.Mode() == RplMode.Dedicated)
+		if (!GetGame().InPlayMode())
+			return;
+
+		// The server instance handles admin requests sent through the player controller
+		s_Instance = this;
+
+		if (!m_bEnabled || RplSession.Mode() == RplMode.Dedicated)
 			return;
 
 		GetGame().GetCallqueue().CallLater(CheckHotkey, 0, true);
@@ -139,6 +238,9 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 		GetGame().GetCallqueue().Remove(CheckHotkey);
 		GetGame().GetCallqueue().Remove(HandleAction);
 		StopTeleportPicking();
+
+		if (s_Instance == this)
+			s_Instance = null;
 
 		super.OnDelete(owner);
 	}

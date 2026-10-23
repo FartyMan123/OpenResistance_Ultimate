@@ -82,7 +82,7 @@ Server/client: towns are static world entities and HQs are replicated dynamic en
 
 **Control**: every location is always controlled by a role (Resistance, Occupiers or Invaders). Each placed location sets its initial controlling role; a loaded campaign restores the saved one. Control is server-owned, replicated to all clients (location prefabs carry an `RplComponent`), raised as a "control changed" event, saved per location, and shown on the map by tinting the location icon with the controlling faction's colour. The Resistance HQ is fixed to the Resistance.
 
-**Population**: only towns and cities have a population count (set per placed location); other types always report none.
+**Settlements**: towns and cities additionally carry population and support (see Settlements).
 
 Depends on: Map Templates (for placement).
 
@@ -98,13 +98,25 @@ Sub-systems (Planned):
 ### Location Capture — In progress
 Purpose: how a location's controlling role changes. Rules depend on the location type; all changes are made by the server through the location's control (see Locations → Control). The HQ cannot be captured.
 
-- **Towns & Cities**: held by the role with **more than 50% support** in that location. Needs a per-location **Support** system (support per role; how it changes is still to be designed).
+- **Towns & Cities**: held by the role with **more than 50% support** in that location (see Settlements).
 - **Military locations** (airport, factory, military base, port, resources): captured through an **interaction on the location's flag** (the capture flag prop gets collision and an interaction), only when **all hostiles within the location's radius have been eliminated**.
 - **Flip cooldown**: after the Resistance captures a location it cannot flip back to the Occupiers or Invaders for a configurable time (default 2 minutes).
 
 Military capture (in progress): `AROR_CaptureLocationAction` is a user action on the capture flag prop (`AROR_Prop_CaptureFlag.et`, a child of the location). Clients check the rules for feedback ("Hostiles in the area", "Recently captured"); the server re-checks and changes control. The flip-cooldown lock is replicated but not saved.
 
-Depends on: Locations, Factions; Support (planned) for towns and cities.
+Depends on: Locations, Factions, Settlements.
+
+### Settlements — In progress
+Purpose: towns and cities as places with people: population, and how much each role is backed there (support), which decides who holds them (see Location Capture).
+
+- Towns and cities only: `AROR_SettlementComponent` on the Town and City prefabs holds the **population** (set per placed location) and the **support**.
+- Support is a percentage per role that **always sums to 100**. Raising one role lowers the others in proportion.
+- A new campaign starts at **100% for the location's initial controlling role**.
+- When a role other than the controller goes **above 50%**, control flips to it; otherwise the current controller keeps it.
+- Server-owned, replicated, raised as a "support changed" event, and saved per location (only when it differs from the starting state).
+- What changes support in play is still to be designed; for now the framework (server API) plus admin-menu buttons for testing.
+
+Depends on: Locations, Factions, Persistence.
 
 ### Game Flow — In progress
 Purpose: the lifecycle from world boot to play, separating **scenario data** (from the world, never saved) from **playthrough data** (from a save).

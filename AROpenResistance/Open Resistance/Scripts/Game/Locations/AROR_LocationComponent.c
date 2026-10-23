@@ -38,8 +38,6 @@ class AROR_LocationComponent : ScriptComponent
 	[RplProp()]
 	protected bool m_bFlipLocked;
 
-	[Attribute("0", UIWidgets.Slider, desc: "Number of inhabitants. Towns and cities only; ignored on other location types.", params: "0 100000 10")]
-	protected int m_iPopulation;
 
 	//! Current controlling role; server-owned, replicated, saved
 	[RplProp(onRplName: "OnControllingRoleReplicated")]
@@ -73,22 +71,6 @@ class AROR_LocationComponent : ScriptComponent
 	ResourceName GetMapIcon()
 	{
 		return m_sMapIcon;
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! Towns and cities only; always 0 for other location types
-	int GetPopulation()
-	{
-		if (!HasPopulation())
-			return 0;
-
-		return m_iPopulation;
-	}
-
-	//------------------------------------------------------------------------------------------------
-	bool HasPopulation()
-	{
-		return m_eType == AROR_ELocationType.TOWN || m_eType == AROR_ELocationType.CITY;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -209,9 +191,6 @@ class AROR_LocationComponent : ScriptComponent
 
 		if (m_sId.IsEmpty())
 			Print(string.Format("[AROR] Location '%1' has no ID and cannot be referenced by saves", m_sName), LogLevel.WARNING);
-
-		if (m_iPopulation > 0 && !HasPopulation())
-			Print(string.Format("[AROR] Location '%1' has a population but is not a town or city; it is ignored", m_sName), LogLevel.WARNING);
 
 		Print(string.Format("[AROR] Location '%1' (%2) initialised (%3, radius %4 m)", m_sName, m_sId, typename.EnumToString(AROR_ELocationType, m_eType), m_fRadius), LogLevel.NORMAL);
 		AROR_LocationManagerComponent.RegisterLocation(this);
