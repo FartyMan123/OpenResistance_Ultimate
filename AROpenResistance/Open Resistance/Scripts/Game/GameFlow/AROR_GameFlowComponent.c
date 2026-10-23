@@ -22,9 +22,6 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	[Attribute("100", UIWidgets.Slider, desc: "Minimum distance in metres between the HQ and the edge (radius) of any location", params: "0 5000 10")]
 	protected float m_fHQMinDistanceFromLocation;
 
-	//! TODO: replace with the Factions role config (RESISTANCE role)
-	[Attribute("FIA", desc: "Faction key of the Resistance role")]
-	protected string m_sResistanceFactionKey;
 
 	[Attribute("1", desc: "Players can move at the staging spawn while the admin sets up the campaign")]
 	protected bool m_bAllowControlsInSetup;
@@ -111,7 +108,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			return;
 
 		m_aStagingSpawns.Insert(spawnPoint);
-		spawnPoint.SetFactionKey(m_sResistanceFactionKey);
+		spawnPoint.SetFactionKey(GetResistanceFactionKey());
 		spawnPoint.SetSpawnPointEnabled_S(!m_bPlaythroughReady);
 	}
 
@@ -356,6 +353,20 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	protected string GetResistanceFactionKey()
+	{
+		// Look up on our own entity: the roles component may not have initialised its instance yet
+		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.Cast(GetOwner().FindComponent(AROR_FactionRolesComponent));
+		if (!roles)
+		{
+			Print("[AROR] AROR_FactionRolesComponent missing on the game mode; Resistance faction unknown", LogLevel.ERROR);
+			return string.Empty;
+		}
+
+		return roles.GetFactionKey(AROR_EFactionRole.RESISTANCE);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	protected IEntity SpawnHQ(vector position)
 	{
 		Resource resource = Resource.Load(m_sHQPrefab);
@@ -376,7 +387,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 
 		SCR_SpawnPoint spawnPoint = SCR_SpawnPoint.Cast(hq);
 		if (spawnPoint)
-			spawnPoint.SetFactionKey(m_sResistanceFactionKey);
+			spawnPoint.SetFactionKey(GetResistanceFactionKey());
 		else
 			Print("[AROR] HQ prefab is not an SCR_SpawnPoint; players will have nowhere to spawn", LogLevel.ERROR);
 

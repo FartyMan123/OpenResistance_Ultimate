@@ -5,7 +5,7 @@ SCR_LoadoutManager : "{AA4E7419A1FF65B0}Prefabs/MP/Managers/Loadouts/LoadoutMana
   SCR_FactionPlayerLoadout "{6AAC8BBB7DC34043}" {
    m_sLoadoutName "Resistance "
    m_sLoadoutResource "{485FC43C18DC1257}Prefabs/Characters/AROR_Character_Resistance_Base.et"
-   m_sAffiliatedFaction "FIA"
+   m_sAffiliatedFaction "AROR_RESISTANCE"
   }
  }
 }

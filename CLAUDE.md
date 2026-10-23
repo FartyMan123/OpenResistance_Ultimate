@@ -6,7 +6,7 @@ Guidance for Claude Code when working in this repository.
 
 ## Project
 
-**Open Resistance** is an Arma Reforger (Enfusion engine) mod: an Insurgency-style game mode. Players are the **Resistance** (default faction: FIA), the only player faction, fighting AI **Occupiers** (default: USSR) and **Invaders** (default: US). Factions are referenced by role and configurable (see ARCHITECTURE.md → Factions). Each playthrough is a persistent campaign that a server admin creates or loads.
+**Open Resistance** is an Arma Reforger (Enfusion engine) mod: an Insurgency-style game mode. Players are the **Resistance** (INDFOR, default FIA assets), the only player faction, fighting AI **Occupiers** (BLUFOR, default US assets) and **Invaders** (REDFOR, default USSR assets). Factions are referenced by role and configurable (see ARCHITECTURE.md → Factions). Each playthrough is a persistent campaign that a server admin creates or loads.
 
 Systems are being built incrementally; their design and status (Planned / In progress / Implemented) are tracked in [ARCHITECTURE.md](ARCHITECTURE.md). Check the code before assuming a system exists.
 
