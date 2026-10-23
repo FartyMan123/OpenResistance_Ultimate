@@ -13,6 +13,10 @@ SCR_BaseGameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" 
   }
   AROR_SetupUIComponent "{6AAC8BBC83F0CB25}" {
   }
+  SCR_RespawnSystemComponent "{56B2B4793051E7C9}" {
+   m_SpawnLogic AROR_ResistanceSpawnLogic "{5D36888CC966608A}" {
+   }
+  }
  }
  coords 3.116 3.2 3.163
 }
