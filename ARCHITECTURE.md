@@ -136,11 +136,23 @@ Purpose: unlimited, persistent playthrough saves.
 - Save **generated results**, not random seeds, so saves survive map and code changes.
 - Server-only writes: periodic autosave, on key events (e.g. town captured, settings changed), and on shutdown.
 
-### Factions — Planned
+### Factions — In progress
 Purpose: the sides in play, referenced by **role** so the actual factions are configurable.
 
-- Roles: `RESISTANCE`, `OCCUPIERS`, `INVADERS` (role enum, `AROR_` prefixed). Code only ever refers to roles, never to faction keys like "FIA".
-- A role → faction config maps each role to a faction key. Default: Resistance → **FIA**, Occupiers → **USSR**, Invaders → **US**.
+Two layers:
+- **Roles** (gameplay): `AROR_EFactionRole` = `RESISTANCE`, `OCCUPIERS`, `INVADERS`. Code only ever refers to roles, never to faction keys.
+- **Factions** (data): identity (key, name, colours, side), relationships and entity catalogs (which characters, groups and vehicles belong to it). The side and the models are independent, so any side can use any army's assets.
+- Players always join the Resistance role's faction; there is no faction choice.
+- `AROR_FactionRolesComponent` (on the game mode) maps role → faction key. Defaults: Resistance → **`AROR_RESISTANCE`**, Occupiers → **`AROR_OCCUPIERS`**, Invaders → **`AROR_INVADERS`**. Extender mods can point a role at their own faction without touching the core factions or code.
+
+Core factions (in `AROR_FactionManager.et`), all mutually hostile, only the Resistance playable (base-game US, USSR, FIA, CIV stay present but not playable):
+
+| Faction | Side | Default assets |
+|---|---|---|
+| `AROR_RESISTANCE` | INDFOR | FIA catalogs (FIA as faction ancestor) |
+| `AROR_OCCUPIERS` | BLUFOR | US catalogs (US as faction ancestor) |
+| `AROR_INVADERS` | REDFOR | USSR catalogs (USSR as faction ancestor) |
+
 - `Prefabs/Managers/AROR_FactionManager.et` (inherits the base-game `FactionManager_Editor.et`: US, USSR, FIA, CIV) and `AROR_LoadoutManager.et` (inherits the empty `LoadoutManager_Base.et`; holds only the Resistance loadout) are placed in every map as part of the map template.
 - `Prefabs/Characters/AROR_Character_Resistance_Base.et`: the Resistance player character (inherits the base-game FIA rifleman, which carries a map and compass).
 - Resistance loadouts: the Resistance role's loadouts are the only ones offered; each includes a map and compass.
