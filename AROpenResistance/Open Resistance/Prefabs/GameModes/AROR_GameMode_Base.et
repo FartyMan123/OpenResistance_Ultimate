@@ -7,6 +7,8 @@ SCR_BaseGameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" 
   }
   AROR_AdminMenuComponent "{6AAE5E823BD31825}" {
   }
+  AROR_EconomyComponent "{F317694D57DF9B7A}" {
+  }
   AROR_FactionRolesComponent "{6AAE5E8BB415C942}" {
   }
   AROR_GameFlowComponent "{6AAA8D6D8EB1E454}" {

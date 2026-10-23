@@ -15,6 +15,13 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	protected ResourceName m_sDialogPresets;
 
 	protected static const string PRESET_ADMIN = "aror_admin";
+	protected static const string PRESET_ECONOMY = "aror_admin_economy";
+
+	//! Money added per admin button press
+	protected static const int MONEY_STEP = 1000;
+
+	//! Reopen the economy dialog after the server has applied a change, so it shows the new balances
+	protected static const int ECONOMY_REFRESH_DELAY_MS = 300;
 
 	//! Support change per admin button press (percentage points)
 	protected static const float SUPPORT_STEP = 10;
@@ -51,6 +58,57 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 		AROR_AdminDialog dialog = new AROR_AdminDialog(this);
 		SCR_ConfigurableDialogUi.CreateFromPreset(m_sDialogPresets, PRESET_ADMIN, dialog);
 		dialog.SetMessage(GetNearestSupportText());
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void OpenEconomyDialog()
+	{
+		AROR_AdminDialog dialog = new AROR_AdminDialog(this);
+		SCR_ConfigurableDialogUi.CreateFromPreset(m_sDialogPresets, PRESET_ECONOMY, dialog);
+		dialog.SetMessage(GetEconomyText());
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Client: faction funds and the local player's money (shown in the economy dialog)
+	protected string GetEconomyText()
+	{
+		AROR_EconomyComponent economy = AROR_EconomyComponent.GetInstance();
+		if (!economy)
+			return "No AROR_EconomyComponent on the game mode.";
+
+		return string.Format("Funds: Resistance %1 | Occupiers %2 | Invaders %3\nYour money: %4",
+			economy.GetFactionFunds(AROR_EFactionRole.RESISTANCE),
+			economy.GetFactionFunds(AROR_EFactionRole.OCCUPIERS),
+			economy.GetFactionFunds(AROR_EFactionRole.INVADERS),
+			economy.GetLocalPlayerMoney());
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server: add money to a faction's funds, or (selfMoney) to the requesting player's own money
+	void GiveMoney_S(int playerId, AROR_EFactionRole role, bool selfMoney, int amount)
+	{
+		if (!Replication.IsServer() || !m_bEnabled)
+			return;
+
+		AROR_EconomyComponent economy = AROR_EconomyComponent.GetInstance();
+		if (!economy)
+			return;
+
+		if (selfMoney)
+			economy.AddPlayerMoney_S(playerId, amount);
+		else
+			economy.AddFactionFunds_S(role, amount);
+
+		Print(string.Format("[AROR] Admin: player %1 gave %2 to %3", playerId, amount, GetMoneyTargetName(role, selfMoney)), LogLevel.NORMAL);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static string GetMoneyTargetName(AROR_EFactionRole role, bool selfMoney)
+	{
+		if (selfMoney)
+			return "themselves";
+
+		return typename.EnumToString(AROR_EFactionRole, role);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -208,6 +266,24 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 			return;
 		}
 
+		if (tag == "economy")
+		{
+			OpenEconomyDialog();
+			return;
+		}
+
+		if (tag == "economy_back")
+		{
+			OpenDialog();
+			return;
+		}
+
+		if (tag.IndexOf("money_") == 0)
+		{
+			HandleMoneyAction(tag);
+			return;
+		}
+
 		AROR_EFactionRole role;
 		if (tag == "support_resistance")
 			role = AROR_EFactionRole.RESISTANCE;
@@ -221,6 +297,30 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 		SCR_PlayerController playerController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
 		if (playerController)
 			playerController.AROR_RequestAdminSupport(role, SUPPORT_STEP);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Economy dialog buttons; the dialog reopens with the updated balances
+	protected void HandleMoneyAction(string tag)
+	{
+		AROR_EFactionRole role;
+		bool selfMoney;
+		if (tag == "money_resistance")
+			role = AROR_EFactionRole.RESISTANCE;
+		else if (tag == "money_occupiers")
+			role = AROR_EFactionRole.OCCUPIERS;
+		else if (tag == "money_invaders")
+			role = AROR_EFactionRole.INVADERS;
+		else if (tag == "money_self")
+			selfMoney = true;
+		else
+			return;
+
+		SCR_PlayerController playerController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
+		if (playerController)
+			playerController.AROR_RequestAdminMoney(role, selfMoney, MONEY_STEP);
+
+		GetGame().GetCallqueue().CallLater(OpenEconomyDialog, ECONOMY_REFRESH_DELAY_MS);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -318,6 +418,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 		GetGame().GetCallqueue().Remove(CheckHotkey);
 		GetGame().GetCallqueue().Remove(HandleAction);
 		GetGame().GetCallqueue().Remove(OpenGameMaster);
+		GetGame().GetCallqueue().Remove(OpenEconomyDialog);
 		StopTeleportPicking();
 
 		if (s_Instance == this)

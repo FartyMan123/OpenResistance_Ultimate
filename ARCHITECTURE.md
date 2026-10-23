@@ -245,6 +245,16 @@ Three parts:
 2. **State** (playthrough load): location state is shown on the **same icon**, e.g. a town icon tinted by its controlling role (the faction's own colour, so it follows the Factions config). The control state is server-owned, replicated and saved on the location; each client re-tints its icon when it changes.
 3. **Info popup and selector**: hovering a location icon shows pulsing corner brackets (steady on the selected icon); clicking it opens an info card next to it with name, type and controlling faction; settlements also show population and support per faction. It follows the icon, updates live when control or support changes, and is suppressed while a map click is used for something else (HQ pick, teleport). Client-only.
 
+### Economy — In progress
+Purpose: money for the campaign. Base level for now: balances only; earning and spending rules come later.
+Key classes: `AROR_EconomyComponent` (on the game mode), `AROR_EconomyComponentSerializer`.
+
+- **Faction funds**: one bank balance per faction role (Resistance, Occupiers, Invaders), starting from per-role base values set on the component. Server-owned, replicated to every client, with a funds-changed event.
+- **Player money**: personal money per player, starting from a base value the first time a player joins the campaign. Server-owned; each player is sent only their own balance (through the player controller). Keyed by the player's identity ID so it survives reconnects and restarts.
+- **Persistence**: funds and player money are saved with the game mode (nothing is written while everything is still at its starting values).
+- **Rules**: balances never go below zero; spending only succeeds if the balance covers it. All changes happen on the server.
+- Extension points: other systems and extender mods call the server API to add, spend and read balances (`AddFactionFunds_S`, `SpendFactionFunds_S`, `AddPlayerMoney_S`, `SpendPlayerMoney_S`).
+
 ### Notifications — In progress
 Purpose: tell players what is happening in the campaign, plus quiet personal feedback. Anything can send: core systems, extender mods, admin tools.
 Key classes: `AROR_NotificationManagerComponent` (on the game mode; static sending API), `AROR_Notification`, `AROR_NotificationDisplay`, `UI/Layouts/Notifications/AROR_Notifications.layout`.
@@ -268,6 +278,7 @@ Purpose: in-game testing and admin tools, opened with **Ctrl+T** (`AROR_AdminMen
 - **Game Master**: the server unlocks the base-game Game Master (Edit) mode for the player.
 - **Support**: adjust the nearest settlement's support per faction (server-side).
 - **Test notifications**: sends a test headline and notification to everyone and a test hint to the player.
+- **Economy**: a sub-menu showing faction funds and the player's money, with buttons to give money to each faction or to the player (server-side).
 - Built on the same base-game dialogs as the setup UI; no base-game config overrides (the hotkey is read directly from the keyboard).
 
 ### Map Templates — Planned
