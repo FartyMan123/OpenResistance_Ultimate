@@ -26,6 +26,9 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 
 	protected AROR_GameFlowComponent m_GameFlow;
 	protected bool m_bPickingHQ;
+
+	//! Weak reference: owned by the dialog's widgets, becomes null once the dialog is gone
+	protected AROR_SetupMainDialog m_MainDialog;
 	protected vector m_vPickedPosition;
 
 	//------------------------------------------------------------------------------------------------
@@ -37,11 +40,17 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 	//------------------------------------------------------------------------------------------------
 	void OpenMainDialogWithMessage(string message)
 	{
-		AROR_SetupMainDialog dialog = new AROR_SetupMainDialog(this);
-		SCR_ConfigurableDialogUi.CreateFromPreset(m_sDialogPresets, PRESET_MAIN, dialog);
+		// Only one main dialog: if it is already open, just update its message
+		if (!m_MainDialog)
+		{
+			// Create in a local (strong) variable; the dialog's widgets own it once created
+			AROR_SetupMainDialog dialog = new AROR_SetupMainDialog(this);
+			SCR_ConfigurableDialogUi.CreateFromPreset(m_sDialogPresets, PRESET_MAIN, dialog);
+			m_MainDialog = dialog;
+		}
 
 		if (!message.IsEmpty())
-			dialog.SetMessage(message);
+			m_MainDialog.SetMessage(message);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -58,6 +67,8 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 	{
 		if (dialogId == DIALOG_MAIN)
 		{
+			m_MainDialog = null;
+
 			if (tag == "new")
 				StartHQPicking();
 			else if (tag == "load")

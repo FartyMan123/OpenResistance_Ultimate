@@ -52,6 +52,9 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	//! Server: true once a playthrough is created or loaded; lets the game mode leave pre-game
 	protected bool m_bPlaythroughReady;
 
+	//! Server: players already offered the setup screen (join and role change can both trigger it)
+	protected ref array<int> m_aSetupOfferedPlayerIds = {};
+
 	//! Server: saves last sent to the admin, newest first; the client refers to them by index
 	protected ref array<SaveGame> m_aListedSaves = {};
 	protected int m_iSaveListRequesterId;
@@ -395,6 +398,11 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		if (!Replication.IsServer() || m_bPlaythroughReady || !IsAdmin(playerId))
 			return;
 
+		if (m_aSetupOfferedPlayerIds.Contains(playerId))
+			return;
+
+		m_aSetupOfferedPlayerIds.Insert(playerId);
+
 #ifdef WORKBENCH
 		if (m_bWorkbenchAutoNewPlaythrough)
 		{
@@ -506,6 +514,14 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	{
 		super.OnPlayerRoleChange(playerId, roleFlags);
 		TryOfferSetup(playerId);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! A rejoining admin gets the setup screen again
+	override void OnPlayerDisconnected(int playerId, KickCauseCode cause, int timeout)
+	{
+		super.OnPlayerDisconnected(playerId, cause, timeout);
+		m_aSetupOfferedPlayerIds.RemoveItem(playerId);
 	}
 
 	//------------------------------------------------------------------------------------------------
