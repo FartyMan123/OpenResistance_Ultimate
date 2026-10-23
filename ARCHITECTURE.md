@@ -82,7 +82,7 @@ Server/client: towns are static world entities and HQs are replicated dynamic en
 
 **Control**: every location is always controlled by a role (Resistance, Occupiers or Invaders). Each placed location sets its initial controlling role; a loaded campaign restores the saved one. Control is server-owned, replicated to all clients (location prefabs carry an `RplComponent`), raised as a "control changed" event, saved per location, and shown on the map by tinting the location icon with the controlling faction's colour. The Resistance HQ is fixed to the Resistance.
 
-**Population**: towns and cities carry a population count (set per placed location).
+**Population**: only towns and cities have a population count (set per placed location); other types always report none.
 
 Depends on: Map Templates (for placement).
 
@@ -95,12 +95,14 @@ Sub-systems (Planned):
 - Default name from the nearest base-game map descriptor.
 - Workbench plugin to auto-place towns on a terrain.
 
-### Location Capture — Planned
+### Location Capture — In progress
 Purpose: how a location's controlling role changes. Rules depend on the location type; all changes are made by the server through the location's control (see Locations → Control). The HQ cannot be captured.
 
 - **Towns & Cities**: held by the role with **more than 50% support** in that location. Needs a per-location **Support** system (support per role; how it changes is still to be designed).
 - **Military locations** (airport, factory, military base, port, resources): captured through an **interaction on the location's flag** (the capture flag prop gets collision and an interaction), only when **all hostiles within the location's radius have been eliminated**.
 - **Flip cooldown**: after the Resistance captures a location it cannot flip back to the Occupiers or Invaders for a configurable time (default 2 minutes).
+
+Military capture (in progress): `AROR_CaptureLocationAction` is a user action on the capture flag prop (`AROR_Prop_CaptureFlag.et`, a child of the location). Clients check the rules for feedback ("Hostiles in the area", "Recently captured"); the server re-checks and changes control. The flip-cooldown lock is replicated but not saved.
 
 Depends on: Locations, Factions; Support (planned) for towns and cities.
 
@@ -227,6 +229,13 @@ Airborne investigation: inspected base-game movement/controller/transport-waypoi
 Two layers:
 1. **Location markers** (scenario load): **our own icon widgets** drawn on any open map (player map, deploy screen, setup screen) by a client-only component that follows the base-game map events (open/close/pan/zoom) and positions icons from world coordinates. Each location prefab chooses its icon image (white on transparent, so it can be tinted). No base-game config overrides, not draggable, no replication or saving. The HQ also keeps its spawn point map descriptor for the deploy screen.
 2. **State** (playthrough load): location state is shown on the **same icon**, e.g. a town icon tinted by its controlling role (the faction's own colour, so it follows the Factions config). The control state is server-owned, replicated and saved on the location; each client re-tints its icon when it changes. Icons can also handle hover and click (used by the setup screen).
+
+### Admin Tools — In progress
+Purpose: in-game testing and admin tools, opened with **Ctrl+T** (`AROR_AdminMenuComponent` on the game mode, client only).
+
+- Currently available to **every player** (an Enabled switch on the component turns it off; restricting it to admins comes later).
+- **Teleport**: pick a point on the map; the player's own machine moves its character (movement replicates).
+- Built on the same base-game dialogs as the setup UI; no base-game config overrides (the hotkey is read directly from the keyboard).
 
 ### Map Templates — Planned
 Purpose: per-map setup of the game mode, as a sub-scene of the terrain's world.

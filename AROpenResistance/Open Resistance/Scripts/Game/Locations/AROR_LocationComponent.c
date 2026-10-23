@@ -31,7 +31,14 @@ class AROR_LocationComponent : ScriptComponent
 	[Attribute("0", desc: "Control can never change (e.g. the Resistance HQ)", category: "Control")]
 	protected bool m_bControlFixed;
 
-	[Attribute("0", UIWidgets.Slider, desc: "Number of inhabitants (used by towns and cities)", params: "0 100000 10")]
+	[Attribute("120", UIWidgets.Slider, desc: "After the Resistance takes this location, seconds before it can flip to the Occupiers or Invaders", params: "0 3600 10", category: "Control")]
+	protected float m_fFlipCooldownSeconds;
+
+	//! True while the post-Resistance-capture flip cooldown runs; server-owned, replicated, not saved
+	[RplProp()]
+	protected bool m_bFlipLocked;
+
+	[Attribute("0", UIWidgets.Slider, desc: "Number of inhabitants. Towns and cities only; ignored on other location types.", params: "0 100000 10")]
 	protected int m_iPopulation;
 
 	//! Current controlling role; server-owned, replicated, saved
@@ -69,9 +76,19 @@ class AROR_LocationComponent : ScriptComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Towns and cities only; always 0 for other location types
 	int GetPopulation()
 	{
+		if (!HasPopulation())
+			return 0;
+
 		return m_iPopulation;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	bool HasPopulation()
+	{
+		return m_eType == AROR_ELocationType.TOWN || m_eType == AROR_ELocationType.CITY;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -93,16 +110,51 @@ class AROR_LocationComponent : ScriptComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Server only. Returns false if the location's control is fixed or nothing changed.
+	bool IsFlipLocked()
+	{
+		return m_bFlipLocked;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! False while control is fixed, already held by the role, or the flip cooldown blocks the role
+	bool CanBeTakenBy(AROR_EFactionRole role)
+	{
+		if (m_bControlFixed || role == m_eControllingRole)
+			return false;
+
+		if (m_bFlipLocked && role != AROR_EFactionRole.RESISTANCE)
+			return false;
+
+		return true;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server only. Returns false if the change is not allowed (see CanBeTakenBy).
 	bool SetControllingRole_S(AROR_EFactionRole role)
 	{
-		if (!Replication.IsServer() || m_bControlFixed || role == m_eControllingRole)
+		if (!Replication.IsServer() || !CanBeTakenBy(role))
 			return false;
 
 		m_eControllingRole = role;
+
+		// Resistance captures lock the location against flipping back for a while
+		if (role == AROR_EFactionRole.RESISTANCE && m_fFlipCooldownSeconds > 0)
+		{
+			m_bFlipLocked = true;
+			GetGame().GetCallqueue().Remove(UnlockFlip);
+			GetGame().GetCallqueue().CallLater(UnlockFlip, m_fFlipCooldownSeconds * 1000);
+		}
+
 		Replication.BumpMe();
 		OnControllingRoleReplicated();
 		return true;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void UnlockFlip()
+	{
+		m_bFlipLocked = false;
+		Replication.BumpMe();
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -158,6 +210,9 @@ class AROR_LocationComponent : ScriptComponent
 		if (m_sId.IsEmpty())
 			Print(string.Format("[AROR] Location '%1' has no ID and cannot be referenced by saves", m_sName), LogLevel.WARNING);
 
+		if (m_iPopulation > 0 && !HasPopulation())
+			Print(string.Format("[AROR] Location '%1' has a population but is not a town or city; it is ignored", m_sName), LogLevel.WARNING);
+
 		Print(string.Format("[AROR] Location '%1' (%2) initialised (%3, radius %4 m)", m_sName, m_sId, typename.EnumToString(AROR_ELocationType, m_eType), m_fRadius), LogLevel.NORMAL);
 		AROR_LocationManagerComponent.RegisterLocation(this);
 	}
@@ -165,6 +220,7 @@ class AROR_LocationComponent : ScriptComponent
 	//------------------------------------------------------------------------------------------------
 	override void OnDelete(IEntity owner)
 	{
+		GetGame().GetCallqueue().Remove(UnlockFlip);
 		AROR_LocationManagerComponent.UnregisterLocation(this);
 		super.OnDelete(owner);
 	}
