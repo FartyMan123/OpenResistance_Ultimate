@@ -102,6 +102,25 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Admin menu: run an income payment now
+	void AROR_RequestAdminPayIncome()
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_AdminPayIncome();
+		else
+			Rpc(AROR_RpcAsk_AdminPayIncome);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_AdminPayIncome()
+	{
+		AROR_AdminMenuComponent adminMenu = AROR_AdminMenuComponent.GetInstance();
+		if (adminMenu)
+			adminMenu.PayIncomeNow_S(GetPlayerId());
+	}
+
+	//------------------------------------------------------------------------------------------------
 	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
 	protected void AROR_RpcAsk_AdminMoney(int role, bool selfMoney, int amount)
 	{

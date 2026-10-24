@@ -9,12 +9,18 @@ typedef func AROR_OnFactionFundsChanged;
 void AROR_OnLocalPlayerMoneyChanged(int money);
 typedef func AROR_OnLocalPlayerMoneyChanged;
 
-//! Economy (see ARCHITECTURE.md -> Economy): a bank balance per faction role and personal money per player.
-//! The server owns all balances. Faction funds replicate to every client; a player's money is sent only to that
-//! player. Both are saved (AROR_EconomyComponentSerializer); player money is keyed by the player's identity so it
-//! survives reconnects and restarts.
+void AROR_OnManpowerChanged(int manpower);
+typedef func AROR_OnManpowerChanged;
+
+//! Economy (see ARCHITECTURE.md -> Economy): a bank balance per faction role, personal money per player, and the
+//! Resistance's manpower. The server owns all balances. Faction funds and manpower replicate to every client; a
+//! player's money is sent only to that player. All are saved (AROR_EconomyComponentSerializer); player money is keyed
+//! by the player's identity so it survives reconnects and restarts.
 class AROR_EconomyComponent : SCR_BaseGameModeComponent
 {
+	[Attribute("0", desc: "Resistance manpower when a new campaign starts", params: "0 inf", category: "Starting values")]
+	protected int m_iStartingManpower;
+
 	[Attribute("1000", desc: "Resistance funds when a new campaign starts", params: "0 inf", category: "Starting values")]
 	protected int m_iStartingResistanceFunds;
 
@@ -37,6 +43,12 @@ class AROR_EconomyComponent : SCR_BaseGameModeComponent
 
 	[RplProp(onRplName: "OnFundsReplicated")]
 	protected int m_iInvadersFunds;
+
+	//! Resistance only
+	[RplProp(onRplName: "OnManpowerReplicated")]
+	protected int m_iManpower;
+
+	protected ref ScriptInvokerBase<AROR_OnManpowerChanged> m_OnManpowerChanged = new ScriptInvokerBase<AROR_OnManpowerChanged>();
 
 	//! Server: player key (identity ID) -> money
 	protected ref map<string, int> m_mPlayerMoney = new map<string, int>();
@@ -160,6 +172,97 @@ class AROR_EconomyComponent : SCR_BaseGameModeComponent
 		m_OnFactionFundsChanged.Invoke(AROR_EFactionRole.RESISTANCE, m_iResistanceFunds);
 		m_OnFactionFundsChanged.Invoke(AROR_EFactionRole.OCCUPIERS, m_iOccupiersFunds);
 		m_OnFactionFundsChanged.Invoke(AROR_EFactionRole.INVADERS, m_iInvadersFunds);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	// Manpower (Resistance)
+	//------------------------------------------------------------------------------------------------
+	//! Every machine
+	int GetManpower()
+	{
+		return m_iManpower;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Every machine; fires on clients when the replicated value arrives and on the server when it changes
+	ScriptInvokerBase<AROR_OnManpowerChanged> GetOnManpowerChanged()
+	{
+		return m_OnManpowerChanged;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server only. Adds (or with a negative amount, removes) manpower; never goes below 0.
+	void AddManpower_S(int amount)
+	{
+		if (Replication.IsServer())
+			SetManpower(Math.Max(m_iManpower + amount, 0));
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server only. Takes the amount if there is enough manpower; returns false (and takes nothing) otherwise.
+	bool SpendManpower_S(int amount)
+	{
+		if (!Replication.IsServer() || amount < 0 || m_iManpower < amount)
+			return false;
+
+		SetManpower(m_iManpower - amount);
+		return true;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server only: restore saved manpower (used by the serializer)
+	void RestoreManpower_S(int manpower)
+	{
+		if (Replication.IsServer())
+			SetManpower(manpower);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! True while manpower is still at its starting value (nothing to save)
+	bool HasStartingManpower()
+	{
+		return m_iManpower == m_iStartingManpower;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void SetManpower(int manpower)
+	{
+		if (manpower == m_iManpower)
+			return;
+
+		m_iManpower = manpower;
+		Replication.BumpMe();
+		m_OnManpowerChanged.Invoke(manpower);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void OnManpowerReplicated()
+	{
+		m_OnManpowerChanged.Invoke(m_iManpower);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	// Formatting
+	//------------------------------------------------------------------------------------------------
+	//! 1234567 -> "$ 1,234,567.00"
+	static string FormatMoney(int amount)
+	{
+		string digits = Math.AbsInt(amount).ToString();
+		int count = digits.Length();
+
+		string grouped;
+		for (int i = 0; i < count; i++)
+		{
+			if (i > 0 && (count - i) % 3 == 0)
+				grouped += ",";
+
+			grouped += digits.Substring(i, 1);
+		}
+
+		if (amount < 0)
+			return "$ -" + grouped + ".00";
+
+		return "$ " + grouped + ".00";
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -312,6 +415,7 @@ class AROR_EconomyComponent : SCR_BaseGameModeComponent
 			m_iResistanceFunds = m_iStartingResistanceFunds;
 			m_iOccupiersFunds = m_iStartingOccupiersFunds;
 			m_iInvadersFunds = m_iStartingInvadersFunds;
+			m_iManpower = m_iStartingManpower;
 		}
 	}
 

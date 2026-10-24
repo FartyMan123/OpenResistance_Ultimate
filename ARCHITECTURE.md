@@ -246,14 +246,20 @@ Three parts:
 3. **Info popup and selector**: hovering a location icon shows pulsing corner brackets (steady on the selected icon); clicking it opens an info card next to it with name, type and controlling faction; settlements also show population and support per faction. It follows the icon, updates live when control or support changes, and is suppressed while a map click is used for something else (HQ pick, teleport). Client-only.
 
 ### Economy — In progress
-Purpose: money for the campaign. Base level for now: balances only; earning and spending rules come later.
-Key classes: `AROR_EconomyComponent` (on the game mode), `AROR_EconomyComponentSerializer`.
+Purpose: money and manpower for the campaign: balances, and periodic income from held locations. Spending rules come later.
+Key classes: `AROR_EconomyComponent`, `AROR_EconomyComponentSerializer`, `AROR_IncomeComponent` (all on the game mode).
 
 - **Faction funds**: one bank balance per faction role (Resistance, Occupiers, Invaders), starting from per-role base values set on the component. Server-owned, replicated to every client, with a funds-changed event.
+- **Manpower**: a Resistance-only balance with a starting value. Server-owned, replicated to every client, with a changed event.
 - **Player money**: personal money per player, starting from a base value the first time a player joins the campaign. Server-owned; each player is sent only their own balance (through the player controller). Keyed by the player's identity ID so it survives reconnects and restarts.
-- **Persistence**: funds and player money are saved with the game mode (nothing is written while everything is still at its starting values).
+- **Income** (server, every 5 minutes, not during setup): each faction role is paid for the locations it controls.
+  - Money = held Resources × $500 × (1 + 0.3 per held Factory + 0.5 per held Port), plus $5 per inhabitant of held towns and cities (not multiplied).
+  - The Resistance also gains manpower per held town and per held city.
+  - Resistance players get a dispatch card notification with the amounts.
+  - Rates and the interval are attributes on `AROR_IncomeComponent`.
+- **Persistence**: funds, manpower and player money are saved with the game mode (nothing is written while everything is still at its starting values). Income timing is not saved.
 - **Rules**: balances never go below zero; spending only succeeds if the balance covers it. All changes happen on the server.
-- Extension points: other systems and extender mods call the server API to add, spend and read balances (`AddFactionFunds_S`, `SpendFactionFunds_S`, `AddPlayerMoney_S`, `SpendPlayerMoney_S`).
+- Extension points: other systems and extender mods call the server API to add, spend and read balances (`AddFactionFunds_S`, `SpendFactionFunds_S`, `AddPlayerMoney_S`, `SpendPlayerMoney_S`, `AddManpower_S`, `SpendManpower_S`) and can trigger a payment (`AROR_IncomeComponent.PayIncome_S`).
 
 ### Phone — In progress
 Purpose: an in-game phone that hosts player-facing apps. Client only.
@@ -290,7 +296,7 @@ Purpose: in-game testing and admin tools, opened with **Ctrl+T** (`AROR_AdminMen
 - **Game Master**: the server unlocks the base-game Game Master (Edit) mode for the player.
 - **Support**: adjust the nearest settlement's support per faction (server-side).
 - **Test notifications**: sends a test headline and notification to everyone and a test hint to the player.
-- **Economy**: a sub-menu showing faction funds and the player's money, with buttons to give money to each faction or to the player (server-side).
+- **Economy**: a sub-menu showing faction funds, Resistance manpower and the player's money, with buttons to give money to each faction or to the player and to pay income now (server-side).
 - Built on the same base-game dialogs as the setup UI; no base-game config overrides (the hotkey is read directly from the keyboard).
 
 ### Map Templates — Planned
