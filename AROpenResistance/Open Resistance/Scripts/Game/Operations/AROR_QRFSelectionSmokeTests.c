@@ -61,6 +61,12 @@ class AROR_QRFSelectionSmokeTests
 		AROR_QRFReadinessSnapshot limited = ready.WithRuntimeCapacity(3, 128, 10);
 		decision = AROR_QRFSelectionPolicy.Select(recipes, profiles, ready.m_eRole, ready.m_sFactionKey, context, limited, 100);
 		passed = Check(!decision.m_Recipe && ready.m_iFreeGroups == 20, "Runtime limits without mutating provider snapshot") && passed;
+		passed = Check(limited.m_aStock.Count() == ready.m_aStock.Count(), "Runtime snapshot retains all stock entries") && passed;
+		AROR_QRFReadyStock copiedStock = limited.m_aStock[0];
+		AROR_QRFReadyStock originalStock = ready.m_aStock[0];
+		int originalQuantity = originalStock.m_iReadyPackages;
+		copiedStock.m_iReadyPackages = 0;
+		passed = Check(copiedStock != originalStock && originalStock.m_iReadyPackages == originalQuantity, "Runtime stock copy is independent of provider") && passed;
 		ready.m_aStock.Insert(Stock("btr", 10));
 		passed = Check(!ready.IsValidAt(100), "Duplicate stock entry rejected") && passed;
 		if (passed)

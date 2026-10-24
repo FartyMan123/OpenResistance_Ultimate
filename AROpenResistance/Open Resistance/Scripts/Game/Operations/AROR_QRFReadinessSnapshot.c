@@ -73,7 +73,22 @@ class AROR_QRFReadinessSnapshot
 		copy.m_iFreePersonnel = Math.Min(m_iFreePersonnel, Math.Max(0, personnel));
 		copy.m_iFreeVehicles = Math.Min(m_iFreeVehicles, Math.Max(0, vehicles));
 		if (m_aStock)
-			copy.m_aStock.Copy(m_aStock);
+		{
+			// Enforce cannot Copy an owning ref array through a non-owning array signature.
+			// Clone entries as well so the preview cannot mutate provider-owned stock.
+			foreach (AROR_QRFReadyStock stock : m_aStock)
+			{
+				if (!stock)
+				{
+					copy.m_aStock.Insert(null);
+					continue;
+				}
+				AROR_QRFReadyStock clonedStock = new AROR_QRFReadyStock();
+				clonedStock.m_sProfileId = stock.m_sProfileId;
+				clonedStock.m_iReadyPackages = stock.m_iReadyPackages;
+				copy.m_aStock.Insert(clonedStock);
+			}
+		}
 		return copy;
 	}
 }

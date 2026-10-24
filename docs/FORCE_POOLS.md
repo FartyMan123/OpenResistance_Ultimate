@@ -4,7 +4,7 @@ See [QRF tactical commander and staged waves](QRF_TACTICAL_COMMANDER.md) for the
 
 The [USSR/Invader framework](INVADER_QRF_FRAMEWORK.md) is staged with levels 1-5 and operation admission disabled; the current US/Occupier test remains selected.
 
-**Current Chicken fixture:** one truck plus one IFV under the authored `combined_arms_l1` ground recipe. The REAPER override is off. See [Truck/IFV test instructions](TRUCK_IFV_QRF_TEST.md); this current fixture supersedes older forced-profile/level-5 instructions below.
+**Current Chicken fixture:** strategic selection and payments are ON, initially war level 2, with five authored ground tiers per AI role. A normal response varies between the truck/IFV tier and one truck plus two IFVs; affordability can downgrade it. REAPER dispatch and Invader admission remain OFF. See [strategy and prices](QRF_STRATEGY_ECONOMY.md) and [FIA spotting](QRF_SPOTTING.md). To restore the exact truck/IFV regression fixture, disable `m_bQRFStrategicEconomy` and follow [these instructions](TRUCK_IFV_QRF_TEST.md). This supersedes older forced-profile/level-5 instructions below.
 
 The proposed [QRF response roster](QRF_RESPONSE_ROSTER.md) adds 40 authored responses across eight families and levels 1-5, including combined ground/air compositions. It defines future commander/resource selection; it does not change the current repeated-profile executor or Chicken test. A [CSV catalogue](QRF_RESPONSE_ROSTER.csv) provides stable recipe IDs and nominal accounting.
 

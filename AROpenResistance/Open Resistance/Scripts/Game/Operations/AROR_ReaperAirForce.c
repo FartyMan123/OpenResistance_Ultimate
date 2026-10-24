@@ -139,6 +139,9 @@ class AROR_ReaperAirForce : AROR_GroundOperationForce
 		if ((m_CrewGroup && m_CrewGroup.GetPlayerCount() > 0) || AROR_ReaperRetirement.NearPlayers(m_Vehicle, m_fCleanupDistance) || AROR_ReaperRetirement.GroupNearPlayers(m_CrewGroup, m_fCleanupDistance))
 			return;
 		array<AIAgent> agents = {};
+		AROR_OperationManagerComponent operations = AROR_OperationManagerComponent.GetInstance();
+		if (operations)
+			operations.GetQRFFinance().Observe_S(m_Funding);
 		if (m_CrewGroup)
 		{
 			m_CrewGroup.GetAgents(agents);
@@ -149,14 +152,22 @@ class AROR_ReaperAirForce : AROR_GroundOperationForce
 		foreach (AIAgent agent : agents)
 		{
 			if (agent && agent.GetControlledEntity())
+			{
+				if (m_Funding)
+					m_Funding.Retire_S(agent.GetControlledEntity());
 				SCR_EntityHelper.DeleteEntityAndChildren(agent.GetControlledEntity());
+			}
 		}
 		if (m_CrewWaypoint)
 			SCR_EntityHelper.DeleteEntityAndChildren(m_CrewWaypoint);
 		if (m_CrewGroup)
 			SCR_EntityHelper.DeleteEntityAndChildren(m_CrewGroup);
 		if (m_Vehicle)
+		{
+			if (m_Funding)
+				m_Funding.Retire_S(m_Vehicle);
 			SCR_EntityHelper.DeleteEntityAndChildren(m_Vehicle);
+		}
 		m_CrewWaypoint = null;
 		m_CrewGroup = null;
 		m_Vehicle = null;

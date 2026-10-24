@@ -53,6 +53,42 @@ modded class AROR_OperationExecutorComponent
 	}
 
 	protected ref AROR_ReaperLandingSearch m_ReaperLandingSearch;
+	override bool CanFundQRFThreat_S(AROR_EFactionRole role, int desired)
+	{
+		if (!GetGroundQRFRecipeId(role).IsEmpty() || !m_bReaperQRFTest)
+			return super.CanFundQRFThreat_S(role, desired);
+		if (!Replication.IsServer() || !m_Operations)
+			return false;
+		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.GetInstance();
+		if (!roles || desired < 1 || desired > 5)
+			return false;
+		foreach (AROR_ForceProfile profile : m_aForceProfiles)
+		{
+			if (!profile || profile.m_eType != AROR_EForceType.AIRBORNE || profile.m_eRole != role)
+				continue;
+			if (!profile.IsValid() || profile.m_sFactionKey != roles.GetFactionKey(role))
+				continue;
+			return AffordableReaperTier(profile, desired) > 0;
+		}
+		return false;
+	}
+	protected int AffordableReaperTier(AROR_ForceProfile profile, int desired)
+	{
+		if (!AROR_EconomyComponent.GetInstance() || m_Operations.GetQRFFinance().Debt(profile.m_eRole) > 0)
+			return 0;
+		for (int tier = Math.Clamp(desired, 1, 5); tier >= 1; tier--)
+		{
+			int quote = profile.ReplacementQuote() * tier + m_Operations.QRFOverhead(tier);
+			if (quote > m_Operations.GetQRFFinance().Available(profile.m_eRole))
+				continue;
+			if (GetReservedGroups() + 3 * tier > m_iMaxGroups || GetReservedVehicles() + 2 * tier > m_iMaxVehicles)
+				continue;
+			if (GetReservedMembers() + profile.m_iPersonnelBudget * tier > m_iMaxMembers)
+				continue;
+			return tier;
+		}
+		return 0;
+	}
 	protected string m_sReaperPlanningOperation;
 	protected int m_iLastReaperAlternateSearchTick = -1;
 	protected int m_iLastReaperConstructionTick = -1;
@@ -152,8 +188,17 @@ modded class AROR_OperationExecutorComponent
 			return;
 		}
 		int level = 1;
+		if (m_Operations.IsQRFStrategyEnabled())
+		{
+			level = AffordableReaperTier(profile, Math.Max(1, operation.m_iRequestedTier));
+			if (level == 0)
+			{
+				ReportSpawnWait(operation, "No affordable complete airborne pair within the desired war tier");
+				return;
+			}
+		}
 #ifdef WORKBENCH
-		if (m_iWorkbenchResponseLevel > 0)
+		if (!m_Operations.IsQRFStrategyEnabled() && m_iWorkbenchResponseLevel > 0)
 			level = m_iWorkbenchResponseLevel;
 #endif
 		if (level < 1 || level > 5)
@@ -241,6 +286,11 @@ modded class AROR_OperationExecutorComponent
 			force.m_fCleanupDistance = m_fReaperCleanupDistance;
 			prepared.Insert(force);
 		}
+		array<AROR_ForceProfile> financialElements = {};
+		for (int priced = 0; priced < level; priced++)
+			financialElements.Insert(profile);
+		if (!ReserveQRFFunding(operation, financialElements, level))
+			return;
 		if (!operation.BindForceProfile_S(profile.m_sId, level))
 			return;
 		CreateQRFTacticalCommander(operation, level, home);
@@ -259,6 +309,7 @@ modded class AROR_OperationExecutorComponent
 		m_aForces.Insert(reservation);
 		foreach (AROR_ReaperAirForce packageForce : prepared)
 		{
+			ConfigureForceFunding(packageForce, operation, profile);
 			packageForce.m_bTacticalControlled = operation.m_TacticalCommander != null;
 			reservation.m_iReservedGroups -= packageForce.m_iReservedGroups;
 			reservation.m_iReservedMembers -= packageForce.m_iReservedMembers;
@@ -314,6 +365,8 @@ modded class AROR_OperationExecutorComponent
 		force.m_Escort.m_sFactionKey = force.m_sFactionKey;
 		force.m_Escort.m_sAssetFactionKey = force.m_sAssetFactionKey;
 		force.m_Escort.m_bLogFriendlyDamage = m_bLogFriendlyDamage;
+		ConfigureForceFunding(force.m_Escort, operation, force.m_Profile);
+		force.m_Escort.m_iVehicleLossValue = force.m_Profile.m_iEscortLossValue;
 		Resource transport = Resource.Load(force.m_Profile.m_sVehicle);
 		Resource gunship = Resource.Load(force.m_Profile.m_sEscortVehicle);
 		if (transport && transport.IsValid())
@@ -460,6 +513,30 @@ modded class AROR_OperationExecutorComponent
 		force.m_iFlightDeadline = m_iExecutorClock + m_iReaperFlightTimeout * force.m_iPackageCount;
 		force.m_iEscortDeadline = force.m_iFlightDeadline;
 		return true;
+	}
+
+	protected void WithdrawTacticalAir(AROR_ReaperAirForce force, AROR_Operation operation)
+	{
+		AROR_QRFTacticalCommander commander = operation.m_TacticalCommander;
+		force.m_iSupportEndTime = m_iExecutorClock;
+		MonitorReaperEscort(force);
+		if (!force.m_bTacticalWithdrawing)
+		{
+			force.m_bTacticalWithdrawing = true;
+			if (!force.m_bTransportRetired && !force.m_bTransportLost && force.m_CrewGroup && force.m_CrewGroup.GetPlayerCount() == 0)
+				ReaperOrder(force, ReaperMovePrefab(), force.m_vEgress, m_fReaperDepartureSpeed, m_fReaperTransportHeight + force.m_iPackageIndex * 15);
+			if (force.m_bDismounted && commander.m_bSafeWithdrawalOrigin)
+				ReplaceTacticalWaypoint(force, false, m_sMoveWaypointPrefab, commander.m_vOrigin);
+			Print(string.Format("[AROR TACTICAL] %1 air package=%2 withdrawing; no nearby removal", operation.GetId(), force.m_iPackageIndex + 1), LogLevel.WARNING);
+		}
+		if (TacticalEntitiesFar(force))
+		{
+			bool escortFar = true;
+			if (force.m_Escort)
+				escortFar = TacticalEntitiesFar(force.m_Escort);
+			if (escortFar)
+				FailReaperPackage(force, operation, "Air package withdrew beyond all players; normal retention applies");
+		}
 	}
 
 	protected void FailReaperPackage(AROR_ReaperAirForce force, AROR_Operation operation, string reason)
@@ -1155,7 +1232,7 @@ modded class AROR_OperationExecutorComponent
 		}
 		else if (force.m_iFlightStage == 3)
 		{
-			if (!force.m_bDismountRequested && AROR_ReaperAirForce.SettledAt(force.m_Vehicle, force.m_vLanding))
+			if (!force.ArePassengersOut() && AROR_ReaperAirForce.SettledAt(force.m_Vehicle, force.m_vLanding))
 				force.RequestDismount_S();
 			if (force.m_bDismountRequested && force.ArePassengersOut())
 			{

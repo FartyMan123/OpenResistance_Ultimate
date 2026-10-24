@@ -12,17 +12,22 @@ class AROR_QRFTacticalCommander
 	int m_iNextContactCheck;
 	int m_iNextRetask;
 	int m_iMissionSeconds;
+	int m_iTownHoldSeconds;
+	int m_iTownHoldStarted = -1;
 	int m_iRetaskSeconds;
 	bool m_bHasContact;
 	bool m_bWithdraw;
 	bool m_bSafeWithdrawalOrigin = true;
 	bool m_bRosterDirty;
+	bool m_bKnowsTargetControl;
+	AROR_EFactionRole m_eTargetControl;
 	vector m_vContact;
 	vector m_vLastTaskContact;
 	vector m_vTown;
 	vector m_vOrigin;
 	string m_sOriginLocationId;
 	float m_fTownRadius;
+	float m_fSecurityRadius;
 	float m_fMargin;
 	float m_fThreatStandoff;
 	float m_fWithdrawFraction;
@@ -40,11 +45,13 @@ class AROR_QRFTacticalCommander
 		m_aLost.Clear();
 		m_aWave.Clear();
 		m_iFirstDispatch = -1;
+		m_iTownHoldStarted = -1;
 		m_iLosses = 0;
 		m_bWithdraw = false;
 		m_bHasContact = false;
 		m_bSafeWithdrawalOrigin = true;
 		m_bRosterDirty = false;
+		m_bKnowsTargetControl = false;
 		m_iContactSequence = 0;
 		m_iContactVersion = 0;
 		m_iNextContactCheck = 0;
@@ -155,6 +162,26 @@ class AROR_QRFTacticalCommander
 		m_iLosses++;
 		m_bRosterDirty = true;
 	}
+	//! A returned element leaves the tactical roster without fabricating a combat casualty.
+	void MarkRecovered(int index)
+	{
+		if (index < 0 || index >= m_iPackages || m_aLost[index])
+			return;
+		m_aLost[index] = true;
+		m_aInitial[index] = 0;
+		m_aLiving[index] = 0;
+		m_bRosterDirty = true;
+	}
+	//! A captured town stays the objective; territory/support rules still own actual control.
+	bool RecordTargetControl(AROR_EFactionRole role)
+	{
+		bool changed = m_bKnowsTargetControl && m_eTargetControl != role;
+		m_bKnowsTargetControl = true;
+		m_eTargetControl = role;
+		if (changed)
+			m_bRosterDirty = true;
+		return changed;
+	}
 	void RefreshRoster(int now)
 	{
 		if (!m_bRosterDirty || now < m_iNextRetask)
@@ -183,12 +210,27 @@ class AROR_QRFTacticalCommander
 		}
 		return rank;
 	}
+	bool BeginTownHold(int now)
+	{
+		if (m_iTownHoldSeconds <= 0 || m_iTownHoldStarted >= 0)
+			return false;
+		m_iTownHoldStarted = now;
+		return true;
+	}
+
 	bool ShouldWithdraw(int now, bool reserveAvailable)
 	{
 		if (m_bWithdraw)
 			return true;
 		if (m_iFirstDispatch < 0)
 			return false;
+		// Temporary fixed security task: travel does not consume town occupation time.
+		if (m_iTownHoldSeconds > 0)
+		{
+			if (m_iTownHoldStarted >= 0 && now - m_iTownHoldStarted >= m_iTownHoldSeconds)
+				m_bWithdraw = true;
+			return m_bWithdraw;
+		}
 		if (now - m_iFirstDispatch >= m_iMissionSeconds)
 			m_bWithdraw = true;
 		int initial = 0;
@@ -253,6 +295,41 @@ class AROR_QRFTacticalCommander
 		angle += spread;
 		return m_vTown + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * distance;
 	}
+	//! Fixed-size alternatives: preferred wedge, adjacent wedges and the direct origin-side lane.
+	vector ApproachCandidate(int index, vector origin, float distance, int attempt)
+	{
+		vector preferred = ApproachPoint(index, origin, distance);
+		if (attempt == 0)
+			return preferred;
+		// After the preferred ingress wedges, search the whole town road ring.
+		// Narrow lanes from a new origin must not restrict every package to one hillside.
+		if (attempt >= 4)
+		{
+			float fullAngle = (attempt - 4) * 0.78539816 + index * 0.2;
+			float fullDistance = Math.Max(30, distance);
+			if (attempt >= 8)
+				fullDistance += 20;
+			return m_vTown + Vector(Math.Sin(fullAngle), 0, Math.Cos(fullAngle)) * fullDistance;
+		}
+		vector heading = preferred - m_vTown;
+		int ring = attempt / 4;
+		int slot = attempt - ring * 4;
+		if (slot == 3)
+			heading = origin - m_vTown;
+		float angle = Math.Atan2(heading[0], heading[2]);
+		if (slot == 1)
+			angle += 0.45;
+		if (slot == 2)
+			angle -= 0.45;
+		if (ring == 1)
+			distance += 50;
+		if (ring == 2)
+			distance -= 50;
+		if (ring >= 3)
+			distance += 100;
+		distance = Math.Max(60, Math.Min(distance, m_fTownRadius + m_fMargin - 75));
+		return m_vTown + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * distance;
+	}
 	vector InfantryPoint(int index, int step)
 	{
 		vector center = m_vTown;
@@ -261,11 +338,15 @@ class AROR_QRFTacticalCommander
 		if (!m_SearchPlan)
 			return center;
 		float radius = m_fTownRadius * 0.65;
+		if (m_fSecurityRadius > 0)
+			radius = Math.Min(radius, m_fSecurityRadius * 0.75);
 		if (step == 0)
 			radius = 25;
 		vector point = m_SearchPlan.GetSectorPoint(center, radius, ActiveSectorIndex(index), ActiveSectorCount(), step);
 		float distance = vector.DistanceXZ(point, m_vTown);
 		float limit = m_fTownRadius + m_fMargin;
+		if (m_fSecurityRadius > 0)
+			limit = Math.Min(limit, m_fSecurityRadius);
 		if (distance > limit && distance > 0)
 			point = m_vTown + (point - m_vTown) * (limit / distance);
 		return point;
@@ -282,10 +363,12 @@ class AROR_QRFTacticalCommander
 		else
 			heading = heading.Normalized();
 		vector right = Vector(heading[2], 0, -heading[0]);
-		vector point = center + heading * Math.Max(100, m_fThreatStandoff * 0.6);
+		vector point = center + heading * Math.Min(60, Math.Max(30, m_fThreatStandoff * 0.6));
 		point += right * ((ActiveSectorIndex(index) - (ActiveSectorCount() - 1) * 0.5) * 30);
 		float distance = vector.DistanceXZ(point, m_vTown);
 		float limit = m_fTownRadius + m_fMargin;
+		if (m_fSecurityRadius > 0)
+			limit = Math.Min(limit, m_fSecurityRadius);
 		if (distance > limit && distance > 0)
 			point = m_vTown + (point - m_vTown) * (limit / distance);
 		return point;

@@ -1,6 +1,6 @@
 # QRF tactical commander and staged waves
 
-Status: implemented in source, **not yet compiled or Play-tested in Workbench**. The current Chicken fixture enables it for the Occupier truck/LAV response. Invader operation admission remains OFF; no USSR trigger, territory, factory or resource production has been added.
+Status: native Play verified truck/LAV spawning, boarding, factions, ACTIVE state, truck infantry delivery and continued movement after an empty truck cleared its faction. The last infantry reading remained short of the investigation point. Subsequent paid strategic selection, physical return/completion and [FIA spotting](QRF_SPOTTING.md) changes still need fresh Workbench compilation/Play. Chicken now starts at war level 2 with [money-backed strategic selection](QRF_STRATEGY_ECONOMY.md). Invader operation admission remains OFF; no USSR operation, territory/factory placement or resource production has been added.
 
 ## Responsibility and faction ownership
 
@@ -13,7 +13,7 @@ One server-owned `AROR_QRFTacticalCommander` belongs to each dispatched QRF oper
 
 The same tactical code handles both roles. Asset selection stays in the existing role/faction profiles and recipes. Unit, group and vehicle faction audits still apply. The Resistance remains player-directed.
 
-Strategic/resource selection and tactical execution have separate responsibilities: the readiness-provider preview can later choose a feasible recipe, while this commander executes the immutable recipe/profile and tier that the operation already selected. No resource spending, stock regeneration or automatic preview caller is connected here.
+Strategic selection and tactical execution have separate responsibilities: the optional money-backed manager/executor policy selects an affordable response, while this commander executes its immutable recipe/profile and tier. The separate readiness-provider preview remains available for future physical inventory integration; stock regeneration and automatic preview callers are not connected.
 
 ## Response lifecycle
 
@@ -59,19 +59,19 @@ Assigned defenders and operation-owned units already publish validated hostile-d
 
 Fresh ground reports can retask at most every 15 seconds. A first contact, expiry or cumulative movement beyond 75 metres from the last commanded contact changes the search version. Small incremental reports cannot prevent eventual retasking once their cumulative displacement exceeds that threshold. Stale/missing contact returns search to the town.
 
-Infantry first investigates its contact sector, moves through four vicinity sectors, then holds a sector. A leg advances on arrival or its bounded timeout. IFV-delivered infantry begins on a flank sector while motorized/foot troops investigate contact. Points remain inside the defended vicinity. New waves and lost packages redistribute the surviving packages across available sectors, subject to the same retask interval.
+Every delivered fireteam first investigates the reported contact or town center, with separate nearby points, then moves through four vicinity sectors and holds a sector. This includes IFV-delivered infantry; its supporting vehicle receives separate cover orders. A leg advances on arrival or its bounded timeout. Walking deadlines scale with distance and configured planning speed, from 60 seconds to a configurable ceiling (180 seconds in Chicken), rather than abandoning a long investigation walk after 60 seconds. Progress diagnostics distinguish physical arrival from timeout. Points remain inside the defended vicinity. New waves and lost packages redistribute the surviving packages across available sectors, subject to the same retask interval.
 
 This assigns investigation and containment orders to native AI. It does not implement room-by-room building clearance, omniscient detection, coordinated suppression or guaranteed road encirclement. Native navigation/perception/combat still determine how units move and fight.
 
 ### Ground delivery and support
 
-Launch offsets run laterally around the selected origin. Separate approach wedges are projected onto reachable road points; an unavailable road result rejects that package rather than guessing an API or teleporting vehicles.
+Launch offsets run laterally around the selected origin. Road queries first project the origin and goal onto terrain height, including configured origins authored with Y=0. A bounded search tries the preferred approach wedge, adjacent wedges and direct origin-side lanes at nearby radii (12 queries by default). Results must stay within the defended vicinity, preserve a nominal standoff with at most 75 m road snapping, remain at least 40 m from launch and keep configured spacing from other ground approach points. Only exhausting these candidates rejects the package; no teleport or unvalidated direct route is substituted.
 
-Passenger vehicles use their profile dismount distance, increased to at least 200 m when a fresh local hostile report exists. A vehicle must reach its approach area and slow below the configured code threshold before normal passenger exits begin. Infantry tasks start only after the living passengers are actually out. A stalled ingress has a 120-second leg deadline and orders withdrawal instead of waiting forever.
+Ground QRF delivery prioritises the town objective. Profile/contact standoff is capped to 60% of `m_fQRFObjectiveDeliveryRadius` (60 m in Chicken); road candidates must be within that radius (100 m), inside the defended vicinity and at least 15 m from the centre. A stopped vehicle must physically reach within 20 m of its selected road point and remain within the objective delivery radius before unloading. Native waypoint completion does not relax these gates. The driver receives a hold order before staggered animated exits. Infantry tasks start only after living passengers are physically out. Ingress allows 600 seconds with up to four road retries after 30 seconds without 15 metres of movement. Unloading has a 30-second retry window; fixed security mode renews that window while holding the delivery point, bounded by the town task and outer operation timeout; delayed native cleared-position recovery is available for stuck AI ground passengers. Travel and recovery diagnostics distinguish failure to reach the delivery point from rejected passenger exits. These revised objective/exit rules require native verification.
 
 The truck waits at the drop point. An IFV or armour package receives its own bounded reachable road cover point, normally on the origin side of reported contact. Infantry and vehicle task timers are independent, so passenger searching cannot starve vehicle support orders. Cover is reconsidered every 45 seconds. This is not a convoy driving controller and does not guarantee matching arrival times or terrain line of sight.
 
-Player-commanded groups are not retasked. Existing faction-change and vehicle-destruction validation remains in the native monitor.
+Player-commanded groups are not retasked. Personnel affiliation and vehicle-destruction validation remain in the native monitor. A native vehicle affiliation component may return an empty key or its declared asset key after occupants exit: this is tolerated for proven-empty passenger vehicles when their living infantry have left, including early native dismounts, never armour. Early dismounted infantry continue toward town instead of losing their package. A corresponding occupied-seat transition during unloading gets at most five seconds to settle. Missing components, unrelated keys and persistent occupied-vehicle mismatches still fail validation; no runtime faction repainting is performed. A vehicle audit failure degrades its own active package, preserving the other packages; required pre-dispatch package failures still cancel the complete recipe. Detailed audit diagnostics identify the package, profile, expected/actual key, occupancy and position.
 
 ### Air insertion and gunships
 
@@ -83,7 +83,9 @@ Ground recipes still cannot contain air profiles. Ground combined arms and compl
 
 ## Withdrawal and persistence
 
-The whole QRF withdraws after 600 active seconds, when target control is lost, when its recorded outpost is lost, or when known living strength reaches 40% of readied starting strength and no reserve remains available. An individual package can withdraw at 50% strength. Ground strength includes its soldiers/crew; air tactical strength counts the inserted infantry so routine aircraft departures do not look like casualties.
+The intended sequence is enter town, unload, investigate and hold town sectors. Fixed security mode now lasts 900 seconds from the first physically dismounted infantry entry into the 100-metre objective area (armour-only entry uses the hull). Later arrivals do not reset it. Capture does not end or restart this temporary timer; a post-recapture timer is not yet wired. In fixed mode, casualty-based whole-response and local-package tactical retreats are suppressed, while total-force losses, missing targets, lost origins and the outer timeout remain authoritative. The manager allows at least 2,700 active seconds for travel, holding and return. Set m_iQRFTownHoldDuration to 0 to restore the legacy 600-second mission/casualty policy.
+
+`m_bTownCaptureQRFs` on the operation manager opts into town/city capture responses (off by default, on in Chicken). After campaign readiness, the server observes canonical location events and requests a response for the previous AI owner when a hostile role takes its settlement. Registration/restoration provides a baseline and does not spawn a historical response. Existing role gates, reaction delay, cooldown, capacity and same-target deduplication still apply; an existing defense QRF is reused. Invader admission remains off, so captured USSR territory cannot dispatch an Invader response until that separate gate is enabled. The separate m_bOutpostCaptureQRFs switch enables ordinary/military outpost control events in Chicken; it also covers airport/factory/port/resource control events. With strategic economy enabled, the shared admission path applies QRF prices and payments. The QRF investigates and holds; settlement support/capture mechanics still decide ownership.
 
 Vehicles receive reachable return orders and dismounted troops move toward the safe origin. There is no teleport/remount shortcut. If an origin outpost changes hands, the commander seeks another eligible same-role outpost. If none exists, it holds troops/vehicles rather than ordering them back to the captured base. A missing return road also produces a hold. Configured fallback origins have no ownership entity to monitor.
 
@@ -104,9 +106,18 @@ All settings are attributes on the existing operation executor. Tactical coordin
 | `m_iQRFReserveWait` | 300 s | Finite reserve deadline after first dispatch |
 | `m_iQRFMaxLiveGround` | 6 | Live ground packages across the executor |
 | `m_iQRFMaxLiveAircraft` | 6 | Live transport/gunship airframes across the executor |
-| `m_iQRFTacticalDuration` | 600 s | Active task deadline |
+| `m_iQRFTacticalDuration` | 600 s (legacy mode) | Active task deadline |
+| `m_iQRFTownHoldDuration` | 900 s | Shared security hold from first physical town entry; 0 restores legacy withdrawal |
 | `m_iQRFOrderInterval` | 15 s | Contact/roster/infantry retask interval |
-| `m_fQRFThreatDismount` | 200 m | Reported-threat dismount standoff |
+| `m_iQRFApproachAttempts` | 12 | Maximum road queries for a vehicle's initial approach |
+| `m_fQRFVehicleArrivalTolerance` | 20 m | Physical stopped-vehicle tolerance around the delivery road point |
+| `m_fQRFObjectiveDeliveryRadius` | 100 m | Maximum distance from town centre for road-point selection and unloading |
+| `m_iQRFExitRecoveryDelay` | 10 s | Delay before native cleared-position recovery for stuck ground AI passengers; 0 disables |
+| `m_iQRFIngressTimeout` | 600 s | Ground travel deadline including bounded route recovery |
+| `m_iQRFExitTimeout` | 30 s | Separate passenger-exit deadline |
+| `m_iQRFInfantryLegTimeout` | 180 s | Maximum distance-scaled infantry leg duration |
+| `m_fQRFInfantryPlanningSpeed` | 1.5 m/s | Walking-speed estimate used to budget a leg |
+| `m_fQRFThreatDismount` | 200 m | Legacy threat standoff preference, capped by objective delivery policy |
 | `m_fQRFWithdrawFraction` | 0.4 | Whole-force strength threshold without reserve |
 | `m_fQRFLocalWithdrawFraction` | 0.5 | Local package strength threshold |
 | `m_iQRFGroundRetention` | 120 s | Minimum ground retention age |
@@ -118,14 +129,24 @@ The six-package ceiling does **not** mean six soldiers. Each package can include
 
 ## Verification and next Play test
 
+The latest native run reached ACTIVE with both vehicles correctly affiliated and verified truck unloading. Three seconds after its infantry received an investigation order, a vehicle affiliation audit cancelled the entire operation; the old diagnostic did not identify the vehicle or actual key. The empty-vehicle exception, package-local audit handling and revised infantry walking behavior address that failure path, but require fresh Workbench compilation/Play. Thirty-three source-adapted checks pass for the revised validation, occupancy, walking deadlines and task progression with native dependencies mocked; installed configuration checks also pass.
+
 Offline checks exercise source-adapted policy/lifecycle bodies with mocked engine operations: 582 policy assertions across five tiers and eight sizes, 25 ground lifecycle assertions, 29 air lifecycle assertions, 11 contact/roster assertions and three retained-aircraft counter cases passed. Installed-resource/configuration checks also passed for 25 GUIDs, navigation, eight profiles, all prepared levels/recipes, tactical settings and the disabled Invader gate. Workbench smoke tests are connected to the existing optional test runner and do not create QRFs or enable Invaders. These checks cannot establish Enforce compilation, native navigation, boarding, flight or multiplayer behavior.
 
 1. Stop Play, compile Game scripts successfully, then reload `AROR_Everon_Chicken` from disk.
-2. Run the existing US defender test in Provins. Expect `[AROR TACTICAL]` with tier 1, first wave 2, reserve 0, followed by one truck and one LAV under one ACTIVE operation. Both must remain `AROR_OCCUPIERS`.
-3. Let them arrive. Verify passenger exit before infantry search, distinct search sectors, truck holding and IFV road cover. Attack another assigned defender away from the first contact to check bounded retasking. Then stop firing and check return to town search after report expiry.
-4. Test active package losses, nearby survivor/wreck retention, withdrawal and terminal cancellation. Check capacity stays held near players and releases only after age AND all-player distance. Test with a second player near the force as well.
+2. For the exact fixed regression test, disable `m_bQRFStrategicEconomy`, then run the existing US defender test in Provins. Expect `[AROR TACTICAL]` with tier 1, first wave 2, reserve 0, followed by one truck and one LAV under one ACTIVE operation. Both must remain `AROR_OCCUPIERS`. Normal Chicken leaves strategic economy enabled and can select a larger affordable tier; use its strategy/payment guide for that acceptance run.
+3. Let them arrive without shooting the response. Verify passenger exit, then both fireteams walking toward their initial town/contact investigation points before sector patrol. Check infantry progress logs and the explicit physical-arrival message, truck holding and IFV road cover. An empty delivered transport must not cancel the healthy response; any actual mismatch must identify the vehicle/key. Attack another assigned defender away from the first contact to check bounded retasking. Then stop firing and check return to town search after report expiry.
+4. Test the road stop: the LAV should hold its driver, unload infantry, then cover while infantry investigates and patrols. Check travel logs if it remains mounted. Test an authoritative town control change both with and without an existing defense QRF: the previous hostile Occupier owner can request one response; an existing QRF continues investigating rather than withdrawing because of capture. It must not flip settlement ownership directly or dispatch Invaders while disabled. Then test active losses, nearby retention, withdrawal and cancellation with a second player near the force.
 5. In a separate explicit test configuration, use a tier-4/5 ground response with at least four elements. Verify first-wave size, 60-second reserve delay, live cap, finite unused-reserve expiry and no duplicate ACTIVE acknowledgement. The normal truck/LAV fixture has no second wave by design.
 6. For flight testing, clear the ground override, explicitly select the existing REAPER test and level 5. Expect three pairs initially and at most six live aircraft; later pairs need two free slots. Check boarding holds, independent pads, actual exits, gunship reports, traffic yielding and departure before judging performance.
 7. Keep Invader admission OFF during these tests. Enable a separate USSR test only when explicitly ready to establish valid Invader-owned targets/origins. The optional readiness preview remains disconnected from dispatch and stock spending.
 
 Extenders: opt in on the executor, preserve immutable tier/package semantics and account for virtual/retained capacity. Existing non-tactical scenarios retain their execution path. Resource owners can later supply readiness/reservation data through the existing provider seam; no factory, garrison or territory implementation is duplicated here.
+
+Town-hold regression: node tools/Test-QRFTownHold.js checks actual-source timer boundaries, independent operation timeout and bounded stalled-route recovery with mocked native services. Compile/reload Chicken and verify each package reaches town, infantry investigate, survivors remain for the full 15-minute arrival-based hold, then withdraw without nearby deletion. Native driving, unloading and the complete hold are not certified by the offline tests.
+
+A later native capture test confirmed the capture event but failed second-package road planning from Pinewood Lake. The approach search now tries a whole-town ring after its preferred ingress wedges and can use the safest compact candidate with at least 18 metres separation when preferred spacing cannot fit. Objective-distance limits and the query budget remain unchanged. Airport origins are eligible alongside ordinary/military outposts. These changes need native validation.
+
+Ground launch/readiness correction: strategic outpost coordinates are now search anchors for clear nearby road pads rather than direct vehicle positions. Native seating is verified before readiness; premature foot orders are suppressed while the group remains partly seated before authorized delivery. This applies to both role bindings. See tools/Test-QRFIngress.js and the airport regression in TRUCK_IFV_QRF_TEST.md; native acceptance remains pending.
+
+Combat affiliation follow-up: the next airport run verified road ingress, armour arrival and recapture but exposed native blank hull keys during combat. A complete empty/own-AI seat audit now permits that native fallback without rewriting vehicle factions. Explicit foreign occupants/affiliations still reject the package. Test-QRFVehicleFaction.js covers 14 mocked cases; native combat and complete delivery/hold verification remain pending.
