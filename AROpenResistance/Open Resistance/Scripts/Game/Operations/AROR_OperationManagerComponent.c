@@ -9,6 +9,17 @@ class AROR_OperationManagerComponentClass : SCR_BaseGameModeComponentClass
 
 class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 {
+	[Attribute("0", desc: "Allow Invader attacks and QRF requests. Keep disabled until territory/resource integration or an explicit disposable Invader test is ready.")]
+	protected bool m_bInvaderOperationsEnabled;
+
+	bool AreInvaderOperationsEnabled()
+	{
+		return m_bInvaderOperationsEnabled;
+	}
+	int GetClockSeconds()
+	{
+		return m_iClock;
+	}
 	[Attribute("", desc: "Optional Occupier scheduled attack target: stable location ID. Empty disables automatic attacks for this role.")]
 	protected string m_sOccupiersAttackTargetId;
 	[Attribute("", desc: "Optional Invader scheduled attack target: stable location ID. Empty disables automatic attacks for this role.")]
@@ -44,6 +55,53 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 	protected int m_iInvadersNextAttack;
 	protected int m_iOccupiersNextQRF;
 	protected int m_iInvadersNextQRF;
+	protected ref array<ref AROR_CombatContact> m_aCombatContacts = {};
+	protected int m_iContactSequence;
+
+	//! Trusted server combat integration; carries snapshots, never live attacker references.
+	void ReportCombatContact_S(AROR_EFactionRole role, string locationId, vector position)
+	{
+		if (!IsReady() || !IsEnemyRole(role) || !HasLocation(locationId))
+			return;
+		AROR_CombatContact contact;
+		foreach (AROR_CombatContact existing : m_aCombatContacts)
+		{
+			if (existing.m_eRole == role && existing.m_sLocationId == locationId)
+				contact = existing;
+		}
+		if (contact && m_iClock - contact.m_iTime < 5)
+			return;
+		if (!contact)
+		{
+			if (m_aCombatContacts.Count() >= 32)
+				m_aCombatContacts.Remove(0);
+			contact = new AROR_CombatContact();
+			m_aCombatContacts.Insert(contact);
+		}
+		contact.m_eRole = role;
+		contact.m_sLocationId = locationId;
+		contact.m_vPosition = position;
+		contact.m_iTime = m_iClock;
+		m_iContactSequence++;
+		contact.m_iSequence = m_iContactSequence;
+	}
+
+	AROR_CombatContact GetRecentCombatContact(AROR_EFactionRole role, vector origin, float radius, int maxAge)
+	{
+		if (!IsReady())
+			return null;
+		AROR_CombatContact best;
+		foreach (AROR_CombatContact contact : m_aCombatContacts)
+		{
+			if (contact.m_eRole != role || m_iClock - contact.m_iTime > maxAge)
+				continue;
+			if (vector.DistanceXZ(contact.m_vPosition, origin) > radius)
+				continue;
+			if (!best || contact.m_iSequence > best.m_iSequence)
+				best = contact;
+		}
+		return best;
+	}
 
 	static AROR_OperationManagerComponent GetInstance()
 	{
@@ -86,6 +144,28 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 	string ReportAttack_S(AROR_EFactionRole defendingRole, string locationId)
 	{
 		return RequestOperation_S(defendingRole, AROR_EOperationType.QRF, locationId, m_iQRFReaction);
+	}
+
+	//! Trusted damage-report adapter: snapshot the attributed attacker at report time only.
+	//! Existing requests keep their force, deadline and cooldown; only pre-search intel changes.
+	string ReportAttackAt_S(AROR_EFactionRole defendingRole, string locationId, vector reportedPosition)
+	{
+		ReportCombatContact_S(defendingRole, locationId, reportedPosition);
+		string id = ReportAttack_S(defendingRole, locationId);
+		AROR_Operation operation = GetOperation(id);
+		if (operation && !operation.IsTerminal() && operation.GetQRFSearchPlan())
+			operation.GetQRFSearchPlan().ReportContact_S(reportedPosition, m_iClock);
+		return id;
+	}
+
+	//! Freeze the shared plan once, using the scheduler clock for contact expiry.
+	AROR_QRFSearchPlan PrepareQRFSearch_S(string operationId, int maxContactAge)
+	{
+		AROR_Operation operation = GetOperation(operationId);
+		if (!IsReady() || !operation || operation.GetState() != AROR_EOperationState.ACTIVE || maxContactAge < 1 || !operation.GetQRFSearchPlan())
+			return null;
+		operation.GetQRFSearchPlan().BeginSearch_S(m_iClock, maxContactAge);
+		return operation.GetQRFSearchPlan();
 	}
 
 	//! Executor acknowledges that its force exists and has received its orders.
@@ -133,6 +213,8 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 
 	protected string RequestOperation_S(AROR_EFactionRole role, AROR_EOperationType type, string targetId, int delaySeconds)
 	{
+		if (role == AROR_EFactionRole.INVADERS && !m_bInvaderOperationsEnabled)
+			return string.Empty;
 		if (!IsReady() || !IsEnemyRole(role) || delaySeconds < 0 || delaySeconds > 86400 || !HasLocation(targetId))
 			return string.Empty;
 

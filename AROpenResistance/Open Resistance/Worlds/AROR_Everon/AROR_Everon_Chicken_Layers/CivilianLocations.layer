@@ -2,25 +2,31 @@ $grp SCR_ChimeraCharacter : "{26A9756790131354}Prefabs/Characters/Factions/BLUFO
  AROR_Provins_QRFDefender {
   components {
    AROR_QRFDefenseComponent "{6AAE74BEB126DDB6}" {
-    m_bInitializeFromDefendingRole 1
     m_bEnabled 1
     m_eDefendingRole OCCUPIERS
     m_sDefendedLocationId "everon_provins"
     m_iReportInterval 5
     m_bDebugReports 1
+    m_bInitializeFromDefendingRole 1
+   }
+   SCR_CharacterFactionAffiliationComponent "{520EC961FB0A2E90}" {
+    "faction affiliation" "AROR_OCCUPIERS"
    }
   }
   coords 5503.833 96.354 6081.837
  }
  AROR_Provins_ManualQRFDefender {
   components {
-   AROR_QRFDefenseComponent {
-    m_bInitializeFromDefendingRole 1
+   AROR_QRFDefenseComponent "{6AAE9C05758454C4}" {
     m_bEnabled 1
     m_eDefendingRole OCCUPIERS
     m_sDefendedLocationId "everon_provins"
     m_iReportInterval 5
     m_bDebugReports 1
+    m_bInitializeFromDefendingRole 1
+   }
+   SCR_CharacterFactionAffiliationComponent "{520EC961FB0A2E90}" {
+    "faction affiliation" "AROR_OCCUPIERS"
    }
   }
   coords 5489.166 95.901 6086.587

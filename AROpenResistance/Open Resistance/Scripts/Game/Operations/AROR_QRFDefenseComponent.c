@@ -198,7 +198,7 @@ class AROR_QRFDefenseComponent : ScriptComponent
 
 		// Gate before synchronous operation callbacks. Never queue or retry an old damage event.
 		m_iNextReportAttempt = m_iClock + m_iReportInterval;
-		string id = operations.ReportAttack_S(m_eDefendingRole, m_sDefendedLocationId);
+		string id = operations.ReportAttackAt_S(m_eDefendingRole, m_sDefendedLocationId, attacker.GetOrigin());
 		if (id.IsEmpty())
 			DebugReport("Hostile damage verified, but scheduler rejected QRF: check cooldown, capacity and conflicting operation");
 		if (!id.IsEmpty() && id != m_sLastOperationId)

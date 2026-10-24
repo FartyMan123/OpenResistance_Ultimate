@@ -39,6 +39,12 @@ class AROR_OperationTestComponent : SCR_BaseGameModeComponent
 		{
 			AROR_ForcePoolSmokeTests.Run();
 			AROR_ResponseScaleSmokeTests.Run();
+			AROR_QRFSearchPlanSmokeTests.Run_S();
+			AROR_ReaperLandingSearchSmokeTests.Run_S();
+			AROR_AirTrafficPolicySmokeTests.Run_S();
+			AROR_GroundQRFRecipeSmokeTests.Run_S();
+			AROR_QRFSelectionSmokeTests.Run_S();
+			AROR_QRFTacticalSmokeTests.Run_S();
 			AROR_OperationSmokeTests.Run_S(m_sSmokeAttackTargetId, m_sSmokeDefendedTargetId);
 			return;
 		}

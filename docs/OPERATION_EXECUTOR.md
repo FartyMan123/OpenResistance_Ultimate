@@ -1,6 +1,8 @@
 # Infantry executor and QRF testing in Everon_Chicken
 
-Chicken now has preconfigured force pools and ground execution paths: use [FORCE_POOL_QUICKSTART.md](FORCE_POOL_QUICKSTART.md) for the current setup. The infantry-only instructions below remain available when `m_aForceProfiles` is empty. Helicopter/gunship profiles are configured but excluded until a flight adapter exists.
+**Current Chicken fixture:** one truck plus one IFV under the authored `combined_arms_l1` ground recipe. The new [tactical commander and staged waves](QRF_TACTICAL_COMMANDER.md) are enabled; this small response stays in one wave. REAPER dispatch and Invader admission are off. See [Truck/IFV test instructions](TRUCK_IFV_QRF_TEST.md); this fixture supersedes older forced-profile/level-5 instructions below. Revised tactical behavior requires fresh compilation and Play verification.
+
+Chicken now has preconfigured force pools and ground execution paths: use [FORCE_POOL_QUICKSTART.md](FORCE_POOL_QUICKSTART.md) for the current setup. The infantry-only instructions below remain available when `m_aForceProfiles` is empty. The current Chicken fixture enables the [REAPER airborne QRF test](AIRBORNE_QRF_PROTOTYPE.md) at level 5. Its adapter explicitly selects airborne packages; normal weighted airborne selection remains excluded.
 
 Use `Worlds/AROR_Everon/AROR_Everon_Chicken.ent`. Its `AROR_GameMode_Base1` instance now contains `AROR_OperationExecutorComponent` and `AROR_OperationTestComponent`. These additions are in Chicken's Managers layer; the original Everon world and shared game-mode prefab do not receive the executor or test component. Existing shared commander/scheduler scripts still apply to both worlds.
 
