@@ -33,6 +33,63 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 	protected int m_iWakeRetryInterval;
 	[Attribute("", desc: "Optional force pool. Empty retains the existing infantry-only configuration.")]
 	protected ref array<ref AROR_ForceProfile> m_aForceProfiles;
+	[Attribute("", desc: "Optional explicit ground QRF recipe ID; empty restores existing profile/level selection. Same ID can have one entry per role.")]
+	protected string m_sGroundQRFRecipeId;
+	[Attribute("", desc: "Optional Invader-specific ground recipe ID; overrides the shared ground recipe for this role only. Does not enable Invader dispatch.")]
+	protected string m_sInvadersGroundQRFRecipeId;
+
+	protected string GetGroundQRFRecipeId(AROR_EFactionRole role)
+	{
+		if (role == AROR_EFactionRole.INVADERS && !m_sInvadersGroundQRFRecipeId.IsEmpty())
+			return m_sInvadersGroundQRFRecipeId;
+		return m_sGroundQRFRecipeId;
+	}
+	[Attribute("", desc: "Authored ground QRF recipes resolving existing faction-specific force profiles")]
+	protected ref array<ref AROR_GroundQRFRecipe> m_aGroundQRFRecipes;
+	protected ref AROR_QRFReadinessProvider m_QRFReadinessProvider;
+
+	//! Registration does not enable Invader dispatch or manufacture stock.
+	void RegisterQRFReadinessProvider_S(AROR_QRFReadinessProvider provider)
+	{
+		if (Replication.IsServer())
+			m_QRFReadinessProvider = provider;
+	}
+
+	//! Read-only planning seam for future territory/strategy integration. Never spawns.
+	AROR_QRFSelectionDecision PreviewInvaderQRF_S(string targetId, AROR_QRFSelectionContext context)
+	{
+		AROR_QRFSelectionDecision rejected = new AROR_QRFSelectionDecision();
+		rejected.m_sReason = "Server campaign/executor not ready for planning";
+		if (!Replication.IsServer() || !m_bEnabled || !m_Operations)
+			return rejected;
+		AROR_CommanderManagerComponent commanders = AROR_CommanderManagerComponent.GetInstance();
+		AROR_LocationManagerComponent locations = AROR_LocationManagerComponent.GetInstance();
+		if (!commanders || !commanders.IsCampaignActive() || !locations)
+			return rejected;
+		AROR_Commander commander = commanders.GetCommander(AROR_EFactionRole.INVADERS);
+		if (!commander)
+			return rejected;
+		AROR_LocationComponent target = locations.GetLocationById(targetId);
+		rejected.m_sReason = "Target is not a registered Invader-controlled location";
+		if (!target || target.GetControllingRole() != AROR_EFactionRole.INVADERS)
+			return rejected;
+		rejected.m_sReason = "No military readiness provider registered; no resources assumed";
+		if (!m_QRFReadinessProvider)
+			return rejected;
+		int now = m_Operations.GetClockSeconds();
+		AROR_QRFReadinessSnapshot snapshot = m_QRFReadinessProvider.CaptureReadiness_S(AROR_EFactionRole.INVADERS, commander.GetFactionKey(), targetId, now);
+		rejected.m_sReason = "Readiness provider returned no usable snapshot";
+		if (!snapshot || !snapshot.IsValidAt(now))
+			return rejected;
+		AROR_LocationComponent origin = locations.GetLocationById(snapshot.m_sOriginLocationId);
+		rejected.m_sReason = "Resource origin is not an eligible friendly outpost";
+		if (!origin || origin == target || origin.GetLocationType() != AROR_ELocationType.OUTPOST)
+			return rejected;
+		if (origin.GetControllingRole() != AROR_EFactionRole.INVADERS || !IsLaunchPositionSafe(origin.GetCenter(), target.GetCenter()))
+			return rejected;
+		AROR_QRFReadinessSnapshot limited = snapshot.WithRuntimeCapacity(m_iMaxGroups - GetReservedGroups(), m_iMaxMembers - GetReservedMembers(), m_iMaxVehicles - GetReservedVehicles());
+		return AROR_QRFSelectionPolicy.Select(m_aGroundQRFRecipes, m_aForceProfiles, AROR_EFactionRole.INVADERS, commander.GetFactionKey(), context, limited, now);
+	}
 	[Attribute("4", desc: "Maximum reserved ground vehicles across both roles")]
 	protected int m_iMaxVehicles;
 	[Attribute("{000CD338713F2B5A}Prefabs/AI/Groups/Group_Base.et", UIWidgets.ResourceNamePicker, desc: "Empty base group used for separate vehicle crews", params: "et")]
@@ -47,7 +104,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 	protected int m_iWorkbenchResponseLevel;
 	[Attribute("25", desc: "Metres between package launch positions in a multi-package response")]
 	protected float m_fPackageSpacing;
-	[Attribute("1", desc: "Mounted QRFs sweep reachable town road points before returning to their deployment orders. Does not track player positions.")]
+	[Attribute("1", desc: "Mounted QRFs investigate reported contact then sweep separate town sectors before deployment. No live player tracking.")]
 	protected bool m_bQRFVehicleSearch;
 	[Attribute("180", desc: "Maximum seconds for a mounted town search", params: "1 900 1")]
 	protected int m_iQRFSearchDuration;
@@ -57,6 +114,12 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 	protected int m_iQRFSearchDwell;
 	[Attribute("60", desc: "Seconds before skipping a stalled search leg", params: "10 300 1")]
 	protected int m_iQRFSearchLegTimeout;
+	[Attribute("120", desc: "Maximum age in seconds of attacker-position intel when the QRF starts searching", params: "1 900 1")]
+	protected int m_iQRFContactMaxAge;
+	[Attribute("150", desc: "Metres beyond the location radius allowed for investigating reported contact", params: "0 500 10")]
+	protected float m_fQRFSearchMargin;
+	[Attribute("50", desc: "Minimum metres between road stops assigned to any packages of the same QRF", params: "10 150 5")]
+	protected float m_fQRFSearchStopSpacing;
 	[Attribute("0", desc: "Temporary diagnostic: report the first same-faction damage event on each operation-owned character/vehicle. Does not change combat behavior.")]
 	protected bool m_bLogFriendlyDamage;
 
@@ -112,9 +175,14 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 				snapshot.Insert(force);
 		}
 		foreach (AROR_OperationForce packageForce : snapshot)
-			ReleaseForce(packageForce);
+		{
+			if (packageForce.m_bTacticalControlled && packageForce.m_bOrdersIssued && !AROR_ReaperAirForce.Cast(packageForce))
+				RetainTacticalForce(packageForce);
+			else
+				ReleaseForce(packageForce);
+		}
 		if (snapshot.Count() > 0)
-			Print(string.Format("[AROR] Operation %1 cleanup completed for %2 force records; player preservation rules apply", operationId, snapshot.Count()), LogLevel.NORMAL);
+			Print(string.Format("[AROR] Operation %1 terminal handling completed for %2 force records; tactical retention and player preservation rules apply", operationId, snapshot.Count()), LogLevel.NORMAL);
 	}
 
 	protected void ReportPackageProgress(AROR_OperationForce force, string progress)
@@ -127,12 +195,20 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 
 	protected void TryActivateOperation(AROR_Operation operation)
 	{
-		if (!operation || operation.GetState() != AROR_EOperationState.SPAWNING)
+		if (!operation || operation.IsTerminal())
+			return;
+		AROR_QRFTacticalCommander tactical = operation.m_TacticalCommander;
+		if (operation.GetState() != AROR_EOperationState.SPAWNING && !tactical)
 			return;
 		int packages;
 		foreach (AROR_OperationForce force : m_aForces)
 		{
 			if (force.m_sOperationId != operation.GetId())
+				continue;
+			if (force.m_bTacticalRetained)
+				continue;
+			AROR_QRFDeferredForce deferred = AROR_QRFDeferredForce.Cast(force);
+			if (tactical && deferred && tactical.IsReserve(force.m_iPackageIndex))
 				continue;
 			if (force.m_bReservation || !force.m_bReady)
 				return;
@@ -140,9 +216,17 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		}
 		if (packages == 0)
 			return;
+		int required = operation.GetPackageCount();
+		if (tactical)
+			required = tactical.m_iFirstWaveCount;
+		if (operation.GetState() == AROR_EOperationState.SPAWNING)
+		{
+			if ((!operation.GetRecipeId().IsEmpty() || tactical) && packages != required)
+				return;
+		}
 		foreach (AROR_OperationForce ready : m_aForces)
 		{
-			if (ready.m_sOperationId != operation.GetId() || ready.m_bOrdersIssued)
+			if (ready.m_sOperationId != operation.GetId() || ready.m_bOrdersIssued || ready.m_bReservation || ready.m_bTacticalRetained)
 				continue;
 			AROR_GroundOperationForce ground = AROR_GroundOperationForce.Cast(ready);
 			if (ground)
@@ -155,18 +239,34 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			else
 				ready.m_Group.AddWaypoint(ready.m_Waypoint);
 			ready.m_bOrdersIssued = true;
+			ready.m_iTacticalLegDeadline = m_iExecutorClock + 120;
 		}
-		m_Operations.MarkActive_S(operation.GetId());
+		if (operation.GetState() == AROR_EOperationState.SPAWNING)
+		{
+			m_Operations.MarkActive_S(operation.GetId());
+			if (tactical)
+				tactical.MarkDispatched(m_iExecutorClock);
+		}
 	}
 
 	//! One lost element reduces a multi-package response; the final lost element fails it.
 	protected void FailPackage(AROR_OperationForce force, AROR_Operation operation, string reason)
 	{
+		if (operation.GetState() == AROR_EOperationState.SPAWNING && (!operation.GetRecipeId().IsEmpty() || operation.m_TacticalCommander))
+		{
+			FailOperation(operation, "Required composite element lost before dispatch: " + reason);
+			return;
+		}
 		Print(string.Format("[AROR] Operation %1 lost package %2: %3", operation.GetId(), force.m_iPackageIndex + 1, reason), LogLevel.NORMAL);
-		ReleaseForce(force);
+		if (operation.m_TacticalCommander)
+			operation.m_TacticalCommander.MarkLost(force.m_iPackageIndex);
+		if (force.m_bTacticalControlled && force.m_bOrdersIssued && !AROR_ReaperAirForce.Cast(force))
+			RetainTacticalForce(force);
+		else
+			ReleaseForce(force);
 		foreach (AROR_OperationForce survivor : m_aForces)
 		{
-			if (survivor.m_sOperationId == operation.GetId() && !survivor.m_bReservation)
+			if (survivor.m_sOperationId == operation.GetId() && !survivor.m_bTacticalRetained && (!survivor.m_bReservation || AROR_QRFDeferredForce.Cast(survivor)))
 			{
 				TryActivateOperation(operation);
 				return;
@@ -177,6 +277,15 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 
 	protected void FailOperation(AROR_Operation operation, string reason)
 	{
+		if (operation.GetState() == AROR_EOperationState.ACTIVE && operation.m_TacticalCommander && m_sQRFConstructionOperation == operation.GetId())
+		{
+			AROR_OperationForce partial = FindPackage(operation.GetId(), m_iQRFConstructionIndex);
+			if (partial)
+				ReleaseForce(partial);
+			operation.m_TacticalCommander.MarkLost(m_iQRFConstructionIndex);
+			Print(string.Format("[AROR TACTICAL] %1 reserve construction failed: %2; existing force continues", operation.GetId(), reason), LogLevel.WARNING);
+			return;
+		}
 		m_Operations.ResolveOperation_S(operation.GetId(), AROR_EOperationState.FAILED, reason);
 	}
 
@@ -309,6 +418,117 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		return selected;
 	}
 
+	//! Shared by ground and air QRFs. Existing role coordinates remain a scenario fallback.
+	protected vector ResolveQRFOrigin(AROR_Operation operation, AROR_LocationComponent target, vector fallback, bool logOrigin = true)
+	{
+		if (!target || operation.GetType() != AROR_EOperationType.QRF)
+			return fallback;
+		AROR_LocationManagerComponent manager = AROR_LocationManagerComponent.GetInstance();
+		if (!manager)
+			return fallback;
+		array<AROR_LocationComponent> outposts = {};
+		manager.GetLocationsOfType(AROR_ELocationType.OUTPOST, outposts);
+		AROR_LocationComponent nearest;
+		float distance = float.MAX;
+		foreach (AROR_LocationComponent outpost : outposts)
+		{
+			if (!outpost || outpost == target || outpost.GetControllingRole() != operation.GetRole())
+				continue;
+			if (!IsLaunchPositionSafe(outpost.GetCenter(), target.GetCenter()))
+				continue;
+			float candidateDistance = vector.DistanceXZ(outpost.GetCenter(), target.GetCenter());
+			if (candidateDistance < distance)
+			{
+				nearest = outpost;
+				distance = candidateDistance;
+			}
+		}
+		if (nearest)
+		{
+			if (logOrigin)
+				Print(string.Format("[AROR] QRF %1 origin outpost=%2 distance=%3m", operation.GetId(), nearest.GetId(), distance), LogLevel.NORMAL);
+			return nearest.GetCenter();
+		}
+		if (logOrigin)
+			Print(string.Format("[AROR] QRF %1 has no eligible friendly outpost; using configured role origin", operation.GetId()), LogLevel.WARNING);
+		return fallback;
+	}
+
+	protected void StartGroundQRFRecipe(AROR_Operation operation)
+	{
+		AROR_CommanderManagerComponent commanders = AROR_CommanderManagerComponent.GetInstance();
+		if (!commanders)
+		{
+			ReportSpawnWait(operation, "Commander manager unavailable for ground recipe");
+			return;
+		}
+		AROR_Commander commander = commanders.GetCommander(operation.GetRole());
+		if (!commander || commander.IsPlayerDirected())
+			return;
+		AROR_GroundQRFRecipe recipe;
+		foreach (AROR_GroundQRFRecipe candidate : m_aGroundQRFRecipes)
+		{
+			if (candidate && candidate.m_sId == GetGroundQRFRecipeId(operation.GetRole()) && candidate.m_eRole == operation.GetRole())
+				recipe = candidate;
+		}
+		array<AROR_ForceProfile> elements = {};
+		if (!recipe || !recipe.Resolve(m_aForceProfiles, operation.GetRole(), commander.GetFactionKey(), elements))
+		{
+			FailOperation(operation, "Ground QRF recipe missing, disabled, unsupported or faction-incompatible");
+			return;
+		}
+		int groups;
+		int members;
+		int vehicles;
+		foreach (AROR_ForceProfile element : elements)
+		{
+			groups += element.GetGroupBudget();
+			members += element.m_iPersonnelBudget;
+			if (element.m_eType != AROR_EForceType.INFANTRY)
+				vehicles++;
+		}
+		bool fits = true;
+		if (GetReservedGroups() + groups > m_iMaxGroups)
+			fits = false;
+		if (GetReservedMembers() + members > m_iMaxMembers)
+			fits = false;
+		if (GetReservedVehicles() + vehicles > m_iMaxVehicles)
+			fits = false;
+		if (!fits)
+		{
+			ReportSpawnWait(operation, "Entire ground QRF recipe cannot fit remaining executor capacity");
+			return;
+		}
+		if (!operation.BindGroundRecipe_S(recipe.m_sId, recipe.m_iLevel, elements.Count()))
+			return;
+		if (m_bQRFTacticalCommander)
+		{
+			QueueTacticalGroundQRF(operation, elements);
+			return;
+		}
+		AROR_OperationForce reservation = new AROR_OperationForce();
+		reservation.m_sOperationId = operation.GetId();
+		reservation.m_bReservation = true;
+		reservation.m_iPackageIndex = -1;
+		reservation.m_iReservedGroups = groups;
+		reservation.m_iReservedMembers = members;
+		reservation.m_iReservedVehicles = vehicles;
+		m_aForces.Insert(reservation);
+		Print(string.Format("[AROR] Composite QRF %1 recipe=%2 tier=%3 elements=%4 reserved groups=%5 personnel=%6 vehicles=%7", operation.GetId(), recipe.m_sId, recipe.m_iLevel, elements.Count(), groups, members, vehicles), LogLevel.NORMAL);
+		for (int index = 0; index < elements.Count(); index++)
+		{
+			if (operation.IsTerminal())
+				break;
+			AROR_ForceProfile profile = elements[index];
+			if (profile.m_eType == AROR_EForceType.INFANTRY)
+				StartInfantryForce(operation, profile, index, reservation);
+			else
+				StartGroundForce(operation, commander, profile, index, reservation);
+		}
+		m_aForces.RemoveItem(reservation);
+		TryActivateOperation(operation);
+	}
+
 	protected void StartForce(AROR_Operation operation)
 	{
 		if (!operation || operation.GetState() != AROR_EOperationState.SPAWNING || FindForce(operation.GetId()))
@@ -316,6 +536,11 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		if (!GetGame().GetAIWorld())
 		{
 			FailOperation(operation, "No AIWorld in this scenario; add the terrain's AIWorld prefab before deploying AI");
+			return;
+		}
+		if (operation.GetType() == AROR_EOperationType.QRF && !GetGroundQRFRecipeId(operation.GetRole()).IsEmpty())
+		{
+			StartGroundQRFRecipe(operation);
 			return;
 		}
 		if (m_aForceProfiles.Count() == 0)
@@ -336,6 +561,14 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		if (!profile)
 			return;
 		int packages = operation.GetResponseLevel();
+		if (m_bQRFTacticalCommander && operation.GetType() == AROR_EOperationType.QRF)
+		{
+			array<AROR_ForceProfile> elements = {};
+			for (int index = 0; index < packages; index++)
+				elements.Insert(profile);
+			QueueTacticalGroundQRF(operation, elements);
+			return;
+		}
 		AROR_OperationForce reservation = new AROR_OperationForce();
 		reservation.m_sOperationId = operation.GetId();
 		reservation.m_bReservation = true;
@@ -405,7 +638,13 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		vector launchPosition = m_vOccupiersSpawnPosition;
 		if (operation.GetRole() == AROR_EFactionRole.INVADERS)
 			launchPosition = m_vInvadersSpawnPosition;
-		launchPosition[0] = launchPosition[0] + packageIndex * m_fPackageSpacing;
+		if (operation.m_TacticalCommander)
+			launchPosition = TacticalLaunchPoint(operation.m_TacticalCommander, packageIndex);
+		else
+		{
+			launchPosition = ResolveQRFOrigin(operation, target, launchPosition, packageIndex == 0);
+			launchPosition[0] = launchPosition[0] + packageIndex * m_fPackageSpacing;
+		}
 		if (!target || !IsLaunchPositionSafe(launchPosition, target.GetCenter()))
 		{
 			FailOperation(operation, "Ground-force target or launch position invalid");
@@ -417,6 +656,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		force.m_iPackageIndex = packageIndex;
 		force.m_sFactionKey = commander.GetFactionKey();
 		force.m_Profile = profile;
+		force.m_bTacticalControlled = operation.m_TacticalCommander != null;
 		force.m_sAssetFactionKey = profile.m_sAssetFactionKey;
 		force.m_bLogFriendlyDamage = m_bLogFriendlyDamage;
 		force.m_iReservedGroups = profile.GetGroupBudget();
@@ -502,6 +742,19 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			}
 			approach[0] = approach[0] + (launchPosition[0] - approach[0]) / distance * profile.m_fDismountDistance;
 			approach[2] = approach[2] + (launchPosition[2] - approach[2]) / distance * profile.m_fDismountDistance;
+			if (operation.m_TacticalCommander)
+			{
+				float standoff = profile.m_fDismountDistance;
+				if (operation.m_TacticalCommander.m_bHasContact)
+					standoff = Math.Max(standoff, m_fQRFThreatDismount);
+				standoff = Math.Min(standoff, distance - 40);
+				vector desired = operation.m_TacticalCommander.ApproachPoint(packageIndex, launchPosition, standoff);
+				if (!TacticalRoadPoint(launchPosition, desired, approach))
+				{
+					FailOperation(operation, "No reachable tactical approach road point");
+					return;
+				}
+			}
 			force.m_CrewWaypoint = SpawnWaypoint(m_sMoveWaypointPrefab, approach);
 		}
 		force.m_vApproachPosition = approach;
@@ -554,7 +807,13 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		}
 		if (profile)
 			groupPrefab = profile.m_sInfantryGroup;
-		launchPosition[0] = launchPosition[0] + packageIndex * m_fPackageSpacing;
+		if (operation.m_TacticalCommander)
+			launchPosition = TacticalLaunchPoint(operation.m_TacticalCommander, packageIndex);
+		else
+		{
+			launchPosition = ResolveQRFOrigin(operation, target, launchPosition, packageIndex == 0);
+			launchPosition[0] = launchPosition[0] + packageIndex * m_fPackageSpacing;
+		}
 		ResourceName waypointPrefab = m_sAttackWaypointPrefab;
 		if (operation.GetType() == AROR_EOperationType.QRF)
 			waypointPrefab = m_sQRFWaypointPrefab;
@@ -593,6 +852,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			force.m_sAssetFactionKey = profile.m_sAssetFactionKey;
 		force.m_bLogFriendlyDamage = m_bLogFriendlyDamage;
 		group.GetOnAgentAdded().Insert(force.OnAgentAdded);
+		force.m_bTacticalControlled = operation.m_TacticalCommander != null;
 		if (group.m_aUnitPrefabSlots)
 			force.m_iReservedMembers = group.m_aUnitPrefabSlots.Count();
 		int requestedMembers = force.m_iReservedMembers;
@@ -653,7 +913,20 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 
 	protected void MonitorForce(AROR_OperationForce force)
 	{
-		if (!force || force.m_bReservation)
+		if (!force || !m_aForces.Contains(force))
+			return;
+		if (force.m_bTacticalRetained)
+		{
+			MonitorTacticalRetention(force);
+			return;
+		}
+		AROR_QRFDeferredForce deferred = AROR_QRFDeferredForce.Cast(force);
+		if (deferred)
+		{
+			MonitorDeferredQRF(deferred);
+			return;
+		}
+		if (force.m_bReservation)
 			return;
 		AROR_GroundOperationForce ground = AROR_GroundOperationForce.Cast(force);
 		if (ground)
@@ -752,6 +1025,10 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 				return;
 			}
 			force.m_bReady = true;
+			int initialStrength = infantry + crew;
+			if (force.m_Profile.m_eType == AROR_EForceType.ARMOUR)
+				initialStrength = crew;
+			RecordTacticalStrength(force, operation, initialStrength);
 			FactionAffiliationComponent deployedFaction = FactionAffiliationComponent.Cast(force.m_Vehicle.FindComponent(FactionAffiliationComponent));
 			Print(string.Format("[AROR] Deployment faction verified: operation=%1 package=%2 expected=%3 vehicle=%4 crewGroup=%5 infantryGroup=%6 members=%7", operation.GetId(), force.m_iPackageIndex + 1, force.m_sFactionKey, deployedFaction.GetAffiliatedFactionKey(), force.m_CrewGroup.GetFaction().GetFactionKey(), force.m_Group.GetFaction().GetFactionKey(), force.CountLivingMembers()), LogLevel.NORMAL);
 			ReportPackageProgress(force, "Crew and infantry boarded; waiting for all packages before issuing vehicle orders");
@@ -764,6 +1041,13 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			return;
 		}
 		if (operation.GetState() != AROR_EOperationState.ACTIVE)
+			return;
+		if (!force.m_bOrdersIssued)
+		{
+			TryActivateOperation(operation);
+			return;
+		}
+		if (UpdateTacticalGround(force, operation, infantry, crew))
 			return;
 		if (UpdateTownSearch(force, operation))
 			return;
@@ -826,19 +1110,20 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			AROR_LocationComponent location = locations.GetLocationById(operation.GetTargetLocationId());
 			if (!location || !force.m_Vehicle)
 				return false;
-			vector entry = force.m_vApproachPosition;
-			float entryRadius = 30;
 			AIWaypoint previousWaypoint = force.m_CrewWaypoint;
 			if (force.m_Profile.m_eType == AROR_EForceType.ARMOUR)
 			{
-				entry = location.GetCenter();
-				entryRadius = m_fArrivalRadius + 10;
 				previousWaypoint = force.m_Waypoint;
 			}
-			if (vector.DistanceXZ(force.m_Vehicle.GetOrigin(), entry) > entryRadius)
+			// Split search assignments on entering the vicinity, before the common dismount point.
+			if (vector.DistanceXZ(force.m_Vehicle.GetOrigin(), location.GetCenter()) > location.GetRadius() + m_fQRFSearchMargin)
+				return false;
+			AROR_QRFSearchPlan plan = m_Operations.PrepareQRFSearch_S(operation.GetId(), m_iQRFContactMaxAge);
+			if (!plan)
 				return false;
 			force.m_bTownSearchAttempted = true;
 			force.m_TownSearch = new AROR_VehicleTownSearch();
+			force.m_TownSearch.Configure_S(plan, force.m_iPackageIndex, operation.GetPackageCount(), m_fQRFSearchMargin, m_fQRFSearchStopSpacing);
 			if (!force.m_TownSearch.Start_S(force.m_CrewGroup, force.m_Vehicle, location, previousWaypoint, m_sMoveWaypointPrefab, operation.GetId(), m_iExecutorClock, m_iQRFSearchDuration, m_iQRFSearchStops, m_iQRFSearchDwell, m_iQRFSearchLegTimeout))
 			{
 				force.m_TownSearch.Cleanup_S();
@@ -847,7 +1132,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 				Print(string.Format("[AROR] Mounted search skipped for %1: no reachable road stop or move waypoint; keeping deployment orders", operation.GetId()), LogLevel.WARNING);
 				return false;
 			}
-			ReportPackageProgress(force, "Searching town roads while mounted; native AI handles spotting and combat");
+			ReportPackageProgress(force, "Investigating reported contact then patrolling assigned town sector; native AI handles combat");
 			return true;
 		}
 		if (force.m_TownSearch && force.m_TownSearch.Tick_S(m_iExecutorClock))
@@ -902,15 +1187,36 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			FailPackage(force, operation, "Operation infantry eliminated");
 			return;
 		}
-		if (operation.GetState() == AROR_EOperationState.SPAWNING && living > 0 && force.m_Group.IsExpandComplete())
+		bool waitingForDispatch = operation.GetState() == AROR_EOperationState.SPAWNING;
+		if (operation.m_TacticalCommander && !force.m_bReady)
+			waitingForDispatch = true;
+		if (waitingForDispatch && living > 0 && force.m_Group.IsExpandComplete())
 		{
 			if (!force.m_Group.GetFaction() || force.m_Group.GetFaction().GetFactionKey() != force.m_sFactionKey)
 				FailOperation(operation, "Spawned group has no matching faction");
 			else
 			{
 				force.m_bReady = true;
+				RecordTacticalStrength(force, operation, living);
 				TryActivateOperation(operation);
 			}
+			return;
+		}
+		if (operation.GetState() == AROR_EOperationState.ACTIVE && operation.m_TacticalCommander)
+		{
+			if (!force.m_bOrdersIssued)
+			{
+				TryActivateOperation(operation);
+				return;
+			}
+			RecordTacticalStrength(force, operation, living);
+			bool retreat = operation.m_TacticalCommander.m_bWithdraw || force.m_bTacticalWithdrawing;
+			if (living <= force.m_iTacticalInitialStrength * m_fQRFLocalWithdrawFraction)
+				retreat = true;
+			if (retreat)
+				TacticalWithdrawal(force, operation);
+			else
+				TacticalInfantryOrders(force, operation);
 			return;
 		}
 		AROR_LocationManagerComponent locations = AROR_LocationManagerComponent.GetInstance();
@@ -941,6 +1247,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		}
 		if (!m_Operations)
 			return;
+		TickQRFTacticalCommanders();
 		array<AROR_OperationForce> forces = {};
 		foreach (AROR_OperationForce force : m_aForces)
 			forces.Insert(force);
@@ -977,7 +1284,14 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			m_aForceProfiles = {};
 		if (!m_aResponseLevels)
 			m_aResponseLevels = {};
-		if (m_bQRFVehicleSearch && (m_iQRFSearchDuration < 1 || m_iQRFSearchDuration > 900 || m_iQRFSearchStops < 1 || m_iQRFSearchStops > 12 || m_iQRFSearchDwell < 0 || m_iQRFSearchDwell > 60 || m_iQRFSearchLegTimeout < 10 || m_iQRFSearchLegTimeout > 300))
+		if (!m_aGroundQRFRecipes)
+			m_aGroundQRFRecipes = {};
+		if (m_bQRFTacticalCommander && !TacticalSettingsValid())
+		{
+			Print("[AROR] Invalid tactical commander settings; executor disabled", LogLevel.ERROR);
+			return;
+		}
+		if (m_bQRFVehicleSearch && (m_iQRFSearchDuration < 1 || m_iQRFSearchDuration > 900 || m_iQRFSearchStops < 1 || m_iQRFSearchStops > 12 || m_iQRFSearchDwell < 0 || m_iQRFSearchDwell > 60 || m_iQRFSearchLegTimeout < 10 || m_iQRFSearchLegTimeout > 300 || m_iQRFContactMaxAge < 1 || m_iQRFContactMaxAge > 900 || m_fQRFSearchMargin < 0 || m_fQRFSearchMargin > 500 || m_fQRFSearchStopSpacing < 10 || m_fQRFSearchStopSpacing > 150))
 		{
 			Print("[AROR] Invalid mounted QRF search settings; executor disabled", LogLevel.ERROR);
 			return;
@@ -1000,11 +1314,28 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		}
 		GetGame().GetCallqueue().CallLater(Tick, 1000, true);
 		Print("[AROR] Operation force executor enabled", LogLevel.NORMAL);
+		if (m_bQRFVehicleSearch)
+			Print("[AROR] QRF search policy: coordinated contact investigation and sector patrol", LogLevel.NORMAL);
 		Print(string.Format("[AROR] Executor configuration: profiles=%1 levels=%2 budgets groups=%3 members=%4 vehicles=%5", m_aForceProfiles.Count(), m_aResponseLevels.Count(), m_iMaxGroups, m_iMaxMembers, m_iMaxVehicles), LogLevel.NORMAL);
 	}
 
 	protected bool ValidatePool()
 	{
+		if (m_aGroundQRFRecipes.Count() > 32)
+			return false;
+		array<string> recipeKeys = {};
+		foreach (AROR_GroundQRFRecipe recipe : m_aGroundQRFRecipes)
+		{
+			if (!recipe || !recipe.IsValid())
+				return false;
+			string recipeKey = string.Format("%1:%2", recipe.m_sId, recipe.m_eRole);
+			if (recipeKeys.Contains(recipeKey))
+				return false;
+			recipeKeys.Insert(recipeKey);
+			array<AROR_ForceProfile> resolved = {};
+			if (!recipe.Resolve(m_aForceProfiles, recipe.m_eRole, recipe.m_sFactionKey, resolved))
+				return false;
+		}
 		if (m_aForceProfiles.Count() > 64)
 			return false;
 		if (m_aResponseLevels.Count() > 5)
@@ -1026,7 +1357,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			}
 			ids.Insert(profile.m_sId);
 			if (!profile.HasNativeExecutor())
-				Print(string.Format("[AROR] Profile %1 excluded: airborne flight/landing/escort adapter is not implemented", profile.m_sId), LogLevel.WARNING);
+				Print(string.Format("[AROR] Profile %1 excluded from native pool: airborne requires a separate flight executor", profile.m_sId), LogLevel.WARNING);
 		}
 #ifdef WORKBENCH
 		if ((!m_sWorkbenchForceProfileId.IsEmpty() && !ids.Contains(m_sWorkbenchForceProfileId)) || (m_iWorkbenchResponseLevel > 0 && !levels.Contains(m_iWorkbenchResponseLevel)))

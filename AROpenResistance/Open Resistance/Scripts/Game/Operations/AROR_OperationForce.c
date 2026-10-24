@@ -17,6 +17,17 @@ class AROR_OperationForce
 	string m_sLastProgress;
 	bool m_bLogFriendlyDamage;
 	string m_sAssetFactionKey;
+	bool m_bTacticalControlled;
+	bool m_bTacticalWithdrawing;
+	bool m_bTacticalRetained;
+	int m_iTacticalRetainedAt;
+	int m_iTacticalNextOrder;
+	int m_iTacticalLegDeadline;
+	int m_iTacticalInfantryDeadline;
+	int m_iTacticalNextSupport;
+	int m_iTacticalContactVersion = -1;
+	int m_iTacticalSearchStep;
+	int m_iTacticalInitialStrength;
 	protected ref array<ref AROR_OperationDamageObserver> m_aDamageObservers = {};
 	int m_iWakeRetryTicks;
 	protected ref array<IEntity> m_aMembers = {};
@@ -77,7 +88,7 @@ class AROR_OperationForce
 
 	void TrackDamage_S(IEntity entity)
 	{
-		if (!Replication.IsServer() || !m_bLogFriendlyDamage || !entity)
+		if (!Replication.IsServer() || !entity)
 			return;
 		foreach (AROR_OperationDamageObserver observer : m_aDamageObservers)
 		{
@@ -85,7 +96,7 @@ class AROR_OperationForce
 				return;
 		}
 		AROR_OperationDamageObserver added = new AROR_OperationDamageObserver();
-		if (added.Attach_S(entity, m_sOperationId, m_iPackageIndex))
+		if (added.Attach_S(entity, m_sOperationId, m_iPackageIndex, m_bLogFriendlyDamage))
 			m_aDamageObservers.Insert(added);
 	}
 
@@ -122,6 +133,12 @@ class AROR_OperationForce
 				return false;
 		}
 		return true;
+	}
+
+	//! Snapshot for deferred operation cleanup; callers never take ownership of these references.
+	void GetOwnedMembers(array<IEntity> outMembers)
+	{
+		outMembers.Copy(m_aMembers);
 	}
 
 	void Cleanup_S()

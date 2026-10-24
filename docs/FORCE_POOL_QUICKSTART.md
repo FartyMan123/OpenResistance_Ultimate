@@ -1,6 +1,8 @@
 # Prepared Chicken force-pool test
 
-The pool supports randomized strength levels 1–5 and randomized supported profiles; see [RESPONSE_SCALE.md](RESPONSE_SCALE.md). Each level deploys that many complete ground packages. The saved Chicken preset currently forces level 3 `us_mechanized` for Jasper's LAV test: three LAV-25 packages with crews and infantry. Aircraft findings are recorded in [AIR_OPERATIONS_RESEARCH.md](AIR_OPERATIONS_RESEARCH.md).
+**Current Chicken fixture:** one truck plus one IFV under the authored `combined_arms_l1` ground recipe, with the new [tactical commander and staged-wave policy](QRF_TACTICAL_COMMANDER.md) enabled. This two-element response stays in one wave. The REAPER override and Invader admission are off. See [Truck/IFV test instructions](TRUCK_IFV_QRF_TEST.md); this fixture supersedes older forced-profile/level-5 instructions below. Recompile and reload before testing the new tactical behavior.
+
+The pool supports randomized strength levels 1–5 and randomized supported profiles; see [RESPONSE_SCALE.md](RESPONSE_SCALE.md). Each level deploys that many complete ground packages. The saved Chicken preset now enables the [REAPER test](AIRBORNE_QRF_PROTOTYPE.md) at level 5: five transports/fireteams plus five gunships. Disabling Reaper QRF Test restores the forced `us_mechanized` ground profile at level 5 (five LAV packages). Recompile and reload Chicken before testing; the new fleet behavior is unverified. Aircraft findings are recorded in [AIR_OPERATIONS_RESEARCH.md](AIR_OPERATIONS_RESEARCH.md).
 
 For real combat instead of a simulated report, follow [QRF_COMBAT_REPORTS.md](QRF_COMBAT_REPORTS.md): assign `AROR_QRFDefenseComponent` to a defender and clear the simulated target fields first.
 

@@ -15,6 +15,7 @@ class AROR_CaptureLocationAction : ScriptedUserAction
 			case AROR_ELocationType.MILITARY_BASE:
 			case AROR_ELocationType.PORT:
 			case AROR_ELocationType.RESOURCES:
+			case AROR_ELocationType.OUTPOST:
 				return true;
 		}
 
