@@ -108,6 +108,25 @@ class AROR_QRFTacticalSmokeTests
 		passed = Check(contact.m_bHasContact, "Expiry retask respects interval") && passed;
 		contact.UpdateContact_S(null, 70);
 		passed = Check(!contact.m_bHasContact && contact.m_vContact == contact.m_vTown, "Expired snapshot returns search to town") && passed;
+		AROR_QRFTacticalCommander capture = Build(1, 2);
+		capture.MarkDispatched(100);
+		capture.RecordStrength(0, 5);
+		passed = Check(!capture.RecordTargetControl(AROR_EFactionRole.OCCUPIERS), "Initial ownership is a baseline") && passed;
+		passed = Check(capture.RecordTargetControl(AROR_EFactionRole.RESISTANCE), "Town capture updates the tactical objective") && passed;
+		passed = Check(!capture.ShouldWithdraw(110, false), "Town capture alone does not withdraw the QRF") && passed;
+		passed = Check(!capture.RecordTargetControl(AROR_EFactionRole.RESISTANCE), "Repeated ownership observations do not reset search") && passed;
+		AROR_QRFTacticalCommander approach = Build(1, 2);
+		approach.m_vTown = "5500 96 6080";
+		approach.m_fTownRadius = 250;
+		approach.m_fMargin = 150;
+		vector origin = "5100 0 6080";
+		passed = Check(approach.ApproachCandidate(1, origin, 200, 0) == approach.ApproachPoint(1, origin, 200), "First road candidate preserves the preferred wedge") && passed;
+		for (int attempt = 1; attempt < 16; attempt++)
+		{
+			vector roadCandidate = approach.ApproachCandidate(1, origin, 200, attempt);
+			float townDistance = vector.DistanceXZ(roadCandidate, approach.m_vTown);
+			passed = Check(townDistance >= 60 && townDistance <= 325.1, "Alternate road candidates remain in bounded rings") && passed;
+		}
 		if (passed)
 			Print("[AROR TEST] QRF tactical/wave policy regressions passed", LogLevel.NORMAL);
 		return passed;

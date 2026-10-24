@@ -14,6 +14,11 @@ class AROR_Operation
 	protected string m_sRecipeId;
 	protected int m_iRecipePackages;
 	ref AROR_QRFTacticalCommander m_TacticalCommander;
+	ref AROR_QRFFunding m_Funding;
+	int m_iRequestedTier;
+	int m_iThreatPriority;
+	int m_iRecoveredPackages;
+	bool m_bCaptureThreatRecorded;
 
 	string GetRecipeId() { return m_sRecipeId; }
 	int GetPackageCount()

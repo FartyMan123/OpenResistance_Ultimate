@@ -2,6 +2,37 @@
 //! so setup requests and replies travel through the player's controller and are handled by AROR_GameFlowComponent.
 modded class SCR_PlayerController
 {
+	//! Only an observation-suppression bit, never a spotting target or coordinates.
+	void AROR_SetQRFMapOpen(bool open)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_QRFMapOpen(open);
+		else
+			Rpc(AROR_RpcAsk_QRFMapOpen, open);
+	}
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_QRFMapOpen(bool open)
+	{
+		AROR_OperationManagerComponent operations = AROR_OperationManagerComponent.GetInstance();
+		if (operations)
+			operations.SetQRFObserverMapOpen_S(GetPlayerId(), open);
+	}
+	//! Only the server originates this owner-targeted snapshot; clients cannot submit sightings.
+	void AROR_SendQRFIntel_S(array<string> ids, array<vector> positions, array<int> kinds, array<int> ages, int lifetime, array<int> sides)
+	{
+		if (!Replication.IsServer())
+			return;
+		if (AROR_IsLocal())
+			AROR_RpcDo_QRFIntel(ids, positions, kinds, ages, lifetime, sides);
+		else
+			Rpc(AROR_RpcDo_QRFIntel, ids, positions, kinds, ages, lifetime, sides);
+	}
+	[RplRpc(RplChannel.Reliable, RplRcver.Owner)]
+	protected void AROR_RpcDo_QRFIntel(array<string> ids, array<vector> positions, array<int> kinds, array<int> ages, int lifetime, array<int> sides)
+	{
+		AROR_QRFMapIntel.Receive(ids, positions, kinds, ages, lifetime, sides);
+	}
+
 	//! Separator for the save list, sent as a single string
 	protected static const string AROR_SAVE_LIST_SEPARATOR = "\n";
 

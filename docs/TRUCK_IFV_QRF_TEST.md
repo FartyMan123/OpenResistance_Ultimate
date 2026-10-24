@@ -2,7 +2,9 @@
 
 The [USSR/Invader framework](INVADER_QRF_FRAMEWORK.md) is staged with levels 1-5 and operation admission disabled; the current US/Occupier test remains selected.
 
-Chicken now selects `combined_arms_l1` as an explicit ground QRF recipe. The helicopter override is disabled for this test. This is authored tier 1 with **two elements**, not two copies of a profile and not a level-2 response.
+This guide describes the fixed `combined_arms_l1` regression fixture. **Normal Chicken now enables strategic economy at starting war level 2**, which can select one truck plus two IFVs or the lighter truck/IFV tier. See [QRF strategy and prices](QRF_STRATEGY_ECONOMY.md).
+
+For this exact two-vehicle test, set `m_bQRFStrategicEconomy = 0` on the operation manager and retain `m_sGroundQRFRecipeId = "combined_arms_l1"` on the executor. The helicopter override remains disabled. This authored tier 1 has **two elements**, not two copies of a profile and not a level-2 response. Re-enable strategic economy afterward to test payments and war-level selection.
 
 | Element | Occupiers fixture | Personnel |
 |---|---|---|
@@ -14,7 +16,7 @@ Both use the configured `AROR_OCCUPIERS` faction. An equivalent Invaders binding
 
 The entire response reserves four groups, eighteen personnel slots and two vehicles before any members enter the engine queue. Both elements must be ready/boarded before activation. A required element lost during spawning fails and cleans up the undispatched response. After activation, losing one package leaves the other operating. The new [shared tactical commander](QRF_TACTICAL_COMMANDER.md) retains nearby terminal forces and their capacity until age AND all-player distance permit cleanup.
 
-Tactical coordination is now enabled: the truck delivers infantry and waits; the IFV delivers infantry and covers a separate reachable road sector. Troops exit before investigating fresh contact and searching separate town sectors. Contact changes, new waves and losses can retask surviving packages at a bounded interval. Launch spacing remains 35 m, now lateral around the selected origin. The nearest eligible friendly outpost remains the origin when available, otherwise configured role coordinates are used. Convoy driving and matching arrival times are not guaranteed. This two-element tier-1 fixture stays in one wave; larger responses can use the new deferred reserve policy.
+Tactical coordination is now enabled: the truck delivers infantry and waits; the IFV delivers infantry and covers a separate reachable road sector. Troops exit before investigating fresh contact and searching separate town sectors. Contact changes, new waves and losses can retask surviving packages at a bounded interval. Launch seeds use 35 m lateral spacing around the selected origin, then each vehicle must obtain a clear road pad within 150 m of that origin, at least 25 m from existing operation vehicles. Up to 12 road queries are allowed per package; blocked/steep/wet candidates are rejected. All driver/crew/passenger compartment occupancy must be physically confirmed after direct seating before activation. The nearest eligible friendly outpost remains the origin when available, otherwise configured role coordinates are used. Convoy driving and matching arrival times are not guaranteed. This two-element tier-1 fixture stays in one wave; larger responses can use the new deferred reserve policy.
 
 ## Run
 
@@ -33,3 +35,12 @@ To restore the previous helicopter experiment, clear **Ground QRF Recipe Id**, e
 The operation records recipe identity, response tier and expected package count separately. Recipe/profile bindings are mutually exclusive and cannot reroll. Shared budgets include other active/reserved/retained forces. Unsupported airborne elements fail validation; mixed ground/air recipes and resource-aware selection remain future work. There is no campaign spending or stock reservation in this prototype.
 
 Earlier logs verified mixed spawning, boarding, correct campaign factions and activation. The new tactical/wave source and updated Workbench smoke tests are uncompiled/unrun in the engine. Follow the acceptance checks above and the tactical guide before treating revised delivery, search, withdrawal, retention or performance as verified.
+## LAV passenger-exit regression
+
+After compiling and reloading Chicken, trigger a ground response containing a LAV. All four infantry passengers should exit while the driver and turret crew remain aboard. The log should reach `delivered infantry; separate infantry search and vehicle support` for the LAV package, without an exit-deadline withdrawal. Initial seating remains direct placement.
+
+Exit requests are staggered, try alternate usable doors and leave doors open. `m_iQRFExitRecoveryDelay` on the executor defaults to 10 seconds (0 disables recovery). After that delay, a still-seated AI passenger whose normal exit is rejected may use the native cleared exit transform at a stopped ground vehicle. The candidate must be within 12 metres of the hull and within 2 metres of terrain height; native clearance failure leaves the passenger aboard for later retries and the existing timeout. Aircraft, crew, players and active exit/seat-switch animations are excluded. This is a local dismount fallback, not a teleport to the town.
+
+Offline actual-source regression: `node tools/Test-QRFUnloading.js` (40 mocked assertions, including nearby AI driver recovery). Native animations, exit clearance and multiplayer replication require Workbench/Play verification.
+
+Airport ingress regression: capture the airport in normal strategic mode. Expect three road-launch lines, followed by confirmed seating and ACTIVE. Travel distances must decrease from Farm toward the airport. Check all packages reach their road delivery points, unload and investigate; an ACTIVE acknowledgement alone is insufficient. Missing pads or incomplete seating should fail/wait explicitly rather than claim delivery. Offline checks: node tools/Test-QRFIngress.js (21 mocked assertions).
