@@ -363,8 +363,10 @@ Key classes: `AROR_EconomyComponent`, `AROR_EconomyComponentSerializer`, `AROR_I
 - **Faction funds**: one bank balance per faction role (Resistance, Occupiers, Invaders), starting from per-role base values set on the component. Server-owned, replicated to every client, with a funds-changed event.
 - **Manpower**: a Resistance-only balance with a starting value. Server-owned, replicated to every client, with a changed event.
 - **Player money**: personal money per player, starting from a base value the first time a player joins the campaign. Server-owned; each player is sent only their own balance (through the player controller). Keyed by the player's identity ID so it survives reconnects and restarts.
-- **Income** (server, every 5 minutes, not during setup): each faction role is paid for the locations it controls.
+- **Income** (server, every 15 minutes, not during setup): each faction role is paid for the locations it controls.
   - Money = held Resources × $500 × (1 + 0.3 per held Factory + 0.5 per held Port), plus $5 per inhabitant of held towns and cities (not multiplied).
+  - The Occupiers and Invaders also receive fixed **external support** each payment ($500 each), regardless of what they hold.
+  - Every online Resistance player is paid 10% of the Resistance's money income as personal money, on top of (not taken from) the Resistance funds.
   - The Resistance also gains manpower per held town and per held city.
   - Resistance players get a dispatch card notification with the amounts.
   - Rates and the interval are attributes on `AROR_IncomeComponent`.

@@ -18,11 +18,14 @@ class AROR_IncomeTally : Managed
 //! pays it into the role's funds:
 //!   money = resources x resource income x (1 + factory bonus per factory + port bonus per port)
 //!         + population of held towns and cities x money per inhabitant (not multiplied)
-//! The Resistance also gains manpower per town and per city held, and its players get a dispatch card.
+//!         + external support (Occupiers and Invaders only: backing from outside Everon, independent of what they hold)
+//! The Resistance also gains manpower per town and per city held, and its players get a dispatch card. Each online
+//! Resistance player is also paid a share of the Resistance's money income as personal money (extra, not taken from
+//! the Resistance funds).
 //! No income while the campaign is still in setup.
 class AROR_IncomeComponent : SCR_BaseGameModeComponent
 {
-	[Attribute("300", desc: "Seconds between income payments", params: "10 3600", category: "Income")]
+	[Attribute("900", desc: "Seconds between income payments", params: "10 3600", category: "Income")]
 	protected int m_iIntervalSeconds;
 
 	[Attribute("500", desc: "Money per held resource location per payment", params: "0 inf", category: "Income")]
@@ -37,11 +40,20 @@ class AROR_IncomeComponent : SCR_BaseGameModeComponent
 	[Attribute("5", desc: "Money per inhabitant of held towns and cities per payment (not multiplied)", params: "0 inf", category: "Income")]
 	protected int m_iMoneyPerInhabitant;
 
+	[Attribute("500", desc: "Occupiers external support: money per payment regardless of what they hold (not multiplied)", params: "0 inf", category: "External support")]
+	protected int m_iOccupiersExternalSupport;
+
+	[Attribute("500", desc: "Invaders external support: money per payment regardless of what they hold (not multiplied)", params: "0 inf", category: "External support")]
+	protected int m_iInvadersExternalSupport;
+
 	[Attribute("2", desc: "Resistance manpower per held town per payment", params: "0 inf", category: "Manpower")]
 	protected int m_iManpowerPerTown;
 
 	[Attribute("5", desc: "Resistance manpower per held city per payment", params: "0 inf", category: "Manpower")]
 	protected int m_iManpowerPerCity;
+
+	[Attribute("0.1", desc: "Each online Resistance player is paid this fraction of the Resistance's money income as personal money (extra, not taken from the funds)", params: "0 1", category: "Player share")]
+	protected float m_fPlayerShare;
 
 	protected static AROR_IncomeComponent s_Instance;
 
@@ -73,7 +85,7 @@ class AROR_IncomeComponent : SCR_BaseGameModeComponent
 		foreach (AROR_EFactionRole role : roles)
 		{
 			AROR_IncomeTally tally = Tally(role);
-			int money = GetMoney(tally);
+			int money = GetMoney(tally) + GetExternalSupport(role);
 			int manpower;
 			if (role == AROR_EFactionRole.RESISTANCE)
 				manpower = GetManpower(tally);
@@ -87,7 +99,10 @@ class AROR_IncomeComponent : SCR_BaseGameModeComponent
 				tally.m_iTowns, tally.m_iCities, tally.m_iPopulation, tally.m_iResources, tally.m_iFactories, tally.m_iPorts), LogLevel.NORMAL);
 
 			if (role == AROR_EFactionRole.RESISTANCE)
-				NotifyResistance(money, manpower);
+			{
+				int playerShare = PayResistancePlayers(economy, money);
+				NotifyResistance(money, manpower, playerShare);
+			}
 		}
 	}
 
@@ -144,6 +159,21 @@ class AROR_IncomeComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Fixed money per payment from outside backers; the Resistance gets none
+	int GetExternalSupport(AROR_EFactionRole role)
+	{
+		switch (role)
+		{
+			case AROR_EFactionRole.OCCUPIERS:
+				return m_iOccupiersExternalSupport;
+			case AROR_EFactionRole.INVADERS:
+				return m_iInvadersExternalSupport;
+		}
+
+		return 0;
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! Resistance manpower for one payment
 	int GetManpower(notnull AROR_IncomeTally tally)
 	{
@@ -162,7 +192,39 @@ class AROR_IncomeComponent : SCR_BaseGameModeComponent
 
 	//------------------------------------------------------------------------------------------------
 	//! Dispatch card for the Resistance players (every player is Resistance)
-	protected void NotifyResistance(int money, int manpower)
+	//! Pays every online Resistance player their share of the Resistance's money income. Returns the amount each got.
+	protected int PayResistancePlayers(notnull AROR_EconomyComponent economy, int resistanceMoney)
+	{
+		float share = resistanceMoney * m_fPlayerShare;
+		int amount = Math.Round(share);
+		if (amount <= 0)
+			return 0;
+
+		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.GetInstance();
+		if (!roles)
+			return 0;
+
+		array<int> playerIds = {};
+		GetGame().GetPlayerManager().GetPlayers(playerIds);
+
+		int paid;
+		foreach (int playerId : playerIds)
+		{
+			// The player's faction, whether or not they are currently spawned
+			AROR_EFactionRole role;
+			if (!roles.GetRoleOfFaction(SCR_FactionManager.SGetPlayerFaction(playerId), role) || role != AROR_EFactionRole.RESISTANCE)
+				continue;
+
+			economy.AddPlayerMoney_S(playerId, amount);
+			paid++;
+		}
+
+		Print(string.Format("[AROR] Income: %1 Resistance players paid %2 each", paid, amount), LogLevel.NORMAL);
+		return amount;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void NotifyResistance(int money, int manpower, int playerShare)
 	{
 		if (money <= 0 && manpower <= 0)
 			return;
@@ -175,6 +237,9 @@ class AROR_IncomeComponent : SCR_BaseGameModeComponent
 		string text = string.Format("+%1 funds", AROR_EconomyComponent.FormatMoney(money));
 		if (manpower > 0)
 			text += string.Format(", +%1 manpower", manpower);
+
+		if (playerShare > 0)
+			text += string.Format(". Your share: +%1", AROR_EconomyComponent.FormatMoney(playerShare));
 
 		AROR_NotificationManagerComponent.Send_S(new AROR_Notification(AROR_ENotificationType.NOTIFICATION, text, string.Empty, color, "Income"));
 	}
