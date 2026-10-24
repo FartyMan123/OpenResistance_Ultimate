@@ -1,5 +1,71 @@
 # Changelog
 
+## Unreleased - Rowan integration and combined development build (2026-10-24)
+
+### Branch reconciliation
+
+- Commit the accumulated QRF, REAPER and tactical work on `chicken-dev` as `7a3b340` (`Add QRF tactical command and staged waves`).
+- Merge Rowan's `master-dev` work through `99ad920`, including PRs #8, #9 and #10. Preserve both development histories without rebasing or force-pushing the shared branch.
+- Rebuild the conflicted `AGENTS.md` architecture copy from current authoritative `CLAUDE.md` and merged `ARCHITECTURE.md`. Keep Economy, Phone and Admin Tools architecture alongside the QRF design. No project-guidance policy is rewritten.
+- Keep the shared role authority: Resistance uses FIA assets, Occupiers/BLUFOR use US assets and Invaders/REDFOR use USSR assets. QRF code does not introduce another faction or location ownership registry.
+
+### Rowan: campaign economy and persistence
+
+- Bring in role-based faction funds, Resistance manpower and personal player money through `AROR_EconomyComponent` and its serializer. Faction balances are replicated; personal balances are sent through the player's controller and indexed by persistent identity.
+- Preserve server-owned add/spend APIs and nonnegative balance checks. Save economy state through the existing game-mode persistence path and retain setup/new-campaign initialization.
+- Bring in `AROR_IncomeComponent` and Rowan's latest 15-minute default payment interval. Held resource locations produce $500 each, multiplied by factory/port bonuses; held town/city population adds $5 per inhabitant outside that multiplier.
+- Include the newer fixed external-support payment for Occupiers and Invaders ($500 per role per payment), independent of their held locations.
+- Include the newer personal share for every online Resistance player: 10% of Resistance income, paid in addition to faction funds. Keep Resistance manpower income, setup-phase gating and income notifications.
+- Rates remain designer attributes. These are campaign money/manpower systems; they do not yet supply military vehicle stock, crew availability, ammunition, route readiness or QRF purchase reservations.
+
+### Rowan: phone, bank and administration
+
+- Bring in the client phone menu, frame/app/status assets, menu registration and rebindable input context. Default opening action is Ctrl+Y for a living player when no other menu is open.
+- Include the Bank app displaying personal money and Resistance funds, portrait/landscape transitions, home navigation, status bar and Escape handling. Money transfers and general app registration remain planned.
+- Preserve the expanded Ctrl+T admin sub-menus, economy balance display, money-grant buttons and immediate-income test action alongside teleport, Game Master, support and notification tools.
+- Keep the upstream setup-dialog and player-controller changes needed by these systems. Admin access restrictions remain future work; this merge does not claim to add them.
+
+### QRFs: shared tactical command
+
+- Add one server tactical commander per QRF operation for either opposing role. Existing faction strategic commanders still own scheduling; the tactical commander coordinates the already selected immutable response.
+- Use recent validated allied combat reports to investigate last-known enemy positions, then search bounded town sectors. No live enemy entity tracking or omniscient player-position feed is added.
+- Give dismounted infantry separate sectors, redistribute after losses/new waves and rate-limit retasking. Retain native AI perception, navigation and weapon use.
+- Coordinate truck delivery and waiting, separate IFV/armour road cover, reported-threat dismount standoff and bounded ingress attempts. Air-inserted infantry uses the same tactical search controller.
+- Add local/whole-force casualty withdrawal, target/origin ownership checks, safe return/hold behavior and bounded task duration. Building-by-building clearance, guaranteed convoy movement and coordinated suppression remain outside this implementation.
+
+### QRFs: reinforcement waves and performance limits
+
+- Split eligible tier-3+ responses with at least four elements into a type-balanced lead and finite reserve. Keep later elements as actor-free reservations rather than spawning them into a holding area.
+- Preserve the full original group/personnel/vehicle allocation; later waves do not reroll the recipe, create extra replacements or consume untracked capacity.
+- Limit construction to one ground element or transport/gunship pair per executor tick. Default live ceilings are six ground packages and six healthy aircraft, including retained survivors/healthy airframes.
+- Normally release reserves after 60 seconds from lead dispatch, shorten eligibility to 15 seconds following package loss, and expire unspawned reserves after 300 seconds. Later elements join the existing ACTIVE operation.
+- Prepared Invader ground tiers 3/4/5 divide into 3+2, 4+3 and 4+4 elements. Air level 5 divides into three pairs plus two reserved pairs; a pair requires two free aircraft slots.
+- Hold capacity for retained forces near players. Waves bound deployment/construction work; they do not certify FPS or guarantee every reserve deploys before its deadline.
+
+### QRFs: air operations, origins and retention
+
+- Bring the direct REAPER experiment into the normal project, retaining separate diagnostic files and launcher for optional troubleshooting. The current normal fixture leaves flight dispatch disabled, but REAPER remains a load-time dependency on this experimental branch.
+- Preserve incremental separated-pad landing searches, direct transport landing, stable-touchdown and actual passenger-exit gates, departure, report-driven gunship passes and predictive traffic yielding.
+- Keep boarding holds for later-wave helicopters until flight dispatch. Successful aircraft departures do not count as inserted-infantry casualties, and disabled/retained healthy airframes do not silently free live slots.
+- Select eligible nearest friendly outposts for ground/air QRF origins, with configured role coordinates as fallback. Append OUTPOST without changing existing location enum values and retain military capture classification.
+- Keep nearby ground survivors/wrecks at least 120 seconds and until every player is 1,200 m away. Preserve the separate air retention policy and aggregate reservations. These are session policies, not durable saved operations.
+
+### Worlds, fixtures and resource planning boundary
+
+- Bring in Rowan's separate Everon test world, income-test location data and original Everon updates. Preserve the separate `AROR_Everon_Chicken` QRF fixture and its inherited shared game-mode systems.
+- Keep Chicken on the authored US truck/LAV `combined_arms_l1` response: two vehicles, four groups, twelve actual personnel and eighteen reserved slots, with tactical coordination enabled. This small tier-1 response stays in one wave.
+- Keep the REAPER override off, Invader operation admission off and Invader automatic/simulated targets empty. Stage USSR Ural/BTR/BRDM tiers and Mi-8 profiles without adding an Invader gameplay trigger.
+- Keep the resource-aware QRF readiness-provider preview read-only and disconnected from dispatch/spending. Rowan's balances and income are preserved as the economy authority; no parallel economy, stock generator or automatic QRF funds deduction is introduced.
+- Maintain the 40-response design roster and separate authored recipe tier from element count. Mixed ground/air recipes, stock-backed selection and campaign factory/territory dispatch wiring remain future work.
+
+### Validation, extender impact and next acceptance
+
+- Re-run installed-asset/configuration validation after integration: verified GUIDs, navigation, force profiles, prepared tiers/recipes, tactical fixture settings and disabled Invader admission. Check copied context synchronization, merge markers and whitespace.
+- Earlier development included source-adapted offline tactical/lifecycle checks with mocked native dependencies and Workbench-only smoke-test helpers. These do not establish native compilation or gameplay correctness.
+- Preserve Rowan's imported Economy/Phone implementation and verify shared prefab/component coexistence at source level. The combined build still needs a successful Workbench compile and fresh Chicken/Rowantrek Play tests, including setup, Bank balances, income, QRF delivery/search/waves and multiplayer behavior.
+- Extenders must account for the experimental direct REAPER dependency, opt-in tactical attributes, default-disabled Invader admission, immutable recipe tier/package semantics and deferred/retained capacity. Operation state, tactical contacts and wave timers remain session-local.
+- Detailed operational settings and acceptance steps are in [QRF_TACTICAL_COMMANDER.md](QRF_TACTICAL_COMMANDER.md); ground and air fixtures have their own guides. No merge into `master-dev` or `master` is performed by publishing the development branch/PR.
+
 ## Unreleased - QRF tactical command and finite waves (2026-10-24)
 
 - Add a shared server tactical commander for US-backed Occupiers and USSR-backed Invaders, using existing Operations, factions, location ownership, native group AI and REAPER. Coordinate report-driven investigation, bounded infantry sectors, survivor/new-wave redistribution, ground delivery, separate IFV/armour road support and landed air infantry. Retask from time-limited position snapshots; no live player tracking, building-clearance controller or new territory authority is introduced.
