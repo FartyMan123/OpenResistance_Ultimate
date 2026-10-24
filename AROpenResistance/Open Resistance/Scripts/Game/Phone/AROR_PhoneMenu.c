@@ -462,8 +462,8 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		AROR_EconomyComponent economy = AROR_EconomyComponent.GetInstance();
 		if (economy)
 		{
-			personal = FormatMoney(economy.GetLocalPlayerMoney());
-			resistance = FormatMoney(economy.GetFactionFunds(AROR_EFactionRole.RESISTANCE));
+			personal = AROR_EconomyComponent.FormatMoney(economy.GetLocalPlayerMoney());
+			resistance = AROR_EconomyComponent.FormatMoney(economy.GetFactionFunds(AROR_EFactionRole.RESISTANCE));
 		}
 
 		m_wBankName.SetText(GetLocalPlayerName());
@@ -587,28 +587,6 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			return string.Empty;
 
 		return GetGame().GetPlayerManager().GetPlayerName(playerController.GetPlayerId());
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! 1234567 -> "$ 1,234,567.00"
-	protected static string FormatMoney(int amount)
-	{
-		string digits = Math.AbsInt(amount).ToString();
-		int count = digits.Length();
-
-		string grouped;
-		for (int i = 0; i < count; i++)
-		{
-			if (i > 0 && (count - i) % 3 == 0)
-				grouped += ",";
-
-			grouped += digits.Substring(i, 1);
-		}
-
-		if (amount < 0)
-			return "$ -" + grouped + ".00";
-
-		return "$ " + grouped + ".00";
 	}
 
 	//------------------------------------------------------------------------------------------------

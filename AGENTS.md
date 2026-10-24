@@ -1,7 +1,7 @@
 # Project context for Codex
 
 Read and follow this project context in every conversation working in this repository.
-This file contains copies of CLAUDE.md and ARCHITECTURE.md synchronized on 2026-10-23.
+This file contains copies of CLAUDE.md and ARCHITECTURE.md synchronized on 2026-10-24.
 The source files remain authoritative: read their current contents before working on a system, because these copies may become outdated. Apply the project guidance to Codex as well as Claude.
 
 User collaboration preference: develop opposing-faction AI, economy and QRF work alongside ROWANTREK's work without overlapping his responsibilities. The three-role commander foundation, enemy attack/QRF scheduling and optional infantry/ground force-pool executor are now tracked in ARCHITECTURE.md; broader AI and economy responsibilities remain a proposed work split.
@@ -189,7 +189,11 @@ Key classes/prefabs/configs:
 - `Prefabs/Locations/AROR_Location_Base.et` → one template per world-placed type (`AROR_Location_Town.et`, `_City`, `_Airport`, `_Factory`, `_MilitaryBase`, `_Port`, `_Resources`), each setting only its type and map icon. `AROR_Location_HQ.et`: a base-game spawn point entity with the location component (type HQ) and Persistence.
 - Map icons (planned): each location prefab names its own map icon (image in our addon); `AROR_LocationMapIconsComponent` on the game mode draws them (Map Markers layer 1).
 
-Server/client: towns are static world entities and HQs are replicated dynamic entities; both register on server and clients. Location state (control status, active/inactive) will be server-owned and replicated when added.
+Server/client: towns are static world entities and HQs are replicated dynamic entities; both register on server and clients.
+
+**Control**: every location is always controlled by a role (Resistance, Occupiers or Invaders). Each placed location sets its initial controlling role; a loaded campaign restores the saved one. Control is server-owned, replicated to all clients (location prefabs carry an `RplComponent`), raised as a "control changed" event, saved per location, and shown on the map by tinting the location icon with the controlling faction's colour. The Resistance HQ is fixed to the Resistance.
+
+**Settlements**: towns and cities additionally carry population and support (see Settlements).
 
 Depends on: Map Templates (for placement).
 
@@ -198,10 +202,34 @@ Extension points:
 - Extender maps place `AROR_Location_*` prefabs in their own sub-scene.
 
 Sub-systems (Planned):
-- Town state (e.g. who controls the town).
 - Optional hand-placed child points (spawn, garrison, objective); fall back to scanning buildings inside the radius.
 - Default name from the nearest base-game map descriptor.
 - Workbench plugin to auto-place towns on a terrain.
+
+### Location Capture — In progress
+Purpose: how a location's controlling role changes. Rules depend on the location type; all changes are made by the server through the location's control (see Locations → Control). The HQ cannot be captured.
+
+- **Towns & Cities**: held by the role with **more than 50% support** in that location (see Settlements).
+- **Military locations** (airport, factory, military base, port, resources): captured through an **interaction on the location's flag** (the capture flag prop gets collision and an interaction), only when **all hostiles within the location's radius have been eliminated**.
+- **Flip cooldown**: after the Resistance captures a location it cannot flip back to the Occupiers or Invaders for **5 minutes** (fixed).
+- **Resistance captures** of military locations require **every hostile** in the radius to be dead.
+- **AI recapture** (`AROR_RecaptureComponent`, server, on the game mode): every few seconds, forces inside each military location's radius are weighed. **Defenders** (the controlling role's players and AI) count **×2**, **attacking AI** count **×1**. An attacking AI role (Occupiers or Invaders) with more weight than the defenders takes the location, subject to the flip cooldown. Applies AI vs AI too.
+
+Military capture (in progress): `AROR_CaptureLocationAction` is a user action on the capture flag prop (`AROR_Prop_CaptureFlag.et`, a child of the location). Clients check the rules for feedback ("Hostiles in the area", "Recently captured"); the server re-checks and changes control. The flip-cooldown lock is replicated but not saved.
+
+Depends on: Locations, Factions, Settlements.
+
+### Settlements — In progress
+Purpose: towns and cities as places with people: population, and how much each role is backed there (support), which decides who holds them (see Location Capture).
+
+- Towns and cities only: `AROR_SettlementComponent` on the Town and City prefabs holds the **population** (set per placed location) and the **support**.
+- Support is a percentage per role that **always sums to 100**. Raising one role lowers the others in proportion.
+- A new campaign starts at **100% for the location's initial controlling role**.
+- When a role other than the controller goes **above 50%**, control flips to it; otherwise the current controller keeps it.
+- Server-owned, replicated, raised as a "support changed" event, and saved per location (only when it differs from the starting state).
+- What changes support in play is still to be designed; for now the framework (server API) plus admin-menu buttons for testing.
+
+Depends on: Locations, Factions, Persistence.
 
 ### Game Flow — In progress
 Purpose: the lifecycle from world boot to play, separating **scenario data** (from the world, never saved) from **playthrough data** (from a save).
@@ -240,7 +268,7 @@ Purpose: unlimited, persistent playthrough saves.
 - **Saving must be enabled for the scenario**: running the bare world in Workbench reports saving disabled. It is expected to come from the mission header (Save Types) and/or the world systems config (under investigation).
 - **Where our data lives: inside the base-game save, via entity persistence. No separate save files.** Entities with the engine `Persistence` component are saved; the game mode already has it.
   - **Playthrough-wide state** (settings, start location, etc.) lives in our components on the game mode.
-  - **Per-location state** (e.g. who controls a town) lives on the location entities, which get a `Persistence` component when they need it.
+  - **Per-location state** (controlling role) lives on the location entities, which carry a `Persistence` component; `AROR_LocationComponentSerializer` saves it only when it differs from the initial role (first serializer).
   - Each `AROR_` component with saved state has a matching serializer (`ScriptedComponentSerializer`, as base-game components do). Serializers write a version number first, so older saves keep loading after the data changes.
 - Locations are referenced by a **stable location ID**, never by list position or entity reference. Saved data for a location that no longer exists is skipped with a warning.
 - **Each system owns its save section** via three hooks: initialise fresh / restore from save / write to save. Extender mods add saved data the same way.
@@ -323,9 +351,64 @@ Development validation: Everon_Chicken has an `AROR_OperationTestComponent` for 
 Airborne investigation: inspected base-game movement/controller/transport-waypoint interfaces do not establish an end-to-end landing/escort executor. A mission waypoint coordinator and verified flight adapter are still required; ordinary ground waypoints and cinematic movement are insufficient evidence. External helicopter-mod integration, if pursued, belongs in an optional extender so the core retains its base-game-only dependency. Findings and a proposed takeoff/transit/landing/unload/escort/return sequence are documented in `docs/AIR_OPERATIONS_RESEARCH.md`.
 
 ### Map Markers — In progress
-Two layers:
+Three parts:
 1. **Location markers** (scenario load): **our own icon widgets** drawn on any open map (player map, deploy screen, setup screen) by a client-only component that follows the base-game map events (open/close/pan/zoom) and positions icons from world coordinates. Each location prefab chooses its icon image (white on transparent, so it can be tinted). No base-game config overrides, not draggable, no replication or saving. The HQ also keeps its spawn point map descriptor for the deploy screen.
-2. **State** (playthrough load): location state is shown on the **same icon**, e.g. a town icon tinted by its controlling role (the faction's own colour, so it follows the Factions config). The control state is server-owned, replicated and saved on the location; each client re-tints its icon when it changes. Icons can also handle hover and click (used by the setup screen).
+2. **State** (playthrough load): location state is shown on the **same icon**, e.g. a town icon tinted by its controlling role (the faction's own colour, so it follows the Factions config). The control state is server-owned, replicated and saved on the location; each client re-tints its icon when it changes.
+3. **Info popup and selector**: hovering a location icon shows pulsing corner brackets (steady on the selected icon); clicking it opens an info card next to it with name, type and controlling faction; settlements also show population and support per faction. It follows the icon, updates live when control or support changes, and is suppressed while a map click is used for something else (HQ pick, teleport). Client-only.
+
+### Economy — In progress
+Purpose: money and manpower for the campaign: balances, and periodic income from held locations. Spending rules come later.
+Key classes: `AROR_EconomyComponent`, `AROR_EconomyComponentSerializer`, `AROR_IncomeComponent` (all on the game mode).
+
+- **Faction funds**: one bank balance per faction role (Resistance, Occupiers, Invaders), starting from per-role base values set on the component. Server-owned, replicated to every client, with a funds-changed event.
+- **Manpower**: a Resistance-only balance with a starting value. Server-owned, replicated to every client, with a changed event.
+- **Player money**: personal money per player, starting from a base value the first time a player joins the campaign. Server-owned; each player is sent only their own balance (through the player controller). Keyed by the player's identity ID so it survives reconnects and restarts.
+- **Income** (server, every 5 minutes, not during setup): each faction role is paid for the locations it controls.
+  - Money = held Resources × $500 × (1 + 0.3 per held Factory + 0.5 per held Port), plus $5 per inhabitant of held towns and cities (not multiplied).
+  - The Resistance also gains manpower per held town and per held city.
+  - Resistance players get a dispatch card notification with the amounts.
+  - Rates and the interval are attributes on `AROR_IncomeComponent`.
+- **Persistence**: funds, manpower and player money are saved with the game mode (nothing is written while everything is still at its starting values). Income timing is not saved.
+- **Rules**: balances never go below zero; spending only succeeds if the balance covers it. All changes happen on the server.
+- Extension points: other systems and extender mods call the server API to add, spend and read balances (`AddFactionFunds_S`, `SpendFactionFunds_S`, `AddPlayerMoney_S`, `SpendPlayerMoney_S`, `AddManpower_S`, `SpendManpower_S`) and can trigger a payment (`AROR_IncomeComponent.PayIncome_S`).
+
+### Phone — In progress
+Purpose: an in-game phone that hosts player-facing apps. Client only.
+Key classes: `AROR_PhoneMenu` (menu, preset `AROR_PhoneMenu`), `AROR_PhoneComponent` (game mode; keybind), `UI/Layouts/Phone/AROR_PhoneMenu.layout`, textures in `UI/Textures/Phone/`.
+
+- **Opening**: a rebindable input action (`AROR_OpenPhone` in its own `AROR_PhoneContext`) opens and closes it (Ctrl+Y by default), for every living player, when no other menu is open.
+- **Menu**: registered through `chimeraMenus.conf` and the input config via **Override in addon**, which layers our entries on top of the base configs rather than replacing them.
+- **Look**: a phone frame image over a wallpaper, with a status bar (in-game clock, signal, battery). It slides up from the bottom when opened.
+- **Orientation**: apps open in portrait or landscape. Landscape apps turn the whole phone 90 degrees and scale it up, with the frame staying on; app content is hidden while it turns and laid out for the new size afterwards.
+- **Apps**: launched from tiles on the home screen; the frame's home button returns to the home screen. **Bank** (portrait) shows the account holder, the player's personal money and the Resistance funds live from the Economy; transfers are planned. A landscape test app exercises the turn.
+- **Esc** closes the phone from any screen.
+- Extension points: planned app registration so extender mods can add apps.
+
+### Notifications — In progress
+Purpose: tell players what is happening in the campaign, plus quiet personal feedback. Anything can send: core systems, extender mods, admin tools.
+Key classes: `AROR_NotificationManagerComponent` (on the game mode; static sending API), `AROR_Notification`, `AROR_NotificationDisplay`, `UI/Layouts/Notifications/AROR_Notifications.layout`.
+
+Three kinds:
+1. **Headline**: a full-width strip across the upper third, for major campaign events (e.g. HQ established).
+2. **Notification**: a dispatch card in the top right with a coloured icon block, a small label set by the sender and the text, for routine events (e.g. location captured).
+3. **Hint**: a pill at the bottom centre, for personal feedback (e.g. why an action failed). Its colour is optional (amber by default).
+
+- **Server/client**: headlines and notifications are sent by the server only, to everyone (broadcast) or to one player (through the player controller). Hints are shown locally by a client, or sent by the server to one player when it rejects an action. Drawing is client-only, never on a dedicated server.
+- **Queue**: headlines and notifications share one queue and show one at a time; headlines jump ahead of queued notifications. No cap. Hints skip the queue; a new hint replaces the current one.
+- **Who sees them**: headlines and notifications show for every connected player, alive or dead, and over the map. Hints are dropped while the player is dead or not spawned. No replay for players who join later. Not saved.
+- **Content**: text (English, the same for everyone), an optional icon and accent colour (e.g. the faction's), and a UI sound (one default per kind, which senders can override).
+- Extension points: extender mods call the static API (`Send_S`, `SendHint_S`, `ShowHint`). Audiences beyond everyone and single players (roles, areas) and a notification log come later.
+
+### Admin Tools — In progress
+Purpose: in-game testing and admin tools, opened with **Ctrl+T** (`AROR_AdminMenuComponent` on the game mode, client only).
+
+- Currently available to **every player** (an Enabled switch on the component turns it off; restricting it to admins comes later).
+- **Teleport**: pick a point on the map; the player's own machine moves its character (movement replicates).
+- **Game Master**: the server unlocks the base-game Game Master (Edit) mode for the player.
+- **Support**: adjust the nearest settlement's support per faction (server-side).
+- **Test notifications**: sends a test headline and notification to everyone and a test hint to the player.
+- **Economy**: a sub-menu showing faction funds, Resistance manpower and the player's money, with buttons to give money to each faction or to the player and to pay income now (server-side).
+- Built on the same base-game dialogs as the setup UI; no base-game config overrides (the hotkey is read directly from the keyboard).
 
 ### Map Templates — Planned
 Purpose: per-map setup of the game mode, as a sub-scene of the terrain's world.

@@ -1,8 +1,9 @@
-//! Saves faction funds and player money (AROR_EconomyComponent on the game mode, which has a Persistence component).
+//! Saves faction funds, Resistance manpower and player money (AROR_EconomyComponent on the game mode, which has a Persistence component).
 //! Nothing is written while funds are at their starting values and no player has money yet.
 class AROR_EconomyComponentSerializer : ScriptedComponentSerializer
 {
-	protected static const int VERSION = 1;
+	//! 2: adds Resistance manpower
+	protected static const int VERSION = 2;
 
 	//------------------------------------------------------------------------------------------------
 	override static typename GetTargetType()
@@ -19,13 +20,14 @@ class AROR_EconomyComponentSerializer : ScriptedComponentSerializer
 		array<int> playerBalances = {};
 		economy.GetPlayerMoneyEntries(playerKeys, playerBalances);
 
-		if (economy.HasStartingFactionFunds() && playerKeys.IsEmpty())
+		if (economy.HasStartingFactionFunds() && economy.HasStartingManpower() && playerKeys.IsEmpty())
 			return ESerializeResult.DEFAULT;
 
 		context.WriteValue("version", VERSION);
 		context.WriteValue("resistance", economy.GetFactionFunds(AROR_EFactionRole.RESISTANCE));
 		context.WriteValue("occupiers", economy.GetFactionFunds(AROR_EFactionRole.OCCUPIERS));
 		context.WriteValue("invaders", economy.GetFactionFunds(AROR_EFactionRole.INVADERS));
+		context.WriteValue("manpower", economy.GetManpower());
 		context.WriteValue("playerKeys", playerKeys);
 		context.WriteValue("playerBalances", playerBalances);
 		return ESerializeResult.OK;
@@ -42,6 +44,11 @@ class AROR_EconomyComponentSerializer : ScriptedComponentSerializer
 		int resistance, occupiers, invaders;
 		if (context.ReadValue("resistance", resistance) && context.ReadValue("occupiers", occupiers) && context.ReadValue("invaders", invaders))
 			economy.RestoreFactionFunds_S(resistance, occupiers, invaders);
+
+		// Version 1 saves have no manpower; it then stays at the starting value
+		int manpower;
+		if (version >= 2 && context.ReadValue("manpower", manpower))
+			economy.RestoreManpower_S(manpower);
 
 		array<string> playerKeys = {};
 		array<int> playerBalances = {};
