@@ -5,7 +5,7 @@ class AROR_ForceProfile
 	string m_sId;
 	[Attribute("1", desc: "Enable this profile for selection")]
 	bool m_bEnabled;
-	[Attribute("1", UIWidgets.ComboBox, desc: "Campaign role", enums: ParamEnumArray.FromEnum(AROR_EFactionRole))]
+	[Attribute("1", UIWidgets.ComboBox, desc: "Campaign role", enums: AROR_FactionRoles.MilitaryRoleParams())]
 	AROR_EFactionRole m_eRole;
 	[Attribute("AROR_OCCUPIERS", desc: "Required campaign faction key from AROR_FactionRolesComponent")]
 	string m_sFactionKey;

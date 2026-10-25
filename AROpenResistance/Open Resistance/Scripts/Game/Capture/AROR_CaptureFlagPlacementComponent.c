@@ -3,8 +3,8 @@ class AROR_CaptureFlagPlacementComponentClass : ScriptComponentClass {}
 
 class AROR_CaptureFlagPlacementComponent : ScriptComponent
 {
-	[Attribute("1", desc: "Find a clear grounded position for this capture pole during Play")]
-	protected bool m_bEnabled;
+	[Attribute("1", desc: "Auto Place: during Play the server moves this capture pole to a clear, flat, walkable spot near the location centre (within Search Radius). Turn off for hand-placed flags to keep their editor position.")]
+	protected bool m_bAutoPlace;
 	[Attribute("60", desc: "Maximum search distance from the location centre; also limited to half its radius", params: "5 100 5")]
 	protected float m_fSearchRadius;
 	[RplProp()]
@@ -133,7 +133,7 @@ class AROR_CaptureFlagPlacementComponent : ScriptComponent
 	override void OnPostInit(IEntity owner)
 	{
 		super.OnPostInit(owner);
-		if (!GetGame().InPlayMode() || !m_bEnabled)
+		if (!GetGame().InPlayMode() || !m_bAutoPlace)
 			return;
 		if (Replication.IsServer())
 			GetGame().GetCallqueue().CallLater(TryPlace, 250, false);

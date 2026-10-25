@@ -3,13 +3,13 @@ class AROR_AdminMenuComponentClass : SCR_BaseGameModeComponentClass
 {
 }
 
-//! Admin/testing menu, opened with Ctrl+T. Currently available to every player (switch off with Enabled).
+//! Admin/testing menu, opened with Ctrl+T. Currently available to every player (switch off with Menu Available).
 //! Teleport: opens the base-game map menu; the clicked position teleports the local player there.
 //! The hotkey is read directly from the keyboard to avoid overriding the base-game input config.
 class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 {
-	[Attribute("1", desc: "Menu available (currently to every player). Turn off for public servers.")]
-	protected bool m_bEnabled;
+	[Attribute("1", desc: "Menu Available: Ctrl+T opens the admin menu (currently for every player) and the server accepts its requests. Turn off for public servers.")]
+	protected bool m_bMenuAvailable;
 
 	[Attribute("{5BB4D0ED53225DDC}Configs/UI/AROR_SetupDialogs.conf", UIWidgets.ResourceNamePicker, desc: "Dialog presets (uses the 'aror_admin' preset)", params: "conf")]
 	protected ResourceName m_sDialogPresets;
@@ -116,7 +116,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//! Server: add money to a faction's funds, or (selfMoney) to the requesting player's own money
 	void GiveMoney_S(int playerId, AROR_EFactionRole role, bool selfMoney, int amount)
 	{
-		if (!Replication.IsServer() || !m_bEnabled)
+		if (!Replication.IsServer() || !m_bMenuAvailable)
 			return;
 
 		AROR_EconomyComponent economy = AROR_EconomyComponent.GetInstance();
@@ -135,7 +135,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//! Server: run an income payment now instead of waiting for the timer
 	void PayIncomeNow_S(int playerId)
 	{
-		if (!Replication.IsServer() || !m_bEnabled)
+		if (!Replication.IsServer() || !m_bMenuAvailable)
 			return;
 
 		AROR_IncomeComponent income = AROR_IncomeComponent.GetInstance();
@@ -220,7 +220,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//! Server: unlock the Game Master (Edit) editor mode for the requesting player
 	void GrantGameMaster_S(int playerId)
 	{
-		if (!Replication.IsServer() || !m_bEnabled)
+		if (!Replication.IsServer() || !m_bMenuAvailable)
 			return;
 
 		SCR_EditorManagerCore editorCore = SCR_EditorManagerCore.Cast(SCR_EditorManagerCore.GetInstance(SCR_EditorManagerCore));
@@ -248,7 +248,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//! Server: a headline and a notification for everyone (they queue), and a hint for the requesting player
 	void SendTestNotifications_S(int playerId)
 	{
-		if (!Replication.IsServer() || !m_bEnabled)
+		if (!Replication.IsServer() || !m_bMenuAvailable)
 			return;
 
 		Color resistanceColor;
@@ -265,7 +265,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//! Server: adjust support of the town or city nearest to the requesting player
 	void AdjustNearestSupport_S(int playerId, AROR_EFactionRole role, float delta)
 	{
-		if (!Replication.IsServer() || !m_bEnabled)
+		if (!Replication.IsServer() || !m_bMenuAvailable)
 			return;
 
 		IEntity player = GetGame().GetPlayerManager().GetPlayerControlledEntity(playerId);
@@ -487,7 +487,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 		// The server instance handles admin requests sent through the player controller
 		s_Instance = this;
 
-		if (!m_bEnabled || RplSession.Mode() == RplMode.Dedicated)
+		if (!m_bMenuAvailable || RplSession.Mode() == RplMode.Dedicated)
 			return;
 
 		GetGame().GetCallqueue().CallLater(CheckHotkey, 0, true);

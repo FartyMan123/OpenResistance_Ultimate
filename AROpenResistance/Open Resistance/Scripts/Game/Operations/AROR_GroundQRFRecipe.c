@@ -6,7 +6,7 @@ class AROR_GroundQRFRecipe
 	string m_sId;
 	[Attribute("1", desc: "Authored response tier; does not multiply the element list", params: "1 5 1")]
 	int m_iLevel;
-	[Attribute("1", UIWidgets.ComboBox, desc: "Responding campaign role", enums: ParamEnumArray.FromEnum(AROR_EFactionRole))]
+	[Attribute("1", UIWidgets.ComboBox, desc: "Responding campaign role", enums: AROR_FactionRoles.MilitaryRoleParams())]
 	AROR_EFactionRole m_eRole;
 	[Attribute("AROR_OCCUPIERS", desc: "Required faction from the shared role mapping")]
 	string m_sFactionKey;
