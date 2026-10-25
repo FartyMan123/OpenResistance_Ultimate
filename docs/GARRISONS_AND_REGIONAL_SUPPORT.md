@@ -1,0 +1,76 @@
+# Garrisons and regional support
+
+Implementation is in progress. Scripts and data have offline checks; this is not a Workbench compile or gameplay acceptance report.
+
+Focused actual-source regressions cover region membership, support normalization, registry caches, game-clock timing, deployment expiry, queue-source cancellation, resource failures, orphaned crew, logical asset rebinding and serializer round trips/recovery. Native services are mocked; these do not replace Workbench compilation, queue cancellation, multiplayer or save/load acceptance.
+
+Towns and cities have no flag interaction. Unused Town_Flag/City_Flag resources and the settlement-flag switch/API are removed. MilitaryOutpost is replaced by MilitaryBase; Outpost and MilitaryBase directly inherit Location_Base with their own flags/garrisons. All 41 stable campaign IDs remain. Extenders must update removed resource references and renamed component attributes.
+
+## Regional support
+
+As agreed with Jasper, each military site joins its nearest town/city's region. Distance is horizontal; stable IDs break ties. `m_sSupportRegionId` on a location overrides this assignment; several settlements can share a region ID. For generated Chicken layers, edit the CSV `RegionId` column before regeneration (blank uses the automatic assignment). It is scenario data, not a saved campaign ownership map.
+
+Regional support is opt-in per scenario: the script default and shared game-mode prefab disable it. Only Chicken explicitly enables the current experimental policy. Existing worlds inheriting the shared prefab retain their support unless they opt in or another support authority changes it. The drift rate and policy remain provisional balancing choices.
+
+When enabled, every 60 seconds after campaign setup, count the region's flag-capturable installations by controlling role. Their equal shares define the target support distribution. Move each settlement toward that target by at most two percentage points for any role per cycle. Interpolating all three values together keeps their sum at 100 without granting support to an absent role. A region with no installations has no military influence and retains support. The original initial support, >50% ownership rule, fixed control and flip cooldown remain authoritative. From 0% Resistance support, complete regional military control takes 26 default cycles to exceed 50%; a 50/50 split does not itself produce a majority.
+
+Regional timing/step are attributes on AROR_RegionalSupportComponent. Region membership and settlement references are computed once and invalidated when locations register or disappear. Ownership remains dynamic and is counted each support cycle. This supplies ongoing military influence through the existing support authority; no new support save section is added.
+
+## Defence recipes
+
+| Location | Default recipe |
+| --- | --- |
+| Ordinary outpost | 8 infantry, 1 crewed MG; no vehicles even under a stronger infantry override |
+| Military outpost/base | 24 infantry, 3 crewed MGs, 1 parked unmanned LAV/BTR, 1 random crewed vehicle |
+| Resources / factory / port | Roll level 1–3 once: 8/16/24 infantry, 1/2/3 MGs, 0/1/1 crewed vehicles; level 3 also has parked armour |
+| Airbase | 32 infantry, 4 MGs, parked armour, 3 random crewed vehicles |
+
+All recipes use four-person infantry teams. Crew is additional and comes from the actual non-cargo compartments; seating is requested directly and confirmed before defend orders. Occupier random hulls are LAV-25/M2 Humvee; Invaders use BTR-70/BRDM-2 with equivalent parked BTR and NSV roles. Each role's assets and native faction are configured independently in `AROR_GarrisonFaction`, checked against the shared role mapping. This does not enable Invader QRF admission; garrisons follow the actual site controller and their own valid binding.
+
+These are provisional strengths. Infantry uses the configured character prefab rather than specialist fireteam compositions. Eleven military compositions supply authored walls and editable defence pads. All 23 Chicken footprints passed the earlier native audit; the later hierarchy/configuration changes require resource reload and gameplay checks. Building-interior occupation and runtime fortification construction remain unimplemented.
+
+## Activation, losses and capture
+
+The manager caches location/garrison/game-flow references and takes one player snapshot per configured 1–2 second proximity scan (default 1 second). Registration/deletion invalidates the cache. Construction remains limited to one hull or team request per 250 ms globally. Teleports are noticed by the next proximity scan. Retirement and queue/deployment deadlines use elapsed game time, not callback counts. The 1km activation, 6m local clearance (3m crew staging) and separate 96-personnel default cap remain configurable.
+
+Earlier Levie Play tests identified terrain and blocked-pad problems; later native tests confirmed garrison deployment and the clear/capture/QRF sequence, including relocated East Resources. These results predate the PR-review lifecycle and migration corrections.
+
+Deployment is pending for a bounded window (default 60 seconds), including when terrain or the personnel cap prevents any construction. Failed terrain is rechecked at a throttled cadence. Resource/faction/crew/pad failures share bounded retries. Each submitted queue has its own timeout (default 30 seconds); its source group is stopped and replaced only for existing survivors. Missing slots are omitted for that activation without recording casualties. Closing the window stops all remaining producers before capture unlocks. Living hostile checks continue to block capture; omitted slots cannot materialise later in that activation. Native queue/player-transfer safety still requires acceptance.
+
+Chicken's QRF sequence is **clear the outpost, capture the flag, then request the QRF**. `m_bCombatQRFs` defaults off and is explicitly off in Chicken: hostile damage reports do not create requests or feed threat/contact side effects through the damage adapter. Enabled canonical capture events still queue the previous hostile owner's response, subject to funding, cooldowns and capacity. Settlement support flips also retain their separately enabled capture-response path. Extenders can explicitly re-enable combat responses. Existing operations from a previous Play session are not retroactively cancelled.
+
+Retirement defaults to 2,500 m and 120 continuous seconds. Every player, including spectators with a controlled entity or dead characters, must be far enough from both site and tracked actors before deletion. Returning resets the grace timer. Native player control and foreign vehicle occupants prevent cleanup ownership from being taken away. Explicitly transferred assets become unavailable roster slots; moving a remaining hull outside the site also prevents its later recreation. Group queues are cancelled during retirement, and living administrative retirement is not counted as a death.
+
+Casualties and coarse health survive retirement. Schema 3 saves logical kind/catalogue variant, group/seat relationships and loss/health flags, with no prefab paths or transforms. Versions 1/2 migrate to current role assets and freshly validated pads. A damaged slot is conservatively withheld without rejecting its neighbours; an unreadable header quarantines the section and prevents a free fresh roster. Extra seats introduced by a changed catalogue do not award replacement crew. Surviving crew whose hull was lost re-enter on foot. Variants currently identify configured catalogue positions; stable catalogue IDs remain part of future faction work.
+
+Ownership changes close deployment queues and clear QRF assignments. Existing actors retire safely before a new enemy owner gets a fresh roster; Resistance receives no automatic garrison. Initial rosters still have no cost and casualties are not replenished: that interim policy is unchanged pending an agreed resource-backed replenishment contract with the economy owner. No funds, manpower or stock authority is added here.
+
+## Antistasi reference
+
+Reviewed Antistasi Community at commit `6e4226d3863ca8673535386c2fff8b6e08a806c4`:
+
+- [Server garrison construction](https://github.com/official-antistasi-community/A3-Antistasi/blob/6e4226d3863ca8673535386c2fff8b6e08a806c4/A3A/addons/core/functions/GarrisonServer/fn_buildEnemyGarrison.sqf) separates stored troops/vehicles from physical spawning and varies site strength.
+- [Physical vehicles and static crews](https://github.com/official-antistasi-community/A3-Antistasi/blob/6e4226d3863ca8673535386c2fff8b6e08a806c4/A3A/addons/core/functions/GarrisonLocal/fn_spawnGarrisonVehicles.sqf) distinguishes parked assets, gunner-only statics and full crews.
+- [Server despawn reconciliation](https://github.com/official-antistasi-community/A3-Antistasi/blob/6e4226d3863ca8673535386c2fff8b6e08a806c4/A3A/addons/core/functions/GarrisonServer/fn_garrisonServer_despawn.sqf) reconciles virtual state with live results.
+- [City support](https://github.com/official-antistasi-community/A3-Antistasi/blob/6e4226d3863ca8673535386c2fff8b6e08a806c4/A3A/addons/core/functions/Base/fn_citySupportChange.sqf) is server-owned and responds to local context. Antistasi's current city-battle thresholds are different from Open Resistance's requested support-only rule.
+
+These are design references, not copied SQF or engine APIs. The nearest-settlement regional military-share rule is the agreed Open Resistance design. Asset GUIDs were read from the installed base-game resource database, never invented. No Enfusion MCP API tools were available in this session; native signatures were checked against installed official Workbench API documentation and existing project code. No live `wb_*` tools were used.
+
+## Native acceptance
+
+1. Stop Play, discover the new `AROR_GarrisonGroup.et` resource (hand-authored GUID `{A22D9D957ABE44DF}`), compile Game/Workbench scripts, and reload Chicken from disk. Inspect towns without poles and the remaining 23 military poles. The editor audit should skip all 18 settlements.
+2. Approach or teleport inside an audited site: construction should start within one proximity interval, then remain paced through the native queue. Verify infantry/MG roles and crew occupancy. Test bad terrain, invalid resource/faction bindings, exhausted capacity and stalled/partial queues: the deployment window must finish, existing defenders survive, and no actors spawn after capture.
+3. Visit a military outpost: verify the parked LAV remains unmanned and the random second hull has actual driver/gunner occupancy and can fight. Verify the three resource tiers across fresh campaigns and the larger airbase roster. Repeat using explicitly authored Invader ownership.
+4. Kill several defenders and damage a hull. Leave beyond the retirement radius for the grace period and return. Losses must remain gone, damaged survivors must not return at full coarse health, and the recipe must not reroll. Re-enter before the grace expires to verify retention.
+5. Capture a parked/manned asset. Neither cleanup nor a later activation may delete it or create its replacement. Then clear a military site and capture its flag; verify the old group's reporting assignment clears and only the established capture/QRF rules run. Check spawn-pending capture rejection.
+6. Capture installations within a region. Verify town support advances at the configured rate and changes ownership only above 50%. Recapture an installation, test a split/no-installation region and a shared authored region. Confirm town poles/actions and weighted military recapture are absent.
+7. Save/load with depleted and partially spawned garrisons. Check saved rosters/seat indices, no duplicated physical forces, and unchanged location IDs/support. Check unsupported save versions reject cleanly.
+8. Test two clients approaching different sites, player takeover of AI/vehicles, dedicated-server ownership/replication and the combined garrison+QRF performance budget. Existing QRF hold/return/cleanup acceptance remains pending separately.
+
+Also clear Levie while leaving one hostile alive: capture must remain blocked and damage must not create a QRF. Eliminate the last hostile inside the capture radius; after outstanding native queues resolve, an unused blocked MG recipe must not keep capture locked. Complete the flag interaction and verify one capture response request, funding/admission permitting. Confirm failed pads stop retrying after the placement window without casualties or late spawns. Start fresh Play to exclude any combat response already active before damage requests were disabled.
+
+## Current perimeter bindings
+
+Chicken now binds all 23 military sites to perimeter presets: 20 measured placements and three compact drafts. Strategic roots remain fixed where required; translated children follow their flag, and runtime/editor checks keep anchored perimeters inside the canonical capture circle. Four compact variants retain recipe roles with separated infantry/MG/vehicle pads. Standard cardinal teams are moved inward to avoid the former MG clearance conflict. Saved positions that disagree with edited markers are invalidated without replenishing casualties. See MILITARY_DEFENCE_PRESETS.md for the native grounding/audit workflow; draft geometry is not accepted deployment evidence.
+
+Component settings: use m_bHasGarrison, m_bGarrisonsActive, m_bRegionalSupport, m_bExecuteOperations and m_bReportDamage in place of their former m_bEnabled attributes. Chicken overrides are updated; regional support remains disabled in the shared prefab and explicitly enabled only in Chicken.

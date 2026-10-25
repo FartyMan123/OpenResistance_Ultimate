@@ -11,7 +11,7 @@ The script default is disabled, but the prepared Chicken override now enables th
 ## Test QRF scheduling first
 
 1. Compile in Script Editor, then select `AROR_GameMode_Base1` in Chicken's Managers layer.
-2. Keep `m_bEnabled` off on the executor and disable `m_bQRFStrategicEconomy` for this isolated immediate-scheduler test. Clear both automatic attack target IDs.
+2. Keep `m_bExecuteOperations` off on the executor and disable `m_bQRFStrategicEconomy` for this isolated immediate-scheduler test. Clear both automatic attack target IDs.
 3. On `AROR_OperationTestComponent`, set `m_sOccupiersQRFTestTargetId` to `everon_provins`. Keep the Invader target empty and its admission gate off. Leave `m_bRunSchedulerSmokeTests` off. The default report delay is 15 seconds after campaign readiness.
 4. Play and complete setup. Expect one Occupier `[AROR TEST] Simulated attack` ID, then SPAWNING and an eventual timeout with no executor. A dual-role scheduler test requires a separate explicit disposable configuration with valid Invader targets; normal Chicken keeps Invaders disabled.
 
@@ -31,7 +31,7 @@ On Chicken's executor component, select:
 | `m_sQRFWaypointPrefab` | A base-game AI defend waypoint prefab |
 | `m_vOccupiersSpawnPosition` | A clear, navigable land position for the Occupier force |
 | `m_vInvadersSpawnPosition` | A separate clear, navigable land position for the Invader force |
-| `m_bEnabled` | Enable after filling the fields above |
+| `m_bExecuteOperations` | Enable after filling the fields above |
 
 Use the resource pickers to select group entities, not individual soldier prefabs. Start with small infantry groups without vehicles, nested subgroups or attached static waypoints. Their member-slot arrays define the reservation cost. Campaign faction keys come from `AROR_FactionRolesComponent`. A force profile can explicitly declare a native `m_sAssetFactionKey` for first-spawn conversion to its campaign key; unrelated factions and subsequent changes are rejected. The legacy fallback fields have no source-faction declaration and require matching or unassigned entities. See [force pools](FORCE_POOLS.md).
 

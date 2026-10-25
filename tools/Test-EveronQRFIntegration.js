@@ -13,10 +13,10 @@ function runEveronQRFIntegrationTests(sources) {
   function compile(source,name){
     const m=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
     if(!m)throw Error('Missing '+name);
-    const args=m[1].replace(/\b(?:int|bool|string|AROR_\w+)\s+/g,'');
+    const args=m[1].replace(/\b(?:int|bool|string|vector|AROR_\w+)\s+/g,'');
     let body=m[2].replace(/\b(?:bool|int|string|Faction|AROR_\w+)\s+(\w+)/g,'let $1').replace(/let (\w+);/g,'let $1=0;')
       .replace(/(?<![.\w])m_\w+/g,x=>'this.'+x);
-    for(const method of ['IsReady','IsEnemyRole','QueueQRFThreat_S','RequestOperation_S','HasPendingQRFThreat','ReportLocationCapture_S','IsCapturableType','IsCapturableLocation'])
+    for(const method of ['IsReady','IsEnemyRole','QueueQRFThreat_S','RequestOperation_S','HasPendingQRFThreat','ReportLocationCapture_S','IsCapturableType','IsCapturableLocation','ReportAttack_S','ReportCombatContact_S','GetOperation'])
       body=body.replace(new RegExp('(?<![.\\w])'+method+'\\(', 'g'),'this.'+method+'(');
     return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
   }
@@ -45,27 +45,41 @@ function runEveronQRFIntegrationTests(sources) {
   manager.m_bQRFStrategicEconomy=true;check(capture.call(manager,1,'site')==='queued'&&queued===1,'paid capture uses bounded strategic queue');
   manager.ReportLocationCapture_S=(...args)=>capture.apply(manager,args);
   check(compile(sources.manager,'ReportTownCapture_S').call(manager,1,'site')==='queued','legacy settlement API retained');
+  let combatContacts=0;
+  manager.m_bCombatQRFs=false;
+  manager.ReportAttack_S=compile(sources.manager,'ReportAttack_S');
+  manager.ReportCombatContact_S=()=>combatContacts++;
+  manager.GetOperation=()=>null;
+  const damageAt=compile(sources.manager,'ReportAttackAt_S'),beforeDamageQueue=queued,beforeDamageRequests=requested;
+  check(manager.ReportAttack_S(1,'site')===''&&queued===beforeDamageQueue&&requested===beforeDamageRequests,'combat disabled blocks plain damage request');
+  check(damageAt.call(manager,1,'site',[0,0,0])===''&&queued===beforeDamageQueue&&combatContacts===0,'combat disabled blocks positioned damage, pressure and contact side effects');
+  check(capture.call(manager,1,'site')==='queued'&&queued===beforeDamageQueue+1,'capture still queues a paid response with combat reports disabled');
+  manager.m_bCombatQRFs=true;
+  check(damageAt.call(manager,1,'site',[0,0,0])==='queued'&&queued===beforeDamageQueue+2&&combatContacts===1,'explicit combat opt-in retains strategic response path');
+  manager.m_bQRFStrategicEconomy=false;
+  check(manager.ReportAttack_S(1,'site')==='operation'&&requested===beforeDamageRequests+1,'explicit combat opt-in retains non-strategic response path');
   check(!sources.observer.includes('SetControllingRole_S'),'observer does not change territory authority');
   const actions={IsCapturableType:compile(sources.capture,'IsCapturableType'),IsCapturableLocation:compile(sources.capture,'IsCapturableLocation')};
   const captureFlag=compile(sources.capture,'CaptureLocation_S');
-  const allows=compile(sources.location,'AllowsSettlementFlagCapture');
+  check(!sources.location.includes('AllowsSettlementFlagCapture')&&!sources.location.includes('m_bSettlementFlagCapture'),'obsolete settlement flag API removed');
   let supportCalls=0,controlCalls=0;
-  const site={m_eType:types.CITY,m_bSettlementFlagCapture:true,owner:1,allowed:true,
-    GetLocationType(){return this.m_eType;},AllowsSettlementFlagCapture:allows,CanBeTakenBy(){return this.allowed;},
+  const site={m_eType:types.CITY,owner:1,allowed:true,
+    GetLocationType(){return this.m_eType;},CanBeTakenBy(){return this.allowed;},
     GetControllingRole(){return this.owner;},SetControllingRole_S(role){controlCalls++;this.owner=role;return true;},
     GetOwner:()=>({FindComponent:()=>settlement})};
   let settlement={SetSupport_S(role,value){supportCalls++;check(value===100,'flag capture sets coherent majority support');site.owner=role;}};
-  check(captureFlag.call(actions,site,0)&&site.owner===0&&supportCalls===1&&controlCalls===0,'city flag uses existing support authority');
-  site.m_bSettlementFlagCapture=false;check(!actions.IsCapturableLocation(site),'unmodified cities remain support-only');
-  check(!captureFlag.call(actions,site,0),'non-opted-in city flag rejected');site.m_bSettlementFlagCapture=true;
+  check(!captureFlag.call(actions,site,0)&&supportCalls===0&&controlCalls===0,'legacy opted-in city cannot use flag capture');
+  check(!actions.IsCapturableLocation(site),'unmodified cities remain support-only');
+  check(!captureFlag.call(actions,site,0),'non-opted-in city flag rejected');
   site.allowed=false;check(!captureFlag.call(actions,site,0),'capture cooldown/fixed control respected');site.allowed=true;
   settlement=null;check(!captureFlag.call(actions,site,0),'missing settlement cannot create inconsistent city control');
+	for(const type of [types.TOWN,types.CITY]){site.m_eType=type;check(!actions.IsCapturableLocation(site),'settlements never enter military recapture: '+type);}
   site.m_eType=types.OUTPOST;check(captureFlag.call(actions,site,0)&&controlCalls===1,'outpost flag retains direct control authority');
   site.m_eType=types.MILITARY_BASE;check(captureFlag.call(actions,site,0)&&controlCalls===2,'military outpost flag retains direct control authority');
   site.m_eType=types.HQ;check(!actions.IsCapturableLocation(site),'HQ cannot opt into settlement flag capture');
   env.Replication.IsServer=()=>false;site.m_eType=types.OUTPOST;
   check(!captureFlag.call(actions,site,0)&&controlCalls===2,'client cannot capture through helper');
-  check(sources.capture.includes('if (!IsCapturableLocation(location) || location.IsControlFixed())'),'city flags use location opt-in in action visibility');
+  check(sources.capture.includes('if (!IsCapturableLocation(location) || location.IsControlFixed())'),'action visibility uses the military-only gate');
   return {assertions,note:'Native events, faction manager and response execution mocked; Play verification required.'};
 }
 if(typeof require==='function'&&typeof module!=='undefined'&&require.main===module){

@@ -1,21 +1,27 @@
 # Everon campaign locations
 
-Chicken now places **41** campaign locations: **7 cities, 11 towns, 14 outposts, 5 military outposts, 1 airport, 1 factory and 2 resource sites**. Scope is location prefabs and capturable flagpoles, using the existing location registry, map icons, support, control, income, capture and persistence systems. No garrisons or scenery compounds are spawned; factory/resource markers align with Rowan placements.
+Chicken places **41** campaign locations: **7 cities, 11 towns, 14 outposts, 5 military outposts, 1 airport, 1 factory and 2 resource sites**. The 18 settlements are support-only with no poles; the 23 military sites retain flag capture. Existing location, support, ownership, income and persistence authorities are reused. Runtime defenders and regional support are described in [Garrisons and regional support](GARRISONS_AND_REGIONAL_SUPPORT.md); static perimeter compositions and runtime defenders use separate authorities. Factory/resource relocation is authorised in Chicken.
 
 ## Reusable prefabs
 
 | Template in Prefabs/Locations | Location type | Capture |
 |---|---|---|
-| AROR_Location_City_Flag.et | CITY | Flag capture updates existing settlement support to 100% for the capturing role |
-| AROR_Location_Town_Flag.et | TOWN | Same opt-in settlement flag behavior |
+| AROR_Location_City.et | CITY | Support majority only; no flag |
+| AROR_Location_Town.et | TOWN | Support majority only; no flag |
 | AROR_Location_Outpost.et | OUTPOST | Existing military flag capture |
-| AROR_Location_MilitaryOutpost.et | MILITARY_BASE | Existing military flag capture, larger radius |
+| AROR_Location_MilitaryBase.et | MILITARY_BASE | Existing military flag capture, larger radius |
 
-Settlements and outposts reference these templates; the airport, factory and resource sites use their existing templates. Every site has one inherited or attached AROR_Prop_CaptureFlag.et. Chicken now saves an explicit child-pole transform at every site and disables runtime relocation for those baked flags. Other scenarios retain the shared server placement component. Move a location to an accessible patch of ground in Workbench if its catalogue anchor is obstructed; maintain its stable ID. New template resource GUIDs and entity IDs are hand-authored, recorded in sibling .meta files, and need Workbench resource discovery/registration on reload. No existing asset GUID was invented or reassigned.
+Settlements and outposts reference these templates; the airport, factory and resource sites use their existing templates. Only military installations have the capture-pole child hierarchy and baked transforms. Unused Town_Flag/City_Flag aliases are removed; use the Town/City templates. MilitaryOutpost is removed in favour of MilitaryBase. Outpost and MilitaryBase directly inherit Location_Base. Other scenarios retain the shared server placement component for military flags. New template resource GUIDs and entity IDs are hand-authored, recorded in sibling .meta files, and need Workbench resource discovery/registration on reload. No existing asset GUID was invented or reassigned.
 
-Original AROR_Location_City.et and AROR_Location_Town.et remain support-only. The new flag variants set m_bSettlementFlagCapture=1. The player flag action keeps the existing server hostile-clearance and flip-cooldown checks. AI weighted recapture uses the same support-aware capture helper for opted-in settlements; other settlements retain their existing support-only behavior. Military capture behavior remains direct ownership through the existing authority. No second support, capture or money system is introduced.
+All towns/cities reject flag capture and weighted military recapture, even if an older placed resource retains the deprecated settlement flag attribute. Military flag capture retains hostile-clearance and flip-cooldown checks, with pending unmaterialised defenders also blocking capture. Town support gradually follows control of regional military installations through the existing settlement API. No second support, capture or money system is introduced.
 
 ## Scenario data
+
+Military placement binds all 23 measured clearings through `DefencePreset`, `DefenceYaw`, `DefenceAudit` and `DefenceAnchored`, with no remaining unmeasured drafts. Bindings require their named native evidence. The airport root stays fixed; authorised factory/resource moves affect Chicken only. Saved wall offsets are imported separately and reused only for unchanged poses. The latest native audit passes all 23 current footprints, including East Resources after its final move. All 1526 walls were grounded without warnings, saved and imported; navigation and full Play acceptance remain outstanding.
+
+`DefenceMaxRelief` optionally overrides the garrison's whole-footprint terrain allowance (0.25–4m, military sites only). Levie Military Outpost uses 3m against its measured 2.78125m range; all other rows inherit 2m. This does not change flag placement, waive individual-pad checks or establish native activation acceptance.
+
+The 41-site flag measurements below are historical evidence from before settlement poles were removed. CSV/JSON settlement samples are retained for provenance; the generator emits their root/population only. Current editor auditing should inspect 23 military poles and skip the 18 settlements.
 
 All 41 sites begin as OCCUPIERS (US assets). INVADERS/USSR admission and REAPER dispatch remain disabled. All previous Provins, Morton and Lamentin stable IDs and coordinates are preserved; Morton/Lamentin are classified as cities. Both Provins test defenders remain unchanged and assigned AROR_OCCUPIERS.
 
@@ -81,9 +87,9 @@ Run tools/Set-EveronCampaignLocations.ps1 without arguments to check that the la
 
 Offline validation: tools/Test-EveronCampaignLocations.ps1 checks counts, unique IDs, reference coordinate provenance, preserved anchors, template GUIDs, flag inheritance and origin integration. node tools/Test-EveronQRFIntegration.js checks actual-source capture opt-ins, support/control coherence, server guards and QRF type/admission routing with mocked native services (38 assertions).
 
-In Workbench: stop Play, compile Game scripts, reload Everon_Chicken and let Workbench discover the four new prefab/meta pairs. Start a fresh test campaign. Confirm 41 locations register, inspect flag placement, capture a city and an outpost, verify support/control/income ownership agree, and confirm the queued QRF uses another eligible friendly outpost. Check capture-flag placement logs; investigate any placement-verification warnings and check no location-at/below-sea-level warnings, no duplicate IDs and no immediate AI response just from initialization. Dedicated-server replication, save/load, flag clearance, vehicle launch clearance and native route acceptance remain unverified.
+In Workbench: stop Play, compile Game scripts, reload Everon_Chicken and let Workbench discover the new prefab/meta pairs. Start a fresh test campaign. Confirm 41 locations register, inspect flag placement, change settlement support and capture a military outpost, verify support/control/income ownership agree, and confirm the queued QRF uses another eligible friendly outpost. Check capture-flag placement logs; investigate any placement-verification warnings and check no location-at/below-sea-level warnings, no duplicate IDs and no immediate AI response just from initialization. Dedicated-server replication, save/load, flag clearance, vehicle launch clearance and native route acceptance remain unverified.
 
-Rowan alignment preserves everon_airport at 4913.476,28.251,11787.395 and replaces the duplicate military-outpost airport. North Ridge Factory and both North Ridge Resources sites retain the coordinates authored in his separate layers; those three previously unnamed sites receive stable Chicken IDs. His layers are not rewritten. Airport/factory/resource templates already have the shared capture pole, so they receive the same grounding fix. The generic/military-capture option name m_bOutpostCaptureQRFs remains for serialized compatibility.
+Chicken preserves the airport anchor at 4913.476,28.251,11787.395. Factory/resources retain stable IDs but may relocate to measured clearings under explicit authorisation. Rowan's separate scene files remain untouched. The compatibility option m_bOutpostCaptureQRFs covers all military capture types.
 
 ## Editor-grounding follow-up
 

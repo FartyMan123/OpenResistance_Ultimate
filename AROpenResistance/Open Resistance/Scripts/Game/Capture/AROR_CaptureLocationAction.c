@@ -22,25 +22,17 @@ class AROR_CaptureLocationAction : ScriptedUserAction
 		return false;
 	}
 
-	//! Existing military types remain unchanged; settlement flags are explicit prefab opt-ins.
+	//! Towns and cities always use support, including legacy flag-bearing prefabs.
 	static bool IsCapturableLocation(AROR_LocationComponent location)
 	{
-		return location && (IsCapturableType(location.GetLocationType()) || location.AllowsSettlementFlagCapture());
+		return location && IsCapturableType(location.GetLocationType());
 	}
 
-	//! Use the existing settlement authority so a flag capture cannot leave support contradicting control.
+	//! The flag path never changes settlement support.
 	static bool CaptureLocation_S(AROR_LocationComponent location, AROR_EFactionRole role)
 	{
 		if (!Replication.IsServer() || !IsCapturableLocation(location) || !location.CanBeTakenBy(role))
 			return false;
-		if (location.AllowsSettlementFlagCapture())
-		{
-			AROR_SettlementComponent settlement = AROR_SettlementComponent.Cast(location.GetOwner().FindComponent(AROR_SettlementComponent));
-			if (!settlement)
-				return false;
-			settlement.SetSupport_S(role, 100);
-			return location.GetControllingRole() == role;
-		}
 		return location.SetControllingRole_S(role);
 	}
 
@@ -94,6 +86,16 @@ class AROR_CaptureLocationAction : ScriptedUserAction
 		m_fLastHostileCheckTime = now;
 		return m_bHostilesPresent;
 	}
+	protected string GetDefenceBlockReason()
+	{
+		AROR_LocationComponent location = GetLocation();
+		if (!location)
+			return string.Empty;
+		AROR_GarrisonComponent garrison = AROR_GarrisonComponent.Cast(location.GetOwner().FindComponent(AROR_GarrisonComponent));
+		if (!garrison)
+			return string.Empty;
+		return garrison.GetDefenceCaptureBlockReason();
+	}
 
 	//------------------------------------------------------------------------------------------------
 	//! Needs the flag attached to its location: the flag prefab must have a Hierarchy component
@@ -131,6 +133,12 @@ class AROR_CaptureLocationAction : ScriptedUserAction
 			SetCannotPerformReason("Hostiles in the area");
 			return false;
 		}
+		string deploymentReason = GetDefenceBlockReason();
+		if (!deploymentReason.IsEmpty())
+		{
+			SetCannotPerformReason(deploymentReason);
+			return false;
+		}
 
 		return true;
 	}
@@ -149,14 +157,17 @@ class AROR_CaptureLocationAction : ScriptedUserAction
 
 		// Authoritative re-check without the cache; the player is told why it failed
 		string rejection;
+		string deploymentReason = GetDefenceBlockReason();
 		if (HasHostiles(faction, false))
 			rejection = "Can't capture: hostiles in the area";
+		else if (!deploymentReason.IsEmpty())
+			rejection = "Can't capture: " + deploymentReason;
 		else if (!CaptureLocation_S(location, role))
 			rejection = "Can't capture: recently captured";
 
 		if (!rejection.IsEmpty())
 		{
-			Print(string.Format("[AROR] Capture of '%1' rejected by the server", location.GetName()), LogLevel.NORMAL);
+			Print(string.Format("[AROR] Capture of '%1' rejected by the server: %2", location.GetName(), rejection), LogLevel.NORMAL);
 
 			int playerId = GetGame().GetPlayerManager().GetPlayerIdFromControlledEntity(pUserEntity);
 			if (playerId > 0)

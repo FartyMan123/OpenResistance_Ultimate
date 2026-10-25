@@ -251,6 +251,8 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 	protected bool m_bTownCaptureQRFs;
 	[Attribute("0", desc: "Request a QRF for the previous AI owner after a military site (outpost, base, airport, factory, port or resources) is captured. Role gates, money, cooldowns and capacity still apply.")]
 	protected bool m_bOutpostCaptureQRFs;
+	[Attribute("0", desc: "Allow hostile damage/combat reports to request QRFs. Disabled means automatic responses are driven by enabled location captures instead.")]
+	protected bool m_bCombatQRFs;
 	protected ref AROR_QRFCaptureObserver m_CaptureObserver;
 
 	bool AreInvaderOperationsEnabled()
@@ -385,6 +387,8 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 	//! No client RPC: callers must establish ownership and a real hostile attack before reporting.
 	string ReportAttack_S(AROR_EFactionRole defendingRole, string locationId)
 	{
+		if (!m_bCombatQRFs)
+			return string.Empty;
 		if (m_bQRFStrategicEconomy)
 			return QueueQRFThreat_S(defendingRole, locationId);
 		return RequestOperation_S(defendingRole, AROR_EOperationType.QRF, locationId, m_iQRFReaction);
@@ -435,6 +439,8 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 	//! Existing requests keep their force, deadline and cooldown; only pre-search intel changes.
 	string ReportAttackAt_S(AROR_EFactionRole defendingRole, string locationId, vector reportedPosition)
 	{
+		if (!m_bCombatQRFs)
+			return string.Empty;
 		ReportCombatContact_S(defendingRole, locationId, reportedPosition);
 		string id = ReportAttack_S(defendingRole, locationId);
 		AROR_Operation operation = GetOperation(id);

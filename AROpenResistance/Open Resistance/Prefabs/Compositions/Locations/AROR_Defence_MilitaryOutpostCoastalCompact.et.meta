@@ -1,5 +1,5 @@
 MetaFileClass {
- Name "{9B2CAF507D694BA5}Prefabs/Locations/AROR_Location_MilitaryOutpost.et"
+ Name "{FE70433EF98B3C4D}Prefabs/Compositions/Locations/AROR_Defence_MilitaryOutpostCoastalCompact.et"
  Configurations {
   EntityTemplateResourceClass PC {
   }

@@ -1,9 +1,18 @@
-GenericEntity : "{118F89378FB3D213}Prefabs/Locations/AROR_Location_MilitaryBase.et" {
+GenericEntity : "{D1387921EE9626CA}Prefabs/Locations/AROR_Location_Base.et" {
  ID "A1D4A9DFA34B4F06"
  components {
+  AROR_GarrisonComponent "{66D30571F98F4BE3}" {
+  }
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_eType OUTPOST
    m_fRadius 100
+   m_sMapIcon "{8EFE6E503C402610}UI/Textures/Map/military_base.edds"
+  }
+ }
+ {
+  GenericEntity : "{AE9B75D00D75366B}Prefabs/Props/Locations/AROR_Prop_CaptureFlag.et" {
+   ID "6AACA42C3DE4F4A5"
+   coords 0 0 0
   }
  }
 }

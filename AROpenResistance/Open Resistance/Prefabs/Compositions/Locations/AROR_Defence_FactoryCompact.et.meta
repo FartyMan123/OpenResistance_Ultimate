@@ -1,5 +1,5 @@
 MetaFileClass {
- Name "{DA534E8B5C934410}Prefabs/Locations/AROR_Location_City_Flag.et"
+ Name "{7DB3028CC7602D89}Prefabs/Compositions/Locations/AROR_Defence_FactoryCompact.et"
  Configurations {
   EntityTemplateResourceClass PC {
   }

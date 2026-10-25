@@ -14,7 +14,7 @@ function runCampaignFlagEditorTests(source) {
   const env={Workbench:{GetModule:()=>({GetApi:()=>api})},WorldEditor:{},
     Print:s=>messages.push(s),LogLevel:{NORMAL:0,WARNING:1,ERROR:2},
     string:{Format:(s,...args)=>s.replace(/%(\d+)/g,(_,n)=>String(args[n-1]))},
-    TraceFlags:{WORLD:1,ENTS:2},Vector:(...v)=>v,Math:{Min:Math.min}};
+    TraceFlags:{WORLD:1,ENTS:2},Vector:(...v)=>v,Math:{Min:Math.min},AROR_LocationComponent:{Cast:x=>x},AROR_ELocationType:{TOWN:0,CITY:3}};
   function compile(name){
     const m=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
     if(!m)throw Error('Missing '+name);
@@ -25,7 +25,7 @@ function runCampaignFlagEditorTests(source) {
       .replace(/vector desired = before;/g,'let desired=[...before];')
       .replace(/vector ground = desired;/g,'let ground=[...desired];')
       .replace(/\b(?:bool|int|float|vector|IEntity|IEntitySource|IEntityComponentSource|WorldEditorAPI|WorldEditor|BaseWorld|TraceParam|TraceBox|string)\s+(\w+);/g,'let $1;')
-      .replace(/\b(?:bool|int|float|vector|IEntity|IEntitySource|IEntityComponentSource|WorldEditorAPI|WorldEditor|BaseWorld|TraceParam|TraceBox|string)\s+(\w+) =/g,'let $1 =')
+      .replace(/\b(?:AROR_LocationComponent|bool|int|float|vector|IEntity|IEntitySource|IEntityComponentSource|WorldEditorAPI|WorldEditor|BaseWorld|TraceParam|TraceBox|string)\s+(\w+) =/g,'let $1 =')
       .replace(/foreach \(\w+ (\w+) : ([^)]+)\)/g,'for(const $1 of $2)')
       .replace(/\.StartsWith\(/g,'.startsWith(').replace(/\.Contains\(/g,'.includes(')
       .replace(/roots.Count\(\)/g,'roots.length').replace(/roots.Insert\(/g,'roots.push(')
@@ -48,11 +48,11 @@ function runCampaignFlagEditorTests(source) {
     const flag={source:flagSource,GetParent:()=>parent,GetSibling:()=>null,
       GetWorldTransform:t=>{t[0]=[1,0,0];t[1]=[0,1,0];t[2]=[0,0,1];t[3]=[100,0.1,300];},
       GetBounds:(min,max)=>{min.splice(0,3,-0.1,0,-0.1);max.splice(0,3,0.1,7,0.1);}};
-    rootSource.entity={GetChildren:()=>flag};flagSource.entity=flag;roots.push(rootSource);
+    rootSource.entity={FindComponent:()=>({GetLocationType:()=>i<18?0:8}),GetChildren:()=>i<18?null:flag};flagSource.entity=flag;roots.push(rootSource);
   }
   tool.RunAudit(false);check(writes.length===0&&begin===0&&end===0,'read-only audit never edits or opens an undo action');
-  check(messages.filter(m=>m.startsWith('[AROR EDITOR FLAG] name=')).length===41,'audit reports every campaign flag');
-  tool.RunAudit(true);check(writes.length===41&&begin===1&&end===1,'all 41 source edits grouped into one undo action');
+  check(messages.filter(m=>m.startsWith('[AROR EDITOR FLAG] name=')).length===23,'audit reports every military flag and skips 18 settlements');
+  tool.RunAudit(true);check(writes.length===23&&begin===1&&end===1,'all 23 source edits grouped into one undo action');
   check(writes.every(w=>w.k==='coords'&&Math.abs(Number(w.v.split(' ')[1])-50.1)<1e-8),'world terrain converted through rotated parent into local child source coords');
   check(writes.every(w=>w.s.GetComponentCount()===1),'writes target flag sources rather than parent anchors');
   const reset=()=>{writes=[];begin=0;end=0;messages=[];};
