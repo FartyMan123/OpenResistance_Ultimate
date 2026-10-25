@@ -1,6 +1,9 @@
-GenericEntity : "{9B2CAF507D694BA5}Prefabs/Locations/AROR_Location_MilitaryOutpost.et" {
+GenericEntity : "{118F89378FB3D213}Prefabs/Locations/AROR_Location_MilitaryBase.et" {
  ID "D104DC3780E87705"
  components {
+  AROR_LocationComponent "{6AA28237301A1CF9}" {
+   m_fRadius 150
+  }
   AROR_GarrisonComponent "{66D30571F98F4BE3}" {
    m_fDefenceHalfExtent 32
    m_fMaxDefenceRelief 2

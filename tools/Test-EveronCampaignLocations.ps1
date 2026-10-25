@@ -143,13 +143,12 @@ foreach ($layer in @('CivilianLocations.layer','MilitaryInstallations.layer')) {
 }
 $militaryPrefab = [IO.File]::ReadAllText((Join-Path $addonRoot 'Prefabs/Locations/AROR_Location_MilitaryBase.et'))
 if (!$militaryPrefab.Contains('AROR_Prop_CaptureFlag.et')) { throw 'Both outpost classes must inherit the existing capture flag' }
-foreach ($name in @('Town_Flag','City_Flag')) {
-	$prefab = [IO.File]::ReadAllText((Join-Path $addonRoot "Prefabs/Locations/AROR_Location_$name.et"))
-	if ($prefab.Contains('AROR_Prop_CaptureFlag.et') -or $prefab -match 'm_bSettlementFlagCapture\s+1\b') { throw "Legacy settlement alias must be support-only without a pole: $name" }
+foreach ($name in @('Town_Flag','City_Flag','MilitaryOutpost')) {
+	if (Test-Path -LiteralPath (Join-Path $addonRoot "Prefabs/Locations/AROR_Location_$name.et")) { throw "Obsolete location alias must be removed: $name" }
 }
-foreach ($name in @('Outpost','MilitaryOutpost')) {
+foreach ($name in @('Outpost','MilitaryBase')) {
 	$prefab = [IO.File]::ReadAllText((Join-Path $addonRoot "Prefabs/Locations/AROR_Location_$name.et"))
-	if (!$prefab.Contains('{118F89378FB3D213}Prefabs/Locations/AROR_Location_MilitaryBase.et')) { throw "Outpost must inherit the checked capture-flag hierarchy: $name" }
+	if (!$prefab.Contains('{D1387921EE9626CA}Prefabs/Locations/AROR_Location_Base.et') -or !$prefab.Contains('AROR_Prop_CaptureFlag.et') -or !$prefab.Contains('AROR_GarrisonComponent')) { throw "Military location must directly inherit Location_Base with its own flag/garrison: $name" }
 }
 $executor = [IO.File]::ReadAllText((Join-Path $addonRoot 'Scripts/Game/Operations/AROR_OperationExecutorComponent.c'))
 if ($executor.Contains('GetLocationsOfType(AROR_ELocationType.OUTPOST, outposts)')) { throw 'QRF origin query still excludes military outposts' }

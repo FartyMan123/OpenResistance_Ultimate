@@ -61,7 +61,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 	protected string m_sQRFConstructionOperation;
 
 	[Attribute("0", desc: "Enable only after configuring infantry groups, waypoints and safe launch positions")]
-	protected bool m_bEnabled;
+	protected bool m_bExecuteOperations;
 	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Occupier infantry group prefab; its faction and every member must match the commander", params: "et")]
 	protected ResourceName m_sOccupiersGroupPrefab;
 	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Invader infantry group prefab; its faction and every member must match the commander", params: "et")]
@@ -115,7 +115,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 	{
 		AROR_QRFSelectionDecision rejected = new AROR_QRFSelectionDecision();
 		rejected.m_sReason = "Server campaign/executor not ready for planning";
-		if (!Replication.IsServer() || !m_bEnabled || !m_Operations)
+		if (!Replication.IsServer() || !m_bExecuteOperations || !m_Operations)
 			return rejected;
 		AROR_CommanderManagerComponent commanders = AROR_CommanderManagerComponent.GetInstance();
 		AROR_LocationManagerComponent locations = AROR_LocationManagerComponent.GetInstance();
@@ -1409,9 +1409,9 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		super.OnPostInit(owner);
 		if (!GetGame().InPlayMode() || !Replication.IsServer())
 			return;
-		if (!m_bEnabled)
+		if (!m_bExecuteOperations)
 		{
-			Print("[AROR] Operation executor disabled: enable m_bEnabled on the Chicken game-mode instance", LogLevel.WARNING);
+			Print("[AROR] Operation executor disabled: enable m_bExecuteOperations on the Chicken game-mode instance", LogLevel.WARNING);
 			return;
 		}
 		// Attribute containers are populated from the prefab/world. Declaration initializers

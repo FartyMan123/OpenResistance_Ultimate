@@ -20,6 +20,11 @@ foreach ($preset in $definition.Presets) {
  $lines.Add(('GenericEntity : "{{{0}}}Prefabs/Locations/AROR_Location_{1}.et" {{' -f $preset.SourceGuid,$preset.SourceName))
  $lines.Add((' ID "{0}"' -f (EntityId "$name/root")))
  $lines.Add(' components {')
+ if ($preset.SourceName -eq 'MilitaryBase') {
+  $lines.Add('  AROR_LocationComponent "{6AA28237301A1CF9}" {')
+  $lines.Add('   m_fRadius 150') # Preserve the removed MilitaryOutpost alias default.
+  $lines.Add('  }')
+ }
  $lines.Add('  AROR_GarrisonComponent "{66D30571F98F4BE3}" {')
  $lines.Add(('   m_fDefenceHalfExtent {0}' -f (Number $half)))
  $lines.Add('   m_fMaxDefenceRelief 2')
@@ -75,7 +80,7 @@ foreach ($preset in $definition.Presets) {
  $positions = @()
  $teamCount = 8; $mgCount = 4; $vehicleCount = 3
  if ($preset.SourceName -eq 'Outpost') { $teamCount = 2; $mgCount = 1; $vehicleCount = 0 }
- if ($preset.SourceName -eq 'MilitaryOutpost') { $teamCount = 6; $mgCount = 3; $vehicleCount = 1 }
+ if ($preset.SourceName -eq 'MilitaryBase') { $teamCount = 6; $mgCount = 3; $vehicleCount = 1 }
  if ($preset.SourceName -in @('Resources','Factory','Port')) { $teamCount = 6; $mgCount = 3; $vehicleCount = 1 }
  $bearings = @(45,225,135,315,0,180,90,270)
  for ($team=0; $team -lt $teamCount; $team++) {

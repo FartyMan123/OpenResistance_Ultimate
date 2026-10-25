@@ -2,6 +2,9 @@
 class AROR_GarrisonSlot
 {
 	ResourceName m_sPrefab;
+	int m_iVariant;
+	bool m_bLegacyAsset;
+	bool m_bCrewRecorded;
 	int m_iKind; // 0 infantry, 1 static MG, 2 parked vehicle, 3 manned vehicle, 4 crew
 	int m_iGroup = -1;
 	int m_iVehicle = -1;

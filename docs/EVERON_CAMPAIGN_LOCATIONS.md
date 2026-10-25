@@ -9,9 +9,9 @@ Chicken places **41** campaign locations: **7 cities, 11 towns, 14 outposts, 5 m
 | AROR_Location_City.et | CITY | Support majority only; no flag |
 | AROR_Location_Town.et | TOWN | Support majority only; no flag |
 | AROR_Location_Outpost.et | OUTPOST | Existing military flag capture |
-| AROR_Location_MilitaryOutpost.et | MILITARY_BASE | Existing military flag capture, larger radius |
+| AROR_Location_MilitaryBase.et | MILITARY_BASE | Existing military flag capture, larger radius |
 
-Settlements and outposts reference these templates; the airport, factory and resource sites use their existing templates. Only military installations have the capture-pole child hierarchy and baked transforms. Deprecated Town_Flag/City_Flag resource references still resolve to support-only aliases with no poles. Other scenarios retain the shared server placement component for military flags. New template resource GUIDs and entity IDs are hand-authored, recorded in sibling .meta files, and need Workbench resource discovery/registration on reload. No existing asset GUID was invented or reassigned.
+Settlements and outposts reference these templates; the airport, factory and resource sites use their existing templates. Only military installations have the capture-pole child hierarchy and baked transforms. Unused Town_Flag/City_Flag aliases are removed; use the Town/City templates. MilitaryOutpost is removed in favour of MilitaryBase. Outpost and MilitaryBase directly inherit Location_Base. Other scenarios retain the shared server placement component for military flags. New template resource GUIDs and entity IDs are hand-authored, recorded in sibling .meta files, and need Workbench resource discovery/registration on reload. No existing asset GUID was invented or reassigned.
 
 All towns/cities reject flag capture and weighted military recapture, even if an older placed resource retains the deprecated settlement flag attribute. Military flag capture retains hostile-clearance and flip-cooldown checks, with pending unmaterialised defenders also blocking capture. Town support gradually follows control of regional military installations through the existing settlement API. No second support, capture or money system is introduced.
 

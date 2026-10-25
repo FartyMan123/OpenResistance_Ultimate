@@ -25,14 +25,6 @@ class AROR_LocationComponent : ScriptComponent
 	[Attribute("0", desc: "Ground this static scenario location on terrain before registration. Use for coordinate-catalog placements whose height is not authored; leave off for manually positioned locations.", category: "Placement")]
 	protected bool m_bGroundOnInit;
 
-	[Attribute("0", desc: "Deprecated: settlements always use support; retained only for old resource compatibility.", category: "Control")]
-	protected bool m_bSettlementFlagCapture;
-
-	bool AllowsSettlementFlagCapture()
-	{
-		return false;
-	}
-
 	[Attribute("", desc: "Regional support override. Military sites name a settlement ID; settlements can share that ID to form a larger region. Empty uses this settlement's own ID / nearest settlement for military sites.", category: "Region")]
 	protected string m_sSupportRegionId;
 

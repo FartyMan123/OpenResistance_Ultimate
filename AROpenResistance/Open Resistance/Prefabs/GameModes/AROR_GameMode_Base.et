@@ -2,7 +2,7 @@ SCR_BaseGameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" 
  ID "56B2B479C6B96951"
  components {
   AROR_RegionalSupportComponent "{3E3586CD181A4E9A}" {
-   m_bEnabled 0
+   m_bRegionalSupport 0
   }
   AROR_GarrisonManagerComponent "{62D6819A8BBD4DAB}" {
    m_aFactions {

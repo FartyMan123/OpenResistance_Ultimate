@@ -7,7 +7,7 @@ class AROR_QRFDefenseComponentClass : ScriptComponentClass
 class AROR_QRFDefenseComponent : ScriptComponent
 {
 	[Attribute("1", desc: "Enable damage reporting for the assigned defense. An empty location ID remains inert.")]
-	protected bool m_bEnabled;
+	protected bool m_bReportDamage;
 	[Attribute("1", UIWidgets.ComboBox, desc: "Role defending this location", enums: ParamEnumArray.FromEnum(AROR_EFactionRole))]
 	protected AROR_EFactionRole m_eDefendingRole;
 	[Attribute("", desc: "Explicit stable defended location ID. The scenario/garrison owner must verify ownership.")]
@@ -90,7 +90,7 @@ class AROR_QRFDefenseComponent : ScriptComponent
 		ClearDefense_S();
 		m_eDefendingRole = role;
 		m_sDefendedLocationId = locationId;
-		m_bEnabled = true;
+		m_bReportDamage = true;
 		StartMonitoring_S();
 		return true;
 	}
@@ -101,7 +101,7 @@ class AROR_QRFDefenseComponent : ScriptComponent
 	{
 		if (!Replication.IsServer())
 			return;
-		m_bEnabled = false;
+		m_bReportDamage = false;
 		m_sDefendedLocationId = string.Empty;
 		m_sLastOperationId = string.Empty;
 		m_iNextReportAttempt = 0;
@@ -116,7 +116,7 @@ class AROR_QRFDefenseComponent : ScriptComponent
 	//! Internal subscription callback. Not a client RPC or a substitute for engine damage handling.
 	void ReportDamage_S(IEntity victim, BaseDamageContext context)
 	{
-		if (!Replication.IsServer() || !m_bMonitoring || !m_bEnabled || !victim || !context)
+		if (!Replication.IsServer() || !m_bMonitoring || !m_bReportDamage || !victim || !context)
 			return;
 		if (context.damageValue <= 0)
 		{
@@ -277,7 +277,7 @@ class AROR_QRFDefenseComponent : ScriptComponent
 
 	protected void StartMonitoring_S()
 	{
-		if (m_bMonitoring || !GetGame().InPlayMode() || !Replication.IsServer() || !m_bEnabled || m_sDefendedLocationId.IsEmpty())
+		if (m_bMonitoring || !GetGame().InPlayMode() || !Replication.IsServer() || !m_bReportDamage || m_sDefendedLocationId.IsEmpty())
 			return;
 		if (!IsEnemyRole(m_eDefendingRole) || m_iReportInterval < 1 || m_iReportInterval > 60 || GetOwner().FindComponent(AROR_QRFDefenseComponent) != this)
 		{

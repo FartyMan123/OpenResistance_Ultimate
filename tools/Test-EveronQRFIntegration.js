@@ -61,16 +61,16 @@ function runEveronQRFIntegrationTests(sources) {
   check(!sources.observer.includes('SetControllingRole_S'),'observer does not change territory authority');
   const actions={IsCapturableType:compile(sources.capture,'IsCapturableType'),IsCapturableLocation:compile(sources.capture,'IsCapturableLocation')};
   const captureFlag=compile(sources.capture,'CaptureLocation_S');
-  const allows=compile(sources.location,'AllowsSettlementFlagCapture');
+  check(!sources.location.includes('AllowsSettlementFlagCapture')&&!sources.location.includes('m_bSettlementFlagCapture'),'obsolete settlement flag API removed');
   let supportCalls=0,controlCalls=0;
-  const site={m_eType:types.CITY,m_bSettlementFlagCapture:true,owner:1,allowed:true,
-    GetLocationType(){return this.m_eType;},AllowsSettlementFlagCapture:allows,CanBeTakenBy(){return this.allowed;},
+  const site={m_eType:types.CITY,owner:1,allowed:true,
+    GetLocationType(){return this.m_eType;},CanBeTakenBy(){return this.allowed;},
     GetControllingRole(){return this.owner;},SetControllingRole_S(role){controlCalls++;this.owner=role;return true;},
     GetOwner:()=>({FindComponent:()=>settlement})};
   let settlement={SetSupport_S(role,value){supportCalls++;check(value===100,'flag capture sets coherent majority support');site.owner=role;}};
   check(!captureFlag.call(actions,site,0)&&supportCalls===0&&controlCalls===0,'legacy opted-in city cannot use flag capture');
-  site.m_bSettlementFlagCapture=false;check(!actions.IsCapturableLocation(site),'unmodified cities remain support-only');
-  check(!captureFlag.call(actions,site,0),'non-opted-in city flag rejected');site.m_bSettlementFlagCapture=true;
+  check(!actions.IsCapturableLocation(site),'unmodified cities remain support-only');
+  check(!captureFlag.call(actions,site,0),'non-opted-in city flag rejected');
   site.allowed=false;check(!captureFlag.call(actions,site,0),'capture cooldown/fixed control respected');site.allowed=true;
   settlement=null;check(!captureFlag.call(actions,site,0),'missing settlement cannot create inconsistent city control');
 	for(const type of [types.TOWN,types.CITY]){site.m_eType=type;check(!actions.IsCapturableLocation(site),'settlements never enter military recapture: '+type);}

@@ -8,4 +8,5 @@ class AROR_GarrisonGroup
 	int m_iQueuedAt;
 	int m_iNextWake;
 	bool m_bOrdered;
+	bool m_bQueueClosed;
 }

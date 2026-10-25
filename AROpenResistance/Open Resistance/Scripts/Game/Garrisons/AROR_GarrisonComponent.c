@@ -4,7 +4,7 @@ class AROR_GarrisonComponentClass : ScriptComponentClass {}
 class AROR_GarrisonComponent : ScriptComponent
 {
 	[Attribute("1", desc: "Allow a defence roster for this installation")]
-	protected bool m_bEnabled;
+	protected bool m_bHasGarrison;
 	[Attribute("0", desc: "Defence level override, 0 = type/random recipe", params: "0 4 1")]
 	protected int m_iDefenceLevel;
 	[Attribute("", desc: "Optional authored world-space positions for statics/vehicles. Otherwise use bounded clear terrain search.")]
@@ -23,6 +23,15 @@ class AROR_GarrisonComponent : ScriptComponent
 	protected bool m_bFixedDefenceAnchor;
 	[Attribute("3", desc: "Player clearance for crew staging near the flag. Collision/navigation checks still apply.", params: "2 6 0.5")]
 	protected float m_fCrewPlayerClearance;
+	[Attribute("60", desc: "Maximum seconds to deploy after player proximity, including capacity/terrain failures. Unfinished queues are stopped before capture unlocks.", params: "10 180 1")]
+	protected int m_iDeploymentGraceSeconds;
+	[Attribute("30", desc: "Maximum seconds for one submitted native personnel queue before retaining its survivors and omitting its unspawned slots.", params: "5 120 1")]
+	protected int m_iSpawnQueueTimeoutSeconds;
+	protected int m_iDeploymentStartedAt = -1;
+	protected bool m_bDeploymentClosed;
+	protected bool m_bRestoreQuarantined;
+	protected bool m_bAssetsBound;
+	protected int m_iTerrainRetryAt;
 	protected bool m_bDefenceTerrainChecked;
 	protected bool m_bDefenceTerrainFits;
 
@@ -55,6 +64,9 @@ class AROR_GarrisonComponent : ScriptComponent
 	AROR_LocationComponent GetLocation() { return m_Location; }
 	bool IsGarrisonActive() { return m_bActive; }
 	bool HasRoster() { return m_bGenerated; }
+	bool HasDeploymentStarted() { return m_iDeploymentStartedAt >= 0; }
+	bool IsDeploymentClosed() { return m_bDeploymentClosed; }
+	bool IsRestoreQuarantined() { return m_bRestoreQuarantined; }
 	int GetLevel() { return m_iLevel; }
 	AROR_EFactionRole GetRosterRole() { return m_eRosterRole; }
 	string GetRosterFaction() { return m_sFactionKey; }
@@ -71,12 +83,16 @@ class AROR_GarrisonComponent : ScriptComponent
 		int count;
 		foreach (AROR_GarrisonSlot slot : m_aSlots)
 		{
-			if (!slot.m_bLost && slot.m_iKind == 0)
+			if (slot.m_bLost || (slot.m_bPlacementUnavailable && !slot.m_bSpawned))
+				continue;
+			if (slot.m_iKind == 0)
+				count++;
+			if (slot.m_iKind == 4 && (slot.m_iVehicle < 0 || m_aSlots[slot.m_iVehicle].m_bLost))
 				count++;
 			// Reserve conservatively before crew seats have been discovered.
-			if (!slot.m_bLost && slot.m_iKind == 1)
+			if (slot.m_iKind == 1)
 				count++;
-			if (!slot.m_bLost && slot.m_iKind == 3)
+			if (slot.m_iKind == 3)
 				count += 4;
 		}
 		return count;
@@ -96,36 +112,29 @@ class AROR_GarrisonComponent : ScriptComponent
 	}
 	bool IsEligible()
 	{
-		return m_bEnabled && m_Location && AROR_CaptureLocationAction.IsCapturableLocation(m_Location);
+		return m_bHasGarrison && m_Location && AROR_CaptureLocationAction.IsCapturableLocation(m_Location);
 	}
 	//! Once real personnel have deployed and all submitted native queues have
 	//! resolved, capture depends on actual hostile presence, not unused recipe slots.
-	protected bool HasEstablishedDefence_S()
+	//! A deployment is resolved only when every requested personnel slot has an outcome.
+	protected bool HasUnresolvedQueue(AROR_GarrisonGroup pending)
 	{
-		bool deployed;
-		foreach (AROR_GarrisonSlot slot : m_aSlots)
-		{
-			if ((slot.m_iKind == 0 || slot.m_iKind == 4) && slot.m_bSpawned)
-				deployed = true;
-		}
-		if (!deployed)
+		if (pending.m_bQueueClosed)
 			return false;
-		foreach (AROR_GarrisonGroup queued : m_aGroups)
+		foreach (int index : pending.m_aSlots)
 		{
-			foreach (int index : queued.m_aSlots)
-			{
-				if (!m_aSlots[index].m_bLost && !m_aSlots[index].m_bSpawned)
-					return false;
-			}
+			AROR_GarrisonSlot slot = m_aSlots[index];
+			if (!slot.m_bLost && !slot.m_bPlacementUnavailable && !slot.m_bSpawned)
+				return true;
 		}
-		return true;
+		return false;
 	}
 	//! Pending native spawns cannot make an uncleared garrison look empty to a flag interaction.
 	bool IsDefencePending()
 	{
 		if (!Replication.IsServer())
 			return m_bPendingDefense;
-		if (!IsEligible() || !AROR_GarrisonPolicy.IsEnemyRole(m_Location.GetControllingRole()))
+		if (!IsEligible() || !AROR_GarrisonPolicy.IsEnemyRole(m_Location.GetControllingRole()) || m_bDeploymentClosed || m_bRestoreQuarantined)
 			return false;
 		AROR_GarrisonManagerComponent manager = AROR_GarrisonManagerComponent.GetInstance();
 		if (!manager || !manager.CanDefendRole(m_Location.GetControllingRole()))
@@ -133,8 +142,6 @@ class AROR_GarrisonComponent : ScriptComponent
 		if (!m_bGenerated)
 			return true;
 		if (m_eRosterRole != m_Location.GetControllingRole())
-			return false;
-		if (HasEstablishedDefence_S())
 			return false;
 		foreach (AROR_GarrisonSlot slot : m_aSlots)
 		{
@@ -147,6 +154,7 @@ class AROR_GarrisonComponent : ScriptComponent
 	{
 		if (!Replication.IsServer())
 			return;
+		UpdateDeployment_S(GetGame().GetWorld().GetWorldTime());
 		bool pending = IsDefencePending();
 		string reason = GetDefenceCaptureBlockReason();
 		if (pending == m_bPendingDefense && reason == m_sPendingDefenseReason)
@@ -167,6 +175,124 @@ class AROR_GarrisonComponent : ScriptComponent
 		if (m_bDeploymentDeferred)
 			return "Defence deployment delayed";
 		return "Defenders awaiting deployment";
+	}
+
+	//! Start even when budget or terrain prevents admission. This clock is never a callback count.
+	void BeginDeployment_S(int now)
+	{
+		if (!Replication.IsServer() || m_iDeploymentStartedAt >= 0 || m_bRestoreQuarantined)
+			return;
+		m_iDeploymentStartedAt = now;
+	}
+
+	void UpdateDeployment_S(int now)
+	{
+		if (!Replication.IsServer() || m_iDeploymentStartedAt < 0 || m_bDeploymentClosed)
+			return;
+		if (m_bGenerated && m_eRosterRole != m_Location.GetControllingRole())
+		{
+			CloseDeployment_S("ownership changed");
+			return;
+		}
+		foreach (AROR_GarrisonGroup pending : m_aGroups)
+		{
+			AssignMembers(pending);
+			if (HasUnresolvedQueue(pending) && now - pending.m_iQueuedAt >= m_iSpawnQueueTimeoutSeconds * 1000)
+				CancelQueuedGroup_S(pending);
+		}
+		if (now - m_iDeploymentStartedAt >= m_iDeploymentGraceSeconds * 1000)
+			CloseDeployment_S("deployment window elapsed");
+	}
+
+	//! Cancel queued work by removing its source group. Detach physical members first:
+	//! existing defenders, players and their assets must survive a queue timeout.
+	protected void CancelQueuedGroup_S(AROR_GarrisonGroup pending)
+	{
+		if (pending.m_bQueueClosed)
+			return;
+		pending.m_bQueueClosed = true;
+		SCR_AIGroup previous = pending.m_Group;
+		array<IEntity> survivors = {};
+		if (previous)
+		{
+			previous.SetMaxUnitsToSpawn(0);
+			previous.SetNumberOfMembersToSpawn(0);
+			previous.m_aUnitPrefabSlots.Clear();
+			array<AIAgent> agents = {};
+			previous.GetAgents(agents);
+			foreach (AIAgent agent : agents)
+			{
+				if (!agent)
+					continue;
+				IEntity entity = agent.GetControlledEntity();
+				if (!entity || GetGame().GetPlayerManager().GetPlayerIdFromControlledEntity(entity) > 0)
+					continue;
+				previous.RemoveAgentFromControlledEntity(entity);
+				if (IsPlayerOrForeignAsset(entity))
+					continue;
+				survivors.Insert(entity);
+			}
+			AROR_QRFDefenseComponent defense = AROR_QRFDefenseComponent.Cast(previous.FindComponent(AROR_QRFDefenseComponent));
+			if (defense)
+				defense.ClearDefense_S();
+			if (previous.GetPlayerCount() == 0)
+				SCR_EntityHelper.DeleteEntityAndChildren(previous);
+		}
+		if (pending.m_Waypoint)
+			SCR_EntityHelper.DeleteEntityAndChildren(pending.m_Waypoint);
+		pending.m_Waypoint = null;
+		pending.m_Group = null;
+		foreach (int index : pending.m_aSlots)
+		{
+			AROR_GarrisonSlot slot = m_aSlots[index];
+			if (!slot.m_bSpawned && !slot.m_Entity)
+				slot.m_bPlacementUnavailable = true;
+		}
+		if (!survivors.IsEmpty())
+		{
+			pending.m_Group = CreateGroup_S(survivors[0].GetOrigin());
+			if (pending.m_Group)
+			{
+				foreach (IEntity survivor : survivors)
+					pending.m_Group.AddAgentFromControlledEntity(survivor);
+			}
+		}
+		pending.m_bOrdered = false;
+		Print(string.Format("[AROR GARRISON] %1 queue %2 closed; physical defenders preserved, missing slots omitted without losses", m_Location.GetId(), pending.m_iId), LogLevel.WARNING);
+	}
+
+	void CloseDeployment_S(string reason)
+	{
+		if (!Replication.IsServer() || m_bDeploymentClosed)
+			return;
+		m_bDeploymentClosed = true; // Stop producers before cancelling any submitted work.
+		foreach (AROR_GarrisonGroup pending : m_aGroups)
+		{
+			AssignMembers(pending);
+			if (HasUnresolvedQueue(pending))
+				CancelQueuedGroup_S(pending);
+			pending.m_bQueueClosed = true;
+		}
+		foreach (AROR_GarrisonSlot slot : m_aSlots)
+		{
+			if (!slot.m_bSpawned && !slot.m_Entity)
+				slot.m_bPlacementUnavailable = true;
+		}
+		Print(string.Format("[AROR GARRISON] %1 deployment closed: %2; capture now follows living hostiles", m_Location.GetId(), reason), LogLevel.WARNING);
+	}
+
+	//! A lost hull does not erase its surviving crew or leave them waiting for a new hull.
+	protected void DetachOrphanedCrew_S()
+	{
+		foreach (AROR_GarrisonSlot slot : m_aSlots)
+		{
+			if (slot.m_iKind == 4 && slot.m_iVehicle >= 0 && m_aSlots[slot.m_iVehicle].m_bLost)
+			{
+				slot.m_iVehicle = -1;
+				slot.m_iSeat = -1;
+				slot.m_bPlaced = false;
+			}
+		}
 	}
 
 	//! Bound failed pad placement without inventing deaths, deleting live actors,
@@ -212,7 +338,7 @@ class AROR_GarrisonComponent : ScriptComponent
 
 	bool Generate_S(AROR_GarrisonFaction faction)
 	{
-		if (!Replication.IsServer() || !IsEligible() || m_bGenerated || !faction || faction.m_eRole != m_Location.GetControllingRole())
+		if (!Replication.IsServer() || !IsEligible() || m_bDeploymentClosed || m_bGenerated || !faction || faction.m_eRole != m_Location.GetControllingRole())
 			return false;
 		m_eRosterRole = faction.m_eRole;
 		m_sFactionKey = faction.m_sFactionKey;
@@ -240,7 +366,9 @@ class AROR_GarrisonComponent : ScriptComponent
 			{
 				if (!faction.m_aMannedVehicles || faction.m_aMannedVehicles.IsEmpty())
 					break;
-				AddSlot(faction.m_aMannedVehicles[Math.RandomInt(0, faction.m_aMannedVehicles.Count())], 3, group++);
+				int variant = Math.RandomInt(0, faction.m_aMannedVehicles.Count());
+				int hullSlot = AddSlot(faction.m_aMannedVehicles[variant], 3, group++);
+				m_aSlots[hullSlot].m_iVariant = variant;
 			}
 		}
 		// Crew slots are added from each actual hull's seat list on first activation.
@@ -321,8 +449,12 @@ class AROR_GarrisonComponent : ScriptComponent
 	{
 		if (!Replication.IsServer())
 			return false;
+		int now = GetGame().GetWorld().GetWorldTime();
+		if (m_bDefenceTerrainChecked && !m_bDefenceTerrainFits && now >= m_iTerrainRetryAt)
+			m_bDefenceTerrainChecked = false;
 		if (!m_bDefenceTerrainChecked)
 		{
+			m_iTerrainRetryAt = now + 5000;
 			if (!IsDefenceCenterAllowed(GetDefenceCenter(), GetDefenceHalfExtent()))
 			{
 				m_bDefenceTerrainChecked = true;
@@ -486,7 +618,7 @@ class AROR_GarrisonComponent : ScriptComponent
 	//! One hull per call; native crew seat order is saved alongside the actual asset recipe.
 	bool SpawnNextAsset_S(AROR_GarrisonFaction faction, float exclusion)
 	{
-		if (!Replication.IsServer())
+		if (!Replication.IsServer() || m_bDeploymentClosed)
 			return false;
 		m_bActive = true;
 		int count = m_aSlots.Count();
@@ -503,16 +635,15 @@ class AROR_GarrisonComponent : ScriptComponent
 				return false;
 			}
 			IEntity entity = Spawn(slot.m_sPrefab, slot.m_vPosition, slot.m_vAngles);
-			slot.m_iPlacementFailureSince = -1;
 			if (!entity)
 			{
-				ReportFailure("asset resource failed: " + slot.m_sPrefab);
+				ReportPlacementFailure(index, "asset resource failed: " + slot.m_sPrefab);
 				return false;
 			}
 			if (!InitializeFaction(entity))
 			{
 				SCR_EntityHelper.DeleteEntityAndChildren(entity);
-				ReportFailure("asset faction binding failed: " + slot.m_sPrefab);
+				ReportPlacementFailure(index, "asset faction binding failed: " + slot.m_sPrefab);
 				return false;
 			}
 			array<BaseCompartmentSlot> availableSeats = {};
@@ -533,32 +664,18 @@ class AROR_GarrisonComponent : ScriptComponent
 				if (crewCount < 1 || crewCount > maximumCrew)
 				{
 					SCR_EntityHelper.DeleteEntityAndChildren(entity);
-					ReportFailure("asset has no usable crew compartments or exceeds its reserved crew allowance");
+					ReportPlacementFailure(index, "asset has no usable crew compartments or exceeds its reserved crew allowance");
 					return false;
 				}
 			}
+			slot.m_iPlacementFailureSince = -1;
 			slot.m_Entity = entity;
 			slot.m_bSpawned = true;
 			DamageManagerComponent damage = DamageManagerComponent.Cast(entity.FindComponent(DamageManagerComponent));
 			if (damage)
 				damage.SetHealthScaled(slot.m_fHealth);
 			if (slot.m_iKind != 2)
-			{
-				bool hasCrew;
-				foreach (AROR_GarrisonSlot crew : m_aSlots)
-				{
-					if (crew.m_iVehicle == index)
-						hasCrew = true;
-				}
-				if (!hasCrew)
-				{
-					for (int seat = 0; seat < availableSeats.Count(); seat++)
-					{
-						if (availableSeats[seat] && !CargoCompartmentSlot.Cast(availableSeats[seat]))
-							AddSlot(faction.m_sCrew, 4, slot.m_iGroup, index, seat);
-					}
-				}
-			}
+				ReconcileCrew_S(index, availableSeats, faction);
 			Print(string.Format("[AROR GARRISON] %1 asset slot=%2 kind=%3 at %4", m_Location.GetId(), index, slot.m_iKind, slot.m_vPosition), LogLevel.NORMAL);
 			m_bDeploymentDeferred = false;
 			return true;
@@ -566,11 +683,80 @@ class AROR_GarrisonComponent : ScriptComponent
 		return false;
 	}
 
+	//! Re-map a restored hull's old crew to current seats without replacing casualties.
+	protected void ReconcileCrew_S(int vehicleIndex, array<BaseCompartmentSlot> seats, AROR_GarrisonFaction faction)
+	{
+		array<int> usable = {};
+		for (int seat = 0; seat < seats.Count(); seat++)
+		{
+			if (seats[seat] && !CargoCompartmentSlot.Cast(seats[seat]))
+				usable.Insert(seat);
+		}
+		array<ref AROR_GarrisonSlot> previous = {};
+		foreach (AROR_GarrisonSlot crew : m_aSlots)
+		{
+			if (crew.m_iKind == 4 && crew.m_iVehicle == vehicleIndex)
+				previous.Insert(crew);
+		}
+		for (int ordinal = 0; ordinal < previous.Count(); ordinal++)
+		{
+			AROR_GarrisonSlot saved = previous[ordinal];
+			if (ordinal < usable.Count())
+				saved.m_iSeat = usable[ordinal];
+			else
+			{
+				saved.m_iVehicle = -1;
+				saved.m_iSeat = -1; // Fewer seats must not erase an existing survivor.
+			}
+		}
+		for (int extra = previous.Count(); extra < usable.Count(); extra++)
+		{
+			int added = AddSlot(faction.m_sCrew, 4, m_aSlots[vehicleIndex].m_iGroup, vehicleIndex, usable[extra]);
+			if (!previous.IsEmpty() || m_aSlots[vehicleIndex].m_bCrewRecorded)
+				m_aSlots[added].m_bLost = true; // A changed catalogue cannot grant replacement personnel.
+		}
+		m_aSlots[vehicleIndex].m_bCrewRecorded = true;
+	}
+
+	protected SCR_AIGroup CreateGroup_S(vector position)
+	{
+		SCR_AIGroup.IgnoreSpawning(true);
+		IEntity entity = Spawn("{A22D9D957ABE44DF}Prefabs/Groups/AROR_GarrisonGroup.et", position, vector.Zero);
+		SCR_AIGroup.IgnoreSpawning(false);
+		SCR_AIGroup group = SCR_AIGroup.Cast(entity);
+		if (!group)
+		{
+			if (entity)
+				SCR_EntityHelper.DeleteEntityAndChildren(entity);
+			return null;
+		}
+		Faction faction = GetGame().GetFactionManager().GetFactionByKey(m_sFactionKey);
+		bool assigned;
+		if (faction)
+		{
+			if (!group.GetFaction())
+				assigned = group.InitFactionKey(m_sFactionKey);
+			else
+				assigned = group.SetFaction(faction);
+		}
+		if (!assigned)
+		{
+			SCR_EntityHelper.DeleteEntityAndChildren(group);
+			return null;
+		}
+		group.SetCanDeleteIfNoPlayer(false);
+		group.SetPrivate(true);
+		group.SetPrivacyChangeable(false);
+		group.SetLifecyclePolicy(SCR_EAIGroupLifecyclePolicy.Manual);
+		return group;
+	}
+
 	//! Queue one team through the engine's shared AI queue, never spawn every soldier in one tick.
 	bool SpawnNextGroup_S(int now, float exclusion)
 	{
-		if (!Replication.IsServer())
+		if (!Replication.IsServer() || m_bDeploymentClosed)
 			return false;
+		DetachOrphanedCrew_S();
 		int maximum = -1;
 		foreach (AROR_GarrisonSlot member : m_aSlots)
 			maximum = Math.Max(maximum, member.m_iGroup);
@@ -608,35 +794,13 @@ class AROR_GarrisonComponent : ScriptComponent
 				return false;
 			}
 			vector position = first.m_vPosition;
-			first.m_iPlacementFailureSince = -1;
-			SCR_AIGroup.IgnoreSpawning(true);
-			IEntity groupEntity = Spawn("{A22D9D957ABE44DF}Prefabs/Groups/AROR_GarrisonGroup.et", position, vector.Zero);
-			SCR_AIGroup.IgnoreSpawning(false);
-			SCR_AIGroup group = SCR_AIGroup.Cast(groupEntity);
+			SCR_AIGroup group = CreateGroup_S(position);
 			if (!group)
 			{
-				if (groupEntity)
-					SCR_EntityHelper.DeleteEntityAndChildren(groupEntity);
+				ReportPlacementFailure(indices[0], "group resource/faction setup failed");
 				return false;
 			}
-			Faction faction = GetGame().GetFactionManager().GetFactionByKey(m_sFactionKey);
-			bool assigned;
-			if (faction)
-			{
-				if (!group.GetFaction())
-					assigned = group.InitFactionKey(m_sFactionKey);
-				else
-					assigned = group.SetFaction(faction);
-			}
-			if (!assigned)
-			{
-				SCR_EntityHelper.DeleteEntityAndChildren(group);
-				return false;
-			}
-			group.SetCanDeleteIfNoPlayer(false);
-			group.SetPrivate(true);
-			group.SetPrivacyChangeable(false);
-			group.SetLifecyclePolicy(SCR_EAIGroupLifecyclePolicy.Manual);
+			first.m_iPlacementFailureSince = -1;
 			if (!group.m_aUnitPrefabSlots)
 				group.m_aUnitPrefabSlots = {};
 			group.m_aUnitPrefabSlots.Clear();
@@ -685,7 +849,7 @@ class AROR_GarrisonComponent : ScriptComponent
 			foreach (int availableIndex : pending.m_aSlots)
 			{
 				AROR_GarrisonSlot candidate = m_aSlots[availableIndex];
-				if (!candidate.m_bLost && !candidate.m_Entity)
+				if (!candidate.m_bLost && !candidate.m_bPlacementUnavailable && !candidate.m_Entity)
 				{
 					slot = candidate;
 					break;
@@ -697,7 +861,11 @@ class AROR_GarrisonComponent : ScriptComponent
 			slot.m_bSpawned = true;
 			if (!InitializeFaction(entity))
 			{
-				slot.m_bLost = true;
+				if (!IsPlayerOrForeignAsset(entity))
+					SCR_EntityHelper.DeleteEntityAndChildren(entity);
+				slot.m_Entity = null;
+				slot.m_bSpawned = false;
+				slot.m_bPlacementUnavailable = true;
 				continue;
 			}
 			DamageManagerComponent damage = DamageManagerComponent.Cast(entity.FindComponent(DamageManagerComponent));
@@ -787,7 +955,7 @@ class AROR_GarrisonComponent : ScriptComponent
 		foreach (AROR_GarrisonGroup pending : m_aGroups)
 		{
 			AssignMembers(pending);
-			if (issueOrders && pending.m_Group && pending.m_Group.IsDormant() && pending.m_Group.GetDormantAliveCount() > 0)
+			if (issueOrders && !pending.m_bQueueClosed && pending.m_Group && pending.m_Group.IsDormant() && pending.m_Group.GetDormantAliveCount() > 0)
 			{
 				pending.m_bOrdered = false;
 				int now = GetGame().GetWorld().GetWorldTime();
@@ -861,20 +1029,15 @@ class AROR_GarrisonComponent : ScriptComponent
 		return false;
 	}
 
-	bool CanRetire(float distance)
+	bool CanRetire(float distance, array<vector> players)
 	{
-		array<int> players = {};
-		GetGame().GetPlayerManager().GetPlayers(players);
-		foreach (int id : players)
+		foreach (vector position : players)
 		{
-			IEntity player = GetGame().GetPlayerManager().GetPlayerControlledEntity(id);
-			if (!player)
-				continue;
-			if (vector.DistanceXZ(player.GetOrigin(), m_Location.GetCenter()) <= distance)
+			if (vector.DistanceXZ(position, m_Location.GetCenter()) <= distance)
 				return false;
 			foreach (AROR_GarrisonSlot slot : m_aSlots)
 			{
-				if (slot.m_Entity && vector.DistanceXZ(player.GetOrigin(), slot.m_Entity.GetOrigin()) <= distance)
+				if (slot.m_Entity && vector.DistanceXZ(position, slot.m_Entity.GetOrigin()) <= distance)
 					return false;
 			}
 		}
@@ -914,6 +1077,8 @@ class AROR_GarrisonComponent : ScriptComponent
 		m_iNextAsset = 0;
 		m_bDefenceTerrainChecked = false;
 		m_bDeploymentDeferred = false;
+		m_iDeploymentStartedAt = -1;
+		m_bDeploymentClosed = m_bRestoreQuarantined;
 	}
 
 	//! Ownership mismatch is reconciled only after old physical actors can safely retire.
@@ -923,6 +1088,15 @@ class AROR_GarrisonComponent : ScriptComponent
 			return;
 		m_aSlots.Clear();
 		m_bGenerated = false;
+		m_bRestoreQuarantined = false;
+		m_bAssetsBound = false;
+		m_bDeploymentClosed = false;
+		m_iDeploymentStartedAt = -1;
+		m_iOutsideSince = -1;
+		m_iNextGroup = 0;
+		m_iNextAsset = 0;
+		m_bDefenceTerrainChecked = false;
+		m_bDeploymentDeferred = false;
 	}
 	void RestoreRoster_S(AROR_EFactionRole role, string faction, string assetFaction, int level, array<ref AROR_GarrisonSlot> slots)
 	{
@@ -936,7 +1110,71 @@ class AROR_GarrisonComponent : ScriptComponent
 		foreach (AROR_GarrisonSlot slot : slots)
 			m_aSlots.Insert(slot);
 		m_bGenerated = true;
+		m_bAssetsBound = false;
+		DetachOrphanedCrew_S();
 	}
+	//! Unsupported/damaged headers quarantine the section instead of generating free replacements.
+	void QuarantineRoster_S(string reason)
+	{
+		if (!Replication.IsServer() || m_bActive)
+			return;
+		m_aSlots.Clear();
+		if (!m_Location)
+			m_Location = AROR_LocationComponent.Cast(GetOwner().FindComponent(AROR_LocationComponent));
+		m_eRosterRole = AROR_EFactionRole.OCCUPIERS;
+		string id = "unregistered location";
+		if (m_Location)
+		{
+			m_eRosterRole = m_Location.GetControllingRole();
+			id = m_Location.GetId();
+		}
+		m_iLevel = 1;
+		m_bGenerated = true;
+		m_bRestoreQuarantined = true;
+		m_bDeploymentClosed = true;
+		Print(string.Format("[AROR GARRISON] %1 saved roster quarantined: %2; no automatic regeneration", id, reason), LogLevel.ERROR);
+	}
+
+	//! Saved kinds/variants bind to today's role catalogue, never saved prefab paths.
+	bool BindAssets_S(AROR_GarrisonFaction faction)
+	{
+		if (!Replication.IsServer() || m_bRestoreQuarantined || !faction || faction.m_eRole != m_eRosterRole)
+			return false;
+		if (m_bAssetsBound)
+			return true;
+		m_sFactionKey = faction.m_sFactionKey;
+		m_sAssetFactionKey = faction.m_sAssetFactionKey;
+		foreach (AROR_GarrisonSlot slot : m_aSlots)
+		{
+			switch (slot.m_iKind)
+			{
+				case 0: slot.m_sPrefab = faction.m_sInfantry; break;
+				case 1: slot.m_sPrefab = faction.m_sStaticMG; break;
+				case 2: slot.m_sPrefab = faction.m_sParkedArmour; break;
+				case 4: slot.m_sPrefab = faction.m_sCrew; break;
+				case 3:
+				{
+					if (!faction.m_aMannedVehicles || faction.m_aMannedVehicles.IsEmpty())
+						slot.m_sPrefab = string.Empty;
+					else
+					{
+						// Legacy saves may identify an unchanged choice by its old prefab.
+						if (slot.m_bLegacyAsset && faction.m_aMannedVehicles.Contains(slot.m_sPrefab))
+							slot.m_iVariant = faction.m_aMannedVehicles.Find(slot.m_sPrefab);
+						slot.m_iVariant = Math.Clamp(slot.m_iVariant, 0, faction.m_aMannedVehicles.Count() - 1);
+						slot.m_sPrefab = faction.m_aMannedVehicles[slot.m_iVariant];
+					}
+					break;
+				}
+			}
+			slot.m_bLegacyAsset = false;
+			// Layout is scenario data. Revalidate every restored placement without changing loss/health.
+			slot.m_bPlaced = false;
+		}
+		m_bAssetsBound = true;
+		return true;
+	}
+
 	bool OutsideLongEnough(bool outside, int now, int delay)
 	{
 		if (!outside)

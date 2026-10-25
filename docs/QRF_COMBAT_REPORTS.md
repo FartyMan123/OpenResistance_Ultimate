@@ -28,7 +28,7 @@ The 19:24–19:26 follow-up run successfully spawned the truck and five personne
 
 The corrected scheduler prints `Operation notifications: nested changes queued` at startup; its absence means that run cannot verify the recursion fix. Dispatch now fails explicitly if no AIWorld exists. Ground packages log changing spawn/boarding/transit/dismount stages and terminal force-record cleanup, so an ACTIVE operation alone is not treated as evidence of successful driving or delivery. After arrival, defense forces retain their orders until a trusted combat/territory outcome or timeout; there is no fabricated victory based solely on arrival.
 
-`Defense under attack` confirms the damage report worked. `Executor requested` confirms dispatch, but not that an executor exists or has spawned anything. Stop Play and check the actual `AROR_GameMode_Base1` instance in Chicken has `AROR_OperationExecutorComponent` with `m_bEnabled` checked. Keep your unsaved defender placements/settings when saving the world.
+`Defense under attack` confirms the damage report worked. `Executor requested` confirms dispatch, but not that an executor exists or has spawned anything. Stop Play and check the actual `AROR_GameMode_Base1` instance in Chicken has `AROR_OperationExecutorComponent` with `m_bExecuteOperations` checked. Keep your unsaved defender placements/settings when saving the world.
 
 After recompilation and a fresh Play session, capture the startup log as well as the attack:
 
