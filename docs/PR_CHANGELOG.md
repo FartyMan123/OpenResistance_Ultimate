@@ -13,7 +13,7 @@ Native tests demonstrate partial QRF delivery, Levie garrison deployment and suc
 ### Settlement support and military capture
 
 - Remove poles from all 7 cities and 11 towns. Legacy `Town_Flag` and `City_Flag` resources remain compatible aliases without flag capture. Enforce support-majority control through the canonical settlement path and exclude settlements from military AI recapture.
-- Group installations by their nearest settlement, with authored region-ID overrides. Periodically move each settlement's support distribution toward its region's share of military ownership, preserving the existing normalization, majority, cooldown and persistence rules.
+- Add optional regional influence, disabled by default in both script and shared game-mode prefab; Chicken explicitly opts in. Group installations by their nearest settlement, with authored region-ID overrides. When enabled, periodically move support toward the region's share of military ownership through the existing normalization, majority, cooldown and persistence rules. The policy and rate remain provisional.
 - Configure Chicken for capture-driven QRFs. Combat/damage requests have a separate `m_bCombatQRFs` opt-in, default off; killing or wounding a defender no longer creates a QRF request. Enabled military captures and support-driven settlement ownership changes can request the previous hostile owner's response.
 - Distinguish physical hostiles from pending deployment and unsuitable terrain in replicated capture feedback. After real personnel deploy and submitted native queues resolve, unused recipe slots no longer keep a cleared site uncapturable. The server still checks living hostiles and capture eligibility.
 

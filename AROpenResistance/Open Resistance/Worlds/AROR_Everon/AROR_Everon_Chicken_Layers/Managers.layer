@@ -27,6 +27,9 @@ PerceptionManager AROR_PerceptionManager : "{028DAEAD63E056BE}Prefabs/World/Game
 }
 SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR_GameMode_Base.et" {
  components {
+  AROR_RegionalSupportComponent "{3E3586CD181A4E9A}" {
+   m_bEnabled 1
+  }
   AROR_OperationExecutorComponent {
    m_bReaperQRFTest 0
    m_bQRFTacticalCommander 1

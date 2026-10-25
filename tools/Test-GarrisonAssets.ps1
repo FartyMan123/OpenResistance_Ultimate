@@ -33,4 +33,11 @@ foreach ($name in @('Town','City','Town_Flag','City_Flag')) {
 }
 $hq = [IO.File]::ReadAllText((Join-Path $addonRoot 'Prefabs/Locations/AROR_Location_HQ.et'))
 if ($hq.Contains('AROR_GarrisonComponent') -or !$hq.Contains('m_bControlFixed 1')) { throw 'HQ must remain fixed and excluded from generated defences' }
+$regional = [IO.File]::ReadAllText((Join-Path $addonRoot 'Scripts/Game/Settlements/AROR_RegionalSupportComponent.c'))
+if ($regional -notmatch '\[Attribute\("0",[^\r\n]*\)\]\s+protected bool m_bEnabled;') { throw 'Regional support must default off in the script' }
+$sharedMode = [IO.File]::ReadAllText((Join-Path $addonRoot 'Prefabs/GameModes/AROR_GameMode_Base.et'))
+if ($sharedMode -notmatch 'AROR_RegionalSupportComponent[^\r\n]*\{\s+m_bEnabled 0\s+\}') { throw 'Shared game mode must explicitly disable regional support' }
+$chicken = [IO.File]::ReadAllText((Join-Path $addonRoot 'Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/Managers.layer'))
+if ($chicken -notmatch 'AROR_RegionalSupportComponent[^\r\n]*\{\s+m_bEnabled 1\s+\}') { throw 'Chicken must explicitly opt into regional support' }
+Write-Output 'Verified regional support is disabled by default in script/shared prefab and explicitly enabled in Chicken.'
 Write-Output "Verified $checked garrison/shared resource GUIDs, military component placement and settlement/HQ exclusions. Hand-authored group metadata still requires Workbench discovery; native seating/gameplay unverified."

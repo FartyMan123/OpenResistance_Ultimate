@@ -3,7 +3,7 @@ class AROR_RegionalSupportComponentClass : SCR_BaseGameModeComponentClass {}
 
 class AROR_RegionalSupportComponent : SCR_BaseGameModeComponent
 {
-	[Attribute("1", desc: "Enable gradual military-control influence on settlement support.")]
+	[Attribute("0", desc: "Opt this scenario into gradual military-control influence on settlement support.")]
 	protected bool m_bEnabled;
 	[Attribute("60", desc: "Seconds per support cycle", params: "10 900 1")]
 	protected int m_iInterval;
