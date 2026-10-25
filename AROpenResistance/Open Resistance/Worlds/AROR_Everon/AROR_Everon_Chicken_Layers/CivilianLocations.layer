@@ -32,7 +32,7 @@ $grp SCR_ChimeraCharacter : "{26A9756790131354}Prefabs/Characters/Factions/BLUFO
   coords 5489.166 95.901 6086.587
  }
 }
-GenericEntity AROR_Location_everon_saint_philippe : "{DA534E8B5C934410}Prefabs/Locations/AROR_Location_City_Flag.et" {
+GenericEntity AROR_Location_everon_saint_philippe : "{CCD444F168F300B9}Prefabs/Locations/AROR_Location_City.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_saint_philippe"
@@ -47,28 +47,8 @@ GenericEntity AROR_Location_everon_saint_philippe : "{DA534E8B5C934410}Prefabs/L
   }
  }
  coords 4500.872 12.8353 10776.053
- {
-  GenericEntity {
-   ID "615E4069714445D5"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords -0.002 0.901846 15.047
-  }
- }
 }
-GenericEntity AROR_Location_everon_montignac : "{DA534E8B5C934410}Prefabs/Locations/AROR_Location_City_Flag.et" {
+GenericEntity AROR_Location_everon_montignac : "{CCD444F168F300B9}Prefabs/Locations/AROR_Location_City.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_montignac"
@@ -83,28 +63,8 @@ GenericEntity AROR_Location_everon_montignac : "{DA534E8B5C934410}Prefabs/Locati
   }
  }
  coords 4775.641 164.054 7086.945
- {
-  GenericEntity {
-   ID "615E4069714445D5"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords -0.001 0.905946 14.995
-  }
- }
 }
-GenericEntity AROR_Location_everon_entre_deux : "{FE40DD5F63A34B1E}Prefabs/Locations/AROR_Location_Town_Flag.et" {
+GenericEntity AROR_Location_everon_entre_deux : "{A744BF492EFD2B54}Prefabs/Locations/AROR_Location_Town.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_entre_deux"
@@ -119,28 +79,8 @@ GenericEntity AROR_Location_everon_entre_deux : "{FE40DD5F63A34B1E}Prefabs/Locat
   }
  }
  coords 5760.571 217.282 7061.821
- {
-  GenericEntity {
-   ID "A17514DE7AEA4E5C"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords 14.999 0.905946 -0.001
-  }
- }
 }
-GenericEntity AROR_Location_everon_meaux : "{FE40DD5F63A34B1E}Prefabs/Locations/AROR_Location_Town_Flag.et" {
+GenericEntity AROR_Location_everon_meaux : "{A744BF492EFD2B54}Prefabs/Locations/AROR_Location_Town.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_meaux"
@@ -155,28 +95,8 @@ GenericEntity AROR_Location_everon_meaux : "{FE40DD5F63A34B1E}Prefabs/Locations/
   }
  }
  coords 4517.52 14.4622 9467.668
- {
-  GenericEntity {
-   ID "A17514DE7AEA4E5C"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords 10.61 0.905946 10.602
-  }
- }
 }
-GenericEntity AROR_Location_everon_saint_pierre : "{DA534E8B5C934410}Prefabs/Locations/AROR_Location_City_Flag.et" {
+GenericEntity AROR_Location_everon_saint_pierre : "{CCD444F168F300B9}Prefabs/Locations/AROR_Location_City.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_saint_pierre"
@@ -191,28 +111,8 @@ GenericEntity AROR_Location_everon_saint_pierre : "{DA534E8B5C934410}Prefabs/Loc
   }
  }
  coords 9689.432 12.5688 1558.166
- {
-  GenericEntity {
-   ID "615E4069714445D5"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords 10.608 0.905746 -10.606
-  }
- }
 }
-GenericEntity AROR_Location_everon_morton_town : "{DA534E8B5C934410}Prefabs/Locations/AROR_Location_City_Flag.et" {
+GenericEntity AROR_Location_everon_morton_town : "{CCD444F168F300B9}Prefabs/Locations/AROR_Location_City.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_morton_town"
@@ -227,28 +127,8 @@ GenericEntity AROR_Location_everon_morton_town : "{DA534E8B5C934410}Prefabs/Loca
   }
  }
  coords 5132.015 16.575 4008.557
- {
-  GenericEntity {
-   ID "615E4069714445D5"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords 0.005 -1.245754 15.003
-  }
- }
 }
-GenericEntity AROR_Location_everon_figari : "{FE40DD5F63A34B1E}Prefabs/Locations/AROR_Location_Town_Flag.et" {
+GenericEntity AROR_Location_everon_figari : "{A744BF492EFD2B54}Prefabs/Locations/AROR_Location_Town.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_figari"
@@ -263,28 +143,8 @@ GenericEntity AROR_Location_everon_figari : "{FE40DD5F63A34B1E}Prefabs/Locations
   }
  }
  coords 5256.366 62.6466 5341.263
- {
-  GenericEntity {
-   ID "A17514DE7AEA4E5C"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords 10.604 0.905746 10.607
-  }
- }
 }
-GenericEntity AROR_Location_everon_lamentin_town : "{DA534E8B5C934410}Prefabs/Locations/AROR_Location_City_Flag.et" {
+GenericEntity AROR_Location_everon_lamentin_town : "{CCD444F168F300B9}Prefabs/Locations/AROR_Location_City.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_lamentin_town"
@@ -299,28 +159,8 @@ GenericEntity AROR_Location_everon_lamentin_town : "{DA534E8B5C934410}Prefabs/Lo
   }
  }
  coords 1308.509 38.292 5985.583
- {
-  GenericEntity {
-   ID "615E4069714445D5"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords 10.611 2.169746 10.607
-  }
- }
 }
-GenericEntity AROR_Location_everon_chotain : "{DA534E8B5C934410}Prefabs/Locations/AROR_Location_City_Flag.et" {
+GenericEntity AROR_Location_everon_chotain : "{CCD444F168F300B9}Prefabs/Locations/AROR_Location_City.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_chotain"
@@ -335,28 +175,8 @@ GenericEntity AROR_Location_everon_chotain : "{DA534E8B5C934410}Prefabs/Location
   }
  }
  coords 7087.74 118.867 6011.904
- {
-  GenericEntity {
-   ID "615E4069714445D5"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords 10.61 0.904946 10.606
-  }
- }
 }
-GenericEntity AROR_Location_everon_levie : "{DA534E8B5C934410}Prefabs/Locations/AROR_Location_City_Flag.et" {
+GenericEntity AROR_Location_everon_levie : "{CCD444F168F300B9}Prefabs/Locations/AROR_Location_City.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_levie"
@@ -371,28 +191,8 @@ GenericEntity AROR_Location_everon_levie : "{DA534E8B5C934410}Prefabs/Locations/
   }
  }
  coords 7456.592 137.273 4737.094
- {
-  GenericEntity {
-   ID "615E4069714445D5"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords -10.602 0.905946 -10.604
-  }
- }
 }
-GenericEntity AROR_Location_everon_durras : "{FE40DD5F63A34B1E}Prefabs/Locations/AROR_Location_Town_Flag.et" {
+GenericEntity AROR_Location_everon_durras : "{A744BF492EFD2B54}Prefabs/Locations/AROR_Location_Town.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_durras"
@@ -407,28 +207,8 @@ GenericEntity AROR_Location_everon_durras : "{FE40DD5F63A34B1E}Prefabs/Locations
   }
  }
  coords 8826.12 95.0682 2746.123
- {
-  GenericEntity {
-   ID "A17514DE7AEA4E5C"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords 15 0.905846 -0.003
-  }
- }
 }
-GenericEntity AROR_Location_everon_camurac : "{FE40DD5F63A34B1E}Prefabs/Locations/AROR_Location_Town_Flag.et" {
+GenericEntity AROR_Location_everon_camurac : "{A744BF492EFD2B54}Prefabs/Locations/AROR_Location_Town.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_camurac"
@@ -443,28 +223,8 @@ GenericEntity AROR_Location_everon_camurac : "{FE40DD5F63A34B1E}Prefabs/Location
   }
  }
  coords 6594.162 6.11406 3116.684
- {
-  GenericEntity {
-   ID "A17514DE7AEA4E5C"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords 10.608 0.905346 -10.604
-  }
- }
 }
-GenericEntity AROR_Location_everon_provins : "{FE40DD5F63A34B1E}Prefabs/Locations/AROR_Location_Town_Flag.et" {
+GenericEntity AROR_Location_everon_provins : "{A744BF492EFD2B54}Prefabs/Locations/AROR_Location_Town.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_provins"
@@ -479,28 +239,8 @@ GenericEntity AROR_Location_everon_provins : "{FE40DD5F63A34B1E}Prefabs/Location
   }
  }
  coords 5503.833 96.354 6081.837
- {
-  GenericEntity {
-   ID "A17514DE7AEA4E5C"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords 10.607 0.062446 10.603
-  }
- }
 }
-GenericEntity AROR_Location_everon_kermovan : "{FE40DD5F63A34B1E}Prefabs/Locations/AROR_Location_Town_Flag.et" {
+GenericEntity AROR_Location_everon_kermovan : "{A744BF492EFD2B54}Prefabs/Locations/AROR_Location_Town.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_kermovan"
@@ -515,28 +255,8 @@ GenericEntity AROR_Location_everon_kermovan : "{FE40DD5F63A34B1E}Prefabs/Locatio
   }
  }
  coords 6359.376 6.74846 9668.684
- {
-  GenericEntity {
-   ID "A17514DE7AEA4E5C"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords 10.604 0.905476 -10.604
-  }
- }
 }
-GenericEntity AROR_Location_everon_gravette : "{FE40DD5F63A34B1E}Prefabs/Locations/AROR_Location_Town_Flag.et" {
+GenericEntity AROR_Location_everon_gravette : "{A744BF492EFD2B54}Prefabs/Locations/AROR_Location_Town.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_gravette"
@@ -551,28 +271,8 @@ GenericEntity AROR_Location_everon_gravette : "{FE40DD5F63A34B1E}Prefabs/Locatio
   }
  }
  coords 4128.282 36.5755 7792.364
- {
-  GenericEntity {
-   ID "A17514DE7AEA4E5C"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords 10.608 0.905746 10.606
-  }
- }
 }
-GenericEntity AROR_Location_everon_regina : "{FE40DD5F63A34B1E}Prefabs/Locations/AROR_Location_Town_Flag.et" {
+GenericEntity AROR_Location_everon_regina : "{A744BF492EFD2B54}Prefabs/Locations/AROR_Location_Town.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_regina"
@@ -587,28 +287,8 @@ GenericEntity AROR_Location_everon_regina : "{FE40DD5F63A34B1E}Prefabs/Locations
   }
  }
  coords 7188.38 137.478 2312.382
- {
-  GenericEntity {
-   ID "A17514DE7AEA4E5C"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords 0 0.905946 14.998
-  }
- }
 }
-GenericEntity AROR_Location_everon_villeneuve : "{FE40DD5F63A34B1E}Prefabs/Locations/AROR_Location_Town_Flag.et" {
+GenericEntity AROR_Location_everon_villeneuve : "{A744BF492EFD2B54}Prefabs/Locations/AROR_Location_Town.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_villeneuve"
@@ -623,28 +303,8 @@ GenericEntity AROR_Location_everon_villeneuve : "{FE40DD5F63A34B1E}Prefabs/Locat
   }
  }
  coords 2847.008 86.8441 6339.848
- {
-  GenericEntity {
-   ID "A17514DE7AEA4E5C"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords 15.002 0.905946 0.002
-  }
- }
 }
-GenericEntity AROR_Location_everon_tyrone : "{FE40DD5F63A34B1E}Prefabs/Locations/AROR_Location_Town_Flag.et" {
+GenericEntity AROR_Location_everon_tyrone : "{A744BF492EFD2B54}Prefabs/Locations/AROR_Location_Town.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_tyrone"
@@ -659,24 +319,4 @@ GenericEntity AROR_Location_everon_tyrone : "{FE40DD5F63A34B1E}Prefabs/Locations
   }
  }
  coords 4948.837 38.1244 9075.68
- {
-  GenericEntity {
-   ID "A17514DE7AEA4E5C"
-   components {
-    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
-    }
-    ActionsManagerComponent "{6AAE5E8DE935135E}" {
-     ActionContexts {
-      UserActionContext "{6AAE5E8DEECDFE8B}" {
-       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
-        Offset 0 0.694054 0
-       }
-      }
-     }
-    }
-   }
-   coords 0.003 0.905846 -15
-  }
- }
 }

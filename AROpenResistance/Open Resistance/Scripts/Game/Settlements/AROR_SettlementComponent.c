@@ -103,6 +103,30 @@ class AROR_SettlementComponent : ScriptComponent
 		SetValues(role, value, others[0], first, others[1], second);
 	}
 
+	//! Move the complete distribution together; sequential SetSupport calls would bias the last role.
+	//! Each role changes by at most maxStep percentage points in one cycle.
+	void ApplyRegionalSupport_S(float resistance, float occupiers, float invaders, float maxStep)
+	{
+		if (!Replication.IsServer() || !m_Location || m_Location.IsControlFixed() || maxStep <= 0)
+			return;
+		float total = resistance + occupiers + invaders;
+		if (total <= 0 || resistance < 0 || occupiers < 0 || invaders < 0)
+			return;
+		float r = 100 * resistance / total;
+		float o = 100 * occupiers / total;
+		float i = 100 - r - o;
+		float largest = Math.Max(Math.AbsFloat(r - m_fResistance), Math.Max(Math.AbsFloat(o - m_fOccupiers), Math.AbsFloat(i - m_fInvaders)));
+		if (largest > 0.001)
+		{
+			float fraction = Math.Min(1, maxStep / largest);
+			r = m_fResistance + (r - m_fResistance) * fraction;
+			o = m_fOccupiers + (o - m_fOccupiers) * fraction;
+			SetValues(AROR_EFactionRole.RESISTANCE, r, AROR_EFactionRole.OCCUPIERS, o, AROR_EFactionRole.INVADERS, 100 - r - o);
+		}
+		else
+			UpdateControl_S(); // A previous majority may have been blocked by the flip cooldown.
+	}
+
 	//------------------------------------------------------------------------------------------------
 	//! Server only: restore saved values (used by the serializer); normalised to 100
 	void RestoreSupport_S(float resistance, float occupiers, float invaders)

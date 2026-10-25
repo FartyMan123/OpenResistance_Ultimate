@@ -452,6 +452,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
    m_bInvaderOperationsEnabled 0
    m_bTownCaptureQRFs 1
    m_bOutpostCaptureQRFs 1
+   m_bCombatQRFs 0
    m_sOccupiersAttackTargetId ""
    m_sInvadersAttackTargetId ""
    m_iAttackPreparation 5

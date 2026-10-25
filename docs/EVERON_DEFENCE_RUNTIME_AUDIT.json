@@ -1,0 +1,67 @@
+{
+    "Source":  "Workbench script.log, logs_2026-10-25_11-40-40",
+    "Date":  "2026-10-25",
+    "Method":  "Runtime 7x7 rotated terrain sampling across the standard half-width plus 2m margin. Maximum allowed relief is 2m. Negative placement evidence only; no wall/arc/access acceptance.",
+    "Measurements":  {
+                         "everon_outpost_gorey":  {
+                                                      "Time":  "11:41:34.507",
+                                                      "HalfExtent":  18,
+                                                      "Relief":  5.5788,
+                                                      "TerrainSuitable":  false
+                                                  },
+                         "everon_outpost_andres_beacon":  {
+                                                              "Time":  "11:41:37.518",
+                                                              "HalfExtent":  18,
+                                                              "Relief":  4.24518,
+                                                              "TerrainSuitable":  false
+                                                          },
+                         "everon_military_outpost_chotain":  {
+                                                                 "Time":  "11:44:19.275",
+                                                                 "HalfExtent":  32,
+                                                                 "Relief":  4.10403,
+                                                                 "TerrainSuitable":  false
+                                                             },
+                         "everon_factory_north_ridge":  {
+                                                            "Time":  "11:41:39.524",
+                                                            "HalfExtent":  28,
+                                                            "Relief":  17.0641,
+                                                            "TerrainSuitable":  false
+                                                        },
+                         "everon_resources_north_ridge_west":  {
+                                                                   "Time":  "11:41:40.527",
+                                                                   "HalfExtent":  26,
+                                                                   "Relief":  11.3378,
+                                                                   "TerrainSuitable":  false
+                                                               },
+                         "everon_resources_north_ridge_east":  {
+                                                                   "Time":  "11:41:41.526",
+                                                                   "HalfExtent":  26,
+                                                                   "Relief":  11.1975,
+                                                                   "TerrainSuitable":  false
+                                                               },
+                         "everon_outpost_laruns":  {
+                                                       "Time":  "11:44:18.272",
+                                                       "HalfExtent":  18,
+                                                       "Relief":  6.49771,
+                                                       "TerrainSuitable":  false
+                                                   },
+                         "everon_outpost_levie_hillside":  {
+                                                               "Time":  "11:44:16.264",
+                                                               "HalfExtent":  18,
+                                                               "Relief":  11.3021,
+                                                               "TerrainSuitable":  false
+                                                           },
+                         "everon_military_outpost_levie":  {
+                                                               "Time":  "11:44:20.275",
+                                                               "HalfExtent":  32,
+                                                               "Relief":  2.78125,
+                                                               "TerrainSuitable":  false
+                                                           },
+                         "everon_outpost_quarry":  {
+                                                       "Time":  "11:44:24.279",
+                                                       "HalfExtent":  18,
+                                                       "Relief":  3.04907,
+                                                       "TerrainSuitable":  false
+                                                   }
+                     }
+}

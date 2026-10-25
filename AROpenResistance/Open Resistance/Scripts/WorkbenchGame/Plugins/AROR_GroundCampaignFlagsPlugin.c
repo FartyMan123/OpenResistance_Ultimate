@@ -1,4 +1,4 @@
-[WorkbenchPluginAttribute(name: "Ground all campaign flags", description: "Ground and audit all 41 Chicken campaign poles using editor terrain; one undo action. Save the world afterward.", wbModules: {"WorldEditor"}, category: "Open Resistance")]
+[WorkbenchPluginAttribute(name: "Ground all campaign flags", description: "Ground and audit the 23 military Chicken poles; settlements have no flags. One undo action.", wbModules: {"WorldEditor"}, category: "Open Resistance")]
 class AROR_GroundCampaignFlagsPlugin : WorldEditorPlugin
 {
 	override void Run()
@@ -110,7 +110,15 @@ class AROR_GroundCampaignFlagsPlugin : WorldEditorPlugin
 		BaseWorld world = api.GetWorld();
 		foreach (IEntitySource rootSource : roots)
 		{
+			// Catalogue settlement IDs remain stable, but their pole hierarchies were removed.
+			// Check type on the actual editor entity, not a naming convention.
 			IEntity root = api.SourceToEntity(rootSource);
+			if (root)
+			{
+				AROR_LocationComponent location = AROR_LocationComponent.Cast(root.FindComponent(AROR_LocationComponent));
+				if (location && (location.GetLocationType() == AROR_ELocationType.TOWN || location.GetLocationType() == AROR_ELocationType.CITY))
+					continue;
+			}
 			IEntity flag;
 			if (root)
 				flag = FindFlag(api, root);

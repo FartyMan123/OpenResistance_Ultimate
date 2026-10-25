@@ -1,0 +1,157 @@
+{
+    "Version":  1,
+    "Note":  "New preset resource GUIDs are hand-authored. Existing asset GUIDs verified against installed base-game metadata. Geometry is provisional until Workbench inspection.",
+    "WallResource":  "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et",
+    "WallPitch":  2.5,
+    "EntranceWidth":  10,
+    "Presets":  [
+                    {
+                        "Name":  "Outpost",
+                        "Type":  "OUTPOST",
+                        "HalfExtent":  18,
+                        "SourceGuid":  "3D1925CD1FA54115",
+                        "SourceName":  "Outpost",
+                        "FlagId":  "6AACA42C3DE4F4A5",
+                        "Guid":  "1B645C4060E84216"
+                    },
+                    {
+                        "Name":  "MilitaryOutpost",
+                        "Type":  "MILITARY_BASE",
+                        "HalfExtent":  32,
+                        "SourceGuid":  "9B2CAF507D694BA5",
+                        "SourceName":  "MilitaryOutpost",
+                        "FlagId":  "6AACA42C3DE4F4A5",
+                        "Guid":  "6B5025C036D84B66"
+                    },
+                    {
+                        "Name":  "Resources",
+                        "Type":  "RESOURCES",
+                        "HalfExtent":  26,
+                        "SourceGuid":  "DFDDE00B63706BEF",
+                        "SourceName":  "Resources",
+                        "FlagId":  "6AACA42C07095538",
+                        "Guid":  "C3CE3C983BD347EB"
+                    },
+                    {
+                        "Name":  "Factory",
+                        "Type":  "FACTORY",
+                        "HalfExtent":  28,
+                        "SourceGuid":  "357CE0E8EC82AFED",
+                        "SourceName":  "Factory",
+                        "FlagId":  "6AACA42C2C775A3A",
+                        "Guid":  "869B73F0B368419E"
+                    },
+                    {
+                        "Name":  "Port",
+                        "Type":  "PORT",
+                        "HalfExtent":  28,
+                        "SourceGuid":  "BACC096222622272",
+                        "SourceName":  "Port",
+                        "FlagId":  "6AACA42C304AE078",
+                        "Guid":  "E7FDF4F789F44053"
+                    },
+                    {
+                        "Name":  "Airbase",
+                        "Type":  "AIRPORT",
+                        "HalfExtent":  44,
+                        "SourceGuid":  "ED619C5A68ED5FAB",
+                        "SourceName":  "Airport",
+                        "FlagId":  "6AACA42BFC76C266",
+                        "Guid":  "37786477B1914A61"
+                    },
+                    {
+                        "Name":  "OutpostCompact",
+                        "Type":  "OUTPOST",
+                        "HalfExtent":  14,
+                        "SourceGuid":  "3D1925CD1FA54115",
+                        "SourceName":  "Outpost",
+                        "FlagId":  "6AACA42C3DE4F4A5",
+                        "Guid":  "796C32EF26719D2E",
+                        "CompactTeams":  false
+                    },
+                    {
+                        "Name":  "MilitaryOutpostCompact",
+                        "Type":  "MILITARY_BASE",
+                        "HalfExtent":  24,
+                        "SourceGuid":  "9B2CAF507D694BA5",
+                        "SourceName":  "MilitaryOutpost",
+                        "FlagId":  "6AACA42C3DE4F4A5",
+                        "Guid":  "3D67A8A2E6AB69B5",
+                        "CompactTeams":  true
+                    },
+                    {
+                        "Name":  "FactoryCompact",
+                        "Type":  "FACTORY",
+                        "HalfExtent":  24,
+                        "SourceGuid":  "357CE0E8EC82AFED",
+                        "SourceName":  "Factory",
+                        "FlagId":  "6AACA42C2C775A3A",
+                        "Guid":  "7DB3028CC7602D89",
+                        "CompactTeams":  true
+                    },
+                    {
+                        "Name":  "ResourcesCompact",
+                        "SearchRadius":  1200,
+                        "Type":  "RESOURCES",
+                        "HalfExtent":  24,
+                        "SourceGuid":  "DFDDE00B63706BEF",
+                        "SourceName":  "Resources",
+                        "FlagId":  "6AACA42C07095538",
+                        "Guid":  "BC294CFD17A22D5C",
+                        "CompactTeams":  true
+                    },
+                    {
+                        "Name":  "MilitaryOutpostCoastalCompact",
+                        "Type":  "MILITARY_BASE",
+                        "HalfExtent":  20,
+                        "SourceGuid":  "9B2CAF507D694BA5",
+                        "SourceName":  "MilitaryOutpost",
+                        "FlagId":  "6AACA42C3DE4F4A5",
+                        "Guid":  "FE70433EF98B3C4D",
+                        "CompactTeams":  true,
+                        "TeamPositions":  [
+                                              [
+                                                  -10,
+                                                  10
+                                              ],
+                                              [
+                                                  10,
+                                                  10
+                                              ],
+                                              [
+                                                  -14,
+                                                  -14
+                                              ],
+                                              [
+                                                  14,
+                                                  -14
+                                              ],
+                                              [
+                                                  0,
+                                                  8
+                                              ],
+                                              [
+                                                  0,
+                                                  -14
+                                              ]
+                                          ],
+                        "MGPositions":  [
+                                            [
+                                                0,
+                                                16,
+                                                0
+                                            ],
+                                            [
+                                                -16,
+                                                6,
+                                                270
+                                            ],
+                                            [
+                                                16,
+                                                6,
+                                                90
+                                            ]
+                                        ]
+                    }
+                ]
+}

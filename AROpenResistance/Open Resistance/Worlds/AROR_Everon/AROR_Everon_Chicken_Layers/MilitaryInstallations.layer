@@ -1,4 +1,4 @@
-GenericEntity AROR_Location_everon_outpost_farm : "{3D1925CD1FA54115}Prefabs/Locations/AROR_Location_Outpost.et" {
+GenericEntity AROR_Location_everon_outpost_farm : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defence_Outpost.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_outpost_farm"
@@ -9,7 +9,7 @@ GenericEntity AROR_Location_everon_outpost_farm : "{3D1925CD1FA54115}Prefabs/Loc
    m_bGroundOnInit 0
   }
  }
- coords 5009.537 25.7643 9964.422
+ coords 4959.54 25.0481 10051.9
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -27,11 +27,231 @@ GenericEntity AROR_Location_everon_outpost_farm : "{3D1925CD1FA54115}Prefabs/Loc
      }
     }
    }
-   coords 0.003 0.905946 12.498
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "A26A58E35980454B"
+   coords -16.8 -0.5831 18
+  }
+  GenericEntity {
+   ID "B6F4BC8A9127F481"
+   coords -14.4 -0.5081 18
+  }
+  GenericEntity {
+   ID "8E56A3354B5079CC"
+   coords -12 -0.4331 18
+  }
+  GenericEntity {
+   ID "FF068F9282B15884"
+   coords -9.6 -0.3581 18
+  }
+  GenericEntity {
+   ID "14904C59F826BC31"
+   coords -7.2 -0.3121 18
+  }
+  GenericEntity {
+   ID "822B8D9215CE0E02"
+   coords -4.8 -0.2491 18
+  }
+  GenericEntity {
+   ID "CBB50C2CD0D4FD09"
+   coords -2.4 -0.1941 18
+  }
+  GenericEntity {
+   ID "4C1594EC7E4A1C60"
+   coords 0 -0.1431 18
+  }
+  GenericEntity {
+   ID "0FEF4ED2460C58CA"
+   coords 2.4 -0.1051 18
+  }
+  GenericEntity {
+   ID "B9F9F2E86D252B4E"
+   coords 4.8 -0.0681 18
+  }
+  GenericEntity {
+   ID "CF38FBE4D913F668"
+   coords 7.2 -0.0301 18
+  }
+  GenericEntity {
+   ID "0105144196B3AA44"
+   coords 9.6 -0.0091 18
+  }
+  GenericEntity {
+   ID "FF40A2D0A933ECFE"
+   coords 12 0.0139 18
+  }
+  GenericEntity {
+   ID "FCB56D63BD9D1149"
+   coords 14.4 0.0219 18
+  }
+  GenericEntity {
+   ID "64E24B5736D65094"
+   coords 16.8 0.0259 18
+  }
+  GenericEntity {
+   ID "D368C9AEDA1F18FD"
+   coords 18 0.7089 -16.8
+  }
+  GenericEntity {
+   ID "FAA6E7203CBF9177"
+   coords 18 0.7239 -14.4
+  }
+  GenericEntity {
+   ID "0DAFA8A0FD2BD3A2"
+   coords 18 0.7239 -12
+  }
+  GenericEntity {
+   ID "D23BFF382C96F7E0"
+   coords 18 0.7239 -9.6
+  }
+  GenericEntity {
+   ID "CD82E841075EDDEE"
+   coords 18 0.6919 -7.2
+  }
+  GenericEntity {
+   ID "DFDEA8208E018BB7"
+   coords 18 0.6649 -4.8
+  }
+  GenericEntity {
+   ID "BF7D8F36F0E0D1EB"
+   coords 18 0.6139 -2.4
+  }
+  GenericEntity {
+   ID "34C9C64E7F22F99F"
+   coords 18 0.5689 0
+  }
+  GenericEntity {
+   ID "D82A4D576D4801F7"
+   coords 18 0.5029 2.4
+  }
+  GenericEntity {
+   ID "7D628730CCE652BF"
+   coords 18 0.4279 4.8
+  }
+  GenericEntity {
+   ID "EDC1BF1A899F258B"
+   coords 18 0.3529 7.2
+  }
+  GenericEntity {
+   ID "CFE8B0245B6E7BD9"
+   coords 18 0.2779 9.6
+  }
+  GenericEntity {
+   ID "26B52FD7935E2E80"
+   coords 18 0.2099 12
+  }
+  GenericEntity {
+   ID "A8F5CFEE1431C3FA"
+   coords 18 0.1349 14.4
+  }
+  GenericEntity {
+   ID "F470401E52527881"
+   coords 18 0.0639 16.8
+  }
+  GenericEntity {
+   ID "B2121EDBD40B9FF1"
+   coords -16.8 -0.5831 -18
+  }
+  GenericEntity {
+   ID "53C18E3C9140EAC7"
+   coords -14.4 -0.5081 -18
+  }
+  GenericEntity {
+   ID "3874E35EF4F28C5E"
+   coords -12 -0.4331 -18
+  }
+  GenericEntity {
+   ID "A010AAFE9D36E9BD"
+   coords -9.6 -0.3581 -18
+  }
+  GenericEntity {
+   ID "587964F58F214B46"
+   coords -7.2 -0.2481 -18
+  }
+  GenericEntity {
+   ID "6CD5DB4836D17D78"
+   coords 7.2 0.3219 -18
+  }
+  GenericEntity {
+   ID "8841B3D006F58B82"
+   coords 9.6 0.4149 -18
+  }
+  GenericEntity {
+   ID "32B890E7012D525B"
+   coords 12 0.5029 -18
+  }
+  GenericEntity {
+   ID "C9342BE97A6A0009"
+   coords 14.4 0.5779 -18
+  }
+  GenericEntity {
+   ID "CD9489D6AB17F9C4"
+   coords 16.8 0.6549 -18
+  }
+  GenericEntity {
+   ID "0FA42749B9B95242"
+   coords -18 -0.6371 -16.8
+  }
+  GenericEntity {
+   ID "D5C795DB7BA54B68"
+   coords -18 -0.6821 -14.4
+  }
+  GenericEntity {
+   ID "5E234409C32177EB"
+   coords -18 -0.6901 -12
+  }
+  GenericEntity {
+   ID "CF5402F0922553CD"
+   coords -18 -0.6901 -9.6
+  }
+  GenericEntity {
+   ID "AA1B5013A90C5C4D"
+   coords -18 -0.6661 -7.2
+  }
+  GenericEntity {
+   ID "F90716AC7C33AD48"
+   coords -18 -0.6661 -4.8
+  }
+  GenericEntity {
+   ID "3DFE3F5F7A2C3E9A"
+   coords -18 -0.6661 -2.4
+  }
+  GenericEntity {
+   ID "F5BE43B3F1DEAF0A"
+   coords -18 -0.6591 0
+  }
+  GenericEntity {
+   ID "8C12BD9792796572"
+   coords -18 -0.6301 2.4
+  }
+  GenericEntity {
+   ID "DB45C0F83AEF8376"
+   coords -18 -0.6271 4.8
+  }
+  GenericEntity {
+   ID "507799348CE44CC4"
+   coords -18 -0.6271 7.2
+  }
+  GenericEntity {
+   ID "A7E5A421102FF5D9"
+   coords -18 -0.6201 9.6
+  }
+  GenericEntity {
+   ID "A339FE8605CD2AF1"
+   coords -18 -0.6201 12
+  }
+  GenericEntity {
+   ID "D36738A30FFF80DF"
+   coords -18 -0.6251 14.4
+  }
+  GenericEntity {
+   ID "A75867ADA23F5BE9"
+   coords -18 -0.6271 16.8
   }
  }
 }
-GenericEntity AROR_Location_everon_outpost_meaux_harbour : "{3D1925CD1FA54115}Prefabs/Locations/AROR_Location_Outpost.et" {
+GenericEntity AROR_Location_everon_outpost_meaux_harbour : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defence_Outpost.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_outpost_meaux_harbour"
@@ -42,7 +262,8 @@ GenericEntity AROR_Location_everon_outpost_meaux_harbour : "{3D1925CD1FA54115}Pr
    m_bGroundOnInit 0
   }
  }
- coords 4304.272 1.125 9517.466
+ coords 4588.11 23.5439 9701.3
+ angles 0 45 0
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -60,11 +281,231 @@ GenericEntity AROR_Location_everon_outpost_meaux_harbour : "{3D1925CD1FA54115}Pr
      }
     }
    }
-   coords 8.838 0.905826 8.834
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "A26A58E35980454B"
+   coords -16.8 -0.2589 18
+  }
+  GenericEntity {
+   ID "B6F4BC8A9127F481"
+   coords -14.4 -0.2059 18
+  }
+  GenericEntity {
+   ID "8E56A3354B5079CC"
+   coords -12 -0.1299 18
+  }
+  GenericEntity {
+   ID "FF068F9282B15884"
+   coords -9.6 -0.0499 18
+  }
+  GenericEntity {
+   ID "14904C59F826BC31"
+   coords -7.2 0.0571 18
+  }
+  GenericEntity {
+   ID "822B8D9215CE0E02"
+   coords -4.8 0.1401 18
+  }
+  GenericEntity {
+   ID "CBB50C2CD0D4FD09"
+   coords -2.4 0.2201 18
+  }
+  GenericEntity {
+   ID "4C1594EC7E4A1C60"
+   coords 0 0.2861 18
+  }
+  GenericEntity {
+   ID "0FEF4ED2460C58CA"
+   coords 2.4 0.3311 18
+  }
+  GenericEntity {
+   ID "B9F9F2E86D252B4E"
+   coords 4.8 0.3541 18
+  }
+  GenericEntity {
+   ID "CF38FBE4D913F668"
+   coords 7.2 0.3371 18
+  }
+  GenericEntity {
+   ID "0105144196B3AA44"
+   coords 9.6 0.3361 18
+  }
+  GenericEntity {
+   ID "FF40A2D0A933ECFE"
+   coords 12 0.3221 18
+  }
+  GenericEntity {
+   ID "FCB56D63BD9D1149"
+   coords 14.4 0.3221 18
+  }
+  GenericEntity {
+   ID "64E24B5736D65094"
+   coords 16.8 0.3221 18
+  }
+  GenericEntity {
+   ID "D368C9AEDA1F18FD"
+   coords 18 0.1471 -16.8
+  }
+  GenericEntity {
+   ID "FAA6E7203CBF9177"
+   coords 18 0.2061 -14.4
+  }
+  GenericEntity {
+   ID "0DAFA8A0FD2BD3A2"
+   coords 18 0.2791 -12
+  }
+  GenericEntity {
+   ID "D23BFF382C96F7E0"
+   coords 18 0.3061 -9.6
+  }
+  GenericEntity {
+   ID "CD82E841075EDDEE"
+   coords 18 0.3591 -7.2
+  }
+  GenericEntity {
+   ID "DFDEA8208E018BB7"
+   coords 18 0.3711 -4.8
+  }
+  GenericEntity {
+   ID "BF7D8F36F0E0D1EB"
+   coords 18 0.3851 -2.4
+  }
+  GenericEntity {
+   ID "34C9C64E7F22F99F"
+   coords 18 0.3981 0
+  }
+  GenericEntity {
+   ID "D82A4D576D4801F7"
+   coords 18 0.3981 2.4
+  }
+  GenericEntity {
+   ID "7D628730CCE652BF"
+   coords 18 0.3981 4.8
+  }
+  GenericEntity {
+   ID "EDC1BF1A899F258B"
+   coords 18 0.3981 7.2
+  }
+  GenericEntity {
+   ID "CFE8B0245B6E7BD9"
+   coords 18 0.3731 9.6
+  }
+  GenericEntity {
+   ID "26B52FD7935E2E80"
+   coords 18 0.3671 12
+  }
+  GenericEntity {
+   ID "A8F5CFEE1431C3FA"
+   coords 18 0.3511 14.4
+  }
+  GenericEntity {
+   ID "F470401E52527881"
+   coords 18 0.3251 16.8
+  }
+  GenericEntity {
+   ID "B2121EDBD40B9FF1"
+   coords -16.8 -1.1389 -18
+  }
+  GenericEntity {
+   ID "53C18E3C9140EAC7"
+   coords -14.4 -1.0739 -18
+  }
+  GenericEntity {
+   ID "3874E35EF4F28C5E"
+   coords -12 -0.9509 -18
+  }
+  GenericEntity {
+   ID "A010AAFE9D36E9BD"
+   coords -9.6 -0.7639 -18
+  }
+  GenericEntity {
+   ID "587964F58F214B46"
+   coords -7.2 -0.5309 -18
+  }
+  GenericEntity {
+   ID "6CD5DB4836D17D78"
+   coords 7.2 -0.0639 -18
+  }
+  GenericEntity {
+   ID "8841B3D006F58B82"
+   coords 9.6 -0.0349 -18
+  }
+  GenericEntity {
+   ID "32B890E7012D525B"
+   coords 12 0.0191 -18
+  }
+  GenericEntity {
+   ID "C9342BE97A6A0009"
+   coords 14.4 0.0471 -18
+  }
+  GenericEntity {
+   ID "CD9489D6AB17F9C4"
+   coords 16.8 0.0931 -18
+  }
+  GenericEntity {
+   ID "0FA42749B9B95242"
+   coords -18 -1.2439 -16.8
+  }
+  GenericEntity {
+   ID "D5C795DB7BA54B68"
+   coords -18 -1.2949 -14.4
+  }
+  GenericEntity {
+   ID "5E234409C32177EB"
+   coords -18 -1.2329 -12
+  }
+  GenericEntity {
+   ID "CF5402F0922553CD"
+   coords -18 -1.1269 -9.6
+  }
+  GenericEntity {
+   ID "AA1B5013A90C5C4D"
+   coords -18 -1.0209 -7.2
+  }
+  GenericEntity {
+   ID "F90716AC7C33AD48"
+   coords -18 -0.9149 -4.8
+  }
+  GenericEntity {
+   ID "3DFE3F5F7A2C3E9A"
+   coords -18 -0.8089 -2.4
+  }
+  GenericEntity {
+   ID "F5BE43B3F1DEAF0A"
+   coords -18 -0.7029 0
+  }
+  GenericEntity {
+   ID "8C12BD9792796572"
+   coords -18 -0.6239 2.4
+  }
+  GenericEntity {
+   ID "DB45C0F83AEF8376"
+   coords -18 -0.5349 4.8
+  }
+  GenericEntity {
+   ID "507799348CE44CC4"
+   coords -18 -0.4649 7.2
+  }
+  GenericEntity {
+   ID "A7E5A421102FF5D9"
+   coords -18 -0.4339 9.6
+  }
+  GenericEntity {
+   ID "A339FE8605CD2AF1"
+   coords -18 -0.4219 12
+  }
+  GenericEntity {
+   ID "D36738A30FFF80DF"
+   coords -18 -0.3929 14.4
+  }
+  GenericEntity {
+   ID "A75867ADA23F5BE9"
+   coords -18 -0.3119 16.8
   }
  }
 }
-GenericEntity AROR_Location_everon_outpost_gorey : "{3D1925CD1FA54115}Prefabs/Locations/AROR_Location_Outpost.et" {
+GenericEntity AROR_Location_everon_outpost_gorey : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defence_Outpost.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_outpost_gorey"
@@ -75,7 +516,8 @@ GenericEntity AROR_Location_everon_outpost_gorey : "{3D1925CD1FA54115}Prefabs/Lo
    m_bGroundOnInit 0
   }
  }
- coords 4844.906 112.307 8088.995
+ coords 4694.91 125.759 8051.5
+ angles 0 315 0
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -93,11 +535,231 @@ GenericEntity AROR_Location_everon_outpost_gorey : "{3D1925CD1FA54115}Prefabs/Lo
      }
     }
    }
-   coords 0.004 0.904946 12.505
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "A26A58E35980454B"
+   coords -16.8 -0.672 18
+  }
+  GenericEntity {
+   ID "B6F4BC8A9127F481"
+   coords -14.4 -0.567 18
+  }
+  GenericEntity {
+   ID "8E56A3354B5079CC"
+   coords -12 -0.514 18
+  }
+  GenericEntity {
+   ID "FF068F9282B15884"
+   coords -9.6 -0.451 18
+  }
+  GenericEntity {
+   ID "14904C59F826BC31"
+   coords -7.2 -0.408 18
+  }
+  GenericEntity {
+   ID "822B8D9215CE0E02"
+   coords -4.8 -0.368 18
+  }
+  GenericEntity {
+   ID "CBB50C2CD0D4FD09"
+   coords -2.4 -0.341 18
+  }
+  GenericEntity {
+   ID "4C1594EC7E4A1C60"
+   coords 0 -0.311 18
+  }
+  GenericEntity {
+   ID "0FEF4ED2460C58CA"
+   coords 2.4 -0.258 18
+  }
+  GenericEntity {
+   ID "B9F9F2E86D252B4E"
+   coords 4.8 -0.23 18
+  }
+  GenericEntity {
+   ID "CF38FBE4D913F668"
+   coords 7.2 -0.183 18
+  }
+  GenericEntity {
+   ID "0105144196B3AA44"
+   coords 9.6 -0.085 18
+  }
+  GenericEntity {
+   ID "FF40A2D0A933ECFE"
+   coords 12 0.068 18
+  }
+  GenericEntity {
+   ID "FCB56D63BD9D1149"
+   coords 14.4 0.211 18
+  }
+  GenericEntity {
+   ID "64E24B5736D65094"
+   coords 16.8 0.341 18
+  }
+  GenericEntity {
+   ID "D368C9AEDA1F18FD"
+   coords 18 0.961 -16.8
+  }
+  GenericEntity {
+   ID "FAA6E7203CBF9177"
+   coords 18 0.857 -14.4
+  }
+  GenericEntity {
+   ID "0DAFA8A0FD2BD3A2"
+   coords 18 0.751 -12
+  }
+  GenericEntity {
+   ID "D23BFF382C96F7E0"
+   coords 18 0.645 -9.6
+  }
+  GenericEntity {
+   ID "CD82E841075EDDEE"
+   coords 18 0.537 -7.2
+  }
+  GenericEntity {
+   ID "DFDEA8208E018BB7"
+   coords 18 0.461 -4.8
+  }
+  GenericEntity {
+   ID "BF7D8F36F0E0D1EB"
+   coords 18 0.408 -2.4
+  }
+  GenericEntity {
+   ID "34C9C64E7F22F99F"
+   coords 18 0.361 0
+  }
+  GenericEntity {
+   ID "D82A4D576D4801F7"
+   coords 18 0.335 2.4
+  }
+  GenericEntity {
+   ID "7D628730CCE652BF"
+   coords 18 0.361 4.8
+  }
+  GenericEntity {
+   ID "EDC1BF1A899F258B"
+   coords 18 0.451 7.2
+  }
+  GenericEntity {
+   ID "CFE8B0245B6E7BD9"
+   coords 18 0.553 9.6
+  }
+  GenericEntity {
+   ID "26B52FD7935E2E80"
+   coords 18 0.624 12
+  }
+  GenericEntity {
+   ID "A8F5CFEE1431C3FA"
+   coords 18 0.607 14.4
+  }
+  GenericEntity {
+   ID "F470401E52527881"
+   coords 18 0.474 16.8
+  }
+  GenericEntity {
+   ID "B2121EDBD40B9FF1"
+   coords -16.8 -0.543 -18
+  }
+  GenericEntity {
+   ID "53C18E3C9140EAC7"
+   coords -14.4 -0.454 -18
+  }
+  GenericEntity {
+   ID "3874E35EF4F28C5E"
+   coords -12 -0.348 -18
+  }
+  GenericEntity {
+   ID "A010AAFE9D36E9BD"
+   coords -9.6 -0.242 -18
+  }
+  GenericEntity {
+   ID "587964F58F214B46"
+   coords -7.2 -0.101 -18
+  }
+  GenericEntity {
+   ID "6CD5DB4836D17D78"
+   coords 7.2 0.46 -18
+  }
+  GenericEntity {
+   ID "8841B3D006F58B82"
+   coords 9.6 0.489 -18
+  }
+  GenericEntity {
+   ID "32B890E7012D525B"
+   coords 12 0.549 -18
+  }
+  GenericEntity {
+   ID "C9342BE97A6A0009"
+   coords 14.4 0.669 -18
+  }
+  GenericEntity {
+   ID "CD9489D6AB17F9C4"
+   coords 16.8 0.866 -18
+  }
+  GenericEntity {
+   ID "0FA42749B9B95242"
+   coords -18 -0.569 -16.8
+  }
+  GenericEntity {
+   ID "D5C795DB7BA54B68"
+   coords -18 -0.543 -14.4
+  }
+  GenericEntity {
+   ID "5E234409C32177EB"
+   coords -18 -0.516 -12
+  }
+  GenericEntity {
+   ID "CF5402F0922553CD"
+   coords -18 -0.49 -9.6
+  }
+  GenericEntity {
+   ID "AA1B5013A90C5C4D"
+   coords -18 -0.463 -7.2
+  }
+  GenericEntity {
+   ID "F90716AC7C33AD48"
+   coords -18 -0.436 -4.8
+  }
+  GenericEntity {
+   ID "3DFE3F5F7A2C3E9A"
+   coords -18 -0.429 -2.4
+  }
+  GenericEntity {
+   ID "F5BE43B3F1DEAF0A"
+   coords -18 -0.455 0
+  }
+  GenericEntity {
+   ID "8C12BD9792796572"
+   coords -18 -0.482 2.4
+  }
+  GenericEntity {
+   ID "DB45C0F83AEF8376"
+   coords -18 -0.525 4.8
+  }
+  GenericEntity {
+   ID "507799348CE44CC4"
+   coords -18 -0.537 7.2
+  }
+  GenericEntity {
+   ID "A7E5A421102FF5D9"
+   coords -18 -0.571 9.6
+  }
+  GenericEntity {
+   ID "A339FE8605CD2AF1"
+   coords -18 -0.604 12
+  }
+  GenericEntity {
+   ID "D36738A30FFF80DF"
+   coords -18 -0.645 14.4
+  }
+  GenericEntity {
+   ID "A75867ADA23F5BE9"
+   coords -18 -0.699 16.8
   }
  }
 }
-GenericEntity AROR_Location_everon_outpost_pinewood_lake : "{3D1925CD1FA54115}Prefabs/Locations/AROR_Location_Outpost.et" {
+GenericEntity AROR_Location_everon_outpost_pinewood_lake : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defence_Outpost.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_outpost_pinewood_lake"
@@ -108,7 +770,7 @@ GenericEntity AROR_Location_everon_outpost_pinewood_lake : "{3D1925CD1FA54115}Pr
    m_bGroundOnInit 0
   }
  }
- coords 4871.928 52.5011 5675.194
+ coords 4854.25 53.1088 5670.01
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -126,11 +788,231 @@ GenericEntity AROR_Location_everon_outpost_pinewood_lake : "{3D1925CD1FA54115}Pr
      }
     }
    }
-   coords 0.002 0.905846 12.496
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "A26A58E35980454B"
+   coords -16.8 0.9392 18
+  }
+  GenericEntity {
+   ID "B6F4BC8A9127F481"
+   coords -14.4 0.7802 18
+  }
+  GenericEntity {
+   ID "8E56A3354B5079CC"
+   coords -12 0.5952 18
+  }
+  GenericEntity {
+   ID "FF068F9282B15884"
+   coords -9.6 0.4182 18
+  }
+  GenericEntity {
+   ID "14904C59F826BC31"
+   coords -7.2 0.2682 18
+  }
+  GenericEntity {
+   ID "822B8D9215CE0E02"
+   coords -4.8 0.1182 18
+  }
+  GenericEntity {
+   ID "CBB50C2CD0D4FD09"
+   coords -2.4 -0.0028 18
+  }
+  GenericEntity {
+   ID "4C1594EC7E4A1C60"
+   coords 0 -0.1158 18
+  }
+  GenericEntity {
+   ID "0FEF4ED2460C58CA"
+   coords 2.4 -0.2178 18
+  }
+  GenericEntity {
+   ID "B9F9F2E86D252B4E"
+   coords 4.8 -0.2928 18
+  }
+  GenericEntity {
+   ID "CF38FBE4D913F668"
+   coords 7.2 -0.3448 18
+  }
+  GenericEntity {
+   ID "0105144196B3AA44"
+   coords 9.6 -0.3828 18
+  }
+  GenericEntity {
+   ID "FF40A2D0A933ECFE"
+   coords 12 -0.4158 18
+  }
+  GenericEntity {
+   ID "FCB56D63BD9D1149"
+   coords 14.4 -0.4268 18
+  }
+  GenericEntity {
+   ID "64E24B5736D65094"
+   coords 16.8 -0.4638 18
+  }
+  GenericEntity {
+   ID "D368C9AEDA1F18FD"
+   coords 18 -0.3178 -16.8
+  }
+  GenericEntity {
+   ID "FAA6E7203CBF9177"
+   coords 18 -0.3558 -14.4
+  }
+  GenericEntity {
+   ID "0DAFA8A0FD2BD3A2"
+   coords 18 -0.3888 -12
+  }
+  GenericEntity {
+   ID "D23BFF382C96F7E0"
+   coords 18 -0.3958 -9.6
+  }
+  GenericEntity {
+   ID "CD82E841075EDDEE"
+   coords 18 -0.4158 -7.2
+  }
+  GenericEntity {
+   ID "DFDEA8208E018BB7"
+   coords 18 -0.4388 -4.8
+  }
+  GenericEntity {
+   ID "BF7D8F36F0E0D1EB"
+   coords 18 -0.4478 -2.4
+  }
+  GenericEntity {
+   ID "34C9C64E7F22F99F"
+   coords 18 -0.4518 0
+  }
+  GenericEntity {
+   ID "D82A4D576D4801F7"
+   coords 18 -0.4578 2.4
+  }
+  GenericEntity {
+   ID "7D628730CCE652BF"
+   coords 18 -0.4788 4.8
+  }
+  GenericEntity {
+   ID "EDC1BF1A899F258B"
+   coords 18 -0.4788 7.2
+  }
+  GenericEntity {
+   ID "CFE8B0245B6E7BD9"
+   coords 18 -0.4788 9.6
+  }
+  GenericEntity {
+   ID "26B52FD7935E2E80"
+   coords 18 -0.4788 12
+  }
+  GenericEntity {
+   ID "A8F5CFEE1431C3FA"
+   coords 18 -0.4788 14.4
+  }
+  GenericEntity {
+   ID "F470401E52527881"
+   coords 18 -0.4788 16.8
+  }
+  GenericEntity {
+   ID "B2121EDBD40B9FF1"
+   coords -16.8 0.7402 -18
+  }
+  GenericEntity {
+   ID "53C18E3C9140EAC7"
+   coords -14.4 0.7692 -18
+  }
+  GenericEntity {
+   ID "3874E35EF4F28C5E"
+   coords -12 1.0722 -18
+  }
+  GenericEntity {
+   ID "A010AAFE9D36E9BD"
+   coords -9.6 1.1672 -18
+  }
+  GenericEntity {
+   ID "587964F58F214B46"
+   coords -7.2 1.0012 -18
+  }
+  GenericEntity {
+   ID "6CD5DB4836D17D78"
+   coords 7.2 0.1182 -18
+  }
+  GenericEntity {
+   ID "8841B3D006F58B82"
+   coords 9.6 -0.0028 -18
+  }
+  GenericEntity {
+   ID "32B890E7012D525B"
+   coords 12 -0.1118 -18
+  }
+  GenericEntity {
+   ID "C9342BE97A6A0009"
+   coords 14.4 -0.1968 -18
+  }
+  GenericEntity {
+   ID "CD9489D6AB17F9C4"
+   coords 16.8 -0.2768 -18
+  }
+  GenericEntity {
+   ID "0FA42749B9B95242"
+   coords -18 0.7402 -16.8
+  }
+  GenericEntity {
+   ID "D5C795DB7BA54B68"
+   coords -18 0.7402 -14.4
+  }
+  GenericEntity {
+   ID "5E234409C32177EB"
+   coords -18 0.7402 -12
+  }
+  GenericEntity {
+   ID "CF5402F0922553CD"
+   coords -18 0.7372 -9.6
+  }
+  GenericEntity {
+   ID "AA1B5013A90C5C4D"
+   coords -18 0.7242 -7.2
+  }
+  GenericEntity {
+   ID "F90716AC7C33AD48"
+   coords -18 0.7552 -4.8
+  }
+  GenericEntity {
+   ID "3DFE3F5F7A2C3E9A"
+   coords -18 0.8622 -2.4
+  }
+  GenericEntity {
+   ID "F5BE43B3F1DEAF0A"
+   coords -18 1.0682 0
+  }
+  GenericEntity {
+   ID "8C12BD9792796572"
+   coords -18 1.1912 2.4
+  }
+  GenericEntity {
+   ID "DB45C0F83AEF8376"
+   coords -18 1.3442 4.8
+  }
+  GenericEntity {
+   ID "507799348CE44CC4"
+   coords -18 1.4732 7.2
+  }
+  GenericEntity {
+   ID "A7E5A421102FF5D9"
+   coords -18 1.3602 9.6
+  }
+  GenericEntity {
+   ID "A339FE8605CD2AF1"
+   coords -18 1.1882 12
+  }
+  GenericEntity {
+   ID "D36738A30FFF80DF"
+   coords -18 1.0652 14.4
+  }
+  GenericEntity {
+   ID "A75867ADA23F5BE9"
+   coords -18 1.0372 16.8
   }
  }
 }
-GenericEntity AROR_Location_everon_outpost_levie_hillside : "{3D1925CD1FA54115}Prefabs/Locations/AROR_Location_Outpost.et" {
+GenericEntity AROR_Location_everon_outpost_levie_hillside : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defence_Outpost.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_outpost_levie_hillside"
@@ -141,7 +1023,8 @@ GenericEntity AROR_Location_everon_outpost_levie_hillside : "{3D1925CD1FA54115}P
    m_bGroundOnInit 0
   }
  }
- coords 6918 54.8828 4450
+ coords 7168 116.508 4912.5
+ angles 0 315 0
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -159,11 +1042,231 @@ GenericEntity AROR_Location_everon_outpost_levie_hillside : "{3D1925CD1FA54115}P
      }
     }
    }
-   coords 0 0.905946 12.5
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "A26A58E35980454B"
+   coords -16.8 0.591 18
+  }
+  GenericEntity {
+   ID "B6F4BC8A9127F481"
+   coords -14.4 0.591 18
+  }
+  GenericEntity {
+   ID "8E56A3354B5079CC"
+   coords -12 0.366 18
+  }
+  GenericEntity {
+   ID "FF068F9282B15884"
+   coords -9.6 0.233 18
+  }
+  GenericEntity {
+   ID "14904C59F826BC31"
+   coords -7.2 0.185 18
+  }
+  GenericEntity {
+   ID "822B8D9215CE0E02"
+   coords -4.8 0.185 18
+  }
+  GenericEntity {
+   ID "CBB50C2CD0D4FD09"
+   coords -2.4 0.209 18
+  }
+  GenericEntity {
+   ID "4C1594EC7E4A1C60"
+   coords 0 0.235 18
+  }
+  GenericEntity {
+   ID "0FEF4ED2460C58CA"
+   coords 2.4 0.262 18
+  }
+  GenericEntity {
+   ID "B9F9F2E86D252B4E"
+   coords 4.8 0.298 18
+  }
+  GenericEntity {
+   ID "CF38FBE4D913F668"
+   coords 7.2 0.341 18
+  }
+  GenericEntity {
+   ID "0105144196B3AA44"
+   coords 9.6 0.372 18
+  }
+  GenericEntity {
+   ID "FF40A2D0A933ECFE"
+   coords 12 0.399 18
+  }
+  GenericEntity {
+   ID "FCB56D63BD9D1149"
+   coords 14.4 0.425 18
+  }
+  GenericEntity {
+   ID "64E24B5736D65094"
+   coords 16.8 0.398 18
+  }
+  GenericEntity {
+   ID "D368C9AEDA1F18FD"
+   coords 18 0.716 -16.8
+  }
+  GenericEntity {
+   ID "FAA6E7203CBF9177"
+   coords 18 0.716 -14.4
+  }
+  GenericEntity {
+   ID "0DAFA8A0FD2BD3A2"
+   coords 18 0.703 -12
+  }
+  GenericEntity {
+   ID "D23BFF382C96F7E0"
+   coords 18 0.684 -9.6
+  }
+  GenericEntity {
+   ID "CD82E841075EDDEE"
+   coords 18 0.679 -7.2
+  }
+  GenericEntity {
+   ID "DFDEA8208E018BB7"
+   coords 18 0.626 -4.8
+  }
+  GenericEntity {
+   ID "BF7D8F36F0E0D1EB"
+   coords 18 0.278 -2.4
+  }
+  GenericEntity {
+   ID "34C9C64E7F22F99F"
+   coords 18 0.165 0
+  }
+  GenericEntity {
+   ID "D82A4D576D4801F7"
+   coords 18 0.123 2.4
+  }
+  GenericEntity {
+   ID "7D628730CCE652BF"
+   coords 18 0.091 4.8
+  }
+  GenericEntity {
+   ID "EDC1BF1A899F258B"
+   coords 18 0.102 7.2
+  }
+  GenericEntity {
+   ID "CFE8B0245B6E7BD9"
+   coords 18 0.155 9.6
+  }
+  GenericEntity {
+   ID "26B52FD7935E2E80"
+   coords 18 0.208 12
+  }
+  GenericEntity {
+   ID "A8F5CFEE1431C3FA"
+   coords 18 0.261 14.4
+  }
+  GenericEntity {
+   ID "F470401E52527881"
+   coords 18 0.332 16.8
+  }
+  GenericEntity {
+   ID "B2121EDBD40B9FF1"
+   coords -16.8 0.69 -18
+  }
+  GenericEntity {
+   ID "53C18E3C9140EAC7"
+   coords -14.4 0.796 -18
+  }
+  GenericEntity {
+   ID "3874E35EF4F28C5E"
+   coords -12 0.878 -18
+  }
+  GenericEntity {
+   ID "A010AAFE9D36E9BD"
+   coords -9.6 0.96 -18
+  }
+  GenericEntity {
+   ID "587964F58F214B46"
+   coords -7.2 1.005 -18
+  }
+  GenericEntity {
+   ID "6CD5DB4836D17D78"
+   coords 7.2 0.822 -18
+  }
+  GenericEntity {
+   ID "8841B3D006F58B82"
+   coords 9.6 0.708 -18
+  }
+  GenericEntity {
+   ID "32B890E7012D525B"
+   coords 12 0.716 -18
+  }
+  GenericEntity {
+   ID "C9342BE97A6A0009"
+   coords 14.4 0.716 -18
+  }
+  GenericEntity {
+   ID "CD9489D6AB17F9C4"
+   coords 16.8 0.716 -18
+  }
+  GenericEntity {
+   ID "0FA42749B9B95242"
+   coords -18 0.529 -16.8
+  }
+  GenericEntity {
+   ID "D5C795DB7BA54B68"
+   coords -18 0.328 -14.4
+  }
+  GenericEntity {
+   ID "5E234409C32177EB"
+   coords -18 0.236 -12
+  }
+  GenericEntity {
+   ID "CF5402F0922553CD"
+   coords -18 0.156 -9.6
+  }
+  GenericEntity {
+   ID "AA1B5013A90C5C4D"
+   coords -18 0.123 -7.2
+  }
+  GenericEntity {
+   ID "F90716AC7C33AD48"
+   coords -18 0.111 -4.8
+  }
+  GenericEntity {
+   ID "3DFE3F5F7A2C3E9A"
+   coords -18 0.113 -2.4
+  }
+  GenericEntity {
+   ID "F5BE43B3F1DEAF0A"
+   coords -18 0.237 0
+  }
+  GenericEntity {
+   ID "8C12BD9792796572"
+   coords -18 0.419 2.4
+  }
+  GenericEntity {
+   ID "DB45C0F83AEF8376"
+   coords -18 0.598 4.8
+  }
+  GenericEntity {
+   ID "507799348CE44CC4"
+   coords -18 0.702 7.2
+  }
+  GenericEntity {
+   ID "A7E5A421102FF5D9"
+   coords -18 0.691 9.6
+  }
+  GenericEntity {
+   ID "A339FE8605CD2AF1"
+   coords -18 0.649 12
+  }
+  GenericEntity {
+   ID "D36738A30FFF80DF"
+   coords -18 0.622 14.4
+  }
+  GenericEntity {
+   ID "A75867ADA23F5BE9"
+   coords -18 0.612 16.8
   }
  }
 }
-GenericEntity AROR_Location_everon_outpost_durras_hill : "{3D1925CD1FA54115}Prefabs/Locations/AROR_Location_Outpost.et" {
+GenericEntity AROR_Location_everon_outpost_durras_hill : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defence_Outpost.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_outpost_durras_hill"
@@ -174,7 +1277,8 @@ GenericEntity AROR_Location_everon_outpost_durras_hill : "{3D1925CD1FA54115}Pref
    m_bGroundOnInit 0
   }
  }
- coords 9044.778 125.263 2741.715
+ coords 8732.28 112.781 3016.72
+ angles 0 45 0
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -192,11 +1296,231 @@ GenericEntity AROR_Location_everon_outpost_durras_hill : "{3D1925CD1FA54115}Pref
      }
     }
    }
-   coords 12.502 0.905946 0.005
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "A26A58E35980454B"
+   coords -16.8 0.776 18
+  }
+  GenericEntity {
+   ID "B6F4BC8A9127F481"
+   coords -14.4 0.769 18
+  }
+  GenericEntity {
+   ID "8E56A3354B5079CC"
+   coords -12 0.769 18
+  }
+  GenericEntity {
+   ID "FF068F9282B15884"
+   coords -9.6 0.769 18
+  }
+  GenericEntity {
+   ID "14904C59F826BC31"
+   coords -7.2 0.746 18
+  }
+  GenericEntity {
+   ID "822B8D9215CE0E02"
+   coords -4.8 0.745 18
+  }
+  GenericEntity {
+   ID "CBB50C2CD0D4FD09"
+   coords -2.4 0.725 18
+  }
+  GenericEntity {
+   ID "4C1594EC7E4A1C60"
+   coords 0 0.714 18
+  }
+  GenericEntity {
+   ID "0FEF4ED2460C58CA"
+   coords 2.4 0.703 18
+  }
+  GenericEntity {
+   ID "B9F9F2E86D252B4E"
+   coords 4.8 0.67 18
+  }
+  GenericEntity {
+   ID "CF38FBE4D913F668"
+   coords 7.2 0.619 18
+  }
+  GenericEntity {
+   ID "0105144196B3AA44"
+   coords 9.6 0.592 18
+  }
+  GenericEntity {
+   ID "FF40A2D0A933ECFE"
+   coords 12 0.542 18
+  }
+  GenericEntity {
+   ID "FCB56D63BD9D1149"
+   coords 14.4 0.478 18
+  }
+  GenericEntity {
+   ID "64E24B5736D65094"
+   coords 16.8 0.405 18
+  }
+  GenericEntity {
+   ID "D368C9AEDA1F18FD"
+   coords 18 -0.72 -16.8
+  }
+  GenericEntity {
+   ID "FAA6E7203CBF9177"
+   coords 18 -0.598 -14.4
+  }
+  GenericEntity {
+   ID "0DAFA8A0FD2BD3A2"
+   coords 18 -0.487 -12
+  }
+  GenericEntity {
+   ID "D23BFF382C96F7E0"
+   coords 18 -0.407 -9.6
+  }
+  GenericEntity {
+   ID "CD82E841075EDDEE"
+   coords 18 -0.329 -7.2
+  }
+  GenericEntity {
+   ID "DFDEA8208E018BB7"
+   coords 18 -0.258 -4.8
+  }
+  GenericEntity {
+   ID "BF7D8F36F0E0D1EB"
+   coords 18 -0.2 -2.4
+  }
+  GenericEntity {
+   ID "34C9C64E7F22F99F"
+   coords 18 -0.12 0
+  }
+  GenericEntity {
+   ID "D82A4D576D4801F7"
+   coords 18 -0.067 2.4
+  }
+  GenericEntity {
+   ID "7D628730CCE652BF"
+   coords 18 -0.014 4.8
+  }
+  GenericEntity {
+   ID "EDC1BF1A899F258B"
+   coords 18 0.056 7.2
+  }
+  GenericEntity {
+   ID "CFE8B0245B6E7BD9"
+   coords 18 0.123 9.6
+  }
+  GenericEntity {
+   ID "26B52FD7935E2E80"
+   coords 18 0.176 12
+  }
+  GenericEntity {
+   ID "A8F5CFEE1431C3FA"
+   coords 18 0.261 14.4
+  }
+  GenericEntity {
+   ID "F470401E52527881"
+   coords 18 0.343 16.8
+  }
+  GenericEntity {
+   ID "B2121EDBD40B9FF1"
+   coords -16.8 -0.091 -18
+  }
+  GenericEntity {
+   ID "53C18E3C9140EAC7"
+   coords -14.4 -0.217 -18
+  }
+  GenericEntity {
+   ID "3874E35EF4F28C5E"
+   coords -12 -0.232 -18
+  }
+  GenericEntity {
+   ID "A010AAFE9D36E9BD"
+   coords -9.6 -0.218 -18
+  }
+  GenericEntity {
+   ID "587964F58F214B46"
+   coords -7.2 -0.247 -18
+  }
+  GenericEntity {
+   ID "6CD5DB4836D17D78"
+   coords 7.2 -0.523 -18
+  }
+  GenericEntity {
+   ID "8841B3D006F58B82"
+   coords 9.6 -0.527 -18
+  }
+  GenericEntity {
+   ID "32B890E7012D525B"
+   coords 12 -0.588 -18
+  }
+  GenericEntity {
+   ID "C9342BE97A6A0009"
+   coords 14.4 -0.667 -18
+  }
+  GenericEntity {
+   ID "CD9489D6AB17F9C4"
+   coords 16.8 -0.747 -18
+  }
+  GenericEntity {
+   ID "0FA42749B9B95242"
+   coords -18 0.02 -16.8
+  }
+  GenericEntity {
+   ID "D5C795DB7BA54B68"
+   coords -18 0.096 -14.4
+  }
+  GenericEntity {
+   ID "5E234409C32177EB"
+   coords -18 0.127 -12
+  }
+  GenericEntity {
+   ID "CF5402F0922553CD"
+   coords -18 -0.081 -9.6
+  }
+  GenericEntity {
+   ID "AA1B5013A90C5C4D"
+   coords -18 -0.011 -7.2
+  }
+  GenericEntity {
+   ID "F90716AC7C33AD48"
+   coords -18 0.004 -4.8
+  }
+  GenericEntity {
+   ID "3DFE3F5F7A2C3E9A"
+   coords -18 0.056 -2.4
+  }
+  GenericEntity {
+   ID "F5BE43B3F1DEAF0A"
+   coords -18 0.104 0
+  }
+  GenericEntity {
+   ID "8C12BD9792796572"
+   coords -18 0.166 2.4
+  }
+  GenericEntity {
+   ID "DB45C0F83AEF8376"
+   coords -18 0.247 4.8
+  }
+  GenericEntity {
+   ID "507799348CE44CC4"
+   coords -18 0.322 7.2
+  }
+  GenericEntity {
+   ID "A7E5A421102FF5D9"
+   coords -18 0.424 9.6
+  }
+  GenericEntity {
+   ID "A339FE8605CD2AF1"
+   coords -18 0.503 12
+  }
+  GenericEntity {
+   ID "D36738A30FFF80DF"
+   coords -18 0.614 14.4
+  }
+  GenericEntity {
+   ID "A75867ADA23F5BE9"
+   coords -18 0.737 16.8
   }
  }
 }
-GenericEntity AROR_Location_everon_outpost_sawmill : "{3D1925CD1FA54115}Prefabs/Locations/AROR_Location_Outpost.et" {
+GenericEntity AROR_Location_everon_outpost_sawmill : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defence_Outpost.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_outpost_sawmill"
@@ -207,7 +1531,7 @@ GenericEntity AROR_Location_everon_outpost_sawmill : "{3D1925CD1FA54115}Prefabs/
    m_bGroundOnInit 0
   }
  }
- coords 3114.358 119.148 5221.5
+ coords 3151.86 120.073 5296.5
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -225,11 +1549,231 @@ GenericEntity AROR_Location_everon_outpost_sawmill : "{3D1925CD1FA54115}Prefabs/
      }
     }
    }
-   coords 12.502 0.905946 0
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "A26A58E35980454B"
+   coords -16.8 0.938 18
+  }
+  GenericEntity {
+   ID "B6F4BC8A9127F481"
+   coords -14.4 0.87 18
+  }
+  GenericEntity {
+   ID "8E56A3354B5079CC"
+   coords -12 0.796 18
+  }
+  GenericEntity {
+   ID "FF068F9282B15884"
+   coords -9.6 0.709 18
+  }
+  GenericEntity {
+   ID "14904C59F826BC31"
+   coords -7.2 0.604 18
+  }
+  GenericEntity {
+   ID "822B8D9215CE0E02"
+   coords -4.8 0.508 18
+  }
+  GenericEntity {
+   ID "CBB50C2CD0D4FD09"
+   coords -2.4 0.402 18
+  }
+  GenericEntity {
+   ID "4C1594EC7E4A1C60"
+   coords 0 0.29 18
+  }
+  GenericEntity {
+   ID "0FEF4ED2460C58CA"
+   coords 2.4 0.177 18
+  }
+  GenericEntity {
+   ID "B9F9F2E86D252B4E"
+   coords 4.8 0.075 18
+  }
+  GenericEntity {
+   ID "CF38FBE4D913F668"
+   coords 7.2 -0.008 18
+  }
+  GenericEntity {
+   ID "0105144196B3AA44"
+   coords 9.6 -0.105 18
+  }
+  GenericEntity {
+   ID "FF40A2D0A933ECFE"
+   coords 12 -0.187 18
+  }
+  GenericEntity {
+   ID "FCB56D63BD9D1149"
+   coords 14.4 -0.264 18
+  }
+  GenericEntity {
+   ID "64E24B5736D65094"
+   coords 16.8 -0.357 18
+  }
+  GenericEntity {
+   ID "D368C9AEDA1F18FD"
+   coords 18 -0.412 -16.8
+  }
+  GenericEntity {
+   ID "FAA6E7203CBF9177"
+   coords 18 -0.405 -14.4
+  }
+  GenericEntity {
+   ID "0DAFA8A0FD2BD3A2"
+   coords 18 -0.405 -12
+  }
+  GenericEntity {
+   ID "D23BFF382C96F7E0"
+   coords 18 -0.405 -9.6
+  }
+  GenericEntity {
+   ID "CD82E841075EDDEE"
+   coords 18 -0.387 -7.2
+  }
+  GenericEntity {
+   ID "DFDEA8208E018BB7"
+   coords 18 -0.401 -4.8
+  }
+  GenericEntity {
+   ID "BF7D8F36F0E0D1EB"
+   coords 18 -0.374 -2.4
+  }
+  GenericEntity {
+   ID "34C9C64E7F22F99F"
+   coords 18 -0.345 0
+  }
+  GenericEntity {
+   ID "D82A4D576D4801F7"
+   coords 18 -0.343 2.4
+  }
+  GenericEntity {
+   ID "7D628730CCE652BF"
+   coords 18 -0.345 4.8
+  }
+  GenericEntity {
+   ID "EDC1BF1A899F258B"
+   coords 18 -0.345 7.2
+  }
+  GenericEntity {
+   ID "CFE8B0245B6E7BD9"
+   coords 18 -0.376 9.6
+  }
+  GenericEntity {
+   ID "26B52FD7935E2E80"
+   coords 18 -0.408 12
+  }
+  GenericEntity {
+   ID "A8F5CFEE1431C3FA"
+   coords 18 -0.405 14.4
+  }
+  GenericEntity {
+   ID "F470401E52527881"
+   coords 18 -0.405 16.8
+  }
+  GenericEntity {
+   ID "B2121EDBD40B9FF1"
+   coords -16.8 0.439 -18
+  }
+  GenericEntity {
+   ID "53C18E3C9140EAC7"
+   coords -14.4 0.401 -18
+  }
+  GenericEntity {
+   ID "3874E35EF4F28C5E"
+   coords -12 0.371 -18
+  }
+  GenericEntity {
+   ID "A010AAFE9D36E9BD"
+   coords -9.6 0.334 -18
+  }
+  GenericEntity {
+   ID "587964F58F214B46"
+   coords -7.2 0.296 -18
+  }
+  GenericEntity {
+   ID "6CD5DB4836D17D78"
+   coords 7.2 -0.031 -18
+  }
+  GenericEntity {
+   ID "8841B3D006F58B82"
+   coords 9.6 -0.106 -18
+  }
+  GenericEntity {
+   ID "32B890E7012D525B"
+   coords 12 -0.212 -18
+  }
+  GenericEntity {
+   ID "C9342BE97A6A0009"
+   coords 14.4 -0.291 -18
+  }
+  GenericEntity {
+   ID "CD9489D6AB17F9C4"
+   coords 16.8 -0.394 -18
+  }
+  GenericEntity {
+   ID "0FA42749B9B95242"
+   coords -18 0.439 -16.8
+  }
+  GenericEntity {
+   ID "D5C795DB7BA54B68"
+   coords -18 0.432 -14.4
+  }
+  GenericEntity {
+   ID "5E234409C32177EB"
+   coords -18 0.434 -12
+  }
+  GenericEntity {
+   ID "CF5402F0922553CD"
+   coords -18 0.446 -9.6
+  }
+  GenericEntity {
+   ID "AA1B5013A90C5C4D"
+   coords -18 0.465 -7.2
+  }
+  GenericEntity {
+   ID "F90716AC7C33AD48"
+   coords -18 0.492 -4.8
+  }
+  GenericEntity {
+   ID "3DFE3F5F7A2C3E9A"
+   coords -18 0.529 -2.4
+  }
+  GenericEntity {
+   ID "F5BE43B3F1DEAF0A"
+   coords -18 0.567 0
+  }
+  GenericEntity {
+   ID "8C12BD9792796572"
+   coords -18 0.604 2.4
+  }
+  GenericEntity {
+   ID "DB45C0F83AEF8376"
+   coords -18 0.662 4.8
+  }
+  GenericEntity {
+   ID "507799348CE44CC4"
+   coords -18 0.711 7.2
+  }
+  GenericEntity {
+   ID "A7E5A421102FF5D9"
+   coords -18 0.779 9.6
+  }
+  GenericEntity {
+   ID "A339FE8605CD2AF1"
+   coords -18 0.825 12
+  }
+  GenericEntity {
+   ID "D36738A30FFF80DF"
+   coords -18 0.886 14.4
+  }
+  GenericEntity {
+   ID "A75867ADA23F5BE9"
+   coords -18 0.943 16.8
   }
  }
 }
-GenericEntity AROR_Location_everon_outpost_regina_south : "{3D1925CD1FA54115}Prefabs/Locations/AROR_Location_Outpost.et" {
+GenericEntity AROR_Location_everon_outpost_regina_south : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defence_Outpost.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_outpost_regina_south"
@@ -240,7 +1784,7 @@ GenericEntity AROR_Location_everon_outpost_regina_south : "{3D1925CD1FA54115}Pre
    m_bGroundOnInit 0
   }
  }
- coords 7089.407 156.573 2072.731
+ coords 7289.41 138.021 2335.23
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -258,11 +1802,231 @@ GenericEntity AROR_Location_everon_outpost_regina_south : "{3D1925CD1FA54115}Pre
      }
     }
    }
-   coords 0.003 0.905946 12.499
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "A26A58E35980454B"
+   coords -16.8 0.145 18
+  }
+  GenericEntity {
+   ID "B6F4BC8A9127F481"
+   coords -14.4 0.093 18
+  }
+  GenericEntity {
+   ID "8E56A3354B5079CC"
+   coords -12 0.045 18
+  }
+  GenericEntity {
+   ID "FF068F9282B15884"
+   coords -9.6 -0.03 18
+  }
+  GenericEntity {
+   ID "14904C59F826BC31"
+   coords -7.2 -0.105 18
+  }
+  GenericEntity {
+   ID "822B8D9215CE0E02"
+   coords -4.8 -0.18 18
+  }
+  GenericEntity {
+   ID "CBB50C2CD0D4FD09"
+   coords -2.4 -0.255 18
+  }
+  GenericEntity {
+   ID "4C1594EC7E4A1C60"
+   coords 0 -0.33 18
+  }
+  GenericEntity {
+   ID "0FEF4ED2460C58CA"
+   coords 2.4 -0.433 18
+  }
+  GenericEntity {
+   ID "B9F9F2E86D252B4E"
+   coords 4.8 -0.533 18
+  }
+  GenericEntity {
+   ID "CF38FBE4D913F668"
+   coords 7.2 -0.646 18
+  }
+  GenericEntity {
+   ID "0105144196B3AA44"
+   coords 9.6 -0.758 18
+  }
+  GenericEntity {
+   ID "FF40A2D0A933ECFE"
+   coords 12 -0.871 18
+  }
+  GenericEntity {
+   ID "FCB56D63BD9D1149"
+   coords 14.4 -0.983 18
+  }
+  GenericEntity {
+   ID "64E24B5736D65094"
+   coords 16.8 -1.096 18
+  }
+  GenericEntity {
+   ID "D368C9AEDA1F18FD"
+   coords 18 0.326 -16.8
+  }
+  GenericEntity {
+   ID "FAA6E7203CBF9177"
+   coords 18 0.204 -14.4
+  }
+  GenericEntity {
+   ID "0DAFA8A0FD2BD3A2"
+   coords 18 0.082 -12
+  }
+  GenericEntity {
+   ID "D23BFF382C96F7E0"
+   coords 18 -0.043 -9.6
+  }
+  GenericEntity {
+   ID "CD82E841075EDDEE"
+   coords 18 -0.155 -7.2
+  }
+  GenericEntity {
+   ID "DFDEA8208E018BB7"
+   coords 18 -0.259 -4.8
+  }
+  GenericEntity {
+   ID "BF7D8F36F0E0D1EB"
+   coords 18 -0.377 -2.4
+  }
+  GenericEntity {
+   ID "34C9C64E7F22F99F"
+   coords 18 -0.452 0
+  }
+  GenericEntity {
+   ID "D82A4D576D4801F7"
+   coords 18 -0.574 2.4
+  }
+  GenericEntity {
+   ID "7D628730CCE652BF"
+   coords 18 -0.646 4.8
+  }
+  GenericEntity {
+   ID "EDC1BF1A899F258B"
+   coords 18 -0.752 7.2
+  }
+  GenericEntity {
+   ID "CFE8B0245B6E7BD9"
+   coords 18 -0.844 9.6
+  }
+  GenericEntity {
+   ID "26B52FD7935E2E80"
+   coords 18 -0.945 12
+  }
+  GenericEntity {
+   ID "A8F5CFEE1431C3FA"
+   coords 18 -1.034 14.4
+  }
+  GenericEntity {
+   ID "F470401E52527881"
+   coords 18 -1.115 16.8
+  }
+  GenericEntity {
+   ID "B2121EDBD40B9FF1"
+   coords -16.8 -0.144 -18
+  }
+  GenericEntity {
+   ID "53C18E3C9140EAC7"
+   coords -14.4 -0.031 -18
+  }
+  GenericEntity {
+   ID "3874E35EF4F28C5E"
+   coords -12 0.069 -18
+  }
+  GenericEntity {
+   ID "A010AAFE9D36E9BD"
+   coords -9.6 0.21 -18
+  }
+  GenericEntity {
+   ID "587964F58F214B46"
+   coords -7.2 0.303 -18
+  }
+  GenericEntity {
+   ID "6CD5DB4836D17D78"
+   coords 7.2 0.508 -18
+  }
+  GenericEntity {
+   ID "8841B3D006F58B82"
+   coords 9.6 0.508 -18
+  }
+  GenericEntity {
+   ID "32B890E7012D525B"
+   coords 12 0.498 -18
+  }
+  GenericEntity {
+   ID "C9342BE97A6A0009"
+   coords 14.4 0.46 -18
+  }
+  GenericEntity {
+   ID "CD9489D6AB17F9C4"
+   coords 16.8 0.423 -18
+  }
+  GenericEntity {
+   ID "0FA42749B9B95242"
+   coords -18 -0.193 -16.8
+  }
+  GenericEntity {
+   ID "D5C795DB7BA54B68"
+   coords -18 -0.156 -14.4
+  }
+  GenericEntity {
+   ID "5E234409C32177EB"
+   coords -18 -0.118 -12
+  }
+  GenericEntity {
+   ID "CF5402F0922553CD"
+   coords -18 -0.065 -9.6
+  }
+  GenericEntity {
+   ID "AA1B5013A90C5C4D"
+   coords -18 -0.021 -7.2
+  }
+  GenericEntity {
+   ID "F90716AC7C33AD48"
+   coords -18 0.032 -4.8
+  }
+  GenericEntity {
+   ID "3DFE3F5F7A2C3E9A"
+   coords -18 0.085 -2.4
+  }
+  GenericEntity {
+   ID "F5BE43B3F1DEAF0A"
+   coords -18 0.16 0
+  }
+  GenericEntity {
+   ID "8C12BD9792796572"
+   coords -18 0.21 2.4
+  }
+  GenericEntity {
+   ID "DB45C0F83AEF8376"
+   coords -18 0.256 4.8
+  }
+  GenericEntity {
+   ID "507799348CE44CC4"
+   coords -18 0.272 7.2
+  }
+  GenericEntity {
+   ID "A7E5A421102FF5D9"
+   coords -18 0.292 9.6
+  }
+  GenericEntity {
+   ID "A339FE8605CD2AF1"
+   coords -18 0.274 12
+  }
+  GenericEntity {
+   ID "D36738A30FFF80DF"
+   coords -18 0.249 14.4
+  }
+  GenericEntity {
+   ID "A75867ADA23F5BE9"
+   coords -18 0.211 16.8
   }
  }
 }
-GenericEntity AROR_Location_everon_outpost_chotain_industrial : "{3D1925CD1FA54115}Prefabs/Locations/AROR_Location_Outpost.et" {
+GenericEntity AROR_Location_everon_outpost_chotain_industrial : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defence_Outpost.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_outpost_chotain_industrial"
@@ -273,7 +2037,8 @@ GenericEntity AROR_Location_everon_outpost_chotain_industrial : "{3D1925CD1FA541
    m_bGroundOnInit 0
   }
  }
- coords 6455.525 162.381 6487.396
+ coords 6530.52 159.673 6424.9
+ angles 0 45 0
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -291,11 +2056,231 @@ GenericEntity AROR_Location_everon_outpost_chotain_industrial : "{3D1925CD1FA541
      }
     }
    }
-   coords -0.005 0.905946 12.504
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "A26A58E35980454B"
+   coords -16.8 0.855 18
+  }
+  GenericEntity {
+   ID "B6F4BC8A9127F481"
+   coords -14.4 0.543 18
+  }
+  GenericEntity {
+   ID "8E56A3354B5079CC"
+   coords -12 0.264 18
+  }
+  GenericEntity {
+   ID "FF068F9282B15884"
+   coords -9.6 0.072 18
+  }
+  GenericEntity {
+   ID "14904C59F826BC31"
+   coords -7.2 -0.091 18
+  }
+  GenericEntity {
+   ID "822B8D9215CE0E02"
+   coords -4.8 -0.208 18
+  }
+  GenericEntity {
+   ID "CBB50C2CD0D4FD09"
+   coords -2.4 -0.29 18
+  }
+  GenericEntity {
+   ID "4C1594EC7E4A1C60"
+   coords 0 -0.338 18
+  }
+  GenericEntity {
+   ID "0FEF4ED2460C58CA"
+   coords 2.4 -0.322 18
+  }
+  GenericEntity {
+   ID "B9F9F2E86D252B4E"
+   coords 4.8 -0.259 18
+  }
+  GenericEntity {
+   ID "CF38FBE4D913F668"
+   coords 7.2 -0.18 18
+  }
+  GenericEntity {
+   ID "0105144196B3AA44"
+   coords 9.6 -0.082 18
+  }
+  GenericEntity {
+   ID "FF40A2D0A933ECFE"
+   coords 12 0.024 18
+  }
+  GenericEntity {
+   ID "FCB56D63BD9D1149"
+   coords 14.4 0.108 18
+  }
+  GenericEntity {
+   ID "64E24B5736D65094"
+   coords 16.8 0.191 18
+  }
+  GenericEntity {
+   ID "D368C9AEDA1F18FD"
+   coords 18 -0.054 -16.8
+  }
+  GenericEntity {
+   ID "FAA6E7203CBF9177"
+   coords 18 0.052 -14.4
+  }
+  GenericEntity {
+   ID "0DAFA8A0FD2BD3A2"
+   coords 18 0.158 -12
+  }
+  GenericEntity {
+   ID "D23BFF382C96F7E0"
+   coords 18 0.243 -9.6
+  }
+  GenericEntity {
+   ID "CD82E841075EDDEE"
+   coords 18 0.322 -7.2
+  }
+  GenericEntity {
+   ID "DFDEA8208E018BB7"
+   coords 18 0.371 -4.8
+  }
+  GenericEntity {
+   ID "BF7D8F36F0E0D1EB"
+   coords 18 0.442 -2.4
+  }
+  GenericEntity {
+   ID "34C9C64E7F22F99F"
+   coords 18 0.423 0
+  }
+  GenericEntity {
+   ID "D82A4D576D4801F7"
+   coords 18 0.398 2.4
+  }
+  GenericEntity {
+   ID "7D628730CCE652BF"
+   coords 18 0.38 4.8
+  }
+  GenericEntity {
+   ID "EDC1BF1A899F258B"
+   coords 18 0.36 7.2
+  }
+  GenericEntity {
+   ID "CFE8B0245B6E7BD9"
+   coords 18 0.365 9.6
+  }
+  GenericEntity {
+   ID "26B52FD7935E2E80"
+   coords 18 0.334 12
+  }
+  GenericEntity {
+   ID "A8F5CFEE1431C3FA"
+   coords 18 0.334 14.4
+  }
+  GenericEntity {
+   ID "F470401E52527881"
+   coords 18 0.285 16.8
+  }
+  GenericEntity {
+   ID "B2121EDBD40B9FF1"
+   coords -16.8 1.457 -18
+  }
+  GenericEntity {
+   ID "53C18E3C9140EAC7"
+   coords -14.4 1.457 -18
+  }
+  GenericEntity {
+   ID "3874E35EF4F28C5E"
+   coords -12 1.415 -18
+  }
+  GenericEntity {
+   ID "A010AAFE9D36E9BD"
+   coords -9.6 1.347 -18
+  }
+  GenericEntity {
+   ID "587964F58F214B46"
+   coords -7.2 1.267 -18
+  }
+  GenericEntity {
+   ID "6CD5DB4836D17D78"
+   coords 7.2 0.158 -18
+  }
+  GenericEntity {
+   ID "8841B3D006F58B82"
+   coords 9.6 -0.02 -18
+  }
+  GenericEntity {
+   ID "32B890E7012D525B"
+   coords 12 -0.107 -18
+  }
+  GenericEntity {
+   ID "C9342BE97A6A0009"
+   coords 14.4 -0.107 -18
+  }
+  GenericEntity {
+   ID "CD9489D6AB17F9C4"
+   coords 16.8 -0.107 -18
+  }
+  GenericEntity {
+   ID "0FA42749B9B95242"
+   coords -18 1.457 -16.8
+  }
+  GenericEntity {
+   ID "D5C795DB7BA54B68"
+   coords -18 1.386 -14.4
+  }
+  GenericEntity {
+   ID "5E234409C32177EB"
+   coords -18 1.156 -12
+  }
+  GenericEntity {
+   ID "CF5402F0922553CD"
+   coords -18 0.889 -9.6
+  }
+  GenericEntity {
+   ID "AA1B5013A90C5C4D"
+   coords -18 0.846 -7.2
+  }
+  GenericEntity {
+   ID "F90716AC7C33AD48"
+   coords -18 0.582 -4.8
+  }
+  GenericEntity {
+   ID "3DFE3F5F7A2C3E9A"
+   coords -18 0.115 -2.4
+  }
+  GenericEntity {
+   ID "F5BE43B3F1DEAF0A"
+   coords -18 0.22 0
+  }
+  GenericEntity {
+   ID "8C12BD9792796572"
+   coords -18 0.331 2.4
+  }
+  GenericEntity {
+   ID "DB45C0F83AEF8376"
+   coords -18 0.44 4.8
+  }
+  GenericEntity {
+   ID "507799348CE44CC4"
+   coords -18 0.53 7.2
+  }
+  GenericEntity {
+   ID "A7E5A421102FF5D9"
+   coords -18 0.647 9.6
+  }
+  GenericEntity {
+   ID "A339FE8605CD2AF1"
+   coords -18 0.8 12
+  }
+  GenericEntity {
+   ID "D36738A30FFF80DF"
+   coords -18 0.878 14.4
+  }
+  GenericEntity {
+   ID "A75867ADA23F5BE9"
+   coords -18 1.033 16.8
   }
  }
 }
-GenericEntity AROR_Location_everon_outpost_old_wood : "{3D1925CD1FA54115}Prefabs/Locations/AROR_Location_Outpost.et" {
+GenericEntity AROR_Location_everon_outpost_old_wood : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defence_Outpost.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_outpost_old_wood"
@@ -306,7 +2291,7 @@ GenericEntity AROR_Location_everon_outpost_old_wood : "{3D1925CD1FA54115}Prefabs
    m_bGroundOnInit 0
   }
  }
- coords 3293.234 120.562 4488.741
+ coords 2952.07 90.9019 4847.58
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -324,11 +2309,231 @@ GenericEntity AROR_Location_everon_outpost_old_wood : "{3D1925CD1FA54115}Prefabs
      }
     }
    }
-   coords 8.836 0.904946 8.839
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "A26A58E35980454B"
+   coords -16.8 0.2771 18
+  }
+  GenericEntity {
+   ID "B6F4BC8A9127F481"
+   coords -14.4 0.2581 18
+  }
+  GenericEntity {
+   ID "8E56A3354B5079CC"
+   coords -12 0.3031 18
+  }
+  GenericEntity {
+   ID "FF068F9282B15884"
+   coords -9.6 0.2921 18
+  }
+  GenericEntity {
+   ID "14904C59F826BC31"
+   coords -7.2 0.3531 18
+  }
+  GenericEntity {
+   ID "822B8D9215CE0E02"
+   coords -4.8 0.4111 18
+  }
+  GenericEntity {
+   ID "CBB50C2CD0D4FD09"
+   coords -2.4 0.4661 18
+  }
+  GenericEntity {
+   ID "4C1594EC7E4A1C60"
+   coords 0 0.5281 18
+  }
+  GenericEntity {
+   ID "0FEF4ED2460C58CA"
+   coords 2.4 0.5791 18
+  }
+  GenericEntity {
+   ID "B9F9F2E86D252B4E"
+   coords 4.8 0.6371 18
+  }
+  GenericEntity {
+   ID "CF38FBE4D913F668"
+   coords 7.2 0.7161 18
+  }
+  GenericEntity {
+   ID "0105144196B3AA44"
+   coords 9.6 0.7931 18
+  }
+  GenericEntity {
+   ID "FF40A2D0A933ECFE"
+   coords 12 0.8041 18
+  }
+  GenericEntity {
+   ID "FCB56D63BD9D1149"
+   coords 14.4 0.8541 18
+  }
+  GenericEntity {
+   ID "64E24B5736D65094"
+   coords 16.8 0.8981 18
+  }
+  GenericEntity {
+   ID "D368C9AEDA1F18FD"
+   coords 18 1.1761 -16.8
+  }
+  GenericEntity {
+   ID "FAA6E7203CBF9177"
+   coords 18 1.1031 -14.4
+  }
+  GenericEntity {
+   ID "0DAFA8A0FD2BD3A2"
+   coords 18 1.0531 -12
+  }
+  GenericEntity {
+   ID "D23BFF382C96F7E0"
+   coords 18 1.0141 -9.6
+  }
+  GenericEntity {
+   ID "CD82E841075EDDEE"
+   coords 18 1.0081 -7.2
+  }
+  GenericEntity {
+   ID "DFDEA8208E018BB7"
+   coords 18 0.9691 -4.8
+  }
+  GenericEntity {
+   ID "BF7D8F36F0E0D1EB"
+   coords 18 0.8561 -2.4
+  }
+  GenericEntity {
+   ID "34C9C64E7F22F99F"
+   coords 18 0.8691 0
+  }
+  GenericEntity {
+   ID "D82A4D576D4801F7"
+   coords 18 0.8881 2.4
+  }
+  GenericEntity {
+   ID "7D628730CCE652BF"
+   coords 18 0.9131 4.8
+  }
+  GenericEntity {
+   ID "EDC1BF1A899F258B"
+   coords 18 0.9131 7.2
+  }
+  GenericEntity {
+   ID "CFE8B0245B6E7BD9"
+   coords 18 0.9301 9.6
+  }
+  GenericEntity {
+   ID "26B52FD7935E2E80"
+   coords 18 0.8951 12
+  }
+  GenericEntity {
+   ID "A8F5CFEE1431C3FA"
+   coords 18 0.9181 14.4
+  }
+  GenericEntity {
+   ID "F470401E52527881"
+   coords 18 0.9201 16.8
+  }
+  GenericEntity {
+   ID "B2121EDBD40B9FF1"
+   coords -16.8 -0.5019 -18
+  }
+  GenericEntity {
+   ID "53C18E3C9140EAC7"
+   coords -14.4 -0.4579 -18
+  }
+  GenericEntity {
+   ID "3874E35EF4F28C5E"
+   coords -12 -0.3989 -18
+  }
+  GenericEntity {
+   ID "A010AAFE9D36E9BD"
+   coords -9.6 -0.3129 -18
+  }
+  GenericEntity {
+   ID "587964F58F214B46"
+   coords -7.2 -0.1999 -18
+  }
+  GenericEntity {
+   ID "6CD5DB4836D17D78"
+   coords 7.2 0.5191 -18
+  }
+  GenericEntity {
+   ID "8841B3D006F58B82"
+   coords 9.6 0.6511 -18
+  }
+  GenericEntity {
+   ID "32B890E7012D525B"
+   coords 12 0.8011 -18
+  }
+  GenericEntity {
+   ID "C9342BE97A6A0009"
+   coords 14.4 0.9341 -18
+  }
+  GenericEntity {
+   ID "CD9489D6AB17F9C4"
+   coords 16.8 1.1211 -18
+  }
+  GenericEntity {
+   ID "0FA42749B9B95242"
+   coords -18 -0.4969 -16.8
+  }
+  GenericEntity {
+   ID "D5C795DB7BA54B68"
+   coords -18 -0.4599 -14.4
+  }
+  GenericEntity {
+   ID "5E234409C32177EB"
+   coords -18 -0.4339 -12
+  }
+  GenericEntity {
+   ID "CF5402F0922553CD"
+   coords -18 -0.3669 -9.6
+  }
+  GenericEntity {
+   ID "AA1B5013A90C5C4D"
+   coords -18 -0.3289 -7.2
+  }
+  GenericEntity {
+   ID "F90716AC7C33AD48"
+   coords -18 -0.2909 -4.8
+  }
+  GenericEntity {
+   ID "3DFE3F5F7A2C3E9A"
+   coords -18 -0.2539 -2.4
+  }
+  GenericEntity {
+   ID "F5BE43B3F1DEAF0A"
+   coords -18 -0.2149 0
+  }
+  GenericEntity {
+   ID "8C12BD9792796572"
+   coords -18 -0.1479 2.4
+  }
+  GenericEntity {
+   ID "DB45C0F83AEF8376"
+   coords -18 -0.0729 4.8
+  }
+  GenericEntity {
+   ID "507799348CE44CC4"
+   coords -18 -0.0109 7.2
+  }
+  GenericEntity {
+   ID "A7E5A421102FF5D9"
+   coords -18 0.0461 9.6
+  }
+  GenericEntity {
+   ID "A339FE8605CD2AF1"
+   coords -18 0.1201 12
+  }
+  GenericEntity {
+   ID "D36738A30FFF80DF"
+   coords -18 0.1651 14.4
+  }
+  GenericEntity {
+   ID "A75867ADA23F5BE9"
+   coords -18 0.2401 16.8
   }
  }
 }
-GenericEntity AROR_Location_everon_outpost_morton_valley : "{3D1925CD1FA54115}Prefabs/Locations/AROR_Location_Outpost.et" {
+GenericEntity AROR_Location_everon_outpost_morton_valley : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defence_Outpost.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_outpost_morton_valley"
@@ -339,7 +2544,7 @@ GenericEntity AROR_Location_everon_outpost_morton_valley : "{3D1925CD1FA54115}Pr
    m_bGroundOnInit 0
   }
  }
- coords 4517.589 64.0358 4967.065
+ coords 4526.43 63.5864 5000.9
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -357,11 +2562,231 @@ GenericEntity AROR_Location_everon_outpost_morton_valley : "{3D1925CD1FA54115}Pr
      }
     }
    }
-   coords 8.841 0.906046 8.835
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "A26A58E35980454B"
+   coords -16.8 -0.2264 18
+  }
+  GenericEntity {
+   ID "B6F4BC8A9127F481"
+   coords -14.4 -0.2064 18
+  }
+  GenericEntity {
+   ID "8E56A3354B5079CC"
+   coords -12 -0.1834 18
+  }
+  GenericEntity {
+   ID "FF068F9282B15884"
+   coords -9.6 -0.1454 18
+  }
+  GenericEntity {
+   ID "14904C59F826BC31"
+   coords -7.2 -0.1274 18
+  }
+  GenericEntity {
+   ID "822B8D9215CE0E02"
+   coords -4.8 -0.1274 18
+  }
+  GenericEntity {
+   ID "CBB50C2CD0D4FD09"
+   coords -2.4 -0.1274 18
+  }
+  GenericEntity {
+   ID "4C1594EC7E4A1C60"
+   coords 0 -0.1654 18
+  }
+  GenericEntity {
+   ID "0FEF4ED2460C58CA"
+   coords 2.4 -0.1884 18
+  }
+  GenericEntity {
+   ID "B9F9F2E86D252B4E"
+   coords 4.8 -0.2574 18
+  }
+  GenericEntity {
+   ID "CF38FBE4D913F668"
+   coords 7.2 -0.3204 18
+  }
+  GenericEntity {
+   ID "0105144196B3AA44"
+   coords 9.6 -0.3954 18
+  }
+  GenericEntity {
+   ID "FF40A2D0A933ECFE"
+   coords 12 -0.4704 18
+  }
+  GenericEntity {
+   ID "FCB56D63BD9D1149"
+   coords 14.4 -0.5464 18
+  }
+  GenericEntity {
+   ID "64E24B5736D65094"
+   coords 16.8 -0.5674 18
+  }
+  GenericEntity {
+   ID "D368C9AEDA1F18FD"
+   coords 18 1.0076 -16.8
+  }
+  GenericEntity {
+   ID "FAA6E7203CBF9177"
+   coords 18 0.9996 -14.4
+  }
+  GenericEntity {
+   ID "0DAFA8A0FD2BD3A2"
+   coords 18 0.9756 -12
+  }
+  GenericEntity {
+   ID "D23BFF382C96F7E0"
+   coords 18 0.9826 -9.6
+  }
+  GenericEntity {
+   ID "CD82E841075EDDEE"
+   coords 18 0.9606 -7.2
+  }
+  GenericEntity {
+   ID "DFDEA8208E018BB7"
+   coords 18 0.8906 -4.8
+  }
+  GenericEntity {
+   ID "BF7D8F36F0E0D1EB"
+   coords 18 0.7566 -2.4
+  }
+  GenericEntity {
+   ID "34C9C64E7F22F99F"
+   coords 18 0.5686 0
+  }
+  GenericEntity {
+   ID "D82A4D576D4801F7"
+   coords 18 0.4016 2.4
+  }
+  GenericEntity {
+   ID "7D628730CCE652BF"
+   coords 18 0.2186 4.8
+  }
+  GenericEntity {
+   ID "EDC1BF1A899F258B"
+   coords 18 0.0326 7.2
+  }
+  GenericEntity {
+   ID "CFE8B0245B6E7BD9"
+   coords 18 -0.1324 9.6
+  }
+  GenericEntity {
+   ID "26B52FD7935E2E80"
+   coords 18 -0.2984 12
+  }
+  GenericEntity {
+   ID "A8F5CFEE1431C3FA"
+   coords 18 -0.4284 14.4
+  }
+  GenericEntity {
+   ID "F470401E52527881"
+   coords 18 -0.5164 16.8
+  }
+  GenericEntity {
+   ID "B2121EDBD40B9FF1"
+   coords -16.8 0.1286 -18
+  }
+  GenericEntity {
+   ID "53C18E3C9140EAC7"
+   coords -14.4 0.1726 -18
+  }
+  GenericEntity {
+   ID "3874E35EF4F28C5E"
+   coords -12 0.2266 -18
+  }
+  GenericEntity {
+   ID "A010AAFE9D36E9BD"
+   coords -9.6 0.2906 -18
+  }
+  GenericEntity {
+   ID "587964F58F214B46"
+   coords -7.2 0.3296 -18
+  }
+  GenericEntity {
+   ID "6CD5DB4836D17D78"
+   coords 7.2 0.6426 -18
+  }
+  GenericEntity {
+   ID "8841B3D006F58B82"
+   coords 9.6 0.7176 -18
+  }
+  GenericEntity {
+   ID "32B890E7012D525B"
+   coords 12 0.7856 -18
+  }
+  GenericEntity {
+   ID "C9342BE97A6A0009"
+   coords 14.4 0.8636 -18
+  }
+  GenericEntity {
+   ID "CD9489D6AB17F9C4"
+   coords 16.8 0.9446 -18
+  }
+  GenericEntity {
+   ID "0FA42749B9B95242"
+   coords -18 0.0536 -16.8
+  }
+  GenericEntity {
+   ID "D5C795DB7BA54B68"
+   coords -18 -0.0144 -14.4
+  }
+  GenericEntity {
+   ID "5E234409C32177EB"
+   coords -18 -0.0724 -12
+  }
+  GenericEntity {
+   ID "CF5402F0922553CD"
+   coords -18 -0.1264 -9.6
+  }
+  GenericEntity {
+   ID "AA1B5013A90C5C4D"
+   coords -18 -0.1624 -7.2
+  }
+  GenericEntity {
+   ID "F90716AC7C33AD48"
+   coords -18 -0.1694 -4.8
+  }
+  GenericEntity {
+   ID "3DFE3F5F7A2C3E9A"
+   coords -18 -0.1694 -2.4
+  }
+  GenericEntity {
+   ID "F5BE43B3F1DEAF0A"
+   coords -18 -0.1694 0
+  }
+  GenericEntity {
+   ID "8C12BD9792796572"
+   coords -18 -0.1694 2.4
+  }
+  GenericEntity {
+   ID "DB45C0F83AEF8376"
+   coords -18 -0.1694 4.8
+  }
+  GenericEntity {
+   ID "507799348CE44CC4"
+   coords -18 -0.1934 7.2
+  }
+  GenericEntity {
+   ID "A7E5A421102FF5D9"
+   coords -18 -0.1934 9.6
+  }
+  GenericEntity {
+   ID "A339FE8605CD2AF1"
+   coords -18 -0.2004 12
+  }
+  GenericEntity {
+   ID "D36738A30FFF80DF"
+   coords -18 -0.2204 14.4
+  }
+  GenericEntity {
+   ID "A75867ADA23F5BE9"
+   coords -18 -0.2314 16.8
   }
  }
 }
-GenericEntity AROR_Location_everon_outpost_laruns : "{3D1925CD1FA54115}Prefabs/Locations/AROR_Location_Outpost.et" {
+GenericEntity AROR_Location_everon_outpost_laruns : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defence_Outpost.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_outpost_laruns"
@@ -372,7 +2797,8 @@ GenericEntity AROR_Location_everon_outpost_laruns : "{3D1925CD1FA54115}Prefabs/L
    m_bGroundOnInit 0
   }
  }
- coords 7429.288 111.347 5318.843
+ coords 7313.13 122.44 5202.68
+ angles 0 45 0
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -390,11 +2816,231 @@ GenericEntity AROR_Location_everon_outpost_laruns : "{3D1925CD1FA54115}Prefabs/L
      }
     }
    }
-   coords 8.842 0.905946 8.837
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "A26A58E35980454B"
+   coords -16.8 0.305 18
+  }
+  GenericEntity {
+   ID "B6F4BC8A9127F481"
+   coords -14.4 0.231 18
+  }
+  GenericEntity {
+   ID "8E56A3354B5079CC"
+   coords -12 0.157 18
+  }
+  GenericEntity {
+   ID "FF068F9282B15884"
+   coords -9.6 0.077 18
+  }
+  GenericEntity {
+   ID "14904C59F826BC31"
+   coords -7.2 0.01 18
+  }
+  GenericEntity {
+   ID "822B8D9215CE0E02"
+   coords -4.8 0.002 18
+  }
+  GenericEntity {
+   ID "CBB50C2CD0D4FD09"
+   coords -2.4 0.002 18
+  }
+  GenericEntity {
+   ID "4C1594EC7E4A1C60"
+   coords 0 0.002 18
+  }
+  GenericEntity {
+   ID "0FEF4ED2460C58CA"
+   coords 2.4 0.002 18
+  }
+  GenericEntity {
+   ID "B9F9F2E86D252B4E"
+   coords 4.8 0.002 18
+  }
+  GenericEntity {
+   ID "CF38FBE4D913F668"
+   coords 7.2 0.002 18
+  }
+  GenericEntity {
+   ID "0105144196B3AA44"
+   coords 9.6 0.002 18
+  }
+  GenericEntity {
+   ID "FF40A2D0A933ECFE"
+   coords 12 0.002 18
+  }
+  GenericEntity {
+   ID "FCB56D63BD9D1149"
+   coords 14.4 0.002 18
+  }
+  GenericEntity {
+   ID "64E24B5736D65094"
+   coords 16.8 0.002 18
+  }
+  GenericEntity {
+   ID "D368C9AEDA1F18FD"
+   coords 18 0.501 -16.8
+  }
+  GenericEntity {
+   ID "FAA6E7203CBF9177"
+   coords 18 0.422 -14.4
+  }
+  GenericEntity {
+   ID "0DAFA8A0FD2BD3A2"
+   coords 18 0.364 -12
+  }
+  GenericEntity {
+   ID "D23BFF382C96F7E0"
+   coords 18 0.311 -9.6
+  }
+  GenericEntity {
+   ID "CD82E841075EDDEE"
+   coords 18 0.258 -7.2
+  }
+  GenericEntity {
+   ID "DFDEA8208E018BB7"
+   coords 18 0.205 -4.8
+  }
+  GenericEntity {
+   ID "BF7D8F36F0E0D1EB"
+   coords 18 0.156 -2.4
+  }
+  GenericEntity {
+   ID "34C9C64E7F22F99F"
+   coords 18 0.129 0
+  }
+  GenericEntity {
+   ID "D82A4D576D4801F7"
+   coords 18 0.077 2.4
+  }
+  GenericEntity {
+   ID "7D628730CCE652BF"
+   coords 18 0.055 4.8
+  }
+  GenericEntity {
+   ID "EDC1BF1A899F258B"
+   coords 18 0.034 7.2
+  }
+  GenericEntity {
+   ID "CFE8B0245B6E7BD9"
+   coords 18 0.012 9.6
+  }
+  GenericEntity {
+   ID "26B52FD7935E2E80"
+   coords 18 0.002 12
+  }
+  GenericEntity {
+   ID "A8F5CFEE1431C3FA"
+   coords 18 0.002 14.4
+  }
+  GenericEntity {
+   ID "F470401E52527881"
+   coords 18 0.002 16.8
+  }
+  GenericEntity {
+   ID "B2121EDBD40B9FF1"
+   coords -16.8 0.692 -18
+  }
+  GenericEntity {
+   ID "53C18E3C9140EAC7"
+   coords -14.4 0.719 -18
+  }
+  GenericEntity {
+   ID "3874E35EF4F28C5E"
+   coords -12 0.745 -18
+  }
+  GenericEntity {
+   ID "A010AAFE9D36E9BD"
+   coords -9.6 0.772 -18
+  }
+  GenericEntity {
+   ID "587964F58F214B46"
+   coords -7.2 0.778 -18
+  }
+  GenericEntity {
+   ID "6CD5DB4836D17D78"
+   coords 7.2 0.604 -18
+  }
+  GenericEntity {
+   ID "8841B3D006F58B82"
+   coords 9.6 0.577 -18
+  }
+  GenericEntity {
+   ID "32B890E7012D525B"
+   coords 12 0.559 -18
+  }
+  GenericEntity {
+   ID "C9342BE97A6A0009"
+   coords 14.4 0.55 -18
+  }
+  GenericEntity {
+   ID "CD9489D6AB17F9C4"
+   coords 16.8 0.528 -18
+  }
+  GenericEntity {
+   ID "0FA42749B9B95242"
+   coords -18 0.666 -16.8
+  }
+  GenericEntity {
+   ID "D5C795DB7BA54B68"
+   coords -18 0.659 -14.4
+  }
+  GenericEntity {
+   ID "5E234409C32177EB"
+   coords -18 0.627 -12
+  }
+  GenericEntity {
+   ID "CF5402F0922553CD"
+   coords -18 0.596 -9.6
+  }
+  GenericEntity {
+   ID "AA1B5013A90C5C4D"
+   coords -18 0.571 -7.2
+  }
+  GenericEntity {
+   ID "F90716AC7C33AD48"
+   coords -18 0.549 -4.8
+  }
+  GenericEntity {
+   ID "3DFE3F5F7A2C3E9A"
+   coords -18 0.523 -2.4
+  }
+  GenericEntity {
+   ID "F5BE43B3F1DEAF0A"
+   coords -18 0.496 0
+  }
+  GenericEntity {
+   ID "8C12BD9792796572"
+   coords -18 0.47 2.4
+  }
+  GenericEntity {
+   ID "DB45C0F83AEF8376"
+   coords -18 0.474 4.8
+  }
+  GenericEntity {
+   ID "507799348CE44CC4"
+   coords -18 0.448 7.2
+  }
+  GenericEntity {
+   ID "A7E5A421102FF5D9"
+   coords -18 0.424 9.6
+  }
+  GenericEntity {
+   ID "A339FE8605CD2AF1"
+   coords -18 0.424 12
+  }
+  GenericEntity {
+   ID "D36738A30FFF80DF"
+   coords -18 0.39 14.4
+  }
+  GenericEntity {
+   ID "A75867ADA23F5BE9"
+   coords -18 0.378 16.8
   }
  }
 }
-GenericEntity AROR_Location_everon_outpost_quarry : "{3D1925CD1FA54115}Prefabs/Locations/AROR_Location_Outpost.et" {
+GenericEntity AROR_Location_everon_outpost_quarry : "{796C32EF26719D2E}Prefabs/Compositions/Locations/AROR_Defence_OutpostCompact.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_outpost_quarry"
@@ -405,7 +3051,7 @@ GenericEntity AROR_Location_everon_outpost_quarry : "{3D1925CD1FA54115}Prefabs/L
    m_bGroundOnInit 0
   }
  }
- coords 8797.021 198.203 3905.115
+ coords 8605.86 141.588 3388.95
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -423,11 +3069,179 @@ GenericEntity AROR_Location_everon_outpost_quarry : "{3D1925CD1FA54115}Prefabs/L
      }
     }
    }
-   coords 8.839 0.905946 8.835
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "FEA8FC464BE4A520"
+   coords -12.833 -0.223 14
+  }
+  GenericEntity {
+   ID "1BA38C5EA8D3F568"
+   coords -10.5 -0.098 14
+  }
+  GenericEntity {
+   ID "1469815C76707620"
+   coords -8.167 0.038 14
+  }
+  GenericEntity {
+   ID "5A83BEF5FD7FE408"
+   coords -5.833 0.152 14
+  }
+  GenericEntity {
+   ID "6D6793B21E747981"
+   coords -3.5 0.282 14
+  }
+  GenericEntity {
+   ID "D63472290E5B1FCF"
+   coords -1.167 0.402 14
+  }
+  GenericEntity {
+   ID "A000BB4F10773B28"
+   coords 1.167 0.542 14
+  }
+  GenericEntity {
+   ID "8FC52135D54EC0C0"
+   coords 3.5 0.657 14
+  }
+  GenericEntity {
+   ID "64BE795F82673764"
+   coords 5.833 0.776 14
+  }
+  GenericEntity {
+   ID "1D7A08D5382F1B0F"
+   coords 8.167 0.885 14
+  }
+  GenericEntity {
+   ID "893380314CE7C91C"
+   coords 10.5 0.995 14
+  }
+  GenericEntity {
+   ID "9CB6F398F78BF66B"
+   coords 12.833 1.104 14
+  }
+  GenericEntity {
+   ID "5767F1CCE3576263"
+   coords 14 -0.17 -12.833
+  }
+  GenericEntity {
+   ID "E4AA23DE07ABBA8B"
+   coords 14 -0.019 -10.5
+  }
+  GenericEntity {
+   ID "77CA5F4DB9C8BB9C"
+   coords 14 0.151 -8.167
+  }
+  GenericEntity {
+   ID "073E0F83E2DD65D7"
+   coords 14 0.295 -5.833
+  }
+  GenericEntity {
+   ID "EA619E4EA12856C2"
+   coords 14 0.441 -3.5
+  }
+  GenericEntity {
+   ID "0EE7ECE97FAD51E2"
+   coords 14 0.558 -1.167
+  }
+  GenericEntity {
+   ID "D4BD0B269D05AAB1"
+   coords 14 0.668 1.167
+  }
+  GenericEntity {
+   ID "957CCA26D334F6BC"
+   coords 14 0.775 3.5
+  }
+  GenericEntity {
+   ID "1CE2339AD9BC858D"
+   coords 14 0.872 5.833
+  }
+  GenericEntity {
+   ID "6D9DD0605707EAE1"
+   coords 14 0.945 8.167
+  }
+  GenericEntity {
+   ID "68B64CC9C31F3F52"
+   coords 14 1.039 10.5
+  }
+  GenericEntity {
+   ID "AE211E1E68140B11"
+   coords 14 1.122 12.833
+  }
+  GenericEntity {
+   ID "8BDFFC12D7512D6D"
+   coords -12.833 -0.427 -14
+  }
+  GenericEntity {
+   ID "81F8FEC8148F726A"
+   coords -10.5 -0.374 -14
+  }
+  GenericEntity {
+   ID "3566B78FFC80DA35"
+   coords -8.167 -0.338 -14
+  }
+  GenericEntity {
+   ID "441355A636C5948B"
+   coords 8.167 -0.226 -14
+  }
+  GenericEntity {
+   ID "2CBCF9B9B5D4C063"
+   coords 10.5 -0.232 -14
+  }
+  GenericEntity {
+   ID "9616EDC313110E34"
+   coords 12.833 -0.253 -14
+  }
+  GenericEntity {
+   ID "C774165A8AD97BC7"
+   coords -14 -0.431 -12.833
+  }
+  GenericEntity {
+   ID "B5F5F0AC37614A3E"
+   coords -14 -0.429 -10.5
+  }
+  GenericEntity {
+   ID "FD8B552E9E0C5F3C"
+   coords -14 -0.419 -8.167
+  }
+  GenericEntity {
+   ID "9378A0B547F9A357"
+   coords -14 -0.4 -5.833
+  }
+  GenericEntity {
+   ID "3CE4F6FA93E01BDB"
+   coords -14 -0.4 -3.5
+  }
+  GenericEntity {
+   ID "063BF1FFDA03C410"
+   coords -14 -0.4 -1.167
+  }
+  GenericEntity {
+   ID "F253AA2A1C1BCC77"
+   coords -14 -0.371 1.167
+  }
+  GenericEntity {
+   ID "0626A9BB169C4F3C"
+   coords -14 -0.371 3.5
+  }
+  GenericEntity {
+   ID "BB883F60953500DA"
+   coords -14 -0.359 5.833
+  }
+  GenericEntity {
+   ID "F0804F0217C4EB3B"
+   coords -14 -0.34 8.167
+  }
+  GenericEntity {
+   ID "458F215B62DCFFD9"
+   coords -14 -0.319 10.5
+  }
+  GenericEntity {
+   ID "EC9BDC1FB2D952CC"
+   coords -14 -0.283 12.833
   }
  }
 }
-GenericEntity AROR_Location_everon_outpost_andres_beacon : "{3D1925CD1FA54115}Prefabs/Locations/AROR_Location_Outpost.et" {
+GenericEntity AROR_Location_everon_outpost_andres_beacon : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defence_Outpost.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_outpost_andres_beacon"
@@ -438,7 +3252,8 @@ GenericEntity AROR_Location_everon_outpost_andres_beacon : "{3D1925CD1FA54115}Pr
    m_bGroundOnInit 0
   }
  }
- coords 6843.832 82.5811 8191.218
+ coords 7193.83 5.05719 8903.72
+ angles 0 135 0
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -456,11 +3271,231 @@ GenericEntity AROR_Location_everon_outpost_andres_beacon : "{3D1925CD1FA54115}Pr
      }
     }
    }
-   coords -0.002 0.905646 12.502
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "A26A58E35980454B"
+   coords -16.8 -0.01219 18
+  }
+  GenericEntity {
+   ID "B6F4BC8A9127F481"
+   coords -14.4 -0.07719 18
+  }
+  GenericEntity {
+   ID "8E56A3354B5079CC"
+   coords -12 -0.38119 18
+  }
+  GenericEntity {
+   ID "FF068F9282B15884"
+   coords -9.6 -0.70119 18
+  }
+  GenericEntity {
+   ID "14904C59F826BC31"
+   coords -7.2 -0.38119 18
+  }
+  GenericEntity {
+   ID "822B8D9215CE0E02"
+   coords -4.8 0.54581 18
+  }
+  GenericEntity {
+   ID "CBB50C2CD0D4FD09"
+   coords -2.4 1.00281 18
+  }
+  GenericEntity {
+   ID "4C1594EC7E4A1C60"
+   coords 0 0.95181 18
+  }
+  GenericEntity {
+   ID "0FEF4ED2460C58CA"
+   coords 2.4 0.26481 18
+  }
+  GenericEntity {
+   ID "B9F9F2E86D252B4E"
+   coords 4.8 -0.30619 18
+  }
+  GenericEntity {
+   ID "CF38FBE4D913F668"
+   coords 7.2 0.28081 18
+  }
+  GenericEntity {
+   ID "0105144196B3AA44"
+   coords 9.6 1.41381 18
+  }
+  GenericEntity {
+   ID "FF40A2D0A933ECFE"
+   coords 12 1.53581 18
+  }
+  GenericEntity {
+   ID "FCB56D63BD9D1149"
+   coords 14.4 1.46581 18
+  }
+  GenericEntity {
+   ID "64E24B5736D65094"
+   coords 16.8 0.69581 18
+  }
+  GenericEntity {
+   ID "D368C9AEDA1F18FD"
+   coords 18 0.37981 -16.8
+  }
+  GenericEntity {
+   ID "FAA6E7203CBF9177"
+   coords 18 0.27381 -14.4
+  }
+  GenericEntity {
+   ID "0DAFA8A0FD2BD3A2"
+   coords 18 0.17581 -12
+  }
+  GenericEntity {
+   ID "D23BFF382C96F7E0"
+   coords 18 0.09581 -9.6
+  }
+  GenericEntity {
+   ID "CD82E841075EDDEE"
+   coords 18 0.01681 -7.2
+  }
+  GenericEntity {
+   ID "DFDEA8208E018BB7"
+   coords 18 0.01381 -4.8
+  }
+  GenericEntity {
+   ID "BF7D8F36F0E0D1EB"
+   coords 18 0.03481 -2.4
+  }
+  GenericEntity {
+   ID "34C9C64E7F22F99F"
+   coords 18 -0.12819 0
+  }
+  GenericEntity {
+   ID "D82A4D576D4801F7"
+   coords 18 -0.27019 2.4
+  }
+  GenericEntity {
+   ID "7D628730CCE652BF"
+   coords 18 -0.25719 4.8
+  }
+  GenericEntity {
+   ID "EDC1BF1A899F258B"
+   coords 18 -0.22719 7.2
+  }
+  GenericEntity {
+   ID "CFE8B0245B6E7BD9"
+   coords 18 0.09081 9.6
+  }
+  GenericEntity {
+   ID "26B52FD7935E2E80"
+   coords 18 0.30881 12
+  }
+  GenericEntity {
+   ID "A8F5CFEE1431C3FA"
+   coords 18 0.33181 14.4
+  }
+  GenericEntity {
+   ID "F470401E52527881"
+   coords 18 0.31481 16.8
+  }
+  GenericEntity {
+   ID "B2121EDBD40B9FF1"
+   coords -16.8 0.54681 -18
+  }
+  GenericEntity {
+   ID "53C18E3C9140EAC7"
+   coords -14.4 0.62881 -18
+  }
+  GenericEntity {
+   ID "3874E35EF4F28C5E"
+   coords -12 0.39481 -18
+  }
+  GenericEntity {
+   ID "A010AAFE9D36E9BD"
+   coords -9.6 0.51681 -18
+  }
+  GenericEntity {
+   ID "587964F58F214B46"
+   coords -7.2 0.86881 -18
+  }
+  GenericEntity {
+   ID "6CD5DB4836D17D78"
+   coords 7.2 0.78881 -18
+  }
+  GenericEntity {
+   ID "8841B3D006F58B82"
+   coords 9.6 0.85881 -18
+  }
+  GenericEntity {
+   ID "32B890E7012D525B"
+   coords 12 0.84081 -18
+  }
+  GenericEntity {
+   ID "C9342BE97A6A0009"
+   coords 14.4 0.71781 -18
+  }
+  GenericEntity {
+   ID "CD9489D6AB17F9C4"
+   coords 16.8 0.52081 -18
+  }
+  GenericEntity {
+   ID "0FA42749B9B95242"
+   coords -18 0.56881 -16.8
+  }
+  GenericEntity {
+   ID "D5C795DB7BA54B68"
+   coords -18 0.79981 -14.4
+  }
+  GenericEntity {
+   ID "5E234409C32177EB"
+   coords -18 0.86581 -12
+  }
+  GenericEntity {
+   ID "CF5402F0922553CD"
+   coords -18 0.70281 -9.6
+  }
+  GenericEntity {
+   ID "AA1B5013A90C5C4D"
+   coords -18 0.37981 -7.2
+  }
+  GenericEntity {
+   ID "F90716AC7C33AD48"
+   coords -18 0.02881 -4.8
+  }
+  GenericEntity {
+   ID "3DFE3F5F7A2C3E9A"
+   coords -18 0.03081 -2.4
+  }
+  GenericEntity {
+   ID "F5BE43B3F1DEAF0A"
+   coords -18 0.36581 0
+  }
+  GenericEntity {
+   ID "8C12BD9792796572"
+   coords -18 0.78781 2.4
+  }
+  GenericEntity {
+   ID "DB45C0F83AEF8376"
+   coords -18 0.99081 4.8
+  }
+  GenericEntity {
+   ID "507799348CE44CC4"
+   coords -18 0.90281 7.2
+  }
+  GenericEntity {
+   ID "A7E5A421102FF5D9"
+   coords -18 0.62781 9.6
+  }
+  GenericEntity {
+   ID "A339FE8605CD2AF1"
+   coords -18 0.33181 12
+  }
+  GenericEntity {
+   ID "D36738A30FFF80DF"
+   coords -18 0.12781 14.4
+  }
+  GenericEntity {
+   ID "A75867ADA23F5BE9"
+   coords -18 0.00981 16.8
   }
  }
 }
-GenericEntity AROR_Location_everon_military_outpost_chotain : "{9B2CAF507D694BA5}Prefabs/Locations/AROR_Location_MilitaryOutpost.et" {
+GenericEntity AROR_Location_everon_military_outpost_chotain : "{6B5025C036D84B66}Prefabs/Compositions/Locations/AROR_Defence_MilitaryOutpost.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_military_outpost_chotain"
@@ -471,7 +3506,8 @@ GenericEntity AROR_Location_everon_military_outpost_chotain : "{9B2CAF507D694BA5
    m_bGroundOnInit 0
   }
  }
- coords 7444.065 7.875 6697.595
+ coords 6819.06 125.733 6712.6
+ angles 0 45 0
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -489,11 +3525,403 @@ GenericEntity AROR_Location_everon_military_outpost_chotain : "{9B2CAF507D694BA5
      }
     }
    }
-   coords -0.005 0.905826 15.005
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "5BEB3559C55291F4"
+   coords -30.77 1.191 32
+  }
+  GenericEntity {
+   ID "96B150B4E4FE0300"
+   coords -28.308 1.192 32
+  }
+  GenericEntity {
+   ID "A341F836053B7C4C"
+   coords -25.846 1.185 32
+  }
+  GenericEntity {
+   ID "38B8DB2FBCF51775"
+   coords -23.385 1.176 32
+  }
+  GenericEntity {
+   ID "E05E22ED4DBBC3C0"
+   coords -20.923 1.161 32
+  }
+  GenericEntity {
+   ID "08D177B9DF2598D3"
+   coords -18.461 1.161 32
+  }
+  GenericEntity {
+   ID "28D4C73DC07B4B62"
+   coords -16 1.161 32
+  }
+  GenericEntity {
+   ID "4852ED505191F310"
+   coords -13.539 1.163 32
+  }
+  GenericEntity {
+   ID "04917BC83E0A2A9C"
+   coords -11.077 1.176 32
+  }
+  GenericEntity {
+   ID "2EC33C8ECA511516"
+   coords -8.615 1.176 32
+  }
+  GenericEntity {
+   ID "AAD01C84D7E6528B"
+   coords -6.154 1.176 32
+  }
+  GenericEntity {
+   ID "002DDFA1FB971BED"
+   coords -3.692 1.158 32
+  }
+  GenericEntity {
+   ID "0D73A78202790AE8"
+   coords -1.231 1.131 32
+  }
+  GenericEntity {
+   ID "A035F705F9F972EF"
+   coords 1.231 1.095 32
+  }
+  GenericEntity {
+   ID "80F6F0AA5CF60E11"
+   coords 3.692 1.041 32
+  }
+  GenericEntity {
+   ID "0D2715E58E38D65D"
+   coords 6.154 0.987 32
+  }
+  GenericEntity {
+   ID "9E2BFAE61E3F535A"
+   coords 8.615 0.919 32
+  }
+  GenericEntity {
+   ID "8DF67CE01181E881"
+   coords 11.077 0.847 32
+  }
+  GenericEntity {
+   ID "9537CCAB304CB47A"
+   coords 13.539 0.787 32
+  }
+  GenericEntity {
+   ID "99A4FC6174A1AEBA"
+   coords 16 0.705 32
+  }
+  GenericEntity {
+   ID "4B80586CFC2F9F22"
+   coords 18.461 0.624 32
+  }
+  GenericEntity {
+   ID "76B6468410CDD775"
+   coords 20.923 0.542 32
+  }
+  GenericEntity {
+   ID "97BB09A3810D9932"
+   coords 23.385 0.46 32
+  }
+  GenericEntity {
+   ID "7E8679A8F0C9D14B"
+   coords 25.846 0.379 32
+  }
+  GenericEntity {
+   ID "E09C07C93F5A3479"
+   coords 28.308 0.297 32
+  }
+  GenericEntity {
+   ID "8CCC9E05FC18EA7D"
+   coords 30.77 0.193 32
+  }
+  GenericEntity {
+   ID "0108FD07F6A17A81"
+   coords 32 0.28 -30.77
+  }
+  GenericEntity {
+   ID "06A001B338DEF462"
+   coords 32 0.198 -28.308
+  }
+  GenericEntity {
+   ID "152B54A5EAC52859"
+   coords 32 0.121 -25.846
+  }
+  GenericEntity {
+   ID "A505FDEB5E9ECE1F"
+   coords 32 0.062 -23.385
+  }
+  GenericEntity {
+   ID "C9534EFFBE06AF33"
+   coords 32 0.011 -20.923
+  }
+  GenericEntity {
+   ID "7C1062445F3BAC67"
+   coords 32 -0.061 -18.461
+  }
+  GenericEntity {
+   ID "97F5380EB0DEC0D7"
+   coords 32 -0.115 -16
+  }
+  GenericEntity {
+   ID "F590FCFBE9EF8507"
+   coords 32 -0.169 -13.539
+  }
+  GenericEntity {
+   ID "4FCC137B197B16E1"
+   coords 32 -0.255 -11.077
+  }
+  GenericEntity {
+   ID "42BD8ED114649B75"
+   coords 32 -0.309 -8.615
+  }
+  GenericEntity {
+   ID "F91655DBF8CA9C3C"
+   coords 32 -0.395 -6.154
+  }
+  GenericEntity {
+   ID "B96010F96E705154"
+   coords 32 -0.449 -3.692
+  }
+  GenericEntity {
+   ID "756345D42D4A7B96"
+   coords 32 -0.504 -1.231
+  }
+  GenericEntity {
+   ID "6B18D95C0A8786AA"
+   coords 32 -0.527 1.231
+  }
+  GenericEntity {
+   ID "A0DF4EAC9B01D755"
+   coords 32 -0.541 3.692
+  }
+  GenericEntity {
+   ID "0960BFB3560A1C4E"
+   coords 32 -0.531 6.154
+  }
+  GenericEntity {
+   ID "3C0E8BD688802589"
+   coords 32 -0.504 8.615
+  }
+  GenericEntity {
+   ID "F44AE1526A2ABB88"
+   coords 32 -0.456 11.077
+  }
+  GenericEntity {
+   ID "61703126959CA796"
+   coords 32 -0.406 13.539
+  }
+  GenericEntity {
+   ID "AA82B6237F0D501B"
+   coords 32 -0.34 16
+  }
+  GenericEntity {
+   ID "653D2F0054E030D0"
+   coords 32 -0.258 18.461
+  }
+  GenericEntity {
+   ID "E2271CAEE3A933A1"
+   coords 32 -0.192 20.923
+  }
+  GenericEntity {
+   ID "897C425F9353FB9C"
+   coords 32 -0.114 23.385
+  }
+  GenericEntity {
+   ID "94FC1C5FEE36FF84"
+   coords 32 -0.029 25.846
+  }
+  GenericEntity {
+   ID "9AECF384F7B149AE"
+   coords 32 0.052 28.308
+  }
+  GenericEntity {
+   ID "35A65E49A00F60C0"
+   coords 32 0.111 30.77
+  }
+  GenericEntity {
+   ID "F372EB9DC4702349"
+   coords -30.77 0.763 -32
+  }
+  GenericEntity {
+   ID "312BF9F226E3DDFA"
+   coords -28.308 0.797 -32
+  }
+  GenericEntity {
+   ID "AD610A524BF477B2"
+   coords -25.846 0.824 -32
+  }
+  GenericEntity {
+   ID "8832C20309B42866"
+   coords -23.385 0.875 -32
+  }
+  GenericEntity {
+   ID "7F14945EC0C68129"
+   coords -20.923 0.91 -32
+  }
+  GenericEntity {
+   ID "CD070F42709BC05F"
+   coords -18.461 0.959 -32
+  }
+  GenericEntity {
+   ID "D1CAE589996070A6"
+   coords -16 0.995 -32
+  }
+  GenericEntity {
+   ID "3D73BEEE30A31075"
+   coords -13.539 1.023 -32
+  }
+  GenericEntity {
+   ID "B1A5DD37C8DFC54A"
+   coords -11.077 1.056 -32
+  }
+  GenericEntity {
+   ID "73F8BD6E3E9A676A"
+   coords -8.615 1.083 -32
+  }
+  GenericEntity {
+   ID "284762CF0D61EAD5"
+   coords 8.615 1.101 -32
+  }
+  GenericEntity {
+   ID "04D46F532354B819"
+   coords 11.077 1.074 -32
+  }
+  GenericEntity {
+   ID "56B5866A1CD95494"
+   coords 13.539 1.022 -32
+  }
+  GenericEntity {
+   ID "C6795E0E051083E3"
+   coords 16 0.967 -32
+  }
+  GenericEntity {
+   ID "E93E3F2D927DB8DA"
+   coords 18.461 0.89 -32
+  }
+  GenericEntity {
+   ID "2028D4F2554C2A5D"
+   coords 20.923 0.808 -32
+  }
+  GenericEntity {
+   ID "52AFEA980F9C252A"
+   coords 23.385 0.726 -32
+  }
+  GenericEntity {
+   ID "5B86D41643AECAC3"
+   coords 25.846 0.634 -32
+  }
+  GenericEntity {
+   ID "58F1C2A715560179"
+   coords 28.308 0.524 -32
+  }
+  GenericEntity {
+   ID "E33FB27403D2953E"
+   coords 30.77 0.388 -32
+  }
+  GenericEntity {
+   ID "B2BEAE114F93D8DE"
+   coords -32 0.684 -30.77
+  }
+  GenericEntity {
+   ID "91DF765D2A290FA4"
+   coords -32 0.584 -28.308
+  }
+  GenericEntity {
+   ID "A1DC845024650CDA"
+   coords -32 0.475 -25.846
+  }
+  GenericEntity {
+   ID "5257B3E4588995EA"
+   coords -32 0.397 -23.385
+  }
+  GenericEntity {
+   ID "E0FEBD16594B0552"
+   coords -32 0.289 -20.923
+  }
+  GenericEntity {
+   ID "131E6DE2B7A6674D"
+   coords -32 0.235 -18.461
+  }
+  GenericEntity {
+   ID "D9E58CE3210F10D4"
+   coords -32 0.149 -16
+  }
+  GenericEntity {
+   ID "BD5AA6BDB65C91C4"
+   coords -32 0.095 -13.539
+  }
+  GenericEntity {
+   ID "4593EF202C6F9714"
+   coords -32 0.05 -11.077
+  }
+  GenericEntity {
+   ID "65BC68C677DBCB65"
+   coords -32 0.018 -8.615
+  }
+  GenericEntity {
+   ID "03CC777C098EB6FD"
+   coords -32 0.009 -6.154
+  }
+  GenericEntity {
+   ID "E53EF271BF0DA64B"
+   coords -32 0 -3.692
+  }
+  GenericEntity {
+   ID "A8F71CEB6B11D659"
+   coords -32 0.003 -1.231
+  }
+  GenericEntity {
+   ID "991689C49709077A"
+   coords -32 0.009 1.231
+  }
+  GenericEntity {
+   ID "0BDE94068A3ED43A"
+   coords -32 0.023 3.692
+  }
+  GenericEntity {
+   ID "8EB40AD096E95E5F"
+   coords -32 0.065 6.154
+  }
+  GenericEntity {
+   ID "5EFD4BC3D480862B"
+   coords -32 0.121 8.615
+  }
+  GenericEntity {
+   ID "DC712D96B38A5552"
+   coords -32 0.203 11.077
+  }
+  GenericEntity {
+   ID "A94E503B355A62D9"
+   coords -32 0.297 13.539
+  }
+  GenericEntity {
+   ID "F071A0D7AC88AC86"
+   coords -32 0.402 16
+  }
+  GenericEntity {
+   ID "4D7F459AE8143C1E"
+   coords -32 0.538 18.461
+  }
+  GenericEntity {
+   ID "11963EFE346BBFB1"
+   coords -32 0.642 20.923
+  }
+  GenericEntity {
+   ID "CDC14DC72C840692"
+   coords -32 0.779 23.385
+  }
+  GenericEntity {
+   ID "0CA24BD050B51841"
+   coords -32 0.914 25.846
+  }
+  GenericEntity {
+   ID "958754F95339A2AA"
+   coords -32 1.024 28.308
+  }
+  GenericEntity {
+   ID "255DF6662932333C"
+   coords -32 1.137 30.77
   }
  }
 }
-GenericEntity AROR_Location_everon_military_outpost_levie : "{9B2CAF507D694BA5}Prefabs/Locations/AROR_Location_MilitaryOutpost.et" {
+GenericEntity AROR_Location_everon_military_outpost_levie : "{3D67A8A2E6AB69B5}Prefabs/Compositions/Locations/AROR_Defence_MilitaryOutpostCompact.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_military_outpost_levie"
@@ -503,8 +3931,12 @@ GenericEntity AROR_Location_everon_military_outpost_levie : "{9B2CAF507D694BA5}P
    m_eInitialControllingRole OCCUPIERS
    m_bGroundOnInit 0
   }
+  AROR_GarrisonComponent "{66D30571F98F4BE3}" {
+   m_fMaxDefenceRelief 3
+  }
  }
- coords 7476.739 164.563 4301.884
+ coords 7801.74 133.886 4891.88
+ angles 0 315 0
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -522,11 +3954,307 @@ GenericEntity AROR_Location_everon_military_outpost_levie : "{9B2CAF507D694BA5}P
      }
     }
    }
-   coords 0.001 0.904946 14.996
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "1AE190A1761BBE21"
+   coords -22.8 -0.68 24
+  }
+  GenericEntity {
+   ID "C01D7636F6050EFD"
+   coords -20.4 -0.507 24
+  }
+  GenericEntity {
+   ID "6D2F55E788030667"
+   coords -18 -0.374 24
+  }
+  GenericEntity {
+   ID "B7BE7B0C7424D580"
+   coords -15.6 -0.242 24
+  }
+  GenericEntity {
+   ID "ABFEBC44F184B9DB"
+   coords -13.2 -0.124 24
+  }
+  GenericEntity {
+   ID "B473F8A06069D849"
+   coords -10.8 -0.025 24
+  }
+  GenericEntity {
+   ID "ED238C3389054C63"
+   coords -8.4 0.081 24
+  }
+  GenericEntity {
+   ID "9AA0F88796162AF7"
+   coords -6 0.169 24
+  }
+  GenericEntity {
+   ID "EFCF0CF97CB788A4"
+   coords -3.6 0.253 24
+  }
+  GenericEntity {
+   ID "30CC2AAF66EB1FBC"
+   coords -1.2 0.306 24
+  }
+  GenericEntity {
+   ID "446F0D59A5D2B6BA"
+   coords 1.2 0.391 24
+  }
+  GenericEntity {
+   ID "081CCDE84B0BDDDE"
+   coords 3.6 0.486 24
+  }
+  GenericEntity {
+   ID "6948EC479291203F"
+   coords 6 0.575 24
+  }
+  GenericEntity {
+   ID "75B6385F9BFE55DD"
+   coords 8.4 0.666 24
+  }
+  GenericEntity {
+   ID "B778BD71CF74E713"
+   coords 10.8 0.726 24
+  }
+  GenericEntity {
+   ID "D68B40E3268B89DE"
+   coords 13.2 0.784 24
+  }
+  GenericEntity {
+   ID "F5AAF35F4D184E81"
+   coords 15.6 0.89 24
+  }
+  GenericEntity {
+   ID "93C8B506BE066EDD"
+   coords 18 0.965 24
+  }
+  GenericEntity {
+   ID "EC411D11AFFFC552"
+   coords 20.4 1.102 24
+  }
+  GenericEntity {
+   ID "C50D058DB70605FE"
+   coords 22.8 1.208 24
+  }
+  GenericEntity {
+   ID "C8436C5D1F747A95"
+   coords 24 1.508 -22.8
+  }
+  GenericEntity {
+   ID "661FE2C8605DB845"
+   coords 24 1.442 -20.4
+  }
+  GenericEntity {
+   ID "97FB44D0E9C79618"
+   coords 24 1.42 -18
+  }
+  GenericEntity {
+   ID "24D80F49E5CAA299"
+   coords 24 1.442 -15.6
+  }
+  GenericEntity {
+   ID "36BF7C34C5CBCAA0"
+   coords 24 1.418 -13.2
+  }
+  GenericEntity {
+   ID "BEC964960A2A8CD1"
+   coords 24 1.392 -10.8
+  }
+  GenericEntity {
+   ID "450599D6EEDF932B"
+   coords 24 1.351 -8.4
+  }
+  GenericEntity {
+   ID "E7EBD239A50285F8"
+   coords 24 1.317 -6
+  }
+  GenericEntity {
+   ID "51A299506548B1DC"
+   coords 24 1.307 -3.6
+  }
+  GenericEntity {
+   ID "51E31FE521A1721C"
+   coords 24 1.254 -1.2
+  }
+  GenericEntity {
+   ID "AFA166870EC3C92D"
+   coords 24 1.254 1.2
+  }
+  GenericEntity {
+   ID "8D6DDE110C679EFF"
+   coords 24 1.233 3.6
+  }
+  GenericEntity {
+   ID "7BD87F8C97C133BD"
+   coords 24 1.206 6
+  }
+  GenericEntity {
+   ID "80B1A1B2A7FB954B"
+   coords 24 1.199 8.4
+  }
+  GenericEntity {
+   ID "33905E4552F2393B"
+   coords 24 1.192 10.8
+  }
+  GenericEntity {
+   ID "158C86F1D2E4A4DF"
+   coords 24 1.199 13.2
+  }
+  GenericEntity {
+   ID "714D193FF7E2C45E"
+   coords 24 1.204 15.6
+  }
+  GenericEntity {
+   ID "9073B67B1F6CB9CF"
+   coords 24 1.23 18
+  }
+  GenericEntity {
+   ID "30038C0DB11EC122"
+   coords 24 1.27 20.4
+  }
+  GenericEntity {
+   ID "894258F334D06FA2"
+   coords 24 1.301 22.8
+  }
+  GenericEntity {
+   ID "7BCB29412CCB0584"
+   coords -22.8 1.825 -24
+  }
+  GenericEntity {
+   ID "079C2E936FED8162"
+   coords -20.4 1.849 -24
+  }
+  GenericEntity {
+   ID "595ABF9AC853A9AD"
+   coords -18 1.85 -24
+  }
+  GenericEntity {
+   ID "C6CF5FDD399C591B"
+   coords -15.6 1.824 -24
+  }
+  GenericEntity {
+   ID "D7123161604A10A4"
+   coords -13.2 1.664 -24
+  }
+  GenericEntity {
+   ID "5863321AE747D8BC"
+   coords -10.8 1.474 -24
+  }
+  GenericEntity {
+   ID "59BF13F117FBD498"
+   coords -8.4 1.24 -24
+  }
+  GenericEntity {
+   ID "456FA3438E3015EA"
+   coords 8.4 1.187 -24
+  }
+  GenericEntity {
+   ID "F261AA3C0EA6E472"
+   coords 10.8 1.306 -24
+  }
+  GenericEntity {
+   ID "23771A53D813DF51"
+   coords 13.2 1.345 -24
+  }
+  GenericEntity {
+   ID "9B3E6973A1DADCE7"
+   coords 15.6 1.451 -24
+  }
+  GenericEntity {
+   ID "1ACE8E9D1FED90E4"
+   coords 18 1.41 -24
+  }
+  GenericEntity {
+   ID "D57FD7726DC02CCE"
+   coords 20.4 1.474 -24
+  }
+  GenericEntity {
+   ID "F2973C02AA36FAE9"
+   coords 22.8 1.485 -24
+  }
+  GenericEntity {
+   ID "5FF7A4A96B52C5D5"
+   coords -24 1.736 -22.8
+  }
+  GenericEntity {
+   ID "938E1D80DF40F9DE"
+   coords -24 1.518 -20.4
+  }
+  GenericEntity {
+   ID "3A1CFB92BA8EB6DD"
+   coords -24 1.215 -18
+  }
+  GenericEntity {
+   ID "EF0F3EF340B8140E"
+   coords -24 0.893 -15.6
+  }
+  GenericEntity {
+   ID "C7343B17079D1B0E"
+   coords -24 0.45 -13.2
+  }
+  GenericEntity {
+   ID "AAFEFD04A5792F48"
+   coords -24 0.099 -10.8
+  }
+  GenericEntity {
+   ID "70E717178ECD7E83"
+   coords -24 -0.169 -8.4
+  }
+  GenericEntity {
+   ID "5A2BC66554FBE873"
+   coords -24 -0.35 -6
+  }
+  GenericEntity {
+   ID "6BB282B44434F03F"
+   coords -24 -0.476 -3.6
+  }
+  GenericEntity {
+   ID "911F72B2E16C59D5"
+   coords -24 -0.577 -1.2
+  }
+  GenericEntity {
+   ID "108D5D6C41F16969"
+   coords -24 -0.656 1.2
+  }
+  GenericEntity {
+   ID "35D404048AF6B148"
+   coords -24 -0.713 3.6
+  }
+  GenericEntity {
+   ID "6A08932223274D7A"
+   coords -24 -0.748 6
+  }
+  GenericEntity {
+   ID "718AF584305A7FD0"
+   coords -24 -0.78 8.4
+  }
+  GenericEntity {
+   ID "0BF4C7A5F53EFEE7"
+   coords -24 -0.798 10.8
+  }
+  GenericEntity {
+   ID "C72E382D26FD5545"
+   coords -24 -0.798 13.2
+  }
+  GenericEntity {
+   ID "9291FB8415F9F9D5"
+   coords -24 -0.798 15.6
+  }
+  GenericEntity {
+   ID "CC0B58A8B39C7DBD"
+   coords -24 -0.772 18
+  }
+  GenericEntity {
+   ID "EB86D84096C93731"
+   coords -24 -0.771 20.4
+  }
+  GenericEntity {
+   ID "050EAF471C393E91"
+   coords -24 -0.771 22.8
   }
  }
 }
-GenericEntity AROR_Location_everon_military_outpost_hospital : "{9B2CAF507D694BA5}Prefabs/Locations/AROR_Location_MilitaryOutpost.et" {
+GenericEntity AROR_Location_everon_military_outpost_hospital : "{6B5025C036D84B66}Prefabs/Compositions/Locations/AROR_Defence_MilitaryOutpost.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_military_outpost_hospital"
@@ -537,7 +4265,8 @@ GenericEntity AROR_Location_everon_military_outpost_hospital : "{9B2CAF507D694BA
    m_bGroundOnInit 0
   }
  }
- coords 3904.698 15.1087 8450.042
+ coords 4604.7 85.0631 8590.04
+ angles 0 225 0
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -555,11 +4284,403 @@ GenericEntity AROR_Location_everon_military_outpost_hospital : "{9B2CAF507D694BA
      }
     }
    }
-   coords 0.002 0.905846 14.998
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "5BEB3559C55291F4"
+   coords -30.77 -0.3161 32
+  }
+  GenericEntity {
+   ID "96B150B4E4FE0300"
+   coords -28.307 -0.3381 32
+  }
+  GenericEntity {
+   ID "A341F836053B7C4C"
+   coords -25.846 -0.3391 32
+  }
+  GenericEntity {
+   ID "38B8DB2FBCF51775"
+   coords -23.385 -0.3481 32
+  }
+  GenericEntity {
+   ID "E05E22ED4DBBC3C0"
+   coords -20.923 -0.3481 32
+  }
+  GenericEntity {
+   ID "08D177B9DF2598D3"
+   coords -18.461 -0.3481 32
+  }
+  GenericEntity {
+   ID "28D4C73DC07B4B62"
+   coords -16 -0.3481 32
+  }
+  GenericEntity {
+   ID "4852ED505191F310"
+   coords -13.538 -0.3031 32
+  }
+  GenericEntity {
+   ID "04917BC83E0A2A9C"
+   coords -11.077 -0.1311 32
+  }
+  GenericEntity {
+   ID "2EC33C8ECA511516"
+   coords -8.615 0.1139 32
+  }
+  GenericEntity {
+   ID "AAD01C84D7E6528B"
+   coords -6.154 -0.1011 32
+  }
+  GenericEntity {
+   ID "002DDFA1FB971BED"
+   coords -3.692 -0.4181 32
+  }
+  GenericEntity {
+   ID "0D73A78202790AE8"
+   coords -1.231 -0.5191 32
+  }
+  GenericEntity {
+   ID "A035F705F9F972EF"
+   coords 1.231 -0.4961 32
+  }
+  GenericEntity {
+   ID "80F6F0AA5CF60E11"
+   coords 3.692 -0.4951 32
+  }
+  GenericEntity {
+   ID "0D2715E58E38D65D"
+   coords 6.154 -0.4681 32
+  }
+  GenericEntity {
+   ID "9E2BFAE61E3F535A"
+   coords 8.615 -0.4641 32
+  }
+  GenericEntity {
+   ID "8DF67CE01181E881"
+   coords 11.077 -0.4641 32
+  }
+  GenericEntity {
+   ID "9537CCAB304CB47A"
+   coords 13.538 -0.4801 32
+  }
+  GenericEntity {
+   ID "99A4FC6174A1AEBA"
+   coords 16 -0.4961 32
+  }
+  GenericEntity {
+   ID "4B80586CFC2F9F22"
+   coords 18.461 -0.9091 32
+  }
+  GenericEntity {
+   ID "76B6468410CDD775"
+   coords 20.923 -1.3821 32
+  }
+  GenericEntity {
+   ID "97BB09A3810D9932"
+   coords 23.385 -1.3371 32
+  }
+  GenericEntity {
+   ID "7E8679A8F0C9D14B"
+   coords 25.846 -1.1081 32
+  }
+  GenericEntity {
+   ID "E09C07C93F5A3479"
+   coords 28.307 -0.9991 32
+  }
+  GenericEntity {
+   ID "8CCC9E05FC18EA7D"
+   coords 30.77 -0.9691 32
+  }
+  GenericEntity {
+   ID "0108FD07F6A17A81"
+   coords 32 -0.4501 -30.77
+  }
+  GenericEntity {
+   ID "06A001B338DEF462"
+   coords 32 -0.3721 -28.307
+  }
+  GenericEntity {
+   ID "152B54A5EAC52859"
+   coords 32 -0.2501 -25.846
+  }
+  GenericEntity {
+   ID "A505FDEB5E9ECE1F"
+   coords 32 -0.1341 -23.385
+  }
+  GenericEntity {
+   ID "C9534EFFBE06AF33"
+   coords 32 -0.0061 -20.923
+  }
+  GenericEntity {
+   ID "7C1062445F3BAC67"
+   coords 32 0.0889 -18.461
+  }
+  GenericEntity {
+   ID "97F5380EB0DEC0D7"
+   coords 32 0.1709 -16
+  }
+  GenericEntity {
+   ID "F590FCFBE9EF8507"
+   coords 32 0.1469 -13.538
+  }
+  GenericEntity {
+   ID "4FCC137B197B16E1"
+   coords 32 -0.1051 -11.077
+  }
+  GenericEntity {
+   ID "42BD8ED114649B75"
+   coords 32 -1.0921 -8.615
+  }
+  GenericEntity {
+   ID "F91655DBF8CA9C3C"
+   coords 32 -1.1531 -6.154
+  }
+  GenericEntity {
+   ID "B96010F96E705154"
+   coords 32 -1.1091 -3.692
+  }
+  GenericEntity {
+   ID "756345D42D4A7B96"
+   coords 32 -1.0591 -1.231
+  }
+  GenericEntity {
+   ID "6B18D95C0A8786AA"
+   coords 32 -1.0211 1.231
+  }
+  GenericEntity {
+   ID "A0DF4EAC9B01D755"
+   coords 32 -0.9661 3.692
+  }
+  GenericEntity {
+   ID "0960BFB3560A1C4E"
+   coords 32 -0.9381 6.154
+  }
+  GenericEntity {
+   ID "3C0E8BD688802589"
+   coords 32 -0.8891 8.615
+  }
+  GenericEntity {
+   ID "F44AE1526A2ABB88"
+   coords 32 -0.8341 11.077
+  }
+  GenericEntity {
+   ID "61703126959CA796"
+   coords 32 -0.7941 13.538
+  }
+  GenericEntity {
+   ID "AA82B6237F0D501B"
+   coords 32 -0.8641 16
+  }
+  GenericEntity {
+   ID "653D2F0054E030D0"
+   coords 32 -1.1651 18.461
+  }
+  GenericEntity {
+   ID "E2271CAEE3A933A1"
+   coords 32 -1.4831 20.923
+  }
+  GenericEntity {
+   ID "897C425F9353FB9C"
+   coords 32 -1.3761 23.385
+  }
+  GenericEntity {
+   ID "94FC1C5FEE36FF84"
+   coords 32 -1.1021 25.846
+  }
+  GenericEntity {
+   ID "9AECF384F7B149AE"
+   coords 32 -0.9991 28.307
+  }
+  GenericEntity {
+   ID "35A65E49A00F60C0"
+   coords 32 -0.9551 30.77
+  }
+  GenericEntity {
+   ID "F372EB9DC4702349"
+   coords -30.77 0.0209 -32
+  }
+  GenericEntity {
+   ID "312BF9F226E3DDFA"
+   coords -28.307 0.0139 -32
+  }
+  GenericEntity {
+   ID "AD610A524BF477B2"
+   coords -25.846 0.0479 -32
+  }
+  GenericEntity {
+   ID "8832C20309B42866"
+   coords -23.385 0.1039 -32
+  }
+  GenericEntity {
+   ID "7F14945EC0C68129"
+   coords -20.923 0.1859 -32
+  }
+  GenericEntity {
+   ID "CD070F42709BC05F"
+   coords -18.461 0.2169 -32
+  }
+  GenericEntity {
+   ID "D1CAE589996070A6"
+   coords -16 0.2439 -32
+  }
+  GenericEntity {
+   ID "3D73BEEE30A31075"
+   coords -13.538 0.2199 -32
+  }
+  GenericEntity {
+   ID "B1A5DD37C8DFC54A"
+   coords -11.077 0.1789 -32
+  }
+  GenericEntity {
+   ID "73F8BD6E3E9A676A"
+   coords -8.615 0.1509 -32
+  }
+  GenericEntity {
+   ID "284762CF0D61EAD5"
+   coords 8.615 -0.2771 -32
+  }
+  GenericEntity {
+   ID "04D46F532354B819"
+   coords 11.077 -0.2771 -32
+  }
+  GenericEntity {
+   ID "56B5866A1CD95494"
+   coords 13.538 -0.2771 -32
+  }
+  GenericEntity {
+   ID "C6795E0E051083E3"
+   coords 16 -0.2771 -32
+  }
+  GenericEntity {
+   ID "E93E3F2D927DB8DA"
+   coords 18.461 -0.2771 -32
+  }
+  GenericEntity {
+   ID "2028D4F2554C2A5D"
+   coords 20.923 -0.3001 -32
+  }
+  GenericEntity {
+   ID "52AFEA980F9C252A"
+   coords 23.385 -0.3271 -32
+  }
+  GenericEntity {
+   ID "5B86D41643AECAC3"
+   coords 25.846 -0.3541 -32
+  }
+  GenericEntity {
+   ID "58F1C2A715560179"
+   coords 28.307 -0.3921 -32
+  }
+  GenericEntity {
+   ID "E33FB27403D2953E"
+   coords 30.77 -0.4531 -32
+  }
+  GenericEntity {
+   ID "B2BEAE114F93D8DE"
+   coords -32 0.0479 -30.77
+  }
+  GenericEntity {
+   ID "91DF765D2A290FA4"
+   coords -32 0.1069 -28.307
+  }
+  GenericEntity {
+   ID "A1DC845024650CDA"
+   coords -32 0.1289 -25.846
+  }
+  GenericEntity {
+   ID "5257B3E4588995EA"
+   coords -32 0.1289 -23.385
+  }
+  GenericEntity {
+   ID "E0FEBD16594B0552"
+   coords -32 0.1289 -20.923
+  }
+  GenericEntity {
+   ID "131E6DE2B7A6674D"
+   coords -32 0.1289 -18.461
+  }
+  GenericEntity {
+   ID "D9E58CE3210F10D4"
+   coords -32 0.1289 -16
+  }
+  GenericEntity {
+   ID "BD5AA6BDB65C91C4"
+   coords -32 0.1289 -13.538
+  }
+  GenericEntity {
+   ID "4593EF202C6F9714"
+   coords -32 0.1169 -11.077
+  }
+  GenericEntity {
+   ID "65BC68C677DBCB65"
+   coords -32 0.1209 -8.615
+  }
+  GenericEntity {
+   ID "03CC777C098EB6FD"
+   coords -32 0.1029 -6.154
+  }
+  GenericEntity {
+   ID "E53EF271BF0DA64B"
+   coords -32 0.0989 -3.692
+  }
+  GenericEntity {
+   ID "A8F71CEB6B11D659"
+   coords -32 0.1259 -1.231
+  }
+  GenericEntity {
+   ID "991689C49709077A"
+   coords -32 0.1529 1.231
+  }
+  GenericEntity {
+   ID "0BDE94068A3ED43A"
+   coords -32 0.1489 3.692
+  }
+  GenericEntity {
+   ID "8EB40AD096E95E5F"
+   coords -32 0.1459 6.154
+  }
+  GenericEntity {
+   ID "5EFD4BC3D480862B"
+   coords -32 0.1079 8.615
+  }
+  GenericEntity {
+   ID "DC712D96B38A5552"
+   coords -32 0.0529 11.077
+  }
+  GenericEntity {
+   ID "A94E503B355A62D9"
+   coords -32 0.0019 13.538
+  }
+  GenericEntity {
+   ID "F071A0D7AC88AC86"
+   coords -32 -0.0551 16
+  }
+  GenericEntity {
+   ID "4D7F459AE8143C1E"
+   coords -32 -0.0841 18.461
+  }
+  GenericEntity {
+   ID "11963EFE346BBFB1"
+   coords -32 -0.1341 20.923
+  }
+  GenericEntity {
+   ID "CDC14DC72C840692"
+   coords -32 -0.1881 23.385
+  }
+  GenericEntity {
+   ID "0CA24BD050B51841"
+   coords -32 -0.2431 25.846
+  }
+  GenericEntity {
+   ID "958754F95339A2AA"
+   coords -32 -0.2771 28.307
+  }
+  GenericEntity {
+   ID "255DF6662932333C"
+   coords -32 -0.3081 30.77
   }
  }
 }
-GenericEntity AROR_Location_everon_military_outpost_lamentin : "{9B2CAF507D694BA5}Prefabs/Locations/AROR_Location_MilitaryOutpost.et" {
+GenericEntity AROR_Location_everon_military_outpost_lamentin : "{FE70433EF98B3C4D}Prefabs/Compositions/Locations/AROR_Defence_MilitaryOutpostCoastalCompact.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_military_outpost_lamentin"
@@ -570,7 +4691,8 @@ GenericEntity AROR_Location_everon_military_outpost_lamentin : "{9B2CAF507D694BA
    m_bGroundOnInit 0
   }
  }
- coords 1062.89 2.79539 6047.846
+ coords 1598.5 62.2188 5858.45
+ angles 0 315 0
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -588,11 +4710,251 @@ GenericEntity AROR_Location_everon_military_outpost_lamentin : "{9B2CAF507D694BA
      }
     }
    }
-   coords 10.61 0.905726 10.604
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "CB171C1B181E1576"
+   coords -18.75 -1.0168 20
+  }
+  GenericEntity {
+   ID "33A31C04A47CAB28"
+   coords -16.25 -0.9888 20
+  }
+  GenericEntity {
+   ID "C42A18725A40D9BC"
+   coords -13.75 -0.9748 20
+  }
+  GenericEntity {
+   ID "B371D77B20573F36"
+   coords -11.25 -0.9438 20
+  }
+  GenericEntity {
+   ID "2D0F9A44E8BE5D0A"
+   coords -8.75 -0.9438 20
+  }
+  GenericEntity {
+   ID "0022722032B1DC3E"
+   coords -6.25 -0.9438 20
+  }
+  GenericEntity {
+   ID "C19B35AD039BEDA8"
+   coords -3.75 -0.9168 20
+  }
+  GenericEntity {
+   ID "298F51BC02BF48EC"
+   coords -1.25 -0.9128 20
+  }
+  GenericEntity {
+   ID "5B55D5A88C495549"
+   coords 1.25 -0.9128 20
+  }
+  GenericEntity {
+   ID "1C47E1B9B94C212E"
+   coords 3.75 -0.8968 20
+  }
+  GenericEntity {
+   ID "4A1597DE6EC368BC"
+   coords 6.25 -0.8808 20
+  }
+  GenericEntity {
+   ID "046618CD8C9B63AF"
+   coords 8.75 -0.8808 20
+  }
+  GenericEntity {
+   ID "413266492DD121E8"
+   coords 11.25 -0.8758 20
+  }
+  GenericEntity {
+   ID "F59106DDF21582F8"
+   coords 13.75 -0.8498 20
+  }
+  GenericEntity {
+   ID "61B1F3A339222852"
+   coords 16.25 -0.8498 20
+  }
+  GenericEntity {
+   ID "0D43CD9596062F83"
+   coords 18.75 -0.8248 20
+  }
+  GenericEntity {
+   ID "4D58935435BC38DE"
+   coords 20 -0.0178 -18.75
+  }
+  GenericEntity {
+   ID "41B5E8F3F790C86D"
+   coords 20 -0.0558 -16.25
+  }
+  GenericEntity {
+   ID "9B79457F81F48264"
+   coords 20 -0.0708 -13.75
+  }
+  GenericEntity {
+   ID "81EE024333B0223F"
+   coords 20 -0.0768 -11.25
+  }
+  GenericEntity {
+   ID "9A70AB0E56854639"
+   coords 20 -0.0768 -8.75
+  }
+  GenericEntity {
+   ID "1FDD49F74F5E035D"
+   coords 20 -0.0738 -6.25
+  }
+  GenericEntity {
+   ID "096539E17EB92368"
+   coords 20 -0.0578 -3.75
+  }
+  GenericEntity {
+   ID "DF7E889C874DF216"
+   coords 20 -0.0498 -1.25
+  }
+  GenericEntity {
+   ID "11DF9AAFE7E0A853"
+   coords 20 -0.0458 1.25
+  }
+  GenericEntity {
+   ID "B4F51FFEF5756824"
+   coords 20 -0.0458 3.75
+  }
+  GenericEntity {
+   ID "380DC7937C801265"
+   coords 20 -0.0738 6.25
+  }
+  GenericEntity {
+   ID "657F214886A500C0"
+   coords 20 -0.1258 8.75
+  }
+  GenericEntity {
+   ID "EF0C495BC11D1641"
+   coords 20 -0.2488 11.25
+  }
+  GenericEntity {
+   ID "42A73DD6533780C2"
+   coords 20 -0.4038 13.75
+  }
+  GenericEntity {
+   ID "88EFC45DA7F12B72"
+   coords 20 -0.5698 16.25
+  }
+  GenericEntity {
+   ID "21A48F3BC3E9EFBB"
+   coords 20 -0.7358 18.75
+  }
+  GenericEntity {
+   ID "9D02EA5BE1D49126"
+   coords -18.75 0.3372 -20
+  }
+  GenericEntity {
+   ID "8CF50FB339855FDF"
+   coords -16.25 0.3412 -20
+  }
+  GenericEntity {
+   ID "6EDBEC99CE47A497"
+   coords -13.75 0.3132 -20
+  }
+  GenericEntity {
+   ID "9C9143DDE4F602DB"
+   coords -11.25 0.2862 -20
+  }
+  GenericEntity {
+   ID "50990F21E8CECB06"
+   coords -8.75 0.2512 -20
+  }
+  GenericEntity {
+   ID "4F8B194B35AC0CE3"
+   coords -6.25 0.1962 -20
+  }
+  GenericEntity {
+   ID "24B3AE7E5773D0FC"
+   coords 6.25 0.0102 -20
+  }
+  GenericEntity {
+   ID "2D2FB86D2EF066BF"
+   coords 8.75 0.0102 -20
+  }
+  GenericEntity {
+   ID "FC177423980B1770"
+   coords 11.25 0.0102 -20
+  }
+  GenericEntity {
+   ID "A33A593F8BA7CF8D"
+   coords 13.75 0.0102 -20
+  }
+  GenericEntity {
+   ID "6500B0E22AD599A2"
+   coords 16.25 0.0122 -20
+  }
+  GenericEntity {
+   ID "1E56A79AD50372C5"
+   coords 18.75 0.0102 -20
+  }
+  GenericEntity {
+   ID "1F3C514566FE7024"
+   coords -20 0.2952 -18.75
+  }
+  GenericEntity {
+   ID "0E8FFEDC1A4073C2"
+   coords -20 0.2372 -16.25
+  }
+  GenericEntity {
+   ID "DA59BA64A4E417EB"
+   coords -20 0.1642 -13.75
+  }
+  GenericEntity {
+   ID "EDB42CB18AB18778"
+   coords -20 0.1292 -11.25
+  }
+  GenericEntity {
+   ID "F3EA3B9A9271867B"
+   coords -20 0.0762 -8.75
+  }
+  GenericEntity {
+   ID "05F6348DC5C4B188"
+   coords -20 0.0482 -6.25
+  }
+  GenericEntity {
+   ID "5E7664B815414748"
+   coords -20 -0.0048 -3.75
+  }
+  GenericEntity {
+   ID "4D60196D87E329B8"
+   coords -20 -0.0498 -1.25
+  }
+  GenericEntity {
+   ID "3F5E8E27C2AEA4D0"
+   coords -20 -0.1318 1.25
+  }
+  GenericEntity {
+   ID "FB9A2C59A63651A8"
+   coords -20 -0.2428 3.75
+  }
+  GenericEntity {
+   ID "56DB9E3C781AC453"
+   coords -20 -0.3528 6.25
+  }
+  GenericEntity {
+   ID "3DC6BD533FE3ED5B"
+   coords -20 -0.4638 8.75
+  }
+  GenericEntity {
+   ID "18EAC03A6E242491"
+   coords -20 -0.5778 11.25
+  }
+  GenericEntity {
+   ID "379EDE8B99D76D9F"
+   coords -20 -0.7158 13.75
+  }
+  GenericEntity {
+   ID "6567B49E7C7A8D2E"
+   coords -20 -0.8258 16.25
+  }
+  GenericEntity {
+   ID "24CE0E64FD4E4295"
+   coords -20 -0.9608 18.75
   }
  }
 }
-GenericEntity AROR_Location_everon_military_outpost_morton : "{9B2CAF507D694BA5}Prefabs/Locations/AROR_Location_MilitaryOutpost.et" {
+GenericEntity AROR_Location_everon_military_outpost_morton : "{3D67A8A2E6AB69B5}Prefabs/Compositions/Locations/AROR_Defence_MilitaryOutpostCompact.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_military_outpost_morton"
@@ -603,7 +4965,7 @@ GenericEntity AROR_Location_everon_military_outpost_morton : "{9B2CAF507D694BA5}
    m_bGroundOnInit 0
   }
  }
- coords 4956.796 2.20941 3875.627
+ coords 4767.4 85.6817 4536.23
  {
   GenericEntity {
    ID "6AACA42C3DE4F4A5"
@@ -621,11 +4983,307 @@ GenericEntity AROR_Location_everon_military_outpost_morton : "{9B2CAF507D694BA5}
      }
     }
    }
-   coords 10.604 0.905886 10.603
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "1AE190A1761BBE21"
+   coords -22.8 -0.1837 24
+  }
+  GenericEntity {
+   ID "C01D7636F6050EFD"
+   coords -20.4 -0.1797 24
+  }
+  GenericEntity {
+   ID "6D2F55E788030667"
+   coords -18 -0.2317 24
+  }
+  GenericEntity {
+   ID "B7BE7B0C7424D580"
+   coords -15.6 -0.2457 24
+  }
+  GenericEntity {
+   ID "ABFEBC44F184B9DB"
+   coords -13.2 -0.1667 24
+  }
+  GenericEntity {
+   ID "B473F8A06069D849"
+   coords -10.8 -0.1087 24
+  }
+  GenericEntity {
+   ID "ED238C3389054C63"
+   coords -8.4 -0.0897 24
+  }
+  GenericEntity {
+   ID "9AA0F88796162AF7"
+   coords -6 -0.0137 24
+  }
+  GenericEntity {
+   ID "EFCF0CF97CB788A4"
+   coords -3.6 0.0633 24
+  }
+  GenericEntity {
+   ID "30CC2AAF66EB1FBC"
+   coords -1.2 0.1353 24
+  }
+  GenericEntity {
+   ID "446F0D59A5D2B6BA"
+   coords 1.2 0.1953 24
+  }
+  GenericEntity {
+   ID "081CCDE84B0BDDDE"
+   coords 3.6 0.2923 24
+  }
+  GenericEntity {
+   ID "6948EC479291203F"
+   coords 6 0.3893 24
+  }
+  GenericEntity {
+   ID "75B6385F9BFE55DD"
+   coords 8.4 0.5323 24
+  }
+  GenericEntity {
+   ID "B778BD71CF74E713"
+   coords 10.8 0.6763 24
+  }
+  GenericEntity {
+   ID "D68B40E3268B89DE"
+   coords 13.2 0.8113 24
+  }
+  GenericEntity {
+   ID "F5AAF35F4D184E81"
+   coords 15.6 0.9793 24
+  }
+  GenericEntity {
+   ID "93C8B506BE066EDD"
+   coords 18 1.1073 24
+  }
+  GenericEntity {
+   ID "EC411D11AFFFC552"
+   coords 20.4 1.2483 24
+  }
+  GenericEntity {
+   ID "C50D058DB70605FE"
+   coords 22.8 1.3673 24
+  }
+  GenericEntity {
+   ID "C8436C5D1F747A95"
+   coords 24 0.9613 -22.8
+  }
+  GenericEntity {
+   ID "661FE2C8605DB845"
+   coords 24 1.0083 -20.4
+  }
+  GenericEntity {
+   ID "97FB44D0E9C79618"
+   coords 24 1.0493 -18
+  }
+  GenericEntity {
+   ID "24D80F49E5CAA299"
+   coords 24 1.0553 -15.6
+  }
+  GenericEntity {
+   ID "36BF7C34C5CBCAA0"
+   coords 24 1.0833 -13.2
+  }
+  GenericEntity {
+   ID "BEC964960A2A8CD1"
+   coords 24 1.1213 -10.8
+  }
+  GenericEntity {
+   ID "450599D6EEDF932B"
+   coords 24 1.1393 -8.4
+  }
+  GenericEntity {
+   ID "E7EBD239A50285F8"
+   coords 24 1.1743 -6
+  }
+  GenericEntity {
+   ID "51A299506548B1DC"
+   coords 24 1.2023 -3.6
+  }
+  GenericEntity {
+   ID "51E31FE521A1721C"
+   coords 24 1.2233 -1.2
+  }
+  GenericEntity {
+   ID "AFA166870EC3C92D"
+   coords 24 1.2233 1.2
+  }
+  GenericEntity {
+   ID "8D6DDE110C679EFF"
+   coords 24 1.2233 3.6
+  }
+  GenericEntity {
+   ID "7BD87F8C97C133BD"
+   coords 24 1.2323 6
+  }
+  GenericEntity {
+   ID "80B1A1B2A7FB954B"
+   coords 24 1.2323 8.4
+  }
+  GenericEntity {
+   ID "33905E4552F2393B"
+   coords 24 1.2493 10.8
+  }
+  GenericEntity {
+   ID "158C86F1D2E4A4DF"
+   coords 24 1.2733 13.2
+  }
+  GenericEntity {
+   ID "714D193FF7E2C45E"
+   coords 24 1.2733 15.6
+  }
+  GenericEntity {
+   ID "9073B67B1F6CB9CF"
+   coords 24 1.3143 18
+  }
+  GenericEntity {
+   ID "30038C0DB11EC122"
+   coords 24 1.3463 20.4
+  }
+  GenericEntity {
+   ID "894258F334D06FA2"
+   coords 24 1.4053 22.8
+  }
+  GenericEntity {
+   ID "7BCB29412CCB0584"
+   coords -22.8 0.2483 -24
+  }
+  GenericEntity {
+   ID "079C2E936FED8162"
+   coords -20.4 0.2103 -24
+  }
+  GenericEntity {
+   ID "595ABF9AC853A9AD"
+   coords -18 0.1513 -24
+  }
+  GenericEntity {
+   ID "C6CF5FDD399C591B"
+   coords -15.6 0.1363 -24
+  }
+  GenericEntity {
+   ID "D7123161604A10A4"
+   coords -13.2 0.1323 -24
+  }
+  GenericEntity {
+   ID "5863321AE747D8BC"
+   coords -10.8 0.1283 -24
+  }
+  GenericEntity {
+   ID "59BF13F117FBD498"
+   coords -8.4 0.1483 -24
+  }
+  GenericEntity {
+   ID "456FA3438E3015EA"
+   coords 8.4 0.4143 -24
+  }
+  GenericEntity {
+   ID "F261AA3C0EA6E472"
+   coords 10.8 0.4863 -24
+  }
+  GenericEntity {
+   ID "23771A53D813DF51"
+   coords 13.2 0.5513 -24
+  }
+  GenericEntity {
+   ID "9B3E6973A1DADCE7"
+   coords 15.6 0.6083 -24
+  }
+  GenericEntity {
+   ID "1ACE8E9D1FED90E4"
+   coords 18 0.7053 -24
+  }
+  GenericEntity {
+   ID "D57FD7726DC02CCE"
+   coords 20.4 0.7863 -24
+  }
+  GenericEntity {
+   ID "F2973C02AA36FAE9"
+   coords 22.8 0.8983 -24
+  }
+  GenericEntity {
+   ID "5FF7A4A96B52C5D5"
+   coords -24 0.2383 -22.8
+  }
+  GenericEntity {
+   ID "938E1D80DF40F9DE"
+   coords -24 0.2393 -20.4
+  }
+  GenericEntity {
+   ID "3A1CFB92BA8EB6DD"
+   coords -24 0.2173 -18
+  }
+  GenericEntity {
+   ID "EF0F3EF340B8140E"
+   coords -24 0.2173 -15.6
+  }
+  GenericEntity {
+   ID "C7343B17079D1B0E"
+   coords -24 0.2173 -13.2
+  }
+  GenericEntity {
+   ID "AAFEFD04A5792F48"
+   coords -24 0.2073 -10.8
+  }
+  GenericEntity {
+   ID "70E717178ECD7E83"
+   coords -24 0.2073 -8.4
+  }
+  GenericEntity {
+   ID "5A2BC66554FBE873"
+   coords -24 0.1863 -6
+  }
+  GenericEntity {
+   ID "6BB282B44434F03F"
+   coords -24 0.1983 -3.6
+  }
+  GenericEntity {
+   ID "911F72B2E16C59D5"
+   coords -24 0.1763 -1.2
+  }
+  GenericEntity {
+   ID "108D5D6C41F16969"
+   coords -24 0.1763 1.2
+  }
+  GenericEntity {
+   ID "35D404048AF6B148"
+   coords -24 0.1763 3.6
+  }
+  GenericEntity {
+   ID "6A08932223274D7A"
+   coords -24 0.1413 6
+  }
+  GenericEntity {
+   ID "718AF584305A7FD0"
+   coords -24 0.1163 8.4
+  }
+  GenericEntity {
+   ID "0BF4C7A5F53EFEE7"
+   coords -24 0.0573 10.8
+  }
+  GenericEntity {
+   ID "C72E382D26FD5545"
+   coords -24 0.0193 13.2
+  }
+  GenericEntity {
+   ID "9291FB8415F9F9D5"
+   coords -24 -0.0267 15.6
+  }
+  GenericEntity {
+   ID "CC0B58A8B39C7DBD"
+   coords -24 -0.0647 18
+  }
+  GenericEntity {
+   ID "EB86D84096C93731"
+   coords -24 -0.1027 20.4
+  }
+  GenericEntity {
+   ID "050EAF471C393E91"
+   coords -24 -0.1617 22.8
   }
  }
 }
-GenericEntity AROR_Location_everon_airport : "{ED619C5A68ED5FAB}Prefabs/Locations/AROR_Location_Airport.et" {
+GenericEntity AROR_Location_everon_airport : "{37786477B1914A61}Prefabs/Compositions/Locations/AROR_Defence_Airbase.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_airport"
@@ -634,6 +5292,9 @@ GenericEntity AROR_Location_everon_airport : "{ED619C5A68ED5FAB}Prefabs/Location
    m_fRadius 500
    m_eInitialControllingRole OCCUPIERS
    m_bGroundOnInit 0
+  }
+  AROR_GarrisonComponent "{66D30571F98F4BE3}" {
+   m_bFixedDefenceAnchor 1
   }
  }
  coords 4913.476 28.251 11787.395
@@ -654,11 +5315,627 @@ GenericEntity AROR_Location_everon_airport : "{ED619C5A68ED5FAB}Prefabs/Location
      }
     }
    }
-   coords 0.004 1.248746 15.005
+   coords -49.996 1.248746 65.005
+  }
+  GenericEntity {
+   ID "531FB80DDDBDBAA6"
+   coords -92.774 -0.293 109.005
+  }
+  GenericEntity {
+   ID "17FF9973C3EEDB0B"
+   coords -90.329 -0.21 109.005
+  }
+  GenericEntity {
+   ID "6FD563FCEF543E49"
+   coords -87.885 -0.109 109.005
+  }
+  GenericEntity {
+   ID "428F5FDBCB422A97"
+   coords -85.44 -0.026 109.005
+  }
+  GenericEntity {
+   ID "B966BD0D0D16A276"
+   coords -82.996 0.075 109.005
+  }
+  GenericEntity {
+   ID "F3FC4FCC1F2A6A71"
+   coords -80.552 0.151 109.005
+  }
+  GenericEntity {
+   ID "11D332C49617E050"
+   coords -78.107 0.207 109.005
+  }
+  GenericEntity {
+   ID "6F00C7F1FE3002F3"
+   coords -75.663 0.279 109.005
+  }
+  GenericEntity {
+   ID "EA8D000945D3400A"
+   coords -73.218 0.32 109.005
+  }
+  GenericEntity {
+   ID "FB8941E3A9E78B75"
+   coords -70.774 0.358 109.005
+  }
+  GenericEntity {
+   ID "AD2A038B934BEA92"
+   coords -68.329 0.397 109.005
+  }
+  GenericEntity {
+   ID "D8C27EDBD762CF84"
+   coords -65.885 0.435 109.005
+  }
+  GenericEntity {
+   ID "475DC89E5115C2ED"
+   coords -63.44 0.473 109.005
+  }
+  GenericEntity {
+   ID "988E1913FB30FB14"
+   coords -60.996 0.473 109.005
+  }
+  GenericEntity {
+   ID "EDBDD4294AADA93A"
+   coords -58.552 0.473 109.005
+  }
+  GenericEntity {
+   ID "03A2DFCA194C63ED"
+   coords -56.107 0.473 109.005
+  }
+  GenericEntity {
+   ID "70D6EA78B2A9498F"
+   coords -53.663 0.473 109.005
+  }
+  GenericEntity {
+   ID "DA0FAA4F34EA36C1"
+   coords -51.218 0.473 109.005
+  }
+  GenericEntity {
+   ID "63B66E5070526ADF"
+   coords -48.774 0.473 109.005
+  }
+  GenericEntity {
+   ID "113188878ED949F2"
+   coords -46.329 0.473 109.005
+  }
+  GenericEntity {
+   ID "D4E858584047E72B"
+   coords -43.885 0.473 109.005
+  }
+  GenericEntity {
+   ID "B6F438FED520B3C2"
+   coords -41.44 0.473 109.005
+  }
+  GenericEntity {
+   ID "120E205CDA954384"
+   coords -38.996 0.473 109.005
+  }
+  GenericEntity {
+   ID "B46AFAD7635E74E3"
+   coords -36.552 0.473 109.005
+  }
+  GenericEntity {
+   ID "C2DF4B69F2FA9AE1"
+   coords -34.107 0.473 109.005
+  }
+  GenericEntity {
+   ID "F07BEFE8ABFD01CA"
+   coords -31.663 0.473 109.005
+  }
+  GenericEntity {
+   ID "94D518985DE5DFA2"
+   coords -29.218 0.473 109.005
+  }
+  GenericEntity {
+   ID "FE1AA8D00B255DC5"
+   coords -26.774 0.473 109.005
+  }
+  GenericEntity {
+   ID "C51E7800FE514E9D"
+   coords -24.329 0.473 109.005
+  }
+  GenericEntity {
+   ID "2559604B34C887C7"
+   coords -21.885 0.473 109.005
+  }
+  GenericEntity {
+   ID "7641AA188586532C"
+   coords -19.44 0.473 109.005
+  }
+  GenericEntity {
+   ID "88B9FD029AEC0528"
+   coords -16.996 0.473 109.005
+  }
+  GenericEntity {
+   ID "E315164850B7E4B1"
+   coords -14.552 0.473 109.005
+  }
+  GenericEntity {
+   ID "BB7BCF13F60E4BB7"
+   coords -12.107 0.473 109.005
+  }
+  GenericEntity {
+   ID "56BA808DDEA9C4CE"
+   coords -9.663 0.473 109.005
+  }
+  GenericEntity {
+   ID "DA1112B0012149D7"
+   coords -7.218 0.473 109.005
+  }
+  GenericEntity {
+   ID "4491D9C4A2CEC646"
+   coords -5.996 0.473 22.228
+  }
+  GenericEntity {
+   ID "701CA844E13F1ACC"
+   coords -5.996 0.473 24.672
+  }
+  GenericEntity {
+   ID "15F8840BE62C90F2"
+   coords -5.996 0.473 27.116
+  }
+  GenericEntity {
+   ID "BB120EEFD53A3837"
+   coords -5.996 0.473 29.56
+  }
+  GenericEntity {
+   ID "9D7EDB842633F3BD"
+   coords -5.996 0.473 32.005
+  }
+  GenericEntity {
+   ID "DA9E7E8376EF4D0C"
+   coords -5.996 0.473 34.449
+  }
+  GenericEntity {
+   ID "70EB52DA1FED993D"
+   coords -5.996 0.473 36.894
+  }
+  GenericEntity {
+   ID "E762566CFF260212"
+   coords -5.996 0.473 39.338
+  }
+  GenericEntity {
+   ID "2E747EC154F9B86D"
+   coords -5.996 0.473 41.783
+  }
+  GenericEntity {
+   ID "2970FD6883A62893"
+   coords -5.996 0.473 44.228
+  }
+  GenericEntity {
+   ID "6D6360266F615FF1"
+   coords -5.996 0.473 46.672
+  }
+  GenericEntity {
+   ID "71ECFF8109BF6B22"
+   coords -5.996 0.473 49.116
+  }
+  GenericEntity {
+   ID "D72F484DCC1308BB"
+   coords -5.996 0.473 51.561
+  }
+  GenericEntity {
+   ID "C98FC977A2F7A9A0"
+   coords -5.996 0.473 54.005
+  }
+  GenericEntity {
+   ID "6E31502F7B112528"
+   coords -5.996 0.473 56.449
+  }
+  GenericEntity {
+   ID "EA8856C1B9E6AD66"
+   coords -5.996 0.473 58.894
+  }
+  GenericEntity {
+   ID "B4BD41D32B6775C3"
+   coords -5.996 0.473 61.338
+  }
+  GenericEntity {
+   ID "3515F17F6AAF08F2"
+   coords -5.996 0.473 63.783
+  }
+  GenericEntity {
+   ID "C71B16C144037A09"
+   coords -5.996 0.473 66.228
+  }
+  GenericEntity {
+   ID "B93C1018781BFBAB"
+   coords -5.996 0.473 68.672
+  }
+  GenericEntity {
+   ID "5550C61F931626EB"
+   coords -5.996 0.473 71.116
+  }
+  GenericEntity {
+   ID "32FF0C8EBF1DF4E9"
+   coords -5.996 0.473 73.561
+  }
+  GenericEntity {
+   ID "D0D591752944A188"
+   coords -5.996 0.473 76.005
+  }
+  GenericEntity {
+   ID "175F18146E03BB86"
+   coords -5.996 0.473 78.449
+  }
+  GenericEntity {
+   ID "C4D26663C97D478E"
+   coords -5.996 0.473 80.894
+  }
+  GenericEntity {
+   ID "C95BC5A5F43AB6CE"
+   coords -5.996 0.473 83.338
+  }
+  GenericEntity {
+   ID "70112F8B42145410"
+   coords -5.996 0.473 85.783
+  }
+  GenericEntity {
+   ID "6A6A211DC1017362"
+   coords -5.996 0.473 88.228
+  }
+  GenericEntity {
+   ID "89EB48C27B6BB964"
+   coords -5.996 0.473 90.672
+  }
+  GenericEntity {
+   ID "7870CA55543F637D"
+   coords -5.996 0.473 93.116
+  }
+  GenericEntity {
+   ID "061258B0C1020063"
+   coords -5.996 0.473 95.561
+  }
+  GenericEntity {
+   ID "801503BB060BEB2C"
+   coords -5.996 0.473 98.005
+  }
+  GenericEntity {
+   ID "894CAFD38BEB9993"
+   coords -5.996 0.473 100.449
+  }
+  GenericEntity {
+   ID "2B4BF66FDD23B1CF"
+   coords -5.996 0.473 102.894
+  }
+  GenericEntity {
+   ID "CE957B1695ABE6C3"
+   coords -5.996 0.473 105.338
+  }
+  GenericEntity {
+   ID "183B5C6D42184411"
+   coords -5.996 0.473 107.783
+  }
+  GenericEntity {
+   ID "82CFF095B9B9E5DB"
+   coords -92.774 0.051 21.005
+  }
+  GenericEntity {
+   ID "9D9F4AF577529EFA"
+   coords -90.329 0.145 21.005
+  }
+  GenericEntity {
+   ID "6346E58660D437BC"
+   coords -87.885 0.26 21.005
+  }
+  GenericEntity {
+   ID "64D2B5368A683CAE"
+   coords -85.44 0.342 21.005
+  }
+  GenericEntity {
+   ID "130499AC8286C95C"
+   coords -82.996 0.38 21.005
+  }
+  GenericEntity {
+   ID "9367157F5BC2ED20"
+   coords -80.552 0.425 21.005
+  }
+  GenericEntity {
+   ID "F82E3AA881C9B4F6"
+   coords -78.107 0.435 21.005
+  }
+  GenericEntity {
+   ID "A54416DC38EE3596"
+   coords -75.663 0.441 21.005
+  }
+  GenericEntity {
+   ID "EC60460711BD300F"
+   coords -73.218 0.466 21.005
+  }
+  GenericEntity {
+   ID "4D695B805ADFA2B3"
+   coords -70.774 0.473 21.005
+  }
+  GenericEntity {
+   ID "31F21762ECDEEAB2"
+   coords -68.329 0.473 21.005
+  }
+  GenericEntity {
+   ID "9603E8B65409529B"
+   coords -65.885 0.473 21.005
+  }
+  GenericEntity {
+   ID "B799285D77391D52"
+   coords -63.44 0.473 21.005
+  }
+  GenericEntity {
+   ID "63D03B5E71F9D202"
+   coords -60.996 0.473 21.005
+  }
+  GenericEntity {
+   ID "9D16BB1B69AC4546"
+   coords -58.552 0.473 21.005
+  }
+  GenericEntity {
+   ID "F70438F224B22D5C"
+   coords -41.44 0.473 21.005
+  }
+  GenericEntity {
+   ID "F62445A61FE21ACA"
+   coords -38.996 0.473 21.005
+  }
+  GenericEntity {
+   ID "D1C4C7D9BE83AE7B"
+   coords -36.552 0.473 21.005
+  }
+  GenericEntity {
+   ID "0E6EB94C5A72E11E"
+   coords -34.107 0.473 21.005
+  }
+  GenericEntity {
+   ID "FDA6B543D6845D93"
+   coords -31.663 0.473 21.005
+  }
+  GenericEntity {
+   ID "12B935FA44FF02BD"
+   coords -29.218 0.473 21.005
+  }
+  GenericEntity {
+   ID "F5B123A6FBFCBDE7"
+   coords -26.774 0.473 21.005
+  }
+  GenericEntity {
+   ID "AB3490A4E6E38F4A"
+   coords -24.329 0.473 21.005
+  }
+  GenericEntity {
+   ID "05B4FC6C342B5F26"
+   coords -21.885 0.473 21.005
+  }
+  GenericEntity {
+   ID "2F47E4153F3844A4"
+   coords -19.44 0.473 21.005
+  }
+  GenericEntity {
+   ID "3D66E9F62C961467"
+   coords -16.996 0.473 21.005
+  }
+  GenericEntity {
+   ID "579181158E0F7237"
+   coords -14.552 0.473 21.005
+  }
+  GenericEntity {
+   ID "939EDA8BD1181E15"
+   coords -12.107 0.473 21.005
+  }
+  GenericEntity {
+   ID "EE60CAC3523528D6"
+   coords -9.663 0.473 21.005
+  }
+  GenericEntity {
+   ID "4D4FFFD13EADA74E"
+   coords -7.218 0.473 21.005
+  }
+  GenericEntity {
+   ID "86CB2E4BA9E1E880"
+   coords -93.996 -0.006 22.228
+  }
+  GenericEntity {
+   ID "4B9A8C85C6A05DD6"
+   coords -93.996 -0.037 24.672
+  }
+  GenericEntity {
+   ID "6570A6690601F5F2"
+   coords -93.996 -0.044 27.116
+  }
+  GenericEntity {
+   ID "52AE8615A2A3D7BD"
+   coords -93.996 -0.075 29.56
+  }
+  GenericEntity {
+   ID "225E7EEFA8F8D293"
+   coords -93.996 -0.075 32.005
+  }
+  GenericEntity {
+   ID "1C5C612C284377A9"
+   coords -93.996 -0.104 34.449
+  }
+  GenericEntity {
+   ID "C7E52029A9DFB689"
+   coords -93.996 -0.111 36.894
+  }
+  GenericEntity {
+   ID "59FA46AF3FDFC0F9"
+   coords -93.996 -0.118 39.338
+  }
+  GenericEntity {
+   ID "C612C35D4A1227EC"
+   coords -93.996 -0.137 41.783
+  }
+  GenericEntity {
+   ID "FFDDCDDB4CC5F2DD"
+   coords -93.996 -0.137 44.228
+  }
+  GenericEntity {
+   ID "E4A5FF266851A19A"
+   coords -93.996 -0.113 46.672
+  }
+  GenericEntity {
+   ID "0109842CE992EE7E"
+   coords -93.996 -0.098 49.116
+  }
+  GenericEntity {
+   ID "BFC1D710C8C168EE"
+   coords -93.996 -0.075 51.561
+  }
+  GenericEntity {
+   ID "3757B62508932C82"
+   coords -93.996 -0.075 54.005
+  }
+  GenericEntity {
+   ID "57D38FF830BF9AD7"
+   coords -93.996 -0.075 56.449
+  }
+  GenericEntity {
+   ID "CFF4EE89033126B0"
+   coords -93.996 -0.075 58.894
+  }
+  GenericEntity {
+   ID "4694556A52ACD559"
+   coords -93.996 -0.075 61.338
+  }
+  GenericEntity {
+   ID "70854961B01C9BC7"
+   coords -93.996 -0.075 63.783
+  }
+  GenericEntity {
+   ID "3B52D08435CC8002"
+   coords -93.996 -0.075 66.228
+  }
+  GenericEntity {
+   ID "ACE4967ACB2B785B"
+   coords -93.996 -0.075 68.672
+  }
+  GenericEntity {
+   ID "E025AEC95FA7D12D"
+   coords -93.996 -0.075 71.116
+  }
+  GenericEntity {
+   ID "0FF46069F51FF837"
+   coords -93.996 -0.075 73.561
+  }
+  GenericEntity {
+   ID "B49F156E839DC05E"
+   coords -93.996 -0.075 76.005
+  }
+  GenericEntity {
+   ID "C725134B43498C2B"
+   coords -93.996 -0.075 78.449
+  }
+  GenericEntity {
+   ID "A60A9891AA00DF6B"
+   coords -93.996 -0.083 80.894
+  }
+  GenericEntity {
+   ID "B7E785C033C636ED"
+   coords -93.996 -0.114 83.338
+  }
+  GenericEntity {
+   ID "D02AD91649BE2284"
+   coords -93.996 -0.114 85.783
+  }
+  GenericEntity {
+   ID "A1D7382534BDAB98"
+   coords -93.996 -0.14 88.228
+  }
+  GenericEntity {
+   ID "56CE2AB29357BD70"
+   coords -93.996 -0.154 90.672
+  }
+  GenericEntity {
+   ID "45D5363DE2549F5D"
+   coords -93.996 -0.185 93.116
+  }
+  GenericEntity {
+   ID "B61C6858BC83142F"
+   coords -93.996 -0.224 95.561
+  }
+  GenericEntity {
+   ID "E39F0A1FBEB178F7"
+   coords -93.996 -0.246 98.005
+  }
+  GenericEntity {
+   ID "FAC898368D0771A3"
+   coords -93.996 -0.276 100.449
+  }
+  GenericEntity {
+   ID "C44CEF0D21E38FCE"
+   coords -93.996 -0.314 102.894
+  }
+  GenericEntity {
+   ID "27063FF88636DAB6"
+   coords -93.996 -0.329 105.338
+  }
+  GenericEntity {
+   ID "6F73EED1A3956153"
+   coords -93.996 -0.357 107.783
+  }
+  GenericEntity {
+   ID "6D3EC628E244C6F9"
+   coords -24.540156 0.3428 90.460844
+  }
+  GenericEntity {
+   ID "55D6C4749AC74A33"
+   coords -75.451844 0.3428 39.549156
+  }
+  GenericEntity {
+   ID "4D29DBC4943EC31B"
+   coords -24.540156 0.3428 39.549156
+  }
+  GenericEntity {
+   ID "9BC7BA33747D2673"
+   coords -75.451844 0.3428 90.460844
+  }
+  GenericEntity {
+   ID "D0F9C448536E85CD"
+   coords -49.996 0.3428 97.005
+  }
+  GenericEntity {
+   ID "C516FFF96FE7A118"
+   coords -49.996 0.3428 33.005
+  }
+  GenericEntity {
+   ID "F8DBCD436C394409"
+   coords -17.996 0.3428 65.005
+  }
+  GenericEntity {
+   ID "F76497369246D9BB"
+   coords -81.996 0.3428 65.005
+  }
+  GenericEntity {
+   ID "39C9DDF26255E99E"
+   coords -49.996 0.3428 105.005
+  }
+  GenericEntity {
+   ID "1327F871B64888E2"
+   coords -89.996 0.3428 65.005
+  }
+  GenericEntity {
+   ID "7467B1CA76D77588"
+   coords -9.996 0.3428 65.005
+  }
+  GenericEntity {
+   ID "D1F62D109A82640C"
+   coords -49.996 0.3428 25.005
+  }
+  GenericEntity {
+   ID "D5D8BDF5B7B70A15"
+   coords -59.996 0.3428 60.005
+  }
+  GenericEntity {
+   ID "F0A36DC72CE3B85C"
+   coords -39.996 0.3428 60.005
+  }
+  GenericEntity {
+   ID "A52B15E180582006"
+   coords -59.996 0.3428 73.005
+  }
+  GenericEntity {
+   ID "E04CD351B32EC09A"
+   coords -39.996 0.3428 73.005
   }
  }
 }
-GenericEntity AROR_Location_everon_factory_north_ridge : "{357CE0E8EC82AFED}Prefabs/Locations/AROR_Location_Factory.et" {
+GenericEntity AROR_Location_everon_factory_north_ridge : "{7DB3028CC7602D89}Prefabs/Compositions/Locations/AROR_Defence_FactoryCompact.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_factory_north_ridge"
@@ -669,7 +5946,7 @@ GenericEntity AROR_Location_everon_factory_north_ridge : "{357CE0E8EC82AFED}Pref
    m_bGroundOnInit 0
   }
  }
- coords 5591.082 205.067 7235.609
+ coords 6256.08 180.049 7560.61
  {
   GenericEntity {
    ID "6AACA42C2C775A3A"
@@ -687,11 +5964,307 @@ GenericEntity AROR_Location_everon_factory_north_ridge : "{357CE0E8EC82AFED}Pref
      }
     }
    }
-   coords 14.998 4.437946 0.001
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "DD94597124E965B2"
+   coords -22.8 -0.417 24
+  }
+  GenericEntity {
+   ID "8B99FA68DA341E4D"
+   coords -20.4 -0.232 24
+  }
+  GenericEntity {
+   ID "E9A959FBEFD31561"
+   coords -18 -0.089 24
+  }
+  GenericEntity {
+   ID "9F6BE554B41CCFE5"
+   coords -15.6 0.012 24
+  }
+  GenericEntity {
+   ID "E60E968F055A240C"
+   coords -13.2 0.194 24
+  }
+  GenericEntity {
+   ID "7A39C449C2383A83"
+   coords -10.8 0.341 24
+  }
+  GenericEntity {
+   ID "4308DFBEB23F241F"
+   coords -8.4 0.474 24
+  }
+  GenericEntity {
+   ID "5479E01DC9838700"
+   coords -6 0.66 24
+  }
+  GenericEntity {
+   ID "1A926ADA4538CC90"
+   coords -3.6 0.742 24
+  }
+  GenericEntity {
+   ID "0111D4D768D6C1F0"
+   coords -1.2 0.757 24
+  }
+  GenericEntity {
+   ID "B720B30C7615D77A"
+   coords 1.2 0.729 24
+  }
+  GenericEntity {
+   ID "00DEA58A211B53D5"
+   coords 3.6 0.864 24
+  }
+  GenericEntity {
+   ID "4ABB832AAD878AF8"
+   coords 6 0.928 24
+  }
+  GenericEntity {
+   ID "7C7603843883DE58"
+   coords 8.4 0.985 24
+  }
+  GenericEntity {
+   ID "E586E6C9924DB316"
+   coords 10.8 1.009 24
+  }
+  GenericEntity {
+   ID "CFB876DF0453B858"
+   coords 13.2 0.969 24
+  }
+  GenericEntity {
+   ID "D10B0CC56EFC383E"
+   coords 15.6 0.872 24
+  }
+  GenericEntity {
+   ID "99F8364B4E342977"
+   coords 18 0.797 24
+  }
+  GenericEntity {
+   ID "681FA486C4AC7674"
+   coords 20.4 0.754 24
+  }
+  GenericEntity {
+   ID "BD46116F1F60E023"
+   coords 22.8 0.782 24
+  }
+  GenericEntity {
+   ID "E4B3913701412A2B"
+   coords 24 -0.518 -22.8
+  }
+  GenericEntity {
+   ID "76B9B51B145B5A69"
+   coords 24 -0.408 -20.4
+  }
+  GenericEntity {
+   ID "4A0D3AEF0029CBFF"
+   coords 24 -0.296 -18
+  }
+  GenericEntity {
+   ID "EDC7511D0C956322"
+   coords 24 -0.183 -15.6
+  }
+  GenericEntity {
+   ID "697CD47E18861037"
+   coords 24 -0.047 -13.2
+  }
+  GenericEntity {
+   ID "51E8FFC0B29D17CA"
+   coords 24 0.073 -10.8
+  }
+  GenericEntity {
+   ID "A4533F8C223B9145"
+   coords 24 0.217 -8.4
+  }
+  GenericEntity {
+   ID "A7C1177908ACCF98"
+   coords 24 0.329 -6
+  }
+  GenericEntity {
+   ID "DA0CE1EB1445F392"
+   coords 24 0.458 -3.6
+  }
+  GenericEntity {
+   ID "29CE0F7D5928EFDD"
+   coords 24 0.584 -1.2
+  }
+  GenericEntity {
+   ID "6DDBC43EDF599556"
+   coords 24 0.669 1.2
+  }
+  GenericEntity {
+   ID "E47015A16313E665"
+   coords 24 0.744 3.6
+  }
+  GenericEntity {
+   ID "F0C93B5D2B58E52D"
+   coords 24 0.819 6
+  }
+  GenericEntity {
+   ID "AB4615AEA465E58D"
+   coords 24 0.846 8.4
+  }
+  GenericEntity {
+   ID "D150744304034EE5"
+   coords 24 0.832 10.8
+  }
+  GenericEntity {
+   ID "7D4CB43C44BE40AE"
+   coords 24 0.774 13.2
+  }
+  GenericEntity {
+   ID "954567D2155C779C"
+   coords 24 0.771 15.6
+  }
+  GenericEntity {
+   ID "473C57AA4F9E7847"
+   coords 24 0.772 18
+  }
+  GenericEntity {
+   ID "1F15DB7BD9925325"
+   coords 24 0.787 20.4
+  }
+  GenericEntity {
+   ID "AC41399BEF28C975"
+   coords 24 0.803 22.8
+  }
+  GenericEntity {
+   ID "77D0379EE10F8584"
+   coords -22.8 -0.454 -24
+  }
+  GenericEntity {
+   ID "4FEFEFB68FC03FAC"
+   coords -20.4 -0.343 -24
+  }
+  GenericEntity {
+   ID "F577A1F3B55958E0"
+   coords -18 -0.338 -24
+  }
+  GenericEntity {
+   ID "1522D6EB98B1DA97"
+   coords -15.6 -0.345 -24
+  }
+  GenericEntity {
+   ID "4629E766E6C2F378"
+   coords -13.2 -0.406 -24
+  }
+  GenericEntity {
+   ID "6656BE811F8F3579"
+   coords -10.8 -0.461 -24
+  }
+  GenericEntity {
+   ID "7615C9E39850E365"
+   coords -8.4 -0.534 -24
+  }
+  GenericEntity {
+   ID "D5050EEECAB5DEEB"
+   coords 8.4 -0.789 -24
+  }
+  GenericEntity {
+   ID "CA1D3ECEE07F8B0E"
+   coords 10.8 -0.775 -24
+  }
+  GenericEntity {
+   ID "3D5058EBB182204A"
+   coords 13.2 -0.746 -24
+  }
+  GenericEntity {
+   ID "DF5FEBB2079DB0D0"
+   coords 15.6 -0.739 -24
+  }
+  GenericEntity {
+   ID "A360053E03575F1D"
+   coords 18 -0.702 -24
+  }
+  GenericEntity {
+   ID "EE0BF96C5215268C"
+   coords 20.4 -0.657 -24
+  }
+  GenericEntity {
+   ID "474C823B533A7114"
+   coords 22.8 -0.582 -24
+  }
+  GenericEntity {
+   ID "FB28E5BD2E243583"
+   coords -24 -0.454 -22.8
+  }
+  GenericEntity {
+   ID "C6D7E562BED62A5D"
+   coords -24 -0.357 -20.4
+  }
+  GenericEntity {
+   ID "3E9D5CD1EE616E55"
+   coords -24 -0.392 -18
+  }
+  GenericEntity {
+   ID "6E2F2BB9E2FDC127"
+   coords -24 -0.434 -15.6
+  }
+  GenericEntity {
+   ID "8608ECD0AD9FEBEB"
+   coords -24 -0.497 -13.2
+  }
+  GenericEntity {
+   ID "E207663F4272C14A"
+   coords -24 -0.541 -10.8
+  }
+  GenericEntity {
+   ID "98FC76E2CC93F6A5"
+   coords -24 -0.582 -8.4
+  }
+  GenericEntity {
+   ID "0084B29CD6E5F91B"
+   coords -24 -0.648 -6
+  }
+  GenericEntity {
+   ID "4495A56E8C1004C1"
+   coords -24 -0.684 -3.6
+  }
+  GenericEntity {
+   ID "B16125EE12EB753C"
+   coords -24 -0.741 -1.2
+  }
+  GenericEntity {
+   ID "8EA84833D7925AE5"
+   coords -24 -0.672 1.2
+  }
+  GenericEntity {
+   ID "18154D80F07C4B77"
+   coords -24 -0.605 3.6
+  }
+  GenericEntity {
+   ID "B40D6A8F03553403"
+   coords -24 -0.376 6
+  }
+  GenericEntity {
+   ID "6D709A60C091349C"
+   coords -24 -0.229 8.4
+  }
+  GenericEntity {
+   ID "2EFFE3DC02C97794"
+   coords -24 -0.099 10.8
+  }
+  GenericEntity {
+   ID "95E011E8BE6816E8"
+   coords -24 -0.043 13.2
+  }
+  GenericEntity {
+   ID "AF692F4CC98EEF81"
+   coords -24 -0.135 15.6
+  }
+  GenericEntity {
+   ID "F21326E35CEC8A31"
+   coords -24 -0.183 18
+  }
+  GenericEntity {
+   ID "3973AF5F8DABCF68"
+   coords -24 -0.307 20.4
+  }
+  GenericEntity {
+   ID "461CC319C434409F"
+   coords -24 -0.427 22.8
   }
  }
 }
-GenericEntity AROR_Location_everon_resources_north_ridge_west : "{DFDDE00B63706BEF}Prefabs/Locations/AROR_Location_Resources.et" {
+GenericEntity AROR_Location_everon_resources_north_ridge_west : "{C3CE3C983BD347EB}Prefabs/Compositions/Locations/AROR_Defence_Resources.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_resources_north_ridge_west"
@@ -702,7 +6275,8 @@ GenericEntity AROR_Location_everon_resources_north_ridge_west : "{DFDDE00B63706B
    m_bGroundOnInit 0
   }
  }
- coords 5526.961 200.03 7115.338
+ coords 4862.57 165.071 7250.94
+ angles 0 315 0
  {
   GenericEntity {
    ID "6AACA42C07095538"
@@ -720,11 +6294,327 @@ GenericEntity AROR_Location_everon_resources_north_ridge_west : "{DFDDE00B63706B
      }
     }
    }
-   coords 10.609 2.643946 10.602
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "9AF22122B2F1E57E"
+   coords -24.762 -0.038 26
+  }
+  GenericEntity {
+   ID "8E6C3A047EF72193"
+   coords -22.286 0.014 26
+  }
+  GenericEntity {
+   ID "2D9E1B704E9EF4A0"
+   coords -19.809 0.038 26
+  }
+  GenericEntity {
+   ID "386912E0935DE8BB"
+   coords -17.333 0.062 26
+  }
+  GenericEntity {
+   ID "526EF9E0EB15114B"
+   coords -14.857 0.108 26
+  }
+  GenericEntity {
+   ID "B4B51EB17A4CA9F4"
+   coords -12.381 0.117 26
+  }
+  GenericEntity {
+   ID "B1C758ACD6730101"
+   coords -9.905 0.144 26
+  }
+  GenericEntity {
+   ID "49F5680F9AB50565"
+   coords -7.429 0.17 26
+  }
+  GenericEntity {
+   ID "9D11B1960D33B102"
+   coords -4.953 0.199 26
+  }
+  GenericEntity {
+   ID "87D4F00BD44C6A6D"
+   coords -2.476 0.282 26
+  }
+  GenericEntity {
+   ID "8C8C086AE87F172F"
+   coords 0 0.386 26
+  }
+  GenericEntity {
+   ID "F49708B2CF30EF26"
+   coords 2.476 0.331 26
+  }
+  GenericEntity {
+   ID "E90BFED12F961779"
+   coords 4.953 0.222 26
+  }
+  GenericEntity {
+   ID "638C48082149D5A7"
+   coords 7.429 0.099 26
+  }
+  GenericEntity {
+   ID "453315AB4A774944"
+   coords 9.905 0.085 26
+  }
+  GenericEntity {
+   ID "D4E864572FC57D07"
+   coords 12.381 0.074 26
+  }
+  GenericEntity {
+   ID "D9D6B248A4ACE6C0"
+   coords 14.857 0.072 26
+  }
+  GenericEntity {
+   ID "0424FA8849D7EB87"
+   coords 17.333 0.097 26
+  }
+  GenericEntity {
+   ID "93926A7401D97916"
+   coords 19.809 0.093 26
+  }
+  GenericEntity {
+   ID "31BC14AB9530ED22"
+   coords 22.286 0.12 26
+  }
+  GenericEntity {
+   ID "C2D7A47924C6D72F"
+   coords 24.762 0.148 26
+  }
+  GenericEntity {
+   ID "7A5CB05CB9DBE1E7"
+   coords 26 0.756 -24.762
+  }
+  GenericEntity {
+   ID "B733C1D963885BCF"
+   coords 26 0.722 -22.286
+  }
+  GenericEntity {
+   ID "F031914364711BBD"
+   coords 26 0.678 -19.809
+  }
+  GenericEntity {
+   ID "B777A92EE24BA715"
+   coords 26 0.64 -17.333
+  }
+  GenericEntity {
+   ID "D4B285D1CB509000"
+   coords 26 0.613 -14.857
+  }
+  GenericEntity {
+   ID "16E3001B818FF667"
+   coords 26 0.59 -12.381
+  }
+  GenericEntity {
+   ID "0B86F7A7C8C47C40"
+   coords 26 0.589 -9.905
+  }
+  GenericEntity {
+   ID "7B8F903951C9B953"
+   coords 26 0.563 -7.429
+  }
+  GenericEntity {
+   ID "E48826E047D51D40"
+   coords 26 0.563 -4.953
+  }
+  GenericEntity {
+   ID "983112EBB5FDC3A9"
+   coords 26 0.563 -2.476
+  }
+  GenericEntity {
+   ID "4D27F7DD4A78E84C"
+   coords 26 0.542 0
+  }
+  GenericEntity {
+   ID "9639C8E3F675744B"
+   coords 26 0.503 2.476
+  }
+  GenericEntity {
+   ID "0D849DC007747418"
+   coords 26 0.456 4.953
+  }
+  GenericEntity {
+   ID "BB396F33668581DE"
+   coords 26 0.434 7.429
+  }
+  GenericEntity {
+   ID "4E37F1D0CD0AF8AE"
+   coords 26 0.406 9.905
+  }
+  GenericEntity {
+   ID "7FDBC61F9F4325F9"
+   coords 26 0.379 12.381
+  }
+  GenericEntity {
+   ID "30884369403D88C2"
+   coords 26 0.376 14.857
+  }
+  GenericEntity {
+   ID "10A811EEA6DB4853"
+   coords 26 0.331 17.333
+  }
+  GenericEntity {
+   ID "03B677B330EED681"
+   coords 26 0.297 19.809
+  }
+  GenericEntity {
+   ID "65A173086BF861F3"
+   coords 26 0.252 22.286
+  }
+  GenericEntity {
+   ID "6B173B67D7AECEDB"
+   coords 26 0.198 24.762
+  }
+  GenericEntity {
+   ID "9695A3E787FE2E65"
+   coords -24.762 0.213 -26
+  }
+  GenericEntity {
+   ID "703C2B187EDECC9F"
+   coords -22.286 0.252 -26
+  }
+  GenericEntity {
+   ID "36AD4EFD982C9714"
+   coords -19.809 0.299 -26
+  }
+  GenericEntity {
+   ID "B0A5D44D902BC422"
+   coords -17.333 0.331 -26
+  }
+  GenericEntity {
+   ID "C7307BE231FF89DB"
+   coords -14.857 0.385 -26
+  }
+  GenericEntity {
+   ID "9D7D30439F12F07A"
+   coords -12.381 0.412 -26
+  }
+  GenericEntity {
+   ID "BF98F899AAED5D85"
+   coords -9.905 0.463 -26
+  }
+  GenericEntity {
+   ID "D73ED748A4708235"
+   coords -7.429 0.498 -26
+  }
+  GenericEntity {
+   ID "FD4040BD01DE5D96"
+   coords 7.429 0.756 -26
+  }
+  GenericEntity {
+   ID "D997FAF54A7222CF"
+   coords 9.905 0.759 -26
+  }
+  GenericEntity {
+   ID "DD4F6CC8F95A4031"
+   coords 12.381 0.779 -26
+  }
+  GenericEntity {
+   ID "CBEA792E6306A8DE"
+   coords 14.857 0.784 -26
+  }
+  GenericEntity {
+   ID "FBBDDA790C8BD446"
+   coords 17.333 0.802 -26
+  }
+  GenericEntity {
+   ID "D284885FE0C52D0F"
+   coords 19.809 0.799 -26
+  }
+  GenericEntity {
+   ID "E993B20472495882"
+   coords 22.286 0.784 -26
+  }
+  GenericEntity {
+   ID "A50B91DD4CD8D53A"
+   coords 24.762 0.784 -26
+  }
+  GenericEntity {
+   ID "443440AE4C6C3935"
+   coords -26 0.163 -24.762
+  }
+  GenericEntity {
+   ID "BF013329BA98DE9B"
+   coords -26 0.108 -22.286
+  }
+  GenericEntity {
+   ID "93E1D869F8918FD4"
+   coords -26 0.062 -19.809
+  }
+  GenericEntity {
+   ID "746D587F28E87BA8"
+   coords -26 0.01 -17.333
+  }
+  GenericEntity {
+   ID "508D5A974B37A814"
+   coords -26 -0.024 -14.857
+  }
+  GenericEntity {
+   ID "184B36239DE53018"
+   coords -26 -0.035 -12.381
+  }
+  GenericEntity {
+   ID "B8BDD4B6089E84CD"
+   coords -26 -0.035 -9.905
+  }
+  GenericEntity {
+   ID "BD95B68A219605B5"
+   coords -26 -0.044 -7.429
+  }
+  GenericEntity {
+   ID "A90CED40A6B3B8A8"
+   coords -26 -0.066 -4.953
+  }
+  GenericEntity {
+   ID "77D39D1B7AC63F4A"
+   coords -26 -0.08 -2.476
+  }
+  GenericEntity {
+   ID "124AD8A581D469F3"
+   coords -26 -0.134 0
+  }
+  GenericEntity {
+   ID "B3675F73864118A2"
+   coords -26 -0.189 2.476
+  }
+  GenericEntity {
+   ID "3D77C63598A75B22"
+   coords -26 -0.244 4.953
+  }
+  GenericEntity {
+   ID "282B54AE50C11105"
+   coords -26 -0.299 7.429
+  }
+  GenericEntity {
+   ID "AE9C1847FCDFECFB"
+   coords -26 -0.305 9.905
+  }
+  GenericEntity {
+   ID "06D843904B3A81B3"
+   coords -26 -0.325 12.381
+  }
+  GenericEntity {
+   ID "5B0142687DBAA707"
+   coords -26 -0.326 14.857
+  }
+  GenericEntity {
+   ID "7A435CA828A51575"
+   coords -26 -0.247 17.333
+  }
+  GenericEntity {
+   ID "8CCCA493FB79D6F9"
+   coords -26 -0.174 19.809
+  }
+  GenericEntity {
+   ID "99945B4BAD906792"
+   coords -26 -0.119 22.286
+  }
+  GenericEntity {
+   ID "6DF4C70AA8343DA4"
+   coords -26 -0.065 24.762
   }
  }
 }
-GenericEntity AROR_Location_everon_resources_north_ridge_east : "{DFDDE00B63706BEF}Prefabs/Locations/AROR_Location_Resources.et" {
+GenericEntity AROR_Location_everon_resources_north_ridge_east : "{BC294CFD17A22D5C}Prefabs/Compositions/Locations/AROR_Defence_ResourcesCompact.et" {
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_resources_north_ridge_east"
@@ -735,7 +6625,8 @@ GenericEntity AROR_Location_everon_resources_north_ridge_east : "{DFDDE00B63706B
    m_bGroundOnInit 0
   }
  }
- coords 5568.75 205.11 7071.537
+ coords 6179.36 166.438 6457.14
+ angles 0 45 0
  {
   GenericEntity {
    ID "6AACA42C07095538"
@@ -753,7 +6644,303 @@ GenericEntity AROR_Location_everon_resources_north_ridge_east : "{DFDDE00B63706B
      }
     }
    }
-   coords 10.61 3.525946 10.603
+   coords 0 0.905946 0
+  }
+  GenericEntity {
+   ID "EB97FDE853DB400E"
+   coords -22.8 0.07 24
+  }
+  GenericEntity {
+   ID "C6AF310A0EFEF766"
+   coords -20.4 0.044 24
+  }
+  GenericEntity {
+   ID "530D033146B7B9BE"
+   coords -18 0.036 24
+  }
+  GenericEntity {
+   ID "BE79F27E33819080"
+   coords -15.6 0.015 24
+  }
+  GenericEntity {
+   ID "DB68F3852F641141"
+   coords -13.2 -0.02 24
+  }
+  GenericEntity {
+   ID "E4C18D94BE4FA181"
+   coords -10.8 -0.069 24
+  }
+  GenericEntity {
+   ID "D26F67419A54890B"
+   coords -8.4 -0.096 24
+  }
+  GenericEntity {
+   ID "304B3DEE5D6008AB"
+   coords -6 -0.123 24
+  }
+  GenericEntity {
+   ID "CE3E94E434127989"
+   coords -3.6 -0.176 24
+  }
+  GenericEntity {
+   ID "B4D01D029D871E02"
+   coords -1.2 -0.213 24
+  }
+  GenericEntity {
+   ID "D60998E8D2823A03"
+   coords 1.2 -0.251 24
+  }
+  GenericEntity {
+   ID "1BEAB09FFCD080D1"
+   coords 3.6 -0.291 24
+  }
+  GenericEntity {
+   ID "3F4112E638FF46C3"
+   coords 6 -0.317 24
+  }
+  GenericEntity {
+   ID "07312282B8CE859A"
+   coords 8.4 -0.344 24
+  }
+  GenericEntity {
+   ID "AE5384848D42FBD3"
+   coords 10.8 -0.37 24
+  }
+  GenericEntity {
+   ID "746CB2E048272471"
+   coords 13.2 -0.397 24
+  }
+  GenericEntity {
+   ID "76745BC52572A775"
+   coords 15.6 -0.423 24
+  }
+  GenericEntity {
+   ID "E97FD0D491825046"
+   coords 18 -0.466 24
+  }
+  GenericEntity {
+   ID "D09849EEA7057399"
+   coords 20.4 -0.519 24
+  }
+  GenericEntity {
+   ID "8D7C43F5C67032C1"
+   coords 22.8 -0.579 24
+  }
+  GenericEntity {
+   ID "7CBEE2D2F6237966"
+   coords 24 -0.808 -22.8
+  }
+  GenericEntity {
+   ID "A67F89CB00D62A5B"
+   coords 24 -0.808 -20.4
+  }
+  GenericEntity {
+   ID "EBA33D2B2CD1A219"
+   coords 24 -0.768 -18
+  }
+  GenericEntity {
+   ID "E978F843C412B68A"
+   coords 24 -0.189 -15.6
+  }
+  GenericEntity {
+   ID "38F1BDFE0F6626C6"
+   coords 24 -0.017 -13.2
+  }
+  GenericEntity {
+   ID "7B26BEC1173353F4"
+   coords 24 0.01 -10.8
+  }
+  GenericEntity {
+   ID "1AAEDB9C7CCFA6E4"
+   coords 24 0.037 -8.4
+  }
+  GenericEntity {
+   ID "97E501C2BDEF41A5"
+   coords 24 0.033 -6
+  }
+  GenericEntity {
+   ID "C43A819391D9CCA8"
+   coords 24 0.036 -3.6
+  }
+  GenericEntity {
+   ID "DA91EB4E96DB0254"
+   coords 24 -0.042 -1.2
+  }
+  GenericEntity {
+   ID "A4E9E7002353C782"
+   coords 24 -0.095 1.2
+  }
+  GenericEntity {
+   ID "AFC6FFDBDFF82521"
+   coords 24 -0.173 3.6
+  }
+  GenericEntity {
+   ID "2E0BEF782490DD10"
+   coords 24 -0.232 6
+  }
+  GenericEntity {
+   ID "9F6CCCC802341A2C"
+   coords 24 -0.285 8.4
+  }
+  GenericEntity {
+   ID "1D078EF5BE36EB39"
+   coords 24 -0.339 10.8
+  }
+  GenericEntity {
+   ID "5AF3B7E435760050"
+   coords 24 -0.392 13.2
+  }
+  GenericEntity {
+   ID "36A7F38D146B3453"
+   coords 24 -0.445 15.6
+  }
+  GenericEntity {
+   ID "EF02CC794B2C3187"
+   coords 24 -0.498 18
+  }
+  GenericEntity {
+   ID "CCBDFF9A3520C3E1"
+   coords 24 -0.551 20.4
+  }
+  GenericEntity {
+   ID "76FD30389A1BFE46"
+   coords 24 -0.579 22.8
+  }
+  GenericEntity {
+   ID "F7F24F503EBE5BAA"
+   coords -22.8 -0.134 -24
+  }
+  GenericEntity {
+   ID "63789D51E85D32F0"
+   coords -20.4 -0.24 -24
+  }
+  GenericEntity {
+   ID "982C8F03E859DE07"
+   coords -18 -0.329 -24
+  }
+  GenericEntity {
+   ID "22385233C2572344"
+   coords -15.6 -0.408 -24
+  }
+  GenericEntity {
+   ID "969D2B4BA979EE98"
+   coords -13.2 -0.463 -24
+  }
+  GenericEntity {
+   ID "3CC264AF4D030894"
+   coords -10.8 -0.487 -24
+  }
+  GenericEntity {
+   ID "4EBF04C45D24DFF5"
+   coords -8.4 -0.487 -24
+  }
+  GenericEntity {
+   ID "1636ED8279AEBA16"
+   coords 8.4 -0.711 -24
+  }
+  GenericEntity {
+   ID "A713C565E35B0681"
+   coords 10.8 -0.752 -24
+  }
+  GenericEntity {
+   ID "A4C890BC9111F17A"
+   coords 13.2 -0.777 -24
+  }
+  GenericEntity {
+   ID "634BA134D25D0E82"
+   coords 15.6 -0.777 -24
+  }
+  GenericEntity {
+   ID "0C148C4896D432B9"
+   coords 18 -0.777 -24
+  }
+  GenericEntity {
+   ID "D50B97CFC2CDFC2C"
+   coords 20.4 -0.79 -24
+  }
+  GenericEntity {
+   ID "6ACD2DE198AD5B90"
+   coords 22.8 -0.808 -24
+  }
+  GenericEntity {
+   ID "FBEFD53F75B94BA5"
+   coords -24 -0.032 -22.8
+  }
+  GenericEntity {
+   ID "D36941FD0BECFC95"
+   coords -24 0.048 -20.4
+  }
+  GenericEntity {
+   ID "079FC1D640B68293"
+   coords -24 0.137 -18
+  }
+  GenericEntity {
+   ID "B0EFA3E3AF31E889"
+   coords -24 0.19 -15.6
+  }
+  GenericEntity {
+   ID "97448C00A475CD93"
+   coords -24 0.259 -13.2
+  }
+  GenericEntity {
+   ID "46D16BF214B429D9"
+   coords -24 0.289 -10.8
+  }
+  GenericEntity {
+   ID "1DF639B2F85E89CE"
+   coords -24 0.315 -8.4
+  }
+  GenericEntity {
+   ID "78CC11ADCC23221B"
+   coords -24 0.344 -6
+  }
+  GenericEntity {
+   ID "E4F2F5F81F1147DD"
+   coords -24 0.366 -3.6
+  }
+  GenericEntity {
+   ID "F4F84A4642F39DAF"
+   coords -24 0.344 -1.2
+  }
+  GenericEntity {
+   ID "5678FBDFC951A950"
+   coords -24 0.329 1.2
+  }
+  GenericEntity {
+   ID "7014AFFAFD22C7EA"
+   coords -24 0.277 3.6
+  }
+  GenericEntity {
+   ID "06BB8B4A111CDBEC"
+   coords -24 0.229 6
+  }
+  GenericEntity {
+   ID "17E37BE89EE5F6A0"
+   coords -24 0.187 8.4
+  }
+  GenericEntity {
+   ID "2EAF71CE9B4204D1"
+   coords -24 0.16 10.8
+  }
+  GenericEntity {
+   ID "F4CC24B1262C7FB4"
+   coords -24 0.111 13.2
+  }
+  GenericEntity {
+   ID "CB4564E6F1E631FF"
+   coords -24 0.085 15.6
+  }
+  GenericEntity {
+   ID "363F644F13FBE7FD"
+   coords -24 0.081 18
+  }
+  GenericEntity {
+   ID "63ECE9A10CCE0920"
+   coords -24 0.075 20.4
+  }
+  GenericEntity {
+   ID "765BB6F6C37739EE"
+   coords -24 0.07 22.8
   }
  }
 }

@@ -25,12 +25,20 @@ class AROR_LocationComponent : ScriptComponent
 	[Attribute("0", desc: "Ground this static scenario location on terrain before registration. Use for coordinate-catalog placements whose height is not authored; leave off for manually positioned locations.", category: "Placement")]
 	protected bool m_bGroundOnInit;
 
-	[Attribute("0", desc: "Opt this settlement into flag capture and weighted AI recapture. Capture updates existing support as well as control. Off preserves normal support-only settlement rules.", category: "Control")]
+	[Attribute("0", desc: "Deprecated: settlements always use support; retained only for old resource compatibility.", category: "Control")]
 	protected bool m_bSettlementFlagCapture;
 
 	bool AllowsSettlementFlagCapture()
 	{
-		return m_bSettlementFlagCapture && (m_eType == AROR_ELocationType.TOWN || m_eType == AROR_ELocationType.CITY);
+		return false;
+	}
+
+	[Attribute("", desc: "Regional support override. Military sites name a settlement ID; settlements can share that ID to form a larger region. Empty uses this settlement's own ID / nearest settlement for military sites.", category: "Region")]
+	protected string m_sSupportRegionId;
+
+	string GetSupportRegionId()
+	{
+		return m_sSupportRegionId;
 	}
 
 	[Attribute("", UIWidgets.ResourcePickerThumbnail, desc: "Icon drawn on the map for this location. White on transparent so it can be tinted.", params: "edds imageset")]
@@ -127,6 +135,12 @@ class AROR_LocationComponent : ScriptComponent
 	{
 		if (!Replication.IsServer() || !CanBeTakenBy(role))
 			return false;
+		if (m_eType == AROR_ELocationType.TOWN || m_eType == AROR_ELocationType.CITY)
+		{
+			AROR_SettlementComponent support = AROR_SettlementComponent.Cast(GetOwner().FindComponent(AROR_SettlementComponent));
+			if (!support || support.GetSupport(role) <= 50)
+				return false;
+		}
 
 		m_eControllingRole = role;
 

@@ -1,6 +1,8 @@
 GenericEntity : "{D1387921EE9626CA}Prefabs/Locations/AROR_Location_Base.et" {
  ID "6AACA42C00EC9C66"
  components {
+  AROR_GarrisonComponent "{66D30571F98F4BE3}" {
+  }
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_eType RESOURCES
    m_sMapIcon "{6DDCD141147A5FE2}UI/Textures/Map/resources.edds"
