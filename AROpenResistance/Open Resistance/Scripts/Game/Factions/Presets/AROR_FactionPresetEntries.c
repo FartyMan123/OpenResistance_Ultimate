@@ -20,6 +20,27 @@ class AROR_FactionPresetEntry
 	{
 		return m_iCost;
 	}
+
+	//------------------------------------------------------------------------------------------------
+	//! The entry's type within its category, as the int value of that category's type enum
+	int GetTypeValue()
+	{
+		return -1;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! False for types outside the core list (e.g. added by a modded enum); such entries are ignored
+	bool IsKnownType()
+	{
+		return false;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Type name for logs, e.g. "RIFLEMAN"
+	string GetTypeName()
+	{
+		return string.Empty;
+	}
 }
 
 //! AI character. A preset has at most one unit per type.
@@ -30,9 +51,21 @@ class AROR_FactionPresetUnit : AROR_FactionPresetEntry
 	protected AROR_EUnitType m_eType;
 
 	//------------------------------------------------------------------------------------------------
-	AROR_EUnitType GetUnitType()
+	override int GetTypeValue()
 	{
 		return m_eType;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override bool IsKnownType()
+	{
+		return m_eType >= 0 && m_eType <= AROR_EUnitType.CIVILIAN;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override string GetTypeName()
+	{
+		return typename.EnumToString(AROR_EUnitType, m_eType);
 	}
 }
 
@@ -44,9 +77,21 @@ class AROR_FactionPresetVehicle : AROR_FactionPresetEntry
 	protected AROR_EVehicleType m_eType;
 
 	//------------------------------------------------------------------------------------------------
-	AROR_EVehicleType GetVehicleType()
+	override int GetTypeValue()
 	{
 		return m_eType;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override bool IsKnownType()
+	{
+		return m_eType >= 0 && m_eType <= AROR_EVehicleType.STATIC_WEAPON;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override string GetTypeName()
+	{
+		return typename.EnumToString(AROR_EVehicleType, m_eType);
 	}
 }
 
@@ -58,9 +103,21 @@ class AROR_FactionPresetGear : AROR_FactionPresetEntry
 	protected AROR_EGearType m_eType;
 
 	//------------------------------------------------------------------------------------------------
-	AROR_EGearType GetGearType()
+	override int GetTypeValue()
 	{
 		return m_eType;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override bool IsKnownType()
+	{
+		return m_eType >= 0 && m_eType <= AROR_EGearType.FACEWEAR;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override string GetTypeName()
+	{
+		return typename.EnumToString(AROR_EGearType, m_eType);
 	}
 }
 
@@ -72,12 +129,25 @@ class AROR_FactionPresetEquipment : AROR_FactionPresetEntry
 	protected AROR_EEquipmentType m_eType;
 
 	//------------------------------------------------------------------------------------------------
-	AROR_EEquipmentType GetEquipmentType()
+	override int GetTypeValue()
 	{
 		return m_eType;
 	}
+
+	//------------------------------------------------------------------------------------------------
+	override bool IsKnownType()
+	{
+		return m_eType >= 0 && m_eType <= AROR_EEquipmentType.EXPLOSIVE;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override string GetTypeName()
+	{
+		return typename.EnumToString(AROR_EEquipmentType, m_eType);
+	}
 }
 
+//! Hand-held weapon
 [BaseContainerProps(), SCR_BaseContainerCustomTitleEnum(AROR_EWeaponType, "m_eType")]
 class AROR_FactionPresetWeapon : AROR_FactionPresetEntry
 {
@@ -85,9 +155,21 @@ class AROR_FactionPresetWeapon : AROR_FactionPresetEntry
 	protected AROR_EWeaponType m_eType;
 
 	//------------------------------------------------------------------------------------------------
-	AROR_EWeaponType GetWeaponType()
+	override int GetTypeValue()
 	{
 		return m_eType;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override bool IsKnownType()
+	{
+		return m_eType >= 0 && m_eType <= AROR_EWeaponType.GRENADE;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override string GetTypeName()
+	{
+		return typename.EnumToString(AROR_EWeaponType, m_eType);
 	}
 }
 
@@ -98,12 +180,25 @@ class AROR_FactionPresetWeaponAccessory : AROR_FactionPresetEntry
 	protected AROR_EWeaponAccessoryType m_eType;
 
 	//------------------------------------------------------------------------------------------------
-	AROR_EWeaponAccessoryType GetAccessoryType()
+	override int GetTypeValue()
 	{
 		return m_eType;
 	}
+
+	//------------------------------------------------------------------------------------------------
+	override bool IsKnownType()
+	{
+		return m_eType >= 0 && m_eType <= AROR_EWeaponAccessoryType.LIGHT;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override string GetTypeName()
+	{
+		return typename.EnumToString(AROR_EWeaponAccessoryType, m_eType);
+	}
 }
 
+//! Ammunition for hand-held weapons
 [BaseContainerProps(), SCR_BaseContainerCustomTitleEnum(AROR_EAmmunitionType, "m_eType")]
 class AROR_FactionPresetAmmunition : AROR_FactionPresetEntry
 {
@@ -111,8 +206,46 @@ class AROR_FactionPresetAmmunition : AROR_FactionPresetEntry
 	protected AROR_EAmmunitionType m_eType;
 
 	//------------------------------------------------------------------------------------------------
-	AROR_EAmmunitionType GetAmmunitionType()
+	override int GetTypeValue()
 	{
 		return m_eType;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override bool IsKnownType()
+	{
+		return m_eType >= 0 && m_eType <= AROR_EAmmunitionType.GRENADE_ROUND;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override string GetTypeName()
+	{
+		return typename.EnumToString(AROR_EAmmunitionType, m_eType);
+	}
+}
+
+//! Munition loaded onto a vehicle or aircraft as an item (e.g. a helicopter rocket pod)
+[BaseContainerProps(), SCR_BaseContainerCustomTitleEnum(AROR_EVehicleAmmunitionType, "m_eType")]
+class AROR_FactionPresetVehicleAmmunition : AROR_FactionPresetEntry
+{
+	[Attribute("0", UIWidgets.ComboBox, desc: "Vehicle ammunition type", enums: ParamEnumArray.FromEnum(AROR_EVehicleAmmunitionType))]
+	protected AROR_EVehicleAmmunitionType m_eType;
+
+	//------------------------------------------------------------------------------------------------
+	override int GetTypeValue()
+	{
+		return m_eType;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override bool IsKnownType()
+	{
+		return m_eType >= 0 && m_eType <= AROR_EVehicleAmmunitionType.BOMB;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override string GetTypeName()
+	{
+		return typename.EnumToString(AROR_EVehicleAmmunitionType, m_eType);
 	}
 }

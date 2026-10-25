@@ -28,6 +28,7 @@ class AROR_PresetImportResult
 	ref array<string> m_aWeapons = {};
 	ref array<string> m_aAccessories = {};
 	ref array<string> m_aAmmunition = {};
+	ref array<string> m_aVehicleAmmunition = {};
 	ref set<int> m_UnitTypesUsed = new set<int>();
 	ref array<string> m_aSkipped = {};
 }
@@ -135,7 +136,7 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 						AddVehicle(entry, result);
 						break;
 					case EEntityCatalogType.WEAPONS_TRIPOD:
-						AddEntry(result.m_aVehicles, "AROR_FactionPresetVehicle", AROR_EVehicleType.STATIC_WEAPON, entry.GetPrefab());
+						AddEntry(result.m_aVehicles, "AROR_FactionPresetVehicle", AROR_EVehicleType, AROR_EVehicleType.STATIC_WEAPON, entry.GetPrefab());
 						break;
 					case EEntityCatalogType.ITEM:
 						AddItem(entry, result);
@@ -164,7 +165,7 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 			return;
 		}
 
-		AddEntry(result.m_aUnits, "AROR_FactionPresetUnit", type, entry.GetPrefab());
+		AddEntry(result.m_aUnits, "AROR_FactionPresetUnit", AROR_EUnitType, type, entry.GetPrefab());
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -222,7 +223,7 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 			return;
 		}
 
-		AddEntry(result.m_aVehicles, "AROR_FactionPresetVehicle", type, entry.GetPrefab());
+		AddEntry(result.m_aVehicles, "AROR_FactionPresetVehicle", AROR_EVehicleType, type, entry.GetPrefab());
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -299,10 +300,23 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 		SCR_EArsenalItemType itemType = arsenal.GetItemType();
 		SCR_EArsenalItemMode itemMode = arsenal.GetItemMode();
 
+		// Munitions loaded onto aircraft and vehicles as items (e.g. helicopter rocket pods)
+		if (itemMode == SCR_EArsenalItemMode.PYLON || itemType == SCR_EArsenalItemType.HELICOPTER || itemType == SCR_EArsenalItemType.VEHICLE)
+		{
+			int vehicleAmmunition = AROR_EVehicleAmmunitionType.ROCKET;
+			if (name.Contains("missile") || name.Contains("atgm"))
+				vehicleAmmunition = AROR_EVehicleAmmunitionType.MISSILE;
+			else if (name.Contains("bomb"))
+				vehicleAmmunition = AROR_EVehicleAmmunitionType.BOMB;
+
+			AddEntry(result.m_aVehicleAmmunition, "AROR_FactionPresetVehicleAmmunition", AROR_EVehicleAmmunitionType, vehicleAmmunition, prefab);
+			return;
+		}
+
 		if (itemMode == SCR_EArsenalItemMode.AMMUNITION)
 		{
 			int ammo = AmmunitionType(itemType, name);
-			AddEntry(result.m_aAmmunition, "AROR_FactionPresetAmmunition", ammo, prefab);
+			AddEntry(result.m_aAmmunition, "AROR_FactionPresetAmmunition", AROR_EAmmunitionType, ammo, prefab);
 			return;
 		}
 
@@ -312,7 +326,7 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 			if (accessory < 0)
 				result.m_aSkipped.Insert("accessory (no matching type): " + prefab);
 			else
-				AddEntry(result.m_aAccessories, "AROR_FactionPresetWeaponAccessory", accessory, prefab);
+				AddEntry(result.m_aAccessories, "AROR_FactionPresetWeaponAccessory", AROR_EWeaponAccessoryType, accessory, prefab);
 
 			return;
 		}
@@ -320,21 +334,21 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 		int weapon = WeaponType(itemType);
 		if (weapon >= 0)
 		{
-			AddEntry(result.m_aWeapons, "AROR_FactionPresetWeapon", weapon, prefab);
+			AddEntry(result.m_aWeapons, "AROR_FactionPresetWeapon", AROR_EWeaponType, weapon, prefab);
 			return;
 		}
 
 		int gear = GearType(itemType, name);
 		if (gear >= 0)
 		{
-			AddEntry(result.m_aGear, "AROR_FactionPresetGear", gear, prefab);
+			AddEntry(result.m_aGear, "AROR_FactionPresetGear", AROR_EGearType, gear, prefab);
 			return;
 		}
 
 		int equipment = EquipmentType(itemType, name);
 		if (equipment >= 0)
 		{
-			AddEntry(result.m_aEquipment, "AROR_FactionPresetEquipment", equipment, prefab);
+			AddEntry(result.m_aEquipment, "AROR_FactionPresetEquipment", AROR_EEquipmentType, equipment, prefab);
 			return;
 		}
 
@@ -452,9 +466,11 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 	//------------------------------------------------------------------------------------------------
 	// Output
 	//------------------------------------------------------------------------------------------------
-	protected void AddEntry(array<string> lines, string className, int type, ResourceName prefab)
+	//! Types are written by enum name (e.g. "MOTOR_TRUCK"), like Workbench does, so the files are readable and do
+	//! not silently change meaning if an enum is ever reordered
+	protected void AddEntry(array<string> lines, string className, typename enumType, int type, ResourceName prefab)
 	{
-		lines.Insert(string.Format("  %1 {\n   m_sPrefab \"%2\"\n   m_eType %3\n  }", className, prefab, type));
+		lines.Insert(string.Format("  %1 {\n   m_sPrefab \"%2\"\n   m_eType %3\n  }", className, prefab, typename.EnumToString(enumType, type)));
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -482,7 +498,7 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 		file.WriteLine(" m_aUsableRoles {");
 		foreach (int role : factionImport.m_aUsableRoles)
 		{
-			file.WriteLine(string.Format("  %1", role));
+			file.WriteLine(string.Format("  %1", typename.EnumToString(AROR_EFactionRole, role)));
 		}
 		file.WriteLine(" }");
 
@@ -493,13 +509,14 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 		WriteList(file, "m_aWeapons", result.m_aWeapons);
 		WriteList(file, "m_aWeaponAccessories", result.m_aAccessories);
 		WriteList(file, "m_aAmmunition", result.m_aAmmunition);
+		WriteList(file, "m_aVehicleAmmunition", result.m_aVehicleAmmunition);
 		file.WriteLine("}");
 		file.Close();
 
 		Print(string.Format("[AROR] Import base faction presets: %1 (%2) -> %3: %4 units, %5 vehicles, %6 gear, %7 equipment, %8 weapons, %9 accessories",
 			factionImport.m_sPresetId, factionImport.m_sFactionKey, path, result.m_aUnits.Count(), result.m_aVehicles.Count(), result.m_aGear.Count(),
 			result.m_aEquipment.Count(), result.m_aWeapons.Count(), result.m_aAccessories.Count()), LogLevel.NORMAL);
-		Print(string.Format("[AROR] Import base faction presets: %1: %2 ammunition, %3 skipped", factionImport.m_sPresetId, result.m_aAmmunition.Count(), result.m_aSkipped.Count()), LogLevel.NORMAL);
+		Print(string.Format("[AROR] Import base faction presets: %1: %2 ammunition, %3 vehicle ammunition, %4 skipped", factionImport.m_sPresetId, result.m_aAmmunition.Count(), result.m_aVehicleAmmunition.Count(), result.m_aSkipped.Count()), LogLevel.NORMAL);
 
 		foreach (string skipped : result.m_aSkipped)
 		{
