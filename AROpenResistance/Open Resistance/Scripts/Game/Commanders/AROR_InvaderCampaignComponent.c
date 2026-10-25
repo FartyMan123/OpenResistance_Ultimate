@@ -269,12 +269,38 @@ class AROR_InvaderCampaignComponent : SCR_BaseGameModeComponent
 		Print(string.Format("[AROR INVADER] simulated target=%1 attacker=%2 attackCost=%3 defenceCost=%4 chance=%5 captured=%6", target.GetId(), attacker, cost, defence, chance, captured), LogLevel.NORMAL);
 	}
 
+	//! Keep range checks separate to stay within Enforce's expression complexity limit.
+	protected bool HasValidConfiguration()
+	{
+		if (m_iOpeningGrant < 0 || m_iOpeningGrant > 1000000)
+			return false;
+		if (m_iBattleInterval < 30 || m_iBattleInterval > 3600)
+			return false;
+		if (m_iInitialDelay < 30 || m_iInitialDelay > 3600)
+			return false;
+		if (m_iBaselineShare < 10 || m_iBaselineShare > 80)
+			return false;
+		if (m_iBattleCost < 100 || m_iBattleCost > 100000)
+			return false;
+		if (m_fFrontierReach < 500 || m_fFrontierReach > 10000)
+			return false;
+		if (m_fPlayerClearance < 1000 || m_fPlayerClearance > 10000)
+			return false;
+		if (m_iExternalSupport < 0 || m_iExternalSupport > 100000)
+			return false;
+		if (m_iFundingPerWar < 0 || m_iFundingPerWar > 100000)
+			return false;
+		if (m_iFundingPerAggression < 0 || m_iFundingPerAggression > 10000)
+			return false;
+		return true;
+	}
+
 	override void OnPostInit(IEntity owner)
 	{
 		super.OnPostInit(owner);
 		if (!GetGame().InPlayMode() || !Replication.IsServer() || !m_bInvaderCampaign)
 			return;
-		if (s_Instance || m_iOpeningGrant < 0 || m_iOpeningGrant > 1000000 || m_iBattleInterval < 30 || m_iBattleInterval > 3600 || m_iInitialDelay < 30 || m_iInitialDelay > 3600 || m_iBaselineShare < 10 || m_iBaselineShare > 80 || m_iBattleCost < 100 || m_iBattleCost > 100000 || m_fFrontierReach < 500 || m_fFrontierReach > 10000 || m_fPlayerClearance < 1000 || m_fPlayerClearance > 10000 || m_iExternalSupport < 0 || m_iExternalSupport > 100000 || m_iFundingPerWar < 0 || m_iFundingPerWar > 100000 || m_iFundingPerAggression < 0 || m_iFundingPerAggression > 10000)
+		if (s_Instance || !HasValidConfiguration())
 		{
 			Print("[AROR INVADER] Duplicate or invalid campaign configuration; disabled", LogLevel.ERROR);
 			return;
