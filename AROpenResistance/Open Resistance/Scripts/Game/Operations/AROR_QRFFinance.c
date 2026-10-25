@@ -122,7 +122,8 @@ class AROR_QRFFinance
 	{
 		if (!Replication.IsServer())
 			return;
-		array<AROR_EFactionRole> roles = {AROR_EFactionRole.OCCUPIERS, AROR_EFactionRole.INVADERS};
+		array<AROR_EFactionRole> roles = {};
+		AROR_FactionRoles.GetAIMilitary(roles);
 		foreach (AROR_EFactionRole role : roles)
 		{
 			int debt = Debt(role);

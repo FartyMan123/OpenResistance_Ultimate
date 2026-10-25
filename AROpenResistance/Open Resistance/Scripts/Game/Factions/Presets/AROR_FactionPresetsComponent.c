@@ -54,16 +54,6 @@ class AROR_FactionPresetsComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Roles that have a preset, in display order
-	static void GetPresetRoles(notnull array<AROR_EFactionRole> outRoles)
-	{
-		outRoles.Insert(AROR_EFactionRole.RESISTANCE);
-		outRoles.Insert(AROR_EFactionRole.OCCUPIERS);
-		outRoles.Insert(AROR_EFactionRole.INVADERS);
-		outRoles.Insert(AROR_EFactionRole.CIVILIANS);
-	}
-
-	//------------------------------------------------------------------------------------------------
 	//! Every machine; fires when the campaign's presets change (set at campaign creation, restored from a save, or replicated)
 	ScriptInvokerBase<AROR_OnFactionPresetsChanged> GetOnPresetsChanged()
 	{
@@ -158,7 +148,7 @@ class AROR_FactionPresetsComponent : SCR_BaseGameModeComponent
 			return;
 
 		array<AROR_EFactionRole> roles = {};
-		GetPresetRoles(roles);
+		AROR_FactionRoles.GetAll(roles);
 		foreach (AROR_EFactionRole role : roles)
 		{
 			string requested;
@@ -228,7 +218,7 @@ class AROR_FactionPresetsComponent : SCR_BaseGameModeComponent
 	void GetPresetIds(notnull array<string> outPresetIds)
 	{
 		array<AROR_EFactionRole> roles = {};
-		GetPresetRoles(roles);
+		AROR_FactionRoles.GetAll(roles);
 		foreach (AROR_EFactionRole role : roles)
 		{
 			outPresetIds.Insert(GetPresetId(role));
@@ -318,7 +308,7 @@ class AROR_FactionPresetsComponent : SCR_BaseGameModeComponent
 		if (Replication.IsServer())
 		{
 			array<AROR_EFactionRole> roles = {};
-			GetPresetRoles(roles);
+			AROR_FactionRoles.GetAll(roles);
 			foreach (AROR_EFactionRole role : roles)
 			{
 				SetRolePreset(role, ResolvePresetId(role, string.Empty));

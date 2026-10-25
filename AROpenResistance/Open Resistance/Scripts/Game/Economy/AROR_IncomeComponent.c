@@ -81,7 +81,8 @@ class AROR_IncomeComponent : SCR_BaseGameModeComponent
 			return;
 		}
 
-		array<AROR_EFactionRole> roles = {AROR_EFactionRole.RESISTANCE, AROR_EFactionRole.OCCUPIERS, AROR_EFactionRole.INVADERS};
+		array<AROR_EFactionRole> roles = {};
+		AROR_FactionRoles.GetMilitary(roles);
 		foreach (AROR_EFactionRole role : roles)
 		{
 			AROR_IncomeTally tally = Tally(role);

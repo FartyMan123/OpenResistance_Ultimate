@@ -120,7 +120,7 @@ class AROR_LocationInfoPopup : Managed
 		Color controlColor = GetRoleColor(controllingRole);
 
 		m_wTitle.SetText(m_Location.GetName());
-		m_wSubtitle.SetText(FormatEnumName(typename.EnumToString(AROR_ELocationType, m_Location.GetLocationType())));
+		m_wSubtitle.SetText(AROR_TextUtils.FormatEnumName(typename.EnumToString(AROR_ELocationType, m_Location.GetLocationType())));
 		m_wControl.SetText("Controlled by " + ColorText(GetRoleName(controllingRole), controlColor));
 
 		if (m_wAccent && controlColor)
@@ -154,7 +154,8 @@ class AROR_LocationInfoPopup : Managed
 
 			y += LINE_HEIGHT + 4;
 
-			array<AROR_EFactionRole> roles = {AROR_EFactionRole.RESISTANCE, AROR_EFactionRole.OCCUPIERS, AROR_EFactionRole.INVADERS};
+			array<AROR_EFactionRole> roles = {};
+			AROR_FactionRoles.GetMilitary(roles);
 			foreach (int i, AROR_EFactionRole role : roles)
 			{
 				LayoutSupportRow(i, role, settlement.GetSupport(role), left, y);
@@ -284,7 +285,7 @@ class AROR_LocationInfoPopup : Managed
 		if (faction)
 			return faction.GetFactionName();
 
-		return FormatEnumName(typename.EnumToString(AROR_EFactionRole, role));
+		return AROR_FactionRoles.GetDisplayName(role);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -304,28 +305,5 @@ class AROR_LocationInfoPopup : Managed
 			return text;
 
 		return string.Format("<color rgba=\"%1,%2,%3,255\">%4</color>", Math.Round(color.R() * 255), Math.Round(color.G() * 255), Math.Round(color.B() * 255), text);
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! "MILITARY_BASE" -> "Military Base"
-	protected static string FormatEnumName(string enumName)
-	{
-		array<string> words = {};
-		enumName.Split("_", words, true);
-
-		string result;
-		foreach (int i, string word : words)
-		{
-			if (i > 0)
-				result += " ";
-
-			// ToLower/ToUpper modify the string in place
-			word.ToLower();
-			string first = word.Substring(0, 1);
-			first.ToUpper();
-			result += first + word.Substring(1, word.Length() - 1);
-		}
-
-		return result;
 	}
 }

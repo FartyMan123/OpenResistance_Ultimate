@@ -193,7 +193,8 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 			if (!HasLocation(expired.m_sLocationId) || m_iClock - expired.m_iLastSeen > lifetime)
 				m_aQRFThreats.Remove(index);
 		}
-		array<AROR_EFactionRole> roles = {AROR_EFactionRole.OCCUPIERS, AROR_EFactionRole.INVADERS};
+		array<AROR_EFactionRole> roles = {};
+		AROR_FactionRoles.GetAIMilitary(roles);
 		foreach (AROR_EFactionRole role : roles)
 		{
 			if (role == AROR_EFactionRole.INVADERS && !m_bInvaderOperationsEnabled)

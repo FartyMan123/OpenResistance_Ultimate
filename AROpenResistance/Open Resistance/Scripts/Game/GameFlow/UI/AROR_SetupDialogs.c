@@ -22,6 +22,14 @@ class AROR_SetupDialogBase : SCR_ConfigurableDialogUi
 	}
 
 	//------------------------------------------------------------------------------------------------
+	protected void SetButtonEnabled(string tag, bool enabled)
+	{
+		SCR_InputButtonComponent button = FindButton(tag);
+		if (button)
+			button.SetEnabled(enabled);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	override protected void OnButtonPressed(SCR_InputButtonComponent button)
 	{
 		super.OnButtonPressed(button);
@@ -129,14 +137,6 @@ class AROR_SetupLoadDialog : AROR_SetupDialogBase
 	}
 
 	//------------------------------------------------------------------------------------------------
-	protected void SetButtonEnabled(string tag, bool enabled)
-	{
-		SCR_InputButtonComponent button = FindButton(tag);
-		if (button)
-			button.SetEnabled(enabled);
-	}
-
-	//------------------------------------------------------------------------------------------------
 	override protected void OnButtonPressed(SCR_InputButtonComponent button)
 	{
 		string tag = GetButtonTag(button);
@@ -172,7 +172,7 @@ class AROR_SetupFactionsDialog : AROR_SetupDialogBase
 	void AROR_SetupFactionsDialog(AROR_SetupUIComponent setupUI)
 	{
 		m_SetupUI = setupUI;
-		AROR_FactionPresetsComponent.GetPresetRoles(m_aRoles);
+		AROR_FactionRoles.GetAll(m_aRoles);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -211,11 +211,7 @@ class AROR_SetupFactionsDialog : AROR_SetupDialogBase
 	protected void Refresh()
 	{
 		AROR_EFactionRole role = m_aRoles[m_iRoleIndex];
-		string roleName = typename.EnumToString(AROR_EFactionRole, role);
-		roleName.ToLower();
-		string first = roleName.Substring(0, 1);
-		first.ToUpper();
-		roleName = first + roleName.Substring(1, roleName.Length() - 1);
+		string roleName = AROR_FactionRoles.GetDisplayName(role);
 
 		int count = m_aPresets.Count();
 		string header = string.Format("%1 (%2 of %3)", roleName, m_iRoleIndex + 1, m_aRoles.Count());
@@ -226,14 +222,6 @@ class AROR_SetupFactionsDialog : AROR_SetupDialogBase
 
 		SetButtonEnabled("previous", m_iPresetIndex > 0);
 		SetButtonEnabled("next", m_iPresetIndex < count - 1);
-	}
-
-	//------------------------------------------------------------------------------------------------
-	protected void SetButtonEnabled(string tag, bool enabled)
-	{
-		SCR_InputButtonComponent button = FindButton(tag);
-		if (button)
-			button.SetEnabled(enabled);
 	}
 
 	//------------------------------------------------------------------------------------------------

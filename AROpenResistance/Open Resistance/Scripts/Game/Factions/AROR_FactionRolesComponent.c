@@ -65,7 +65,8 @@ class AROR_FactionRolesComponent : SCR_BaseGameModeComponent
 			return false;
 
 		string key = faction.GetFactionKey();
-		array<AROR_EFactionRole> roles = {AROR_EFactionRole.RESISTANCE, AROR_EFactionRole.OCCUPIERS, AROR_EFactionRole.INVADERS, AROR_EFactionRole.CIVILIANS};
+		array<AROR_EFactionRole> roles = {};
+		AROR_FactionRoles.GetAll(roles);
 		foreach (AROR_EFactionRole candidate : roles)
 		{
 			if (GetFactionKey(candidate) == key)
@@ -82,7 +83,8 @@ class AROR_FactionRolesComponent : SCR_BaseGameModeComponent
 	//! Warn early if a role points at a faction the faction manager does not have
 	protected void ValidateRoles()
 	{
-		array<AROR_EFactionRole> roles = {AROR_EFactionRole.RESISTANCE, AROR_EFactionRole.OCCUPIERS, AROR_EFactionRole.INVADERS, AROR_EFactionRole.CIVILIANS};
+		array<AROR_EFactionRole> roles = {};
+		AROR_FactionRoles.GetAll(roles);
 		foreach (AROR_EFactionRole role : roles)
 		{
 			if (!GetFaction(role))

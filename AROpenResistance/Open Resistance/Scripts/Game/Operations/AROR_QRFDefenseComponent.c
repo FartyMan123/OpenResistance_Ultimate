@@ -8,7 +8,7 @@ class AROR_QRFDefenseComponent : ScriptComponent
 {
 	[Attribute("1", desc: "Enable damage reporting for the assigned defense. An empty location ID remains inert.")]
 	protected bool m_bReportDamage;
-	[Attribute("1", UIWidgets.ComboBox, desc: "Role defending this location", enums: ParamEnumArray.FromEnum(AROR_EFactionRole))]
+	[Attribute("1", UIWidgets.ComboBox, desc: "Role defending this location", enums: AROR_FactionRoles.MilitaryRoleParams())]
 	protected AROR_EFactionRole m_eDefendingRole;
 	[Attribute("", desc: "Explicit stable defended location ID. The scenario/garrison owner must verify ownership.")]
 	protected string m_sDefendedLocationId;

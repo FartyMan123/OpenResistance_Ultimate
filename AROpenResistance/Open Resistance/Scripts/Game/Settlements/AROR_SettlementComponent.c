@@ -177,7 +177,8 @@ class AROR_SettlementComponent : ScriptComponent
 	//------------------------------------------------------------------------------------------------
 	protected void GetOtherRoles(AROR_EFactionRole role, notnull array<AROR_EFactionRole> outRoles)
 	{
-		array<AROR_EFactionRole> all = {AROR_EFactionRole.RESISTANCE, AROR_EFactionRole.OCCUPIERS, AROR_EFactionRole.INVADERS};
+		array<AROR_EFactionRole> all = {};
+		AROR_FactionRoles.GetMilitary(all);
 		foreach (AROR_EFactionRole candidate : all)
 		{
 			if (candidate != role)
@@ -192,7 +193,8 @@ class AROR_SettlementComponent : ScriptComponent
 		if (!m_Location)
 			return;
 
-		array<AROR_EFactionRole> all = {AROR_EFactionRole.RESISTANCE, AROR_EFactionRole.OCCUPIERS, AROR_EFactionRole.INVADERS};
+		array<AROR_EFactionRole> all = {};
+		AROR_FactionRoles.GetMilitary(all);
 		foreach (AROR_EFactionRole role : all)
 		{
 			if (GetSupport(role) > MAJORITY && role != m_Location.GetControllingRole())

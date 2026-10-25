@@ -36,7 +36,7 @@ class AROR_LocationComponent : ScriptComponent
 	[Attribute("", UIWidgets.ResourcePickerThumbnail, desc: "Icon drawn on the map for this location. White on transparent so it can be tinted.", params: "edds imageset")]
 	protected ResourceName m_sMapIcon;
 
-	[Attribute("1", UIWidgets.ComboBox, desc: "Role controlling this location when a new campaign starts. Set per placed location.", enums: ParamEnumArray.FromEnum(AROR_EFactionRole), category: "Control")]
+	[Attribute("1", UIWidgets.ComboBox, desc: "Role controlling this location when a new campaign starts. Set per placed location.", enums: AROR_FactionRoles.MilitaryRoleParams(), category: "Control")]
 	protected AROR_EFactionRole m_eInitialControllingRole;
 
 	[Attribute("0", desc: "Control can never change (e.g. the Resistance HQ)", category: "Control")]
