@@ -215,7 +215,7 @@ Purpose: the lifecycle from world boot to play, separating **scenario data** (fr
 
 Phases (mapped onto the base-game states PREGAME → GAME → POSTGAME):
 1. **Scenario load**: world boots, locations register, location markers appear.
-2. **Setup** (PREGAME): the server admin creates a new playthrough (picking the Resistance HQ position on the map) or loads a saved one. A server config fallback for unattended dedicated servers is planned.
+2. **Setup** (PREGAME): the server admin creates a new playthrough (choosing a faction preset per role, or a quick start with the base-game presets, then picking the Resistance HQ position on the map) or loads a saved one. A server config fallback for unattended dedicated servers is planned.
 3. **Playthrough load**: new → fresh state; load → restore from the save. Then GAME.
 4. **Running**: state changes are saved (see Persistence).
 
@@ -236,7 +236,7 @@ Purpose: persistent campaign saves, built on the **base-game save system** (`Sav
   - Each component with saved state has a matching `ScriptedComponentSerializer`. Serializers write a version first and keep loading older versions.
   - Locations are referenced by **stable ID**, never by position in a list.
 - Save generated results, not random seeds, so saves survive map and code changes.
-- Saved so far: location control, settlement support, the Resistance HQ, faction funds, manpower, player money, QRF war pressure and debt.
+- Saved so far: location control, settlement support, the Resistance HQ, faction presets per role, faction funds, manpower, player money, QRF war pressure and debt.
 - Boot rule: if a save is active when the world loads it is restored; otherwise setup starts. A new playthrough writes an initial save point, so new and loaded games share one restore path.
 - Limits: about 101 playthroughs and save points per mission; old autosaves need pruning.
 - Planned: periodic autosave and saves on key events and shutdown; verification on a dedicated server.
@@ -244,19 +244,29 @@ Purpose: persistent campaign saves, built on the **base-game save system** (`Sav
 ### Factions — In progress
 Purpose: the sides in play, referenced by **role** so the actual factions are configurable.
 
-- **Roles** (gameplay): `AROR_EFactionRole` = `RESISTANCE`, `OCCUPIERS`, `INVADERS`. Code refers to roles, never to faction keys.
-- **Factions** (data): identity, relationships and entity catalogs.
-- `AROR_FactionRolesComponent` (game mode) maps each role to a faction key: `AROR_RESISTANCE`, `AROR_OCCUPIERS`, `AROR_INVADERS` by default.
-- Core factions live in `AROR_FactionManager.et`; all are mutually hostile and only the Resistance is playable. Players always join the Resistance.
+Three layers:
+- **Roles** (gameplay): `AROR_EFactionRole` = `RESISTANCE`, `OCCUPIERS`, `INVADERS`, `CIVILIANS`. Code refers to roles, never to faction keys or prefabs.
+- **Factions** (identity): name, colour, flag and relationships. `AROR_FactionRolesComponent` (game mode) maps each role to a faction key: `AROR_RESISTANCE`, `AROR_OCCUPIERS`, `AROR_INVADERS`, `AROR_CIVILIANS`.
+- **Faction presets** (equipment): what an army makes available to the game, independent of identity, so a role can keep its name and colour while using another army's equipment.
 
-| Faction | Side | Default assets |
+Core factions live in `AROR_FactionManager.et`. The three military factions are mutually hostile; Civilians are friendly to all. Only the Resistance is playable, and players always join it.
+
+| Faction | Side | Default preset |
 |---|---|---|
-| `AROR_RESISTANCE` | INDFOR | FIA |
-| `AROR_OCCUPIERS` | BLUFOR | US |
-| `AROR_INVADERS` | REDFOR | USSR |
+| `AROR_RESISTANCE` | INDFOR | `FIA` |
+| `AROR_OCCUPIERS` | BLUFOR | `US_ARMY` |
+| `AROR_INVADERS` | REDFOR | `USSR_ARMY` |
+| `AROR_CIVILIANS` | civilian | `EVERON_CIV` |
+
+**Faction presets — In progress**
+- A preset (`AROR_FactionPreset`, one `.conf` each) lists what an army makes available in seven categories: **Units** (AI characters, at most one per unit type), **Vehicles** (empty, no crew), **Gear**, **Equipment**, **Weapons**, **Weapon accessories** and **Ammunition**. Every entry is a prefab with a **base cost**, grouped by type (e.g. RIFLEMAN, MOTOR_TRUCK, RIFLE); apart from units, a type can have any number of entries.
+- Presets only make things available; the systems that use them (garrisons, QRFs, shops, recruitment) decide what to pick. Each preset lists the roles it can be used for.
+- `AROR_FactionPresetRegistry` (`Configs/FactionPresets/AROR_FactionPresetRegistry.conf`) lists the available presets. The base-game presets (`FIA`, `US_ARMY`, `USSR_ARMY`, `EVERON_CIV`) are built into the core, written the same way an extender would.
+- `AROR_FactionPresetsComponent` (game mode) loads the presets on every machine and answers queries for a role's preset. The server owns which preset each role uses: chosen by the admin per role when creating a campaign (defaults otherwise), replicated, and saved (`AROR_FactionPresetsComponentSerializer`). A saved preset that no longer exists falls back to the role's default.
+- Planned: garrisons, QRFs and air QRFs read their units and vehicles from presets instead of their own lists.
 
 - `AROR_LoadoutManager.et` offers only Resistance loadouts; `AROR_Character_Resistance_Base.et` is the player character.
-- Extension points: extender mods or server admins point a role at another faction without touching core code.
+- Extension points: extender mods add presets (new `.conf` files listed in the registry through Override in addon). The categories and their types are a fixed core list; entries with any other type are ignored. Server admins or extenders point a role at another faction key without touching core code.
 
 ### Commanders — In progress
 Purpose: one server-owned command context per role. The Resistance is player-directed; the Occupiers and Invaders are AI-directed through the same evaluation interface.
