@@ -1,4 +1,4 @@
-[ComponentEditorProps(category: "OpenResistance/Factions", description: "Maps gameplay roles (Resistance, Occupiers, Invaders) to faction keys. Attach to the game mode entity.")]
+[ComponentEditorProps(category: "OpenResistance/Factions", description: "Maps gameplay roles (Resistance, Occupiers, Invaders, Civilians) to faction keys. Attach to the game mode entity.")]
 class AROR_FactionRolesComponentClass : SCR_BaseGameModeComponentClass
 {
 }
@@ -16,6 +16,9 @@ class AROR_FactionRolesComponent : SCR_BaseGameModeComponent
 
 	[Attribute("AROR_INVADERS", desc: "Faction key of the Invaders (AI)", category: "Roles")]
 	protected string m_sInvadersFactionKey;
+
+	[Attribute("AROR_CIVILIANS", desc: "Faction key of the Civilians (non-playable)", category: "Roles")]
+	protected string m_sCiviliansFactionKey;
 
 	protected static AROR_FactionRolesComponent s_Instance;
 
@@ -36,6 +39,8 @@ class AROR_FactionRolesComponent : SCR_BaseGameModeComponent
 				return m_sOccupiersFactionKey;
 			case AROR_EFactionRole.INVADERS:
 				return m_sInvadersFactionKey;
+			case AROR_EFactionRole.CIVILIANS:
+				return m_sCiviliansFactionKey;
 		}
 
 		return string.Empty;
@@ -60,7 +65,7 @@ class AROR_FactionRolesComponent : SCR_BaseGameModeComponent
 			return false;
 
 		string key = faction.GetFactionKey();
-		array<AROR_EFactionRole> roles = {AROR_EFactionRole.RESISTANCE, AROR_EFactionRole.OCCUPIERS, AROR_EFactionRole.INVADERS};
+		array<AROR_EFactionRole> roles = {AROR_EFactionRole.RESISTANCE, AROR_EFactionRole.OCCUPIERS, AROR_EFactionRole.INVADERS, AROR_EFactionRole.CIVILIANS};
 		foreach (AROR_EFactionRole candidate : roles)
 		{
 			if (GetFactionKey(candidate) == key)
@@ -77,7 +82,7 @@ class AROR_FactionRolesComponent : SCR_BaseGameModeComponent
 	//! Warn early if a role points at a faction the faction manager does not have
 	protected void ValidateRoles()
 	{
-		array<AROR_EFactionRole> roles = {AROR_EFactionRole.RESISTANCE, AROR_EFactionRole.OCCUPIERS, AROR_EFactionRole.INVADERS};
+		array<AROR_EFactionRole> roles = {AROR_EFactionRole.RESISTANCE, AROR_EFactionRole.OCCUPIERS, AROR_EFactionRole.INVADERS, AROR_EFactionRole.CIVILIANS};
 		foreach (AROR_EFactionRole role : roles)
 		{
 			if (!GetFaction(role))
