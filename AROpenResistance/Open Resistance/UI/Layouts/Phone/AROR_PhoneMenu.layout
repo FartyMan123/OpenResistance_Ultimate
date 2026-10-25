@@ -43,6 +43,30 @@ FrameWidgetClass {
       Anchor 0 0 0 0
      }
     }
+    ImageWidgetClass "{6AB4E0F1A2B56000}" {
+     Name "RebIntelTile"
+     Slot FrameWidgetSlot "{6AB4E0F1A2B57000}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B56001}" {
+     Name "RebIntelTileGlyph"
+     Slot FrameWidgetSlot "{6AB4E0F1A2B57001}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B56002}" {
+     Name "RebIntelTileLabel"
+     Slot FrameWidgetSlot "{6AB4E0F1A2B57002}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B56003}" {
+     Name "RebIntelTileButton"
+     Slot FrameWidgetSlot "{6AB4E0F1A2B57003}" {
+      Anchor 0 0 0 0
+     }
+    }
     ImageWidgetClass "{6AB4E0F1A2B52005}" {
      Name "TestTile"
      Slot FrameWidgetSlot "{6AB4E0F1A2B52105}" {
@@ -147,6 +171,150 @@ FrameWidgetClass {
      Name "BankTransferButton"
      Slot FrameWidgetSlot "{6AB4E0F1A2B54106}" {
       Anchor 0 0 0 0
+     }
+    }
+   }
+  }
+  FrameWidgetClass "{6AB4E0F1A2B56018}" {
+   Name "RebIntelApp"
+   Slot FrameWidgetSlot "{6AB4E0F1A2B57018}" {
+    Anchor 0 0 0 0
+   }
+   {
+    ImageWidgetClass "{6AB4E0F1A2B56004}" {
+     Name "RebIntelBackground"
+     Slot FrameWidgetSlot "{6AB4E0F1A2B57004}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B56005}" {
+     Name "RebIntelTitle"
+     Slot FrameWidgetSlot "{6AB4E0F1A2B57005}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B56006}" {
+     Name "RebIntelSubtitle"
+     Slot FrameWidgetSlot "{6AB4E0F1A2B57006}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B56007}" {
+     Name "RebIntelFooter"
+     Slot FrameWidgetSlot "{6AB4E0F1A2B57007}" {
+      Anchor 0 0 0 0
+     }
+    }
+    FrameWidgetClass "{6AB4E0F1A2B5600F}" {
+     Name "RebIntelOccupiers"
+     Slot FrameWidgetSlot "{6AB4E0F1A2B5700F}" {
+      Anchor 0 0 0 0
+     }
+     {
+      ImageWidgetClass "{6AB4E0F1A2B56019}" {
+       Name "RebIntelOccupiersBackground"
+       Slot FrameWidgetSlot "{6AB4E0F1A2B57019}" {
+        Anchor 0 0 0 0
+       }
+      }
+      RichTextWidgetClass "{6AB4E0F1A2B56008}" {
+       Name "RebIntelOccupiersName"
+       Slot FrameWidgetSlot "{6AB4E0F1A2B57008}" {
+        Anchor 0 0 0 0
+       }
+      }
+      RichTextWidgetClass "{6AB4E0F1A2B56009}" {
+       Name "RebIntelOccupiersRole"
+       Slot FrameWidgetSlot "{6AB4E0F1A2B57009}" {
+        Anchor 0 0 0 0
+       }
+      }
+      RichTextWidgetClass "{6AB4E0F1A2B5600A}" {
+       Name "RebIntelOccupiersWar"
+       Slot FrameWidgetSlot "{6AB4E0F1A2B5700A}" {
+        Anchor 0 0 0 0
+       }
+      }
+      RichTextWidgetClass "{6AB4E0F1A2B5600B}" {
+       Name "RebIntelOccupiersAggression"
+       Slot FrameWidgetSlot "{6AB4E0F1A2B5700B}" {
+        Anchor 0 0 0 0
+       }
+      }
+      RichTextWidgetClass "{6AB4E0F1A2B5600C}" {
+       Name "RebIntelOccupiersStatus"
+       Slot FrameWidgetSlot "{6AB4E0F1A2B5700C}" {
+        Anchor 0 0 0 0
+       }
+      }
+      ImageWidgetClass "{6AB4E0F1A2B5600D}" {
+       Name "RebIntelOccupiersTrack"
+       Slot FrameWidgetSlot "{6AB4E0F1A2B5700D}" {
+        Anchor 0 0 0 0
+       }
+      }
+      ImageWidgetClass "{6AB4E0F1A2B5600E}" {
+       Name "RebIntelOccupiersBar"
+       Slot FrameWidgetSlot "{6AB4E0F1A2B5700E}" {
+        Anchor 0 0 0 0
+       }
+      }
+     }
+    }
+    FrameWidgetClass "{6AB4E0F1A2B56017}" {
+     Name "RebIntelInvaders"
+     Slot FrameWidgetSlot "{6AB4E0F1A2B57017}" {
+      Anchor 0 0 0 0
+     }
+     {
+      ImageWidgetClass "{6AB4E0F1A2B5601A}" {
+       Name "RebIntelInvadersBackground"
+       Slot FrameWidgetSlot "{6AB4E0F1A2B5701A}" {
+        Anchor 0 0 0 0
+       }
+      }
+      RichTextWidgetClass "{6AB4E0F1A2B56010}" {
+       Name "RebIntelInvadersName"
+       Slot FrameWidgetSlot "{6AB4E0F1A2B57010}" {
+        Anchor 0 0 0 0
+       }
+      }
+      RichTextWidgetClass "{6AB4E0F1A2B56011}" {
+       Name "RebIntelInvadersRole"
+       Slot FrameWidgetSlot "{6AB4E0F1A2B57011}" {
+        Anchor 0 0 0 0
+       }
+      }
+      RichTextWidgetClass "{6AB4E0F1A2B56012}" {
+       Name "RebIntelInvadersWar"
+       Slot FrameWidgetSlot "{6AB4E0F1A2B57012}" {
+        Anchor 0 0 0 0
+       }
+      }
+      RichTextWidgetClass "{6AB4E0F1A2B56013}" {
+       Name "RebIntelInvadersAggression"
+       Slot FrameWidgetSlot "{6AB4E0F1A2B57013}" {
+        Anchor 0 0 0 0
+       }
+      }
+      RichTextWidgetClass "{6AB4E0F1A2B56014}" {
+       Name "RebIntelInvadersStatus"
+       Slot FrameWidgetSlot "{6AB4E0F1A2B57014}" {
+        Anchor 0 0 0 0
+       }
+      }
+      ImageWidgetClass "{6AB4E0F1A2B56015}" {
+       Name "RebIntelInvadersTrack"
+       Slot FrameWidgetSlot "{6AB4E0F1A2B57015}" {
+        Anchor 0 0 0 0
+       }
+      }
+      ImageWidgetClass "{6AB4E0F1A2B56016}" {
+       Name "RebIntelInvadersBar"
+       Slot FrameWidgetSlot "{6AB4E0F1A2B57016}" {
+        Anchor 0 0 0 0
+       }
+      }
      }
     }
    }

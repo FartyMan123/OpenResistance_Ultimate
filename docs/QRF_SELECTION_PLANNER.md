@@ -1,6 +1,6 @@
 # Resource-aware QRF planning — no dispatch
 
-The Invader framework now has a server planning entry point, `PreviewInvaderQRF_S(targetId, context)`, on the operation executor. It does not create an operation, reserve stock, change cooldowns, enable Invaders or spawn units. No caller, timer, trigger or default resource provider is installed. Invader operation admission remains off.
+The Invader framework now has a server planning entry point, `PreviewInvaderQRF_S(targetId, context)`, on the operation executor. It does not create an operation, reserve stock, change cooldowns, enable Invaders or spawn units. No caller, timer, trigger or default resource provider is installed. Chicken now separately enables money-backed Invader ground capture responses; this preview still has no dispatch side effects.
 
 ## Selection inputs
 

@@ -23,6 +23,10 @@ class AROR_GarrisonComponent : ScriptComponent
 	protected bool m_bFixedDefenceAnchor;
 	[Attribute("3", desc: "Player clearance for crew staging near the flag. Collision/navigation checks still apply.", params: "2 6 0.5")]
 	protected float m_fCrewPlayerClearance;
+	[Attribute("100", desc: "Maximum distance from the assigned hull for recovering its own living AI crew into empty seats; never moves players or foreign occupants.", params: "10 200 5")]
+	protected float m_fCrewSeatRecoveryDistance;
+	[Attribute("2", desc: "Seconds between crew seating requests. Readiness always requires observed occupancy, not an accepted request.", params: "1 10 1")]
+	protected int m_iCrewSeatRetrySeconds;
 	[Attribute("60", desc: "Maximum seconds to deploy after player proximity, including capacity/terrain failures. Unfinished queues are stopped before capture unlocks.", params: "10 180 1")]
 	protected int m_iDeploymentGraceSeconds;
 	[Attribute("30", desc: "Maximum seconds for one submitted native personnel queue before retaining its survivors and omitting its unspawned slots.", params: "5 120 1")]
@@ -874,24 +878,28 @@ class AROR_GarrisonComponent : ScriptComponent
 		}
 	}
 
-	protected void CrewAndOrder(AROR_GarrisonGroup pending)
+	//! Seat occupancy is maintained after initial readiness, including partial queue recovery.
+	protected bool MaintainCrewSeats_S(AROR_GarrisonGroup pending)
 	{
-		if (!pending.m_Group || pending.m_bOrdered)
-			return;
-		foreach (int expected : pending.m_aSlots)
-		{
-			if (!m_aSlots[expected].m_bLost && !m_aSlots[expected].m_Entity)
-				return;
-		}
+		if (!Replication.IsServer() || !pending.m_Group)
+			return false;
+		int now = GetGame().GetWorld().GetWorldTime();
+		bool retry = now >= pending.m_iNextSeatAttempt;
+		bool attempted;
 		bool ready = true;
 		foreach (int index : pending.m_aSlots)
 		{
 			AROR_GarrisonSlot slot = m_aSlots[index];
-			if (slot.m_iVehicle < 0 || slot.m_bLost || !slot.m_Entity)
+			if (slot.m_iKind != 4 || slot.m_iVehicle < 0 || slot.m_bLost || slot.m_bPlacementUnavailable || !slot.m_Entity)
 				continue;
 			AROR_GarrisonSlot vehicle = m_aSlots[slot.m_iVehicle];
-			if (!vehicle.m_Entity || vehicle.m_bLost)
-				continue; // Hull loss leaves surviving crew as defenders on foot.
+			if (!vehicle.m_Entity || vehicle.m_bLost || vehicle.m_iKind == 2)
+				continue; // Parked armour is intentionally unmanned; lost-hull crew defend on foot.
+			DamageManagerComponent damage = DamageManagerComponent.Cast(vehicle.m_Entity.FindComponent(DamageManagerComponent));
+			if (damage && damage.IsDestroyed())
+				continue;
+			if (IsPlayerOrForeignAsset(vehicle.m_Entity) || IsPlayerOrForeignAsset(slot.m_Entity))
+				continue;
 			BaseCompartmentManagerComponent manager = BaseCompartmentManagerComponent.Cast(vehicle.m_Entity.FindComponent(BaseCompartmentManagerComponent));
 			array<BaseCompartmentSlot> seats = {};
 			if (manager)
@@ -901,37 +909,106 @@ class AROR_GarrisonComponent : ScriptComponent
 				ready = false;
 				continue;
 			}
-			BaseCompartmentSlot seat = seats[slot.m_iSeat];
-			if (seat.GetOccupant() != slot.m_Entity)
-			{
-				CompartmentAccessComponent access = CompartmentAccessComponent.Cast(slot.m_Entity.FindComponent(CompartmentAccessComponent));
-				if (access && !seat.IsOccupied())
-					access.GetInVehicle(vehicle.m_Entity, seat, true, -1, ECloseDoorAfterActions.CLOSE_DOOR, false);
-				ready = false;
-			}
+			// Register before boarding so native compartment-enter events know the group's vehicle.
 			SCR_AIVehicleUsageComponent usage = SCR_AIVehicleUsageComponent.Cast(vehicle.m_Entity.FindComponent(SCR_AIVehicleUsageComponent));
 			if (usage && pending.m_Group.GetGroupUtilityComponent())
 				pending.m_Group.GetGroupUtilityComponent().AddUsableVehicle(usage);
+			BaseCompartmentSlot seat = seats[slot.m_iSeat];
+			IEntity occupant = seat.GetOccupant();
+			bool ownCrew;
+			foreach (int candidateIndex : pending.m_aSlots)
+			{
+				AROR_GarrisonSlot candidate = m_aSlots[candidateIndex];
+				if (occupant && candidate.m_iKind == 4 && candidate.m_iVehicle == slot.m_iVehicle && !candidate.m_bLost && candidate.m_Entity == occupant && !IsPlayerOrForeignAsset(occupant))
+				{
+					ChimeraCharacter seated = ChimeraCharacter.Cast(occupant);
+					if (seated && seated.GetCharacterController() && !seated.GetCharacterController().IsDead())
+						ownCrew = true;
+				}
+			}
+			if (ownCrew)
+				continue; // Native swaps between surviving assigned crew need no forced reseating.
+			ready = false;
+			if (!retry)
+				continue;
+			attempted = true;
+			if (occupant || seat.IsOccupied() || vector.DistanceXZ(slot.m_Entity.GetOrigin(), vehicle.m_Entity.GetOrigin()) > m_fCrewSeatRecoveryDistance)
+				continue;
+			ChimeraCharacter character = ChimeraCharacter.Cast(slot.m_Entity);
+			if (!character || !character.GetCharacterController() || character.GetCharacterController().IsDead())
+				continue;
+			CompartmentAccessComponent access = CompartmentAccessComponent.Cast(slot.m_Entity.FindComponent(CompartmentAccessComponent));
+			if (!access || access.IsGettingIn() || access.IsGettingOut() || access.IsSwitchingSeatsAnim())
+				continue;
+			if (access.IsInCompartment() && access.GetVehicleCompartmentManagerOwner() != vehicle.m_Entity)
+				continue;
+			access.GetInVehicle(vehicle.m_Entity, seat, true, -1, ECloseDoorAfterActions.CLOSE_DOOR, false);
 		}
-		if (!ready)
+		if (attempted)
+		{
+			pending.m_iNextSeatAttempt = now + Math.Max(1, m_iCrewSeatRetrySeconds) * 1000;
+			pending.m_iSeatAttempts++;
+			if (pending.m_iSeatAttempts == 1 || Math.Mod(pending.m_iSeatAttempts, 10) == 0)
+				Print(string.Format("[AROR GARRISON] %1 group=%2 awaiting physical crew occupancy, seating attempt=%3", m_Location.GetId(), pending.m_iId, pending.m_iSeatAttempts), LogLevel.NORMAL);
+		}
+		return ready;
+	}
+
+	protected bool HasMountedDefence(AROR_GarrisonGroup pending)
+	{
+		foreach (int index : pending.m_aSlots)
+		{
+			AROR_GarrisonSlot slot = m_aSlots[index];
+			if (slot.m_iKind != 4 || slot.m_iVehicle < 0 || slot.m_bLost || slot.m_bPlacementUnavailable)
+				continue;
+			AROR_GarrisonSlot vehicle = m_aSlots[slot.m_iVehicle];
+			if (vehicle.m_Entity && !vehicle.m_bLost && (vehicle.m_iKind == 1 || vehicle.m_iKind == 3) && !IsPlayerOrForeignAsset(vehicle.m_Entity))
+			{
+				DamageManagerComponent damage = DamageManagerComponent.Cast(vehicle.m_Entity.FindComponent(DamageManagerComponent));
+				if (!damage || !damage.IsDestroyed())
+					return true;
+			}
+		}
+		return false;
+	}
+
+	protected void CrewAndOrder(AROR_GarrisonGroup pending)
+	{
+		if (!pending.m_Group || !MaintainCrewSeats_S(pending))
 			return;
+		bool mounted = HasMountedDefence(pending);
+		if (pending.m_bOrdered && pending.m_bMountedDefence == mounted)
+			return;
+		foreach (int expected : pending.m_aSlots)
+		{
+			AROR_GarrisonSlot slot = m_aSlots[expected];
+			if (!slot.m_bLost && !slot.m_bPlacementUnavailable && !slot.m_Entity)
+				return;
+		}
 		if (pending.m_Waypoint)
 		{
 			pending.m_Group.RemoveWaypoint(pending.m_Waypoint);
 			SCR_EntityHelper.DeleteEntityAndChildren(pending.m_Waypoint);
+			pending.m_Waypoint = null;
+		}
+		pending.m_bMountedDefence = mounted;
+		if (mounted)
+		{
+			// Infantry defend waypoints can order vehicle crews out. Keep the assigned
+			// hull/static occupied; native vehicle AI still owns combat and targeting.
+			pending.m_bOrdered = true;
+			Print(string.Format("[AROR GARRISON] %1 group=%2 mounted defence ready with observed seat occupancy", m_Location.GetId(), pending.m_iId), LogLevel.NORMAL);
+			return;
 		}
 		AROR_GarrisonSlot lead = m_aSlots[pending.m_aSlots[0]];
-		vector defend = lead.m_vPosition;
-		if (lead.m_iVehicle >= 0 && m_aSlots[lead.m_iVehicle].m_Entity)
-			defend = m_aSlots[lead.m_iVehicle].m_Entity.GetOrigin();
-		IEntity waypointEntity = Spawn("{93291E72AC23930F}Prefabs/AI/Waypoints/AIWaypoint_Defend.et", defend, vector.Zero);
+		IEntity waypointEntity = Spawn("{93291E72AC23930F}Prefabs/AI/Waypoints/AIWaypoint_Defend.et", lead.m_vPosition, vector.Zero);
 		pending.m_Waypoint = AIWaypoint.Cast(waypointEntity);
 		if (!pending.m_Waypoint)
 			return;
 		pending.m_Waypoint.SetCompletionRadius(m_fDefenceHoldRadius);
 		pending.m_Group.AddWaypoint(pending.m_Waypoint);
 		pending.m_bOrdered = true;
-		Print(string.Format("[AROR GARRISON] %1 group ready with verified crew and defend orders", m_Location.GetId()), LogLevel.NORMAL);
+		Print(string.Format("[AROR GARRISON] %1 group=%2 on-foot defence ready", m_Location.GetId(), pending.m_iId), LogLevel.NORMAL);
 	}
 
 	//! Native dormancy is not a confirmed death. Keep its reserve until the engine rematerialises it.

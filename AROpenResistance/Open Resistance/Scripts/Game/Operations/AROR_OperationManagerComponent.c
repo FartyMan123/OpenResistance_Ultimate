@@ -36,8 +36,13 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 	protected int m_iQRFThreatLifetime;
 	protected ref AROR_QRFFinance m_QRFFinance = new AROR_QRFFinance();
 	protected ref array<ref AROR_QRFThreat> m_aQRFThreats = {};
+	//! Public campaign summary for RebIntel; operations and threat queues remain server-only.
+	[RplProp()]
 	protected int m_iOccupierPressure;
+	[RplProp()]
 	protected int m_iInvaderPressure;
+	[RplProp()]
+	protected bool m_bWarStateReady;
 	protected int m_iOccupierEvidenceAt;
 	protected int m_iInvaderEvidenceAt;
 	protected int m_iOccupierLastThreat;
@@ -87,6 +92,16 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 	{
 		return AROR_QRFStrategicPolicy.WarLevel(GetWarPressure(role));
 	}
+	//! Every machine: false until the server has initialized or restored the summary.
+	bool HasWarState()
+	{
+		return m_bWarStateReady;
+	}
+	//! Display estimate from the existing 0-1000 war pressure, not a separate AI modifier.
+	int GetAggressionPercent(AROR_EFactionRole role)
+	{
+		return Math.Round(Math.Clamp(GetWarPressure(role), 0, 1000) / 10.0);
+	}
 	//! Trusted server/admin seam; no new unprotected client RPC is added.
 	void SetWarLevel_S(AROR_EFactionRole role, int level)
 	{
@@ -95,11 +110,17 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 	}
 	protected void SetWarPressure_S(AROR_EFactionRole role, int value)
 	{
+		if (!Replication.IsServer() || !IsEnemyRole(role))
+			return;
+		value = Math.Clamp(value, 0, 1000);
+		if (GetWarPressure(role) == value)
+			return;
 		int before = GetWarLevel(role);
 		if (role == AROR_EFactionRole.OCCUPIERS)
 			m_iOccupierPressure = Math.Clamp(value, 0, 1000);
 		else if (role == AROR_EFactionRole.INVADERS)
 			m_iInvaderPressure = Math.Clamp(value, 0, 1000);
+		Replication.BumpMe();
 		if (before != GetWarLevel(role))
 			Print(string.Format("[AROR STRATEGY] role=%1 war level %2 -> %3", role, before, GetWarLevel(role)), LogLevel.NORMAL);
 	}
@@ -112,6 +133,8 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 		m_QRFFinance.SetDebt_S(AROR_EFactionRole.OCCUPIERS, occupierDebt);
 		m_QRFFinance.SetDebt_S(AROR_EFactionRole.INVADERS, invaderDebt);
 		m_bStrategyRestored = true;
+		m_bWarStateReady = true;
+		Replication.BumpMe();
 	}
 	protected void RecordStrategicEvidence(AROR_EFactionRole role)
 	{
@@ -245,7 +268,7 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 			m_aQRFThreats.RemoveItem(best);
 		}
 	}
-	[Attribute("0", desc: "Allow Invader attacks and QRF requests. Keep disabled until territory/resource integration or an explicit disposable Invader test is ready.")]
+	[Attribute("0", desc: "Allow physical Invader attacks and QRF requests. Shared default is off; opt in per scenario after configuring role assets and land origins.")]
 	protected bool m_bInvaderOperationsEnabled;
 	[Attribute("0", desc: "Request a QRF for the previous AI owner when a town/city changes to a hostile role during the campaign. Existing Invader gate, cooldowns and capacity still apply.")]
 	protected bool m_bTownCaptureQRFs;
@@ -426,6 +449,18 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 		Faction currentFaction = roles.GetFaction(location.GetControllingRole());
 		if (!previousFaction || !currentFaction || !previousFaction.IsFactionEnemy(currentFaction))
 			return string.Empty;
+		// Territorial pressure also works when physical Invader operation admission is disabled.
+		// Only player-faction gains provoke this path; simulated AI battles do not escalate themselves.
+		if (previousRole == AROR_EFactionRole.INVADERS && !m_bInvaderOperationsEnabled)
+		{
+			AROR_InvaderCampaignComponent campaign = AROR_InvaderCampaignComponent.GetInstance();
+			if (campaign && campaign.IsAdvanceActive() && location.GetControllingRole() == AROR_EFactionRole.RESISTANCE)
+			{
+				RecordStrategicEvidence(previousRole);
+				SetWarPressure_S(previousRole, GetWarPressure(previousRole) + 80);
+			}
+			return string.Empty;
+		}
 		string operationId;
 		if (m_bQRFStrategicEconomy)
 			operationId = QueueQRFThreat_S(previousRole, locationId, true);
@@ -727,6 +762,8 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 			m_iOccupierPressure = AROR_QRFStrategicPolicy.PressureForLevel(m_iStartingWarLevel);
 			m_iInvaderPressure = m_iOccupierPressure;
 		}
+		m_bWarStateReady = true;
+		Replication.BumpMe();
 		GetGame().GetCallqueue().CallLater(Tick, 1000, true);
 		Print("[AROR] Operation scheduler initialised for Occupiers and Invaders", LogLevel.NORMAL);
 		Print("[AROR] Operation notifications: nested changes queued (recursive Invoke protection enabled)", LogLevel.NORMAL);

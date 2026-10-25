@@ -161,7 +161,10 @@ if (($occupierTiers | Sort-Object -Unique) -join ',' -ne '1,2,3,4,5') { throw 'O
 foreach ($setting in @('m_bQRFStrategicEconomy','m_bQRFSpotting')) {
 	if ($layerText -notmatch ($setting + '\s+1\b')) { throw "Expected enabled Chicken fixture: $setting" }
 }
-if ($layerText -notmatch 'm_bInvaderOperationsEnabled\s+0\b' -or $layerText -notmatch 'm_sInvadersGroundQRFRecipeId\s+"invader_ground_l1"') { throw 'Invader framework must remain staged with dispatch disabled' }
+if ($layerText -notmatch 'm_bInvaderOperationsEnabled\s+1\b' -or $layerText -notmatch 'm_sInvadersGroundQRFRecipeId\s+"invader_ground_l1"') { throw 'Chicken must enable the configured Invader ground QRF recipes' }
+$managerSource = [IO.File]::ReadAllText((Join-Path $repoPath 'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_OperationManagerComponent.c'))
+if ($managerSource -notmatch '\[Attribute\("0",[^\r\n]*\)\]\s+protected bool m_bInvaderOperationsEnabled;') { throw 'Shared Invader admission must remain opt-in' }
+if ($layerText -notmatch 'm_bCombatQRFs\s+0\b' -or $layerText -notmatch 'm_bOutpostCaptureQRFs\s+1\b') { throw 'Chicken QRFs must be capture-driven, with combat responses disabled' }
 if ($layerText -notmatch 'm_sInvadersAttackTargetId\s+""' -or $layerText -notmatch 'm_sInvadersQRFTestTargetId\s+""') { throw 'Invader automatic/test targets must remain empty' }
 $tacticalFixture = @{
 	m_bQRFTacticalCommander = '1'; m_bQRFTwoWaves = '1'; m_iQRFSplitTier = '3'
@@ -177,4 +180,4 @@ $tacticalFixture = @{
 foreach ($setting in $tacticalFixture.GetEnumerator()) {
 	if ($layerText -notmatch ('(?m)^\s+' + $setting.Key + '\s+' + [regex]::Escape($setting.Value) + '\s*$')) { throw "Unexpected tactical fixture setting: $($setting.Key)" }
 }
-Write-Output "Verified $verified installed GUIDs, navigation, eight profiles, homogeneous levels, two fixed recipes, five capacity-checked tiers per AI role, strategic/spotting opt-ins and tactical/wave settings; Invader dispatch remains disabled. Configuration checks only, not Enforce compilation or gameplay testing."
+Write-Output "Verified $verified installed GUIDs, navigation, eight profiles, homogeneous levels, two fixed recipes, five capacity-checked tiers per AI role, strategic/spotting opt-ins and tactical/wave settings; Chicken Invader ground capture responses enabled, shared admission opt-in, combat/flight dispatch disabled. Configuration checks only, not Enforce compilation or gameplay testing."

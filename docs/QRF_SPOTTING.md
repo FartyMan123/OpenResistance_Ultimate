@@ -41,6 +41,6 @@ The visibility trace is a conservative prototype of player observation. It does 
 3. Turn away or go behind a building. Keep watching the map: the marker must stop moving, age, fade and disappear after 90 seconds without fresh observations by any FIA player. Watching the map alone must not refresh it.
 4. Verify no new sighting through terrain/buildings, outside range or behind the observer. Check prone stance and smoke separately.
 5. Verify a non-Resistance client receives no intelligence packet, and a dead/non-Resistance local viewer cannot render cached contacts. Test late join and map close/reopen.
-6. Air contacts require a separate explicit airborne fixture: clear the fixed ground recipe override and enable REAPER. Spot transport and gunship separately. Invader admission stays disabled for the normal test.
+6. Air contacts require a separate explicit airborne fixture: clear the fixed ground recipe override and enable REAPER. Spot transport and gunship separately. Keep Invader admission disabled for this isolated Occupier air test; normal Chicken enables both roles' ground capture responses.
 
 Source-adapted checks cover view geometry, confirmation/refresh, packet bounds and expiry filtering. They do not replace those multiplayer and native trace tests.

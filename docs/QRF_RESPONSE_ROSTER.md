@@ -1,6 +1,6 @@
 # QRF response roster
 
-The [tactical commander](QRF_TACTICAL_COMMANDER.md) now coordinates supported ground recipes and complete air packages, including finite two-wave deployment. It does not turn every catalogue entry into an executable recipe or connect campaign stock spending. The Invader dispatch gate remains off.
+The [tactical commander](QRF_TACTICAL_COMMANDER.md) now coordinates supported ground recipes and complete air packages, including finite two-wave deployment. It does not turn every catalogue entry into an executable recipe or connect campaign stock spending. Chicken enables the authored Invader ground capture responses; the shared admission default remains off and native acceptance is pending.
 
 Proposed commander catalogue: **eight response families, five levels each, 40 authored responses**. The catalogue is design data. The ground-only `combined_arms_l1` recipe now has a Chicken prototype (truck plus IFV); see [the test guide](TRUCK_IFV_QRF_TEST.md). Other entries and mixed ground/air selection remain planned. Homogeneous profiles retain their existing level multiplier. A CSV copy lives in [QRF_RESPONSE_ROSTER.csv](QRF_RESPONSE_ROSTER.csv).
 

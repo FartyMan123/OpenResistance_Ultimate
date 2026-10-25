@@ -6,6 +6,8 @@ Towns and cities now change control through support only. Military installations
 
 This also integrates paid QRF strategy, ground-response improvements and Resistance vehicle intelligence built on the commanders and staged waves from PR #11. Chicken retains 41 campaign locations: 18 support-only settlements and 23 military flags. Existing economy, support and location-control authorities remain responsible for campaign state.
 
+This snapshot also includes the user's saved Chotain castle and a first read-only factory/resource cover survey. Further resource relocation and outpost fortification development were stopped before adopting new placements or adding new fortification geometry.
+
 Native tests demonstrate partial QRF delivery, Levie garrison deployment and successful wall grounding. User-reported tests at an outpost and relocated East Resources completed defender clearance, flag capture and subsequent QRF response; East Resources also confirmed garrison spawning. Other sites and the complete QRF lifecycle still need acceptance. This is an integration/draft PR.
 
 ## Changes
@@ -22,6 +24,7 @@ Native tests demonstrate partial QRF delivery, Levie garrison deployment and suc
 - Add server-owned military defence rosters: infantry and manned MGs at ordinary outposts; parked unmanned armour and random crewed vehicles at military outposts; bounded random defence levels at resources, factories and ports; and the largest recipe at airbases. Settlements and HQs are excluded.
 - Activate within 1 km of a living player, including direct teleport arrivals. Cache registry/component references, scan player proximity once per configured 1–2 seconds, admit one hull or team request per 250 ms globally, and use the native personnel queue with 6 m local player clearance (3 m for crew staging beside the flag).
 - Reserve shared personnel capacity and virtualise only after all players remain beyond the wider retirement distance for the grace interval. Save logical recipes, casualties and coarse health; preserve dormant reserves and detach player/captured assets from cleanup. Use game-clock deadlines, and restore surviving crew from lost hulls on foot.
+- Register crew vehicles before boarding, verify physical occupancy and keep checking empty driver/gunner seats after initial readiness. Seat available crew while other members are queued; exclude players, foreign actors and destroyed hulls. Mounted crews receive no infantry defend waypoint, while lost-hull survivors defend on foot. The separate parked armoured vehicle remains intentionally unmanned.
 - Use compact flag-centred infantry sectors, outward MG arcs and vehicle pads. Check the complete terrain footprint and individual pads for water, slope, clearance and navigation. Bound local position repair and failed-placement retries; omitted unqueued positions are session-local placement outcomes, not casualties.
 - Add eleven reusable sandbag-perimeter prefabs, including compact and coastal variants, with entrances and editable defence markers. Walls are scenario geometry; personnel, weapons and vehicles use proximity activation.
 - Bind all 23 military sites to measured perimeter placements, including the final East Resources clearing. The airport anchor stays fixed. Authorised factory/resource moves apply only to Chicken; Rowan scene files remain untouched. Full audits reserve proposed footprints to avoid conflicting suggestions.
@@ -31,7 +34,7 @@ Native tests demonstrate partial QRF delivery, Levie garrison deployment and suc
 ### QRF funding, strategy and ground execution
 
 - Price complete responses, reserve collateral, charge deployment overhead once and debit confirmed individual losses through the existing faction bank. Retain unpaid liabilities without negative balances or manufactured refunds. Save war pressure and debt through a versioned serializer.
-- Maintain independent enemy war pressure, prioritize bounded/coalesced threats and select affordable response tiers. Author five ground tiers per opposing role while retaining role gates, cooldowns, capacity and staged-wave allocations. Invader dispatch and flight dispatch remain disabled in Chicken.
+- Maintain independent enemy war pressure, prioritize bounded/coalesced threats and select affordable response tiers. Author five ground tiers per opposing role while retaining role gates, cooldowns, capacity and staged-wave allocations. Enable Invader ground capture responses in Chicken; retain the shared admission default off and keep combat/flight dispatch disabled.
 - Improve road launch-pad selection, direct seating verification, mounted ingress, physical arrival checks, unloading retries and stopped-vehicle passenger recovery. Preserve surviving infantry after hull loss and tolerate audited native blank vehicle affiliation without repainting vehicles.
 - Support contact investigation, sector searches, a configurable security hold, bounded stalled-route recovery and return-based recovery/cleanup. Friendly outposts, military bases and airports can serve as strategic origins.
 - Consolidate tactical helpers into the original executor component to resolve Workbench visibility issues; remove the obsolete tactical-executor script.
@@ -45,16 +48,39 @@ Native tests demonstrate partial QRF delivery, Levie garrison deployment and suc
 - Replace duplicate component “Enabled” settings with purpose-specific attributes and update their scenario overrides. Complete garrison asset/manager attribute descriptions. Rowan's separate placement/admin changes remain untouched.
 - Update architecture and its full AGENTS.md copy, developer guidance, resource checks and mocked regressions. CLAUDE.md is unchanged.
 
+### RebIntel phone app
+
+- Add a portrait RebIntel home-screen tile and separate US/Occupier and USSR/Invader overview cards. Show War Level 1–5, aggression 0–100% with bars and configured response-policy status, including scenario-dependent Invader response admission.
+- Derive aggression from existing saved war pressure; replicate the two public pressures and summary initialization from the server. Refresh the open app once per second, use placeholders until data arrives and honour alternate faction bindings. No new aggression simulation, dispatch trigger, client mutation RPC or save schema is added.
+
+### Invader territorial campaign
+
+- Opt Chicken into distant resource-funded US/USSR engagements through the existing enemy commander evaluations; default the shared component off. Add a fixed `USSR SUPPORT CORRIDOR` offshore in the southeast and make the existing Durras Hill compound the initial USSR forward base, preserving its stable ID and measured placement. The corridor adds one non-capturable marker outside the 41-site catalogue.
+- Advance along friendly nearby military sites, prioritising proximity to the corridor; use US counterattacks and a soft 40% installation-share target. Equal funding/industry gives 50/50 engagements. Held resources/factories affect odds; increased Invader war level/aggression raises ambition and support. Defer near players, physical/queued garrisons and active/pending QRF interests. Protect Resistance control and canonical cooldowns.
+- Grant opening funds once through Economy and spend engagement costs from unreserved faction funds. Quote escalation support to the existing Income payout path. Save grant receipt/quarantine/cadence separately from Economy balances and location ownership. Suppress physical counter-QRFs for AI-versus-AI ownership changes while the campaign is active; enable player-capture ground responses for Invaders in Chicken while preserving the shared off default. RebIntel identifies the active territorial campaign.
+- Record pressure when Resistance captures an Invader site even while physical Invader responses are disabled. Simulated AI-versus-AI captures do not escalate their own war pressure or create a funding feedback loop.
+
+### Saved authoring and cover survey — unfinished
+
+- Retain the user's saved Chotain castle and Workbench scene serialization. The castle's manual mesh children remain in MilitaryInstallations.layer.
+- Add `Find covered factory and resource sites`, a read-only editor survey that ranks surrounding physical/visibility screening before checking terrain, pads, gun arcs and neighbour separation. Native compilation and survey execution are unverified; no candidates have been adopted.
+- Catalogue regeneration and saved-wall parsing still require reconciliation with the hand-authored castle and grouped Workbench scene. Do not regenerate these layers over the castle until authored-subtree preservation is implemented. The interrupted preservation-tool patch was not applied.
+
 ## Testing
 
 ### Offline checks
 
 - Focused actual-source mocked checks cover garrisons/support/serialization/capture, QRF integration, layouts/terrain/rotated footprint separation editor audit orchestration and editor-reference invalidation during grounding. Audit-import fixtures also pass. Native services are mocked; these are not an Enforce compile or gameplay test.
-- Catalogue validation passes for 41 locations and 23 military poles, including stable IDs, coordinate provenance, inherited capture configuration, generated layers, prefab GUIDs and QRF origin gates.
-- All eleven generated defence presets and the 23-site review validate. Installed/local metadata checks pass for 22 garrison/shared references; existing QRF asset/configuration checks cover 25 references, force profiles and tier capacity.
+- Thirty crew regression assertions cover observed occupancy, partial queues, ongoing seat recovery, native seat swaps, lost-hull orders and player/foreign-actor protection. Native crew seating and sustained mounted combat still require Workbench acceptance.
+- RebIntel mocked assertions cover role separation, server-only pressure changes, restoration, bounded aggression, unavailable data, disabled responses, faction labels, frame-container hierarchy, layout bindings, app navigation and live card/bar updates. Existing QRF strategy regressions also pass. Native phone opening initially exposed unsupported image parents; those were replaced with frames and separate background images.
+- Invader actual-source mocked regressions cover resource spending/collateral, one-time grants, preparation/cadence restoration, player/Resistance protection, connected expansion and AI capture-response suppression. A funded offscreen model on the actual 23 military-site positions averages 39.7% Invader control at baseline and 63.7% at maximum escalation; these are policy-model results, not native income-balance acceptance.
+- Catalogue validation passed for 41 locations and 23 military poles before the latest manual castle/world save. Generated-layer equality and saved-child parsing now require authoring reconciliation; the latest saved scene is retained intact.
+- Earlier checks covered eleven generated defence presets and the 23-site review. Installed/local metadata checks pass for 22 garrison/shared references; QRF asset/configuration checks cover 25 references, force profiles and tier capacity. These do not validate the newly authored castle or unfinished cover survey.
 - `git diff --check` passes.
 
 ### Native evidence (before the latest review corrections)
+
+- User confirmed RebIntel works after correcting the card container hierarchy. Native value-change, restored-state and multiplayer acceptance remain outstanding. The new Invader territorial simulation has not been compiled or played in Workbench.
 
 - Earlier QRF runs verified startup, capture-driven admission, direct seating and Occupier affiliations. An airport response drove from Farm, partially entered the objective, began the 900-second hold and recaptured it. Recorded overhead and personnel/vehicle loss debits were paid with zero outstanding debt.
 - User-reported Levie QRF testing confirmed all three vehicles arrived, unloaded infantry and began searching. Full hold, return and cleanup were not confirmed.
@@ -68,16 +94,22 @@ After the final East Resources move, native wall grounding completed all 1,526 w
 ### Acceptance still required
 
 - Compile/reload the PR-review corrections. Earlier native results above predate the new deployment lifecycle, persistence migration and prefab hierarchy. Exercise invalid resources/factions, stalled/partial queues, exhausted personnel capacity, orphan crew after reactivation and legacy/partially damaged saves. Confirm queue cancellation preserves survivors and prevents late actors; test native player/foreign-asset transfer protection.
+- Start fresh Play after compiling the crew correction. Verify the manned vehicle's driver/gunner and MG crews board, stay mounted and engage; check that surviving crew defend on foot after hull loss. Keep the deliberately parked armour empty.
+- Open the phone with Ctrl+Y and select RebIntel. Check both cards, live changes after captures/quiet-time decay, Home/Esc navigation and Bank/landscape app switching. Verify server/client agreement, late joining and restored pressure in multiplayer; native UI rendering and replication are not yet accepted.
+- Compile/reload the Invader campaign and start a fresh campaign. Verify the southeast corridor, USSR Durras garrison, single opening grant, distant captures/counterattacks and protected nearby/Resistance sites. Check ordinary Income escalation, save/load receipt/cadence, AI-only QRF suppression and client map/RebIntel state. Sustain a campaign with real income/QRF spending before accepting territorial balance.
+- Chicken now enables USSR ground capture responses for native testing. Let Invaders hold a second military site before capturing one: the offshore corridor cannot launch vehicles, and Chicken has no authored safe Invader coordinate fallback. Verify Ural/BTR/BRDM crews, delivery, full hold, return and cleanup; enabling admission is not native lifecycle acceptance.
 
 - Repeat the clear/capture/QRF test across other military-site types and multiplayer. Confirm combat alone does not dispatch a QRF, pending native queues resolve and blocked unqueued positions cannot leave a permanent capture lock or spawn later in that activation.
 - Broaden garrison and capture/QRF gameplay coverage across other military-site types. East Resources passed the reported sequence; all 23 current footprints have passed the native editor audit. Repeat the editor audit after future placement edits and preserve its evidence separately.
 - Verify complete QRF multi-package delivery, unloading, investigation, full security hold, return and cleanup. Validate practical routes and launch/dismount/return points across the island.
-- Test dedicated-server/multiclient replication, capture-feedback consistency, recipient filtering, non-debug spotting, roster/debt/war save-load and sustained combined garrison/QRF performance. Run an explicitly configured Invader test separately.
+- Test dedicated-server/multiclient replication, capture-feedback consistency, recipient filtering, non-debug spotting, roster/debt/war save-load and sustained combined garrison/QRF performance. Complete the enabled Chicken Invader ground-response acceptance, including a second friendly land origin and concurrent Occupier capacity checks.
 
 ## Notes
 
 - Extenders must replace removed Town_Flag/City_Flag resources with Town/City and MilitaryOutpost with MilitaryBase. The obsolete settlement-flag attribute/API is removed. Component switches are renamed to `m_bHasGarrison`, `m_bGarrisonsActive`, `m_bRegionalSupport`, `m_bExecuteOperations` and `m_bReportDamage`; update inherited prefab/world overrides. Garrison schema 3 migrates old records but requires matching updated scripts; review regional bindings, role assets and defence templates.
 - Existing QRF integration also changes force-profile prices, operation-manager serialization, spotting RPCs and map captions. Integrations referencing the removed tactical-executor script must use the original executor component.
+- RebIntel adds replicated war-summary properties to the operation manager; server and clients need matching scripts/layouts. Its aggression percentage is a presentation of war pressure, not a separate combat-difficulty modifier. The existing operation-manager save format is unchanged.
+- Invader campaign state has its own versioned serializer. `SUPPORT_CORRIDOR` is appended without changing existing enum values. Chicken's initial Durras owner/name changes; explicit saved control is retained when present. The corridor is an abstract offshore logistics marker; the land garrison uses the existing Durras compound, with no new terrain placement claim. Extenders must opt in and author corridor/base IDs; physical stock and production remain future work.
 - Save support/control through their existing authorities; save garrison recipes/losses/coarse health and QRF debt/war pressure through their owning serializers. Active operations, threat queues, collateral claims and spotting contacts remain session-local. Exact garrison inventory/ammo/fuel and durable captured-asset persistence are not implemented.
 - Keep the existing Economy authority for balances and income. Physical vehicle stock, production and resource-backed readiness remain future work. Garrison and QRF personnel budgets are separate and require combined performance acceptance.
 - New prefab GUIDs are hand-authored and checked against sibling metadata; native resource discovery remains part of validation. The existing experimental REAPER load-time dependency remains, despite disabled flight dispatch, and must be resolved for a base-game-only release.

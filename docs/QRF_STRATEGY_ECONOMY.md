@@ -1,6 +1,6 @@
 # QRF strategy, prices and response lifecycle
 
-Status: source implementation and offline checks complete; **new Workbench compilation, multiplayer and combat acceptance are pending**. Both opposing roles use the same framework. Chicken enables strategic economy and visual spotting; Invader operation admission and REAPER dispatch remain disabled.
+Status: source implementation and offline checks complete; **new Workbench compilation, multiplayer and combat acceptance are pending**. Both opposing roles use the same framework. Chicken enables strategic economy and visual spotting; Chicken also enables Invader ground capture responses; combat/REAPER dispatch remain disabled.
 
 ## What happens after an attack
 
