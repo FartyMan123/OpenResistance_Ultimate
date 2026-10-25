@@ -69,20 +69,21 @@ Purpose: named areas on the map that other systems use to decide where things ha
 
 - `AROR_LocationComponent` on each location: stable ID, name, type, radius, map icon and initial controlling role.
 - `AROR_LocationManagerComponent` on the game mode: registry of all locations, with registered / unregistered / control-changed / support-changed events. Other systems query locations through it.
-- Templates: `Prefabs/Locations/AROR_Location_Base.et` and one prefab per type; variants carry a capture flag (e.g. `Town_Flag`, `City_Flag`, `Outpost`).
+- Templates: `Prefabs/Locations/AROR_Location_Base.et` and one prefab per type; the military types carry a capture flag.
 - **Control**: every location is always controlled by a role (Resistance, Occupiers or Invaders). Server-owned, replicated, saved per location (`AROR_LocationComponentSerializer`). The Resistance HQ is fixed to the Resistance.
 - Server/client: placed locations are static world entities and the HQ is a replicated dynamic entity; both register on server and clients.
 - Saved: controlling role, referenced by stable location ID.
 - Depends on: Factions, Map Templates (placement).
 - Extension points: new types via `modded enum AROR_ELocationType` (values are appended so existing ones stay stable) plus a prefab inheriting `AROR_Location_Base.et`; extender maps place location prefabs in their own sub-scene.
 - Planned: hand-placed child points (spawn, garrison, objective); default names from base-game map descriptors.
+- Everon campaign data: a catalogue of 41 stable locations (18 settlements, 23 military installations) generated into the Chicken world layers by scripts in `tools/`. See `docs/EVERON_CAMPAIGN_LOCATIONS.md`.
 
 ### Location Capture — In progress
 Purpose: how a location's controlling role changes. All changes are made by the server through the location's control; the HQ cannot be captured.
 
 - **Towns & Cities**: held by the role with **more than 50% support** (see Settlements).
 - **Military locations** (airport, factory, military base, port, resources, outpost): captured at the location's **capture flag** by interaction, only when **every hostile** inside the radius is dead.
-- **Flag settlements** (opt-in per location, used by the `Town_Flag` / `City_Flag` templates): towns and cities that also have a capture flag. A flag capture sets the capturer's support to 100% through the Settlements system, so support and control stay consistent.
+- **Settlements are support-only**: towns and cities reject flag capture and AI recapture; they change hands only through support (see Settlements).
 - **Flip cooldown**: after a Resistance capture, the location cannot flip back to the Occupiers or Invaders for **5 minutes**. Replicated, not saved.
 - **AI recapture** (`AROR_RecaptureComponent`, server): every few seconds the forces inside each capturable location are weighed; defenders count ×2 and attacking AI ×1. An attacking AI role that outweighs the defenders takes the location, subject to the cooldown.
 - **Capture flag placement**: optionally, the server moves a capture flag to a clear, walkable spot near the location centre when play starts ("Auto Place"), and replicates the result.
@@ -96,8 +97,20 @@ Purpose: towns and cities as places with people: population, and how much each r
 - `AROR_SettlementComponent` on town and city prefabs: **population** (set per placed location) and **support** per role, which always sums to 100%.
 - A new campaign starts at 100% for the initial controlling role. When another role goes **above 50%**, control flips to it.
 - Server-owned, replicated, raises a support-changed event, saved per location (`AROR_SettlementComponentSerializer`).
-- What changes support during play is still to be designed; for now the server API plus admin tools.
+- **Regional support** (`AROR_RegionalSupportComponent`, optional scenario policy, off by default): the server gradually moves each settlement's support toward the share of nearby military installations each role holds. Uses the existing support and ownership authority; nothing extra is saved. Otherwise support changes only through the server API and admin tools.
 - Depends on: Locations, Factions.
+
+### Garrisons — In progress
+Purpose: defend flag-capturable military installations with a saved roster whose physical defenders spawn when players are near. Towns, cities and HQs are excluded.
+
+- `AROR_GarrisonComponent` (on military location templates) owns the roster, losses and placement results; `AROR_GarrisonManagerComponent` (game mode) activates and retires defenders by player proximity and paces spawning. `AROR_GarrisonFaction` binds each role to the infantry, crew and vehicle assets it uses.
+- Defence layouts (`AROR_DefenceLayout`, `AROR_DefencePositionComponent` and the `AROR_Defence_*` compositions) define where defenders and vehicles stand. Editor tools audit and ground these sites.
+- Server/client: roster, spawning and saves are server-owned; clients see the replicated defenders. A replicated gate stops capture while a defence is still deploying.
+- Saved: the roster (what remains and what was lost) per location, through Persistence. Defenders are not refilled when players leave and return.
+- Depends on: Locations, Location Capture, Factions, Operations (damage reporting).
+- Extension points: scenario and editor settings (activation range, capacity, defence levels, layouts); role asset catalogues can be replaced for extender factions.
+- Planned: preset-driven units and vehicles (see Factions), restoring exact inventory and live positions, replenishment.
+- Feature detail: `docs/GARRISONS_AND_REGIONAL_SUPPORT.md`, `docs/MILITARY_DEFENCE_PRESETS.md`.
 
 ### Game Flow — In progress
 Purpose: the lifecycle from world boot to play, separating **scenario data** (from the world, never saved) from **playthrough data** (from a save).
@@ -183,7 +196,7 @@ Main parts:
 - Depends on: Commanders, Locations, Location Capture, Factions, Economy, Game Flow; the REAPER mod for airborne execution.
 - Extension points: scenario and prefab configuration of schedules, limits, force profiles, recipes and prices; trusted server callers can request attacks and report threats.
 - Feature detail: `docs/OPERATIONS.md`, `docs/QRF_STRATEGY_ECONOMY.md`, `docs/QRF_TACTICAL_COMMANDER.md`, `docs/AIRBORNE_QRF_PROTOTYPE.md`, `docs/QRF_SPOTTING.md` and the other QRF files in `docs/`. Testing in the Chicken world: `docs/OPERATION_EXECUTOR.md`, `docs/FORCE_POOL_QUICKSTART.md`, `docs/TRUCK_IFV_QRF_TEST.md`.
-- Planned: autonomous target selection, garrisons and physical military stock, durable save/restore of live operations, client summaries.
+- Planned: autonomous target selection, physical military stock, durable save/restore of live operations, client summaries.
 
 ### Map Markers — In progress
 Purpose: our own markers on any open map (player map, deploy screen, setup screen). Client only.
