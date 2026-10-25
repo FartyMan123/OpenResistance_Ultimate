@@ -1,0 +1,17 @@
+MetaFileClass {
+ Name "{4F1F368135E5E570}UI/Layouts/Notifications/AROR_Notifications.layout"
+ Configurations {
+  LayoutResourceClass PC {
+  }
+  LayoutResourceClass XBOX_ONE : PC {
+  }
+  LayoutResourceClass XBOX_SERIES : PC {
+  }
+  LayoutResourceClass PS4 : PC {
+  }
+  LayoutResourceClass PS5 : PC {
+  }
+  LayoutResourceClass HEADLESS : PC {
+  }
+ }
+}

@@ -1,4 +1,68 @@
 SCR_FactionManager : "{4A188E44289B9A50}Prefabs/MP/Managers/Factions/FactionManager_Editor.et" {
  ID "56B2B4776E6E4499"
  coords 449.812 62.695 784.244
+ Factions {
+  SCR_Faction "{6AAE5E88CDBB5D8A}" {
+   FactionKey "AROR_RESISTANCE"
+   FactionColor 0 0.502 0.1255 1
+   UIInfo SCR_FactionUIInfo "{6AAE5E8896FD97D3}" {
+    Name "Resistance"
+   }
+   m_iPlayerLimit 16
+   m_bIsCommanderAvailable 0
+   m_bCanCaptureBases 0
+   m_sParentFactionId "FIA"
+   m_aFriendlyFactionsIds {
+    "AROR_CIVILIANS"
+   }
+  }
+  SCR_Faction "{6AAE5E88DBFEFBBE}" {
+   FactionKey "AROR_OCCUPIERS"
+   FactionColor 0.1569 0.2745 0.6235 1
+   UIInfo SCR_FactionUIInfo "{6AAE5E896EB9251E}" {
+    Name "Occupiers"
+   }
+   m_bIsPlayable 0
+   m_bIsCommanderAvailable 0
+   m_bCanCaptureBases 0
+   m_bCanAIMarkTargets 0
+   m_sParentFactionId "US"
+   m_aFriendlyFactionsIds {
+    "AROR_CIVILIANS"
+   }
+  }
+  SCR_Faction "{6AAE5E88D3C829F7}" {
+   FactionKey "AROR_INVADERS"
+   FactionColor 0.5608 0.0706 0.0706 1
+   UIInfo SCR_FactionUIInfo "{6AAE5E8962C7B051}" {
+    Name "Invaders"
+   }
+   m_bIsPlayable 0
+   m_bIsCommanderAvailable 0
+   m_bCanCaptureBases 0
+   m_bCanAIMarkTargets 0
+   m_sParentFactionId "USSR"
+   m_aFriendlyFactionsIds {
+    "AROR_CIVILIANS"
+   }
+  }
+  SCR_Faction "{6AB5F1C2D3E4A5B6}" {
+   FactionKey "AROR_CIVILIANS"
+   FactionColor 0.6 0.6 0.6 1
+   UIInfo SCR_FactionUIInfo "{6AB5F1C2D3E4A5B7}" {
+    Name "Civilians"
+   }
+   m_bIsPlayable 0
+   m_bIsMilitary 0
+   m_bIsCommanderAvailable 0
+   m_bCanCaptureBases 0
+   m_bCanAIMarkTargets 0
+   m_aFriendlyFactionsIds {
+    "AROR_RESISTANCE"
+    "AROR_OCCUPIERS"
+    "AROR_INVADERS"
+   }
+   m_sParentFactionId "CIV"
+  }
+ }
 }

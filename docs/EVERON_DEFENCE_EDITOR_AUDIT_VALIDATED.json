@@ -1,0 +1,356 @@
+{
+    "Version":  1,
+    "Source":  "logs_2026-10-25_13-44-47/script.log",
+    "Method":  "Completed native read-only defence footprint audit. Proposed centres passed terrain, wall strips, role pads, MG rays and conservative neighbour checks. Candidates are independent; actual models, driving/navmesh and visual acceptance remain unverified. Obstruction counts are not measured when terrain fails early.",
+    "Summary":  "13:46:12.857 SCRIPT       : [AROR DEFENCE AUDIT] current suitable=23 suggested relocations=0 reviewed=23. No files/entities changed; driving, navmesh and actual model joints remain Play checks.",
+    "Current":  {
+                    "everon_outpost_farm":  {
+                                                "Center":  [
+                                                               4959.54,
+                                                               25.0481,
+                                                               10051.9
+                                                           ],
+                                                "HalfExtent":  18,
+                                                "Relief":  1.57687,
+                                                "MaxRelief":  2,
+                                                "Blocked":  0,
+                                                "BadArcs":  0,
+                                                "Overlap":  false,
+                                                "Suitable":  true,
+                                                "SourceLine":  "13:46:12.809 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_outpost_farm current=\u003c4959.54,25.0481,10051.9\u003e half=18 relief=1.57687 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                            },
+                    "everon_outpost_meaux_harbour":  {
+                                                         "Center":  [
+                                                                        4588.11,
+                                                                        23.5439,
+                                                                        9701.3
+                                                                    ],
+                                                         "HalfExtent":  18,
+                                                         "Relief":  1.74631,
+                                                         "MaxRelief":  2,
+                                                         "Blocked":  0,
+                                                         "BadArcs":  0,
+                                                         "Overlap":  false,
+                                                         "Suitable":  true,
+                                                         "SourceLine":  "13:46:12.811 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_outpost_meaux_harbour current=\u003c4588.11,23.5439,9701.3\u003e half=18 relief=1.74631 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                                     },
+                    "everon_outpost_gorey":  {
+                                                 "Center":  [
+                                                                4694.91,
+                                                                125.759,
+                                                                8051.5
+                                                            ],
+                                                 "HalfExtent":  18,
+                                                 "Relief":  1.98172,
+                                                 "MaxRelief":  2,
+                                                 "Blocked":  0,
+                                                 "BadArcs":  0,
+                                                 "Overlap":  false,
+                                                 "Suitable":  true,
+                                                 "SourceLine":  "13:46:12.812 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_outpost_gorey current=\u003c4694.91,125.759,8051.5\u003e half=18 relief=1.98172 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                             },
+                    "everon_outpost_pinewood_lake":  {
+                                                         "Center":  [
+                                                                        4854.25,
+                                                                        53.1091,
+                                                                        5670.01
+                                                                    ],
+                                                         "HalfExtent":  18,
+                                                         "Relief":  1.79965,
+                                                         "MaxRelief":  2,
+                                                         "Blocked":  0,
+                                                         "BadArcs":  0,
+                                                         "Overlap":  false,
+                                                         "Suitable":  true,
+                                                         "SourceLine":  "13:46:12.813 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_outpost_pinewood_lake current=\u003c4854.25,53.1091,5670.01\u003e half=18 relief=1.79965 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                                     },
+                    "everon_outpost_levie_hillside":  {
+                                                          "Center":  [
+                                                                         7168,
+                                                                         116.508,
+                                                                         4912.5
+                                                                     ],
+                                                          "HalfExtent":  18,
+                                                          "Relief":  1.0524,
+                                                          "MaxRelief":  2,
+                                                          "Blocked":  0,
+                                                          "BadArcs":  0,
+                                                          "Overlap":  false,
+                                                          "Suitable":  true,
+                                                          "SourceLine":  "13:46:12.816 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_outpost_levie_hillside current=\u003c7168,116.508,4912.5\u003e half=18 relief=1.0524 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                                      },
+                    "everon_outpost_durras_hill":  {
+                                                       "Center":  [
+                                                                      8732.28,
+                                                                      112.781,
+                                                                      3016.72
+                                                                  ],
+                                                       "HalfExtent":  18,
+                                                       "Relief":  1.93286,
+                                                       "MaxRelief":  2,
+                                                       "Blocked":  0,
+                                                       "BadArcs":  0,
+                                                       "Overlap":  false,
+                                                       "Suitable":  true,
+                                                       "SourceLine":  "13:46:12.817 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_outpost_durras_hill current=\u003c8732.28,112.781,3016.72\u003e half=18 relief=1.93286 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                                   },
+                    "everon_outpost_sawmill":  {
+                                                   "Center":  [
+                                                                  3151.86,
+                                                                  120.073,
+                                                                  5296.5
+                                                              ],
+                                                   "HalfExtent":  18,
+                                                   "Relief":  1.57941,
+                                                   "MaxRelief":  2,
+                                                   "Blocked":  0,
+                                                   "BadArcs":  0,
+                                                   "Overlap":  false,
+                                                   "Suitable":  true,
+                                                   "SourceLine":  "13:46:12.819 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_outpost_sawmill current=\u003c3151.86,120.073,5296.5\u003e half=18 relief=1.57941 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                               },
+                    "everon_outpost_regina_south":  {
+                                                        "Center":  [
+                                                                       7289.41,
+                                                                       138.021,
+                                                                       2335.23
+                                                                   ],
+                                                        "HalfExtent":  18,
+                                                        "Relief":  1.8598,
+                                                        "MaxRelief":  2,
+                                                        "Blocked":  0,
+                                                        "BadArcs":  0,
+                                                        "Overlap":  false,
+                                                        "Suitable":  true,
+                                                        "SourceLine":  "13:46:12.820 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_outpost_regina_south current=\u003c7289.41,138.021,2335.23\u003e half=18 relief=1.8598 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                                    },
+                    "everon_outpost_chotain_industrial":  {
+                                                              "Center":  [
+                                                                             6530.52,
+                                                                             159.673,
+                                                                             6424.9
+                                                                         ],
+                                                              "HalfExtent":  18,
+                                                              "Relief":  1.87076,
+                                                              "MaxRelief":  2,
+                                                              "Blocked":  0,
+                                                              "BadArcs":  0,
+                                                              "Overlap":  false,
+                                                              "Suitable":  true,
+                                                              "SourceLine":  "13:46:12.822 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_outpost_chotain_industrial current=\u003c6530.52,159.673,6424.9\u003e half=18 relief=1.87076 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                                          },
+                    "everon_outpost_old_wood":  {
+                                                    "Center":  [
+                                                                   2952.07,
+                                                                   90.9019,
+                                                                   4847.58
+                                                               ],
+                                                    "HalfExtent":  18,
+                                                    "Relief":  1.9928,
+                                                    "MaxRelief":  2,
+                                                    "Blocked":  0,
+                                                    "BadArcs":  0,
+                                                    "Overlap":  false,
+                                                    "Suitable":  true,
+                                                    "SourceLine":  "13:46:12.823 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_outpost_old_wood current=\u003c2952.07,90.9019,4847.58\u003e half=18 relief=1.9928 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                                },
+                    "everon_outpost_morton_valley":  {
+                                                         "Center":  [
+                                                                        4526.43,
+                                                                        63.5864,
+                                                                        5000.9
+                                                                    ],
+                                                         "HalfExtent":  18,
+                                                         "Relief":  1.66772,
+                                                         "MaxRelief":  2,
+                                                         "Blocked":  0,
+                                                         "BadArcs":  0,
+                                                         "Overlap":  false,
+                                                         "Suitable":  true,
+                                                         "SourceLine":  "13:46:12.825 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_outpost_morton_valley current=\u003c4526.43,63.5864,5000.9\u003e half=18 relief=1.66772 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                                     },
+                    "everon_outpost_laruns":  {
+                                                  "Center":  [
+                                                                 7313.13,
+                                                                 122.44,
+                                                                 5202.68
+                                                             ],
+                                                  "HalfExtent":  18,
+                                                  "Relief":  0.808228,
+                                                  "MaxRelief":  2,
+                                                  "Blocked":  0,
+                                                  "BadArcs":  0,
+                                                  "Overlap":  false,
+                                                  "Suitable":  true,
+                                                  "SourceLine":  "13:46:12.826 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_outpost_laruns current=\u003c7313.13,122.44,5202.68\u003e half=18 relief=0.808228 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                              },
+                    "everon_outpost_quarry":  {
+                                                  "Center":  [
+                                                                 8605.86,
+                                                                 141.588,
+                                                                 3388.95
+                                                             ],
+                                                  "HalfExtent":  14,
+                                                  "Relief":  1.90033,
+                                                  "MaxRelief":  2,
+                                                  "Blocked":  0,
+                                                  "BadArcs":  0,
+                                                  "Overlap":  false,
+                                                  "Suitable":  true,
+                                                  "SourceLine":  "13:46:12.827 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_outpost_quarry current=\u003c8605.86,141.588,3388.95\u003e half=14 relief=1.90033 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                              },
+                    "everon_outpost_andres_beacon":  {
+                                                         "Center":  [
+                                                                        7193.83,
+                                                                        5.05719,
+                                                                        8903.72
+                                                                    ],
+                                                         "HalfExtent":  18,
+                                                         "Relief":  1.92459,
+                                                         "MaxRelief":  2,
+                                                         "Blocked":  0,
+                                                         "BadArcs":  0,
+                                                         "Overlap":  false,
+                                                         "Suitable":  true,
+                                                         "SourceLine":  "13:46:12.828 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_outpost_andres_beacon current=\u003c7193.83,5.05719,8903.72\u003e half=18 relief=1.92459 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                                     },
+                    "everon_military_outpost_chotain":  {
+                                                            "Center":  [
+                                                                           6819.06,
+                                                                           125.733,
+                                                                           6712.6
+                                                                       ],
+                                                            "HalfExtent":  32,
+                                                            "Relief":  1.80292,
+                                                            "MaxRelief":  2,
+                                                            "Blocked":  0,
+                                                            "BadArcs":  0,
+                                                            "Overlap":  false,
+                                                            "Suitable":  true,
+                                                            "SourceLine":  "13:46:12.831 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_military_outpost_chotain current=\u003c6819.06,125.733,6712.6\u003e half=32 relief=1.80292 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                                        },
+                    "everon_military_outpost_levie":  {
+                                                          "Center":  [
+                                                                         7801.74,
+                                                                         133.886,
+                                                                         4891.88
+                                                                     ],
+                                                          "HalfExtent":  24,
+                                                          "Relief":  2.98416,
+                                                          "MaxRelief":  3,
+                                                          "Blocked":  0,
+                                                          "BadArcs":  0,
+                                                          "Overlap":  false,
+                                                          "Suitable":  true,
+                                                          "SourceLine":  "13:46:12.833 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_military_outpost_levie current=\u003c7801.74,133.886,4891.88\u003e half=24 relief=2.98416 blocked=0 badArcs=0 overlap=0 suitable=1 limit=3"
+                                                      },
+                    "everon_military_outpost_hospital":  {
+                                                             "Center":  [
+                                                                            4604.7,
+                                                                            85.0631,
+                                                                            8590.04
+                                                                        ],
+                                                             "HalfExtent":  32,
+                                                             "Relief":  1.61743,
+                                                             "MaxRelief":  2,
+                                                             "Blocked":  0,
+                                                             "BadArcs":  0,
+                                                             "Overlap":  false,
+                                                             "Suitable":  true,
+                                                             "SourceLine":  "13:46:12.836 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_military_outpost_hospital current=\u003c4604.7,85.0631,8590.04\u003e half=32 relief=1.61743 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                                         },
+                    "everon_military_outpost_lamentin":  {
+                                                             "Center":  [
+                                                                            1598.5,
+                                                                            62.2188,
+                                                                            5858.45
+                                                                        ],
+                                                             "HalfExtent":  20,
+                                                             "Relief":  1.56876,
+                                                             "MaxRelief":  2,
+                                                             "Blocked":  0,
+                                                             "BadArcs":  0,
+                                                             "Overlap":  false,
+                                                             "Suitable":  true,
+                                                             "SourceLine":  "13:46:12.838 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_military_outpost_lamentin current=\u003c1598.5,62.2188,5858.45\u003e half=20 relief=1.56876 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                                         },
+                    "everon_military_outpost_morton":  {
+                                                           "Center":  [
+                                                                          4767.4,
+                                                                          85.6817,
+                                                                          4536.23
+                                                                      ],
+                                                           "HalfExtent":  24,
+                                                           "Relief":  1.82758,
+                                                           "MaxRelief":  2,
+                                                           "Blocked":  0,
+                                                           "BadArcs":  0,
+                                                           "Overlap":  false,
+                                                           "Suitable":  true,
+                                                           "SourceLine":  "13:46:12.840 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_military_outpost_morton current=\u003c4767.4,85.6817,4536.23\u003e half=24 relief=1.82758 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                                       },
+                    "everon_airport":  {
+                                           "Center":  [
+                                                          4863.48,
+                                                          28.5938,
+                                                          11852.4
+                                                      ],
+                                           "HalfExtent":  44,
+                                           "Relief":  1.00125,
+                                           "MaxRelief":  2,
+                                           "Blocked":  0,
+                                           "BadArcs":  0,
+                                           "Overlap":  false,
+                                           "Suitable":  true,
+                                           "SourceLine":  "13:46:12.844 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_airport current=\u003c4863.48,28.5938,11852.4\u003e half=44 relief=1.00125 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                       },
+                    "everon_factory_north_ridge":  {
+                                                       "Center":  [
+                                                                      6256.08,
+                                                                      180.049,
+                                                                      7560.61
+                                                                  ],
+                                                       "HalfExtent":  24,
+                                                       "Relief":  1.93207,
+                                                       "MaxRelief":  2,
+                                                       "Blocked":  0,
+                                                       "BadArcs":  0,
+                                                       "Overlap":  false,
+                                                       "Suitable":  true,
+                                                       "SourceLine":  "13:46:12.851 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_factory_north_ridge current=\u003c6256.08,180.049,7560.61\u003e half=24 relief=1.93207 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                                   },
+                    "everon_resources_north_ridge_west":  {
+                                                              "Center":  [
+                                                                             4862.57,
+                                                                             165.071,
+                                                                             7250.94
+                                                                         ],
+                                                              "HalfExtent":  26,
+                                                              "Relief":  1.19867,
+                                                              "MaxRelief":  2,
+                                                              "Blocked":  0,
+                                                              "BadArcs":  0,
+                                                              "Overlap":  false,
+                                                              "Suitable":  true,
+                                                              "SourceLine":  "13:46:12.855 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_resources_north_ridge_west current=\u003c4862.57,165.071,7250.94\u003e half=26 relief=1.19867 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                                          },
+                    "everon_resources_north_ridge_east":  {
+                                                              "Center":  [
+                                                                             6179.36,
+                                                                             166.438,
+                                                                             6457.14
+                                                                         ],
+                                                              "HalfExtent":  24,
+                                                              "Relief":  1.18671,
+                                                              "MaxRelief":  2,
+                                                              "Blocked":  0,
+                                                              "BadArcs":  0,
+                                                              "Overlap":  false,
+                                                              "Suitable":  true,
+                                                              "SourceLine":  "13:46:12.857 SCRIPT       : [AROR DEFENCE AUDIT] id=everon_resources_north_ridge_east current=\u003c6179.36,166.438,6457.14\u003e half=24 relief=1.18671 blocked=0 badArcs=0 overlap=0 suitable=1 limit=2"
+                                                          }
+                },
+    "Candidates":  {
+
+                   }
+}

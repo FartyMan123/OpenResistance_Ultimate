@@ -1,0 +1,9 @@
+enum AROR_EOperationState
+{
+	PLANNED,
+	SPAWNING,
+	ACTIVE,
+	SUCCEEDED,
+	FAILED,
+	CANCELLED
+}

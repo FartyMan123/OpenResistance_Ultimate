@@ -1,0 +1,8 @@
+enum AROR_EForceType
+{
+	MOTORIZED,
+	MECHANIZED,
+	ARMOUR,
+	AIRBORNE,
+	INFANTRY
+}

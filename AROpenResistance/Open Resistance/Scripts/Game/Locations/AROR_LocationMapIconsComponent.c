@@ -14,15 +14,52 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	[Attribute("32", UIWidgets.Slider, desc: "Icon size in reference pixels", params: "8 128 1")]
 	protected float m_fIconSize;
 
+	[Attribute("{EC2170E3AEEDEC1E}UI/Layouts/Map/AROR_MapInfoPopup.layout", UIWidgets.ResourceNamePicker, desc: "Layout of the info popup shown when an icon is clicked; needs a text widget named 'Text'", params: "layout", category: "Info popup")]
+	protected ResourceName m_sPopupLayout;
+
+	[Attribute("230", desc: "Popup width in reference pixels (height fits the text)", category: "Info popup")]
+	protected float m_fPopupWidth;
+
+	[Attribute("0.07 0.08 0.09 0.9", UIWidgets.ColorPicker, desc: "Popup background colour", category: "Info popup")]
+	protected ref Color m_PopupBackgroundColor;
+
+	[Attribute("{9B65C8ACFFEE4DD6}UI/Layouts/Map/AROR_MapIconSelector.layout", UIWidgets.ResourceNamePicker, desc: "Corner-bracket selector shown on hover (and steady on the selected icon)", params: "layout", category: "Selector")]
+	protected ResourceName m_sSelectorLayout;
+
+	[Attribute("1 1 1 1", UIWidgets.ColorPicker, desc: "Selector colour", category: "Selector")]
+	protected ref Color m_SelectorColor;
+
+	[Attribute("12", desc: "Selector size beyond the icon size, in reference pixels", category: "Selector")]
+	protected float m_fSelectorPadding;
+
+	[Attribute("1.6", desc: "Seconds for one fade in and out while hovering", category: "Selector")]
+	protected float m_fSelectorPulseSeconds;
+
 	protected static const string ICON_WIDGET_NAME = "Icon";
 
+	//! Extra clickable margin around an icon, in reference pixels
+	protected static const float CLICK_MARGIN = 4;
+
+	//! Set while another feature uses map clicks (HQ pick, teleport) so clicks do not open the popup
+	protected static bool s_bInfoPopupSuppressed;
+
 	protected Widget m_wIconParent;
+	protected ref AROR_QRFMapIntel m_QRFIntel = new AROR_QRFMapIntel();
 	protected ref array<AROR_LocationComponent> m_aIconLocations = {};
 	protected ref array<Widget> m_aIconWidgets = {};
+	protected ref AROR_LocationInfoPopup m_Popup;
+	protected ref AROR_MapIconSelector m_Selector;
+
+	//------------------------------------------------------------------------------------------------
+	static void SetInfoPopupSuppressed(bool suppressed)
+	{
+		s_bInfoPopupSuppressed = suppressed;
+	}
 
 	//------------------------------------------------------------------------------------------------
 	protected void OnMapOpen(MapConfiguration config)
 	{
+		SetQRFObserverMapOpen(true);
 		SCR_MapEntity mapEntity = SCR_MapEntity.GetMapInstance();
 		if (!mapEntity || !mapEntity.GetMapWidget())
 			return;
@@ -45,6 +82,17 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 
 		locationManager.GetOnLocationRegistered().Insert(CreateIcon);
 		locationManager.GetOnLocationUnregistered().Insert(RemoveIcon);
+		locationManager.GetOnLocationControlChanged().Insert(OnLocationControlChanged);
+		locationManager.GetOnLocationSupportChanged().Insert(OnLocationSupportChanged);
+
+		if (!m_sPopupLayout.IsEmpty())
+		{
+			m_Popup = new AROR_LocationInfoPopup(m_sPopupLayout, m_wIconParent, m_fPopupWidth, m_PopupBackgroundColor);
+			SCR_MapEntity.GetOnSelection().Insert(OnMapClicked);
+		}
+
+		if (!m_sSelectorLayout.IsEmpty())
+			m_Selector = new AROR_MapIconSelector(m_sSelectorLayout, m_wIconParent, m_SelectorColor);
 
 		// Per frame only while a map is open, so icons follow pan and zoom interpolation
 		UpdateIconPositions();
@@ -54,6 +102,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	//------------------------------------------------------------------------------------------------
 	protected void OnMapClose(MapConfiguration config)
 	{
+		SetQRFObserverMapOpen(false);
 		GetGame().GetCallqueue().Remove(UpdateIconPositions);
 
 		AROR_LocationManagerComponent locationManager = AROR_LocationManagerComponent.GetInstance();
@@ -61,9 +110,86 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		{
 			locationManager.GetOnLocationRegistered().Remove(CreateIcon);
 			locationManager.GetOnLocationUnregistered().Remove(RemoveIcon);
+			locationManager.GetOnLocationControlChanged().Remove(OnLocationControlChanged);
+			locationManager.GetOnLocationSupportChanged().Remove(OnLocationSupportChanged);
 		}
 
+		SCR_MapEntity.GetOnSelection().Remove(OnMapClicked);
+		m_Popup = null;
+		m_Selector = null;
 		ClearIcons();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	// Info popup
+	//------------------------------------------------------------------------------------------------
+	//! The click event's coordinates are not used: the map cursor's world position is converted to the screen
+	//! the same way as the icons, so both are compared in the same space
+	protected void OnMapClicked(vector screenPosition)
+	{
+		if (!m_Popup)
+			return;
+
+		if (s_bInfoPopupSuppressed)
+		{
+			m_Popup.Hide();
+			return;
+		}
+
+		AROR_LocationComponent clicked = FindIconAtCursor();
+		if (!clicked || clicked == m_Popup.GetLocation())
+		{
+			// Clicking empty map, or the same icon again, closes the popup
+			m_Popup.Hide();
+			return;
+		}
+
+		m_Popup.Show(clicked);
+		UpdateIconPositions();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected AROR_LocationComponent FindIconAtCursor()
+	{
+		SCR_MapEntity mapEntity = SCR_MapEntity.GetMapInstance();
+		if (!mapEntity)
+			return null;
+
+		float cursorWorldX, cursorWorldZ;
+		mapEntity.GetMapCursorWorldPosition(cursorWorldX, cursorWorldZ);
+
+		int cursorX, cursorY;
+		mapEntity.WorldToScreen(cursorWorldX, cursorWorldZ, cursorX, cursorY, true);
+
+		float hitRadius = GetGame().GetWorkspace().DPIScale(m_fIconSize * 0.5 + CLICK_MARGIN);
+		AROR_LocationComponent nearest;
+		float nearestDistance = hitRadius;
+
+		foreach (AROR_LocationComponent location : m_aIconLocations)
+		{
+			if (!location)
+				continue;
+
+			vector center = location.GetCenter();
+			int iconX, iconY;
+			mapEntity.WorldToScreen(center[0], center[2], iconX, iconY, true);
+
+			float distance = Math.Sqrt((iconX - cursorX) * (iconX - cursorX) + (iconY - cursorY) * (iconY - cursorY));
+			if (distance <= nearestDistance)
+			{
+				nearestDistance = distance;
+				nearest = location;
+			}
+		}
+
+		return nearest;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void OnLocationSupportChanged(AROR_LocationComponent location)
+	{
+		if (m_Popup && m_Popup.GetLocation() == location)
+			m_Popup.Refresh();
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -89,6 +215,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		}
 
 		image.LoadImageTexture(0, icon);
+		ApplyControlColor(image, location);
 		FrameSlot.SetSize(root, m_fIconSize, m_fIconSize);
 		FrameSlot.SetAlignment(root, 0.5, 0.5);
 
@@ -103,6 +230,9 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		if (index < 0)
 			return;
 
+		if (m_Popup && m_Popup.GetLocation() == location)
+			m_Popup.Hide();
+
 		if (m_aIconWidgets[index])
 			m_aIconWidgets[index].RemoveFromHierarchy();
 
@@ -113,6 +243,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	//------------------------------------------------------------------------------------------------
 	protected void ClearIcons()
 	{
+		m_QRFIntel.ClearWidgets();
 		foreach (Widget widget : m_aIconWidgets)
 		{
 			if (widget)
@@ -122,6 +253,40 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		m_aIconLocations.Clear();
 		m_aIconWidgets.Clear();
 		m_wIconParent = null;
+	}
+	protected void SetQRFObserverMapOpen(bool open)
+	{
+		SCR_PlayerController controller = SCR_PlayerController.Cast(GetGame().GetPlayerController());
+		if (controller)
+			controller.AROR_SetQRFMapOpen(open);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Tint the icon with the controlling role's faction colour (icons must be white to show the tint)
+	protected void ApplyControlColor(notnull ImageWidget image, notnull AROR_LocationComponent location)
+	{
+		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.GetInstance();
+		if (!roles)
+			return;
+
+		Faction faction = roles.GetFaction(location.GetControllingRole());
+		if (faction)
+			image.SetColor(faction.GetFactionColor());
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void OnLocationControlChanged(AROR_LocationComponent location)
+	{
+		int index = m_aIconLocations.Find(location);
+		if (index < 0 || !m_aIconWidgets[index])
+			return;
+
+		ImageWidget image = ImageWidget.Cast(m_aIconWidgets[index].FindAnyWidget(ICON_WIDGET_NAME));
+		if (image)
+			ApplyControlColor(image, location);
+
+		if (m_Popup && m_Popup.GetLocation() == location)
+			m_Popup.Refresh();
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -142,8 +307,56 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 
 			vector center = location.GetCenter();
 			mapEntity.WorldToScreen(center[0], center[2], screenX, screenY, true);
-			FrameSlot.SetPos(widget, workspace.DPIUnscale(screenX), workspace.DPIUnscale(screenY));
+			float x = workspace.DPIUnscale(screenX);
+			float y = workspace.DPIUnscale(screenY);
+			FrameSlot.SetPos(widget, x, y);
+
+			// Popup sits to the right of its icon (clear of the selector), top-aligned with it
+			if (m_Popup && m_Popup.GetLocation() == location)
+				m_Popup.SetPosition(x + (m_fIconSize + m_fSelectorPadding) * 0.5 + CLICK_MARGIN, y - m_fIconSize * 0.5);
 		}
+
+		UpdateSelector(mapEntity, workspace);
+		m_QRFIntel.Update(m_wIconParent, m_sIconLayout, mapEntity);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Brackets pulse around the hovered icon and stay steady around the icon whose popup is open
+	protected void UpdateSelector(notnull SCR_MapEntity mapEntity, notnull WorkspaceWidget workspace)
+	{
+		if (!m_Selector)
+			return;
+
+		AROR_LocationComponent selected;
+		if (m_Popup)
+			selected = m_Popup.GetLocation();
+
+		AROR_LocationComponent hovered;
+		if (!s_bInfoPopupSuppressed)
+			hovered = FindIconAtCursor();
+
+		AROR_LocationComponent target = hovered;
+		if (!target)
+			target = selected;
+
+		if (!target)
+		{
+			m_Selector.Hide();
+			return;
+		}
+
+		float opacity = 1;
+		if (target != selected && m_fSelectorPulseSeconds > 0)
+		{
+			float seconds = GetGame().GetWorld().GetWorldTime() * 0.001;
+			float wave = Math.Sin(seconds * Math.PI2 / m_fSelectorPulseSeconds);
+			opacity = 0.25 + 0.75 * (0.5 + 0.5 * wave);
+		}
+
+		vector center = target.GetCenter();
+		int screenX, screenY;
+		mapEntity.WorldToScreen(center[0], center[2], screenX, screenY, true);
+		m_Selector.Show(workspace.DPIUnscale(screenX), workspace.DPIUnscale(screenY), m_fIconSize + m_fSelectorPadding, opacity);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -153,6 +366,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 
 		if (!GetGame().InPlayMode() || RplSession.Mode() == RplMode.Dedicated)
 			return;
+		AROR_QRFMapIntel.Clear();
 
 		SCR_MapEntity.GetOnMapOpen().Insert(OnMapOpen);
 		SCR_MapEntity.GetOnMapClose().Insert(OnMapClose);
@@ -164,6 +378,9 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		GetGame().GetCallqueue().Remove(UpdateIconPositions);
 		SCR_MapEntity.GetOnMapOpen().Remove(OnMapOpen);
 		SCR_MapEntity.GetOnMapClose().Remove(OnMapClose);
+		SCR_MapEntity.GetOnSelection().Remove(OnMapClicked);
+		m_Popup = null;
+		m_Selector = null;
 		ClearIcons();
 
 		super.OnDelete(owner);

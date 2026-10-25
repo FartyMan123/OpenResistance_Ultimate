@@ -4,6 +4,8 @@ GenericEntity : "{D1387921EE9626CA}Prefabs/Locations/AROR_Location_Base.et" {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sMapIcon "{1B114B8D62F6EEB5}UI/Textures/Map/town.edds"
   }
+  AROR_SettlementComponent "{6AAE72CBD95477C1}" {
+  }
  }
  coords 1.475 3.986 2.958
 }

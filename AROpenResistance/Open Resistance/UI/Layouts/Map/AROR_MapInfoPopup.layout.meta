@@ -1,0 +1,17 @@
+MetaFileClass {
+ Name "{EC2170E3AEEDEC1E}UI/Layouts/Map/AROR_MapInfoPopup.layout"
+ Configurations {
+  LayoutResourceClass PC {
+  }
+  LayoutResourceClass XBOX_ONE : PC {
+  }
+  LayoutResourceClass XBOX_SERIES : PC {
+  }
+  LayoutResourceClass PS4 : PC {
+  }
+  LayoutResourceClass PS5 : PC {
+  }
+  LayoutResourceClass HEADLESS : PC {
+  }
+ }
+}

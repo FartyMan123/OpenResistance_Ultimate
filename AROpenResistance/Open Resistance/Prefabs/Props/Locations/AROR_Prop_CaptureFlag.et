@@ -1,8 +1,44 @@
 GenericEntity {
  ID "6AACA42B1A6E3AEF"
  components {
+  AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
+   m_bAutoPlace 1
+   m_fSearchRadius 60
+  }
   MeshObject "{6AACA42B022505CD}" {
    Object "{C41BFB78E6FFFBCB}Assets/Structures/Military/Flags/FlagPole_01/FlagPole_01.xob"
+  }
+  RigidBody "{6AAE5E8D1CEE716E}" {
+   ModelGeometry 1
+  }
+  ActionsManagerComponent "{6AAE5E8DE935135E}" {
+   ActionContexts {
+    UserActionContext "{6AAE5E8DEECDFE8B}" {
+     UIInfo SCR_ActionContextUIInfo "{6AAE5E8DD6AF7137}" {
+      Name "Flag"
+     }
+     ContextName "capture"
+     Position PointInfo "{6AAE5E8DE4DBC0C4}" {
+      Offset 0 1.5 0
+     }
+     Radius 0.5
+    }
+   }
+   additionalActions {
+    AROR_CaptureLocationAction "{6AAE5E8DC81A6290}" {
+     ParentContextList {
+      "capture"
+     }
+     UIInfo SCR_ActionUIInfo "{6AAE5E8DA5FE3A06}" {
+      Name "Capture"
+     }
+     Duration 5
+    }
+   }
+  }
+  RplComponent "{6AAE5E8D1FB62364}" {
+  }
+  Hierarchy "{6AAE5E8360A7867B}" {
   }
  }
  coords 4927.228 14.369 3986.369

@@ -1,0 +1,35 @@
+# Everon military defence site review
+
+All 23 military sites select a perimeter preset: 23 measured placements and 0 unmeasured drafts. The latest native audit passed all 23 current footprints, including relocated East Resources, with no further relocation suggestions. Full model/navigation/lifecycle acceptance remains outstanding.
+
+The airport anchor stays fixed. Authorised Factory/resource moves affect Chicken only; Rowan scene files remain untouched. East Resources now uses the measured clearing at 6179.36,166.438,6457.14, yaw 45, about 866m from its former flag, with 1.18671m relief. Native terrain and pad gates remain active.
+
+After the final East Resources move, native grounding completed all 1526 walls with zero warnings. The world was saved and all 1526 measured offsets were imported into EVERON_DEFENCE_WALL_PLACEMENTS.json. The subsequent audit passed every current footprint. No additional scene changes were made during this evidence import.
+
+| Site | Layout / footprint | Status | Findings |
+| --- | --- | --- | --- |
+| Farm Outpost (`everon_outpost_farm`) | AROR_Defence_Outpost.et; 36 x 36m | Native footprint passed - Play pending | Measured Dense clearing: 1.58m relief; model grounding, access and full Play pending |
+| Meaux Harbour Outpost (`everon_outpost_meaux_harbour`) | AROR_Defence_Outpost.et; 36 x 36m | Native footprint passed - Play pending | Measured Dense clearing: 1.75m relief; model grounding, access and full Play pending |
+| Gorey Outpost (`everon_outpost_gorey`) | AROR_Defence_Outpost.et; 36 x 36m | Native footprint passed - Play pending | Measured Dense clearing: 1.98m relief; model grounding, access and full Play pending |
+| Pinewood Lake Outpost (`everon_outpost_pinewood_lake`) | AROR_Defence_Outpost.et; 36 x 36m | Native footprint passed - Play pending | Measured Original clearing: 1.80m relief; model grounding, access and full Play pending |
+| Levie Hillside Outpost (`everon_outpost_levie_hillside`) | AROR_Defence_Outpost.et; 36 x 36m | Native footprint passed - Play pending | Measured Dense clearing: 1.05m relief; model grounding, access and full Play pending |
+| Durras Hill Outpost (`everon_outpost_durras_hill`) | AROR_Defence_Outpost.et; 36 x 36m | Native footprint passed - Play pending | Measured Dense clearing: 1.93m relief; model grounding, access and full Play pending |
+| Sawmill Outpost (`everon_outpost_sawmill`) | AROR_Defence_Outpost.et; 36 x 36m | Native footprint passed - Play pending | Measured Dense clearing: 1.58m relief; model grounding, access and full Play pending |
+| Regina South Outpost (`everon_outpost_regina_south`) | AROR_Defence_Outpost.et; 36 x 36m | Native footprint passed - Play pending | Measured Dense clearing: 1.86m relief; model grounding, access and full Play pending |
+| Chotain Industrial Outpost (`everon_outpost_chotain_industrial`) | AROR_Defence_Outpost.et; 36 x 36m | Native footprint passed - Play pending | Measured Dense clearing: 1.87m relief; model grounding, access and full Play pending |
+| Old Wood Outpost (`everon_outpost_old_wood`) | AROR_Defence_Outpost.et; 36 x 36m | Native footprint passed - Play pending | Measured Dense clearing: 1.99m relief; model grounding, access and full Play pending |
+| Morton Valley Outpost (`everon_outpost_morton_valley`) | AROR_Defence_Outpost.et; 36 x 36m | Native footprint passed - Play pending | Measured Original clearing: 1.67m relief; model grounding, access and full Play pending |
+| Laruns Outpost (`everon_outpost_laruns`) | AROR_Defence_Outpost.et; 36 x 36m | Native footprint passed - Play pending | Measured Dense clearing: 0.81m relief; model grounding, access and full Play pending |
+| Quarry Outpost (`everon_outpost_quarry`) | AROR_Defence_OutpostCompact.et; 28 x 28m | Native footprint passed - Play pending | Measured Placed clearing: 1.90m relief; model grounding, access and full Play pending |
+| Andres Beacon Outpost (`everon_outpost_andres_beacon`) | AROR_Defence_Outpost.et; 36 x 36m | Native footprint passed - Play pending | Measured Grounded clearing: 1.92m relief; model grounding, access and full Play pending |
+| Chotain Military Outpost (`everon_military_outpost_chotain`) | AROR_Defence_MilitaryOutpost.et; 64 x 64m | Native footprint passed - Play pending | Measured Dense clearing: 1.80m relief; model grounding, access and full Play pending |
+| Levie Military Outpost (`everon_military_outpost_levie`) | AROR_Defence_MilitaryOutpostCompact.et; 48 x 48m | Native footprint passed - Play pending | Measured Placed clearing: 2.98m relief; model grounding, access and full Play pending |
+| Military Hospital Outpost (`everon_military_outpost_hospital`) | AROR_Defence_MilitaryOutpost.et; 64 x 64m | Native footprint passed - Play pending | Measured Dense clearing: 1.62m relief; model grounding, access and full Play pending |
+| Lamentin Military Outpost (`everon_military_outpost_lamentin`) | AROR_Defence_MilitaryOutpostCoastalCompact.et; 40 x 40m | Native footprint passed - Play pending | Measured Grounded clearing: 1.57m relief; model grounding, access and full Play pending |
+| Morton Military Outpost (`everon_military_outpost_morton`) | AROR_Defence_MilitaryOutpostCompact.et; 48 x 48m | Native footprint passed - Play pending | Measured Placed clearing: 1.83m relief; model grounding, access and full Play pending |
+| Everon International Airport (`everon_airport`) | AROR_Defence_Airbase.et; 88 x 88m | Native footprint passed - Play pending | Measured Dense clearing: 1.00m relief; model grounding, access and full Play pending; Strategic root retained; complete defence must remain within its canonical capture radius |
+| North Ridge Factory (`everon_factory_north_ridge`) | AROR_Defence_FactoryCompact.et; 48 x 48m | Native footprint passed - Play pending | Measured Grounded clearing: 1.93m relief; model grounding, access and full Play pending |
+| North Ridge Resources West (`everon_resources_north_ridge_west`) | AROR_Defence_Resources.et; 52 x 52m | Native footprint passed - Play pending | Measured Dense clearing: 1.20m relief; model grounding, access and full Play pending; Resource relocation authorised in Chicken; the overlapping original proposal pair must not be adopted together |
+| North Ridge Resources East (`everon_resources_north_ridge_east`) | AROR_Defence_ResourcesCompact.et; 48 x 48m | Native footprint passed - Play pending | Measured Followup clearing: 1.19m relief; model grounding, access and full Play pending; Resource relocation authorised in Chicken; the overlapping original proposal pair must not be adopted together |
+
+User-reported Play tests: an earlier unnamed outpost completed clearance, flag capture and QRF response with good pathing. East Resources subsequently passed garrison spawning, defender clearance, flag capture and a successful QRF response at its relocated site. Full QRF delivery, security hold, return and cleanup were not confirmed; other sites still need gameplay coverage.

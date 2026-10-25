@@ -1,0 +1,1090 @@
+GenericEntity : "{BACC096222622272}Prefabs/Locations/AROR_Location_Port.et" {
+ ID "6657D219672CE39A"
+ components {
+  AROR_GarrisonComponent "{66D30571F98F4BE3}" {
+   m_fDefenceHalfExtent 28
+   m_fMaxDefenceRelief 2
+   m_fDefenceHoldRadius 6
+  }
+ }
+ coords 0 0 0
+ {
+  GenericEntity {
+   ID "6AACA42C304AE078"
+   components {
+    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
+     m_bAutoPlace 0
+    }
+    ActionsManagerComponent "{6AAE5E8DE935135E}" {
+     ActionContexts {
+      UserActionContext "{6AAE5E8DEECDFE8B}" {
+       Position PointInfo "{6AAE5E8DE4DBC0C4}" {
+        Offset 0 0.694054 0
+       }
+      }
+     }
+    }
+   }
+   coords 0 0.905946 0
+  }
+  GenericEntity AROR_Port_Wall_0_0 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "435828CFAE676DF6"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -26.782609 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_1 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "00E7F6BBDE7E2819"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -24.347826 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_2 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "1A8E96023CCBF4C4"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -21.913043 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_3 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "A193236C022BAF5B"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -19.478261 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_4 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "FBB9B630F56C32D2"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -17.043478 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_5 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "BF5A2AE0F900CE96"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -14.608696 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_6 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "92D54C6F69F7840D"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -12.173913 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_7 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "F38C10A187A394EC"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -9.73913 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_8 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "2A5F93385AECA7AA"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -7.304348 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_9 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "FDEABA138042FB2A"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -4.869565 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_10 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "6D034711B02A956F"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -2.434783 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_11 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "E87E5D8A349179DF"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 0 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_12 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "A71205EF325A9FB0"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 2.434783 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_13 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "096BD97EA56D05FC"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 4.869565 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_14 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "7CE41B2B374B65FC"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 7.304348 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_15 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "7EEC924234B5D9BC"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 9.73913 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_16 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "F382D0A25286C25E"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 12.173913 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_17 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "DCD4BCAAB81049B1"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 14.608696 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_18 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "C5D5B5844C806853"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 17.043478 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_19 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "A65E09BCEFF69E0C"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 19.478261 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_20 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "D1323D5BB834E43B"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 21.913043 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_21 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "354390D57D640F25"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 24.347826 0 28
+  }
+  GenericEntity AROR_Port_Wall_0_22 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "0A97B06248490854"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 26.782609 0 28
+  }
+  GenericEntity AROR_Port_Wall_1_0 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "D54B8AA2A1761C19"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 -26.782609
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_1 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "FCAC43E754259C12"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 -24.347826
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_2 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "2C17FA9D495B65E0"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 -21.913043
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_3 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "A904CA791939C28B"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 -19.478261
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_4 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "572EFE474B6ECDCC"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 -17.043478
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_5 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "EB2A42FFFA111B79"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 -14.608696
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_6 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "7BC91182CC14415E"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 -12.173913
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_7 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "5256DE447FFE219D"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 -9.73913
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_8 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "C13041D63D3FDC0D"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 -7.304348
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_9 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "8A108017F61B0A7C"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 -4.869565
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_10 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "D56F4085CA7AF928"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 -2.434783
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_11 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "B7AC77B1AAF09C99"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 0
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_12 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "2C7CA6B54860716B"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 2.434783
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_13 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "898A8B5D6BCE4182"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 4.869565
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_14 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "95D56A17DF620DBE"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 7.304348
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_15 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "1D92D974C571674D"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 9.73913
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_16 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "3E8A7F2D13725AAD"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 12.173913
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_17 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "1EF151BE3CD95D76"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 14.608696
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_18 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "542BFF0F5ED815BB"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 17.043478
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_19 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "2F0592055792210B"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 19.478261
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_20 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "3EE5FE330A1E4735"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 21.913043
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_21 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "316A050BE5944AC5"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 24.347826
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_1_22 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "7FCC70DDBF5B5E9F"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 28 0 26.782609
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_2_0 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "57DD982E90ACDE4C"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -26.782609 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_1 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "9CFEFDCC217F485B"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -24.347826 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_2 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "4FF9A23058A55D9F"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -21.913043 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_3 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "6EAE51C6891C05E9"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -19.478261 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_4 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "97D28ED5916DA593"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -17.043478 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_5 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "5A612F34F62D3C74"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -14.608696 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_6 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "AB9AC58BBC0C07DD"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -12.173913 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_7 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "423C32E711242BA7"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -9.73913 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_8 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "CDD5BDA2C3FB225E"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -7.304348 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_14 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "3C88CBE9C2BA4C9F"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 7.304348 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_15 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "ADE15F892BDF58C5"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 9.73913 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_16 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "E92C2D0D79E8769C"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 12.173913 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_17 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "FA5E97D7CC21CB2D"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 14.608696 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_18 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "8854DDD0CCA65069"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 17.043478 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_19 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "2B4E3E7CB67D44A7"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 19.478261 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_20 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "E177483D07A56A26"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 21.913043 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_21 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "C135C09BA326C33D"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 24.347826 0 -28
+  }
+  GenericEntity AROR_Port_Wall_2_22 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "95B65ECCD79E731F"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords 26.782609 0 -28
+  }
+  GenericEntity AROR_Port_Wall_3_0 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "2B022C1D40F10790"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 -26.782609
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_1 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "DA85CB44283A1138"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 -24.347826
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_2 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "C71280B528F682DB"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 -21.913043
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_3 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "8FA5B38CD2ECA6FE"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 -19.478261
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_4 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "5AC21102BD5310C9"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 -17.043478
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_5 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "924EC370F674FC49"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 -14.608696
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_6 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "449B23A708682762"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 -12.173913
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_7 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "F0DC9C61315F38BD"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 -9.73913
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_8 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "AC83D962E8FA6441"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 -7.304348
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_9 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "E551EF7455CDA2CD"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 -4.869565
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_10 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "59F0335D8513080B"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 -2.434783
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_11 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "D7E2CD26C0815BE5"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 0
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_12 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "6712B7274EB13EC8"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 2.434783
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_13 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "B495106F8E5DB0A7"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 4.869565
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_14 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "003D54F066A81CA8"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 7.304348
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_15 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "72C72C52F7D71D9B"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 9.73913
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_16 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "B8DBEFD659165A0F"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 12.173913
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_17 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "594F58D93D5B4868"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 14.608696
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_18 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "550DEE1233119A8B"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 17.043478
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_19 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "DB5E1F72E9E3A796"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 19.478261
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_20 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "856E56D180AEA5B3"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 21.913043
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_21 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "EACD52AEBAF85FDE"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 24.347826
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Wall_3_22 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
+   ID "7781A4612D8908F1"
+   components {
+    Hierarchy {
+    }
+    AROR_DefenceWallComponent {
+    }
+   }
+   coords -28 0 26.782609
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Defence_0_0 {
+   ID "5C7A26BE99351D19"
+   components {
+    Hierarchy {
+    }
+    AROR_DefencePositionComponent {
+     m_iKind 0
+     m_iOrdinal 0
+    }
+   }
+   coords 14.142136 0 14.142136
+   angles 0 45 0
+  }
+  GenericEntity AROR_Port_Defence_0_1 {
+   ID "2055C682F7F950EA"
+   components {
+    Hierarchy {
+    }
+    AROR_DefencePositionComponent {
+     m_iKind 0
+     m_iOrdinal 1
+    }
+   }
+   coords -14.142136 0 -14.142136
+   angles 0 225 0
+  }
+  GenericEntity AROR_Port_Defence_0_2 {
+   ID "E6B25864EBE9347E"
+   components {
+    Hierarchy {
+    }
+    AROR_DefencePositionComponent {
+     m_iKind 0
+     m_iOrdinal 2
+    }
+   }
+   coords 14.142136 0 -14.142136
+   angles 0 135 0
+  }
+  GenericEntity AROR_Port_Defence_0_3 {
+   ID "E36A6F292C1C6079"
+   components {
+    Hierarchy {
+    }
+    AROR_DefencePositionComponent {
+     m_iKind 0
+     m_iOrdinal 3
+    }
+   }
+   coords -14.142136 0 14.142136
+   angles 0 315 0
+  }
+  GenericEntity AROR_Port_Defence_0_4 {
+   ID "54C4B7FAF1AF567F"
+   components {
+    Hierarchy {
+    }
+    AROR_DefencePositionComponent {
+     m_iKind 0
+     m_iOrdinal 4
+    }
+   }
+   coords 0 0 16
+   angles 0 0 0
+  }
+  GenericEntity AROR_Port_Defence_0_5 {
+   ID "A55047FA4B1D010B"
+   components {
+    Hierarchy {
+    }
+    AROR_DefencePositionComponent {
+     m_iKind 0
+     m_iOrdinal 5
+    }
+   }
+   coords 0 0 -16
+   angles 0 180 0
+  }
+  GenericEntity AROR_Port_Defence_1_0 {
+   ID "9F8AA3F49D2F82E4"
+   components {
+    Hierarchy {
+    }
+    AROR_DefencePositionComponent {
+     m_iKind 1
+     m_iOrdinal 0
+    }
+   }
+   coords 0 0 24
+   angles 0 0 0
+  }
+  GenericEntity AROR_Port_Defence_1_1 {
+   ID "7EF5583221BA69DD"
+   components {
+    Hierarchy {
+    }
+    AROR_DefencePositionComponent {
+     m_iKind 1
+     m_iOrdinal 1
+    }
+   }
+   coords -24 0 0
+   angles 0 270 0
+  }
+  GenericEntity AROR_Port_Defence_1_2 {
+   ID "032E610A0C712903"
+   components {
+    Hierarchy {
+    }
+    AROR_DefencePositionComponent {
+     m_iKind 1
+     m_iOrdinal 2
+    }
+   }
+   coords 24 0 0
+   angles 0 90 0
+  }
+  GenericEntity AROR_Port_Defence_2_0 {
+   ID "CAEBA98562364A33"
+   components {
+    Hierarchy {
+    }
+    AROR_DefencePositionComponent {
+     m_iKind 2
+     m_iOrdinal 0
+    }
+   }
+   coords -10 0 -5
+   angles 0 180 0
+  }
+  GenericEntity AROR_Port_Defence_3_0 {
+   ID "700F1998D1F44861"
+   components {
+    Hierarchy {
+    }
+    AROR_DefencePositionComponent {
+     m_iKind 3
+     m_iOrdinal 0
+    }
+   }
+   coords 10 0 -5
+   angles 0 180 0
+  }
+ }
+}

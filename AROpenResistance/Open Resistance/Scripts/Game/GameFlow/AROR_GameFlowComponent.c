@@ -22,9 +22,6 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	[Attribute("100", UIWidgets.Slider, desc: "Minimum distance in metres between the HQ and the edge (radius) of any location", params: "0 5000 10")]
 	protected float m_fHQMinDistanceFromLocation;
 
-	//! TODO: replace with the Factions role config (RESISTANCE role)
-	[Attribute("FIA", desc: "Faction key of the Resistance role")]
-	protected string m_sResistanceFactionKey;
 
 	[Attribute("1", desc: "Players can move at the staging spawn while the admin sets up the campaign")]
 	protected bool m_bAllowControlsInSetup;
@@ -51,6 +48,9 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 
 	//! Server: true once a playthrough is created or loaded; lets the game mode leave pre-game
 	protected bool m_bPlaythroughReady;
+
+	//! Server: players already offered the setup screen (join and role change can both trigger it)
+	protected ref array<int> m_aSetupOfferedPlayerIds = {};
 
 	//! Server: saves last sent to the admin, newest first; the client refers to them by index
 	protected ref array<SaveGame> m_aListedSaves = {};
@@ -108,7 +108,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			return;
 
 		m_aStagingSpawns.Insert(spawnPoint);
-		spawnPoint.SetFactionKey(m_sResistanceFactionKey);
+		spawnPoint.SetFactionKey(GetResistanceFactionKey());
 		spawnPoint.SetSpawnPointEnabled_S(!m_bPlaythroughReady);
 	}
 
@@ -140,6 +140,13 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			if (!SCR_Global.TeleportPlayer(playerId, target))
 				Print(string.Format("[AROR] Could not move player %1 to the HQ (not spawned?)", playerId), LogLevel.NORMAL);
 		}
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! True once a playthrough has been started or loaded (setup is over)
+	bool IsPlaythroughReady()
+	{
+		return m_bPlaythroughReady;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -231,7 +238,8 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	//------------------------------------------------------------------------------------------------
 	// Server: requests from the admin (arrive through SCR_PlayerController RPCs)
 	//------------------------------------------------------------------------------------------------
-	void RequestNewPlaythrough_S(int playerId, vector hqPosition, string playthroughName)
+	//! presetIds: faction preset ID per role, indexed by AROR_EFactionRole (null or empty entries use the defaults)
+	void RequestNewPlaythrough_S(int playerId, vector hqPosition, string playthroughName, array<string> presetIds = null)
 	{
 		if (!CanAcceptSetupRequest(playerId))
 			return;
@@ -250,6 +258,11 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			return;
 		}
 
+		// Before the initial save point, so the first save already holds the admin's choice
+		AROR_FactionPresetsComponent factionPresets = AROR_FactionPresetsComponent.GetInstance();
+		if (factionPresets)
+			factionPresets.SetPresets_S(presetIds);
+
 		SaveGameManager saveManager = SaveGameManager.Get();
 		if (saveManager)
 		{
@@ -267,6 +280,8 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		m_bPlaythroughReady = true;
 		DisableStagingSpawns();
 		MovePlayersToHQ(hq.GetOrigin());
+
+		SendHQEstablishedHeadline(hq);
 
 		Print(string.Format("[AROR] New playthrough '%1' started, HQ at %2", playthroughName, hq.GetOrigin()), LogLevel.NORMAL);
 		SendSetupResult(playerId, true, string.Empty);
@@ -353,6 +368,37 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	protected string GetResistanceFactionKey()
+	{
+		// Look up on our own entity: the roles component may not have initialised its instance yet
+		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.Cast(GetOwner().FindComponent(AROR_FactionRolesComponent));
+		if (!roles)
+		{
+			Print("[AROR] AROR_FactionRolesComponent missing on the game mode; Resistance faction unknown", LogLevel.ERROR);
+			return string.Empty;
+		}
+
+		return roles.GetFactionKey(AROR_EFactionRole.RESISTANCE);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Headline for everyone, with the HQ's map icon in the Resistance colour
+	protected void SendHQEstablishedHeadline(notnull IEntity hq)
+	{
+		ResourceName icon;
+		AROR_LocationComponent location = AROR_LocationComponent.Cast(hq.FindComponent(AROR_LocationComponent));
+		if (location)
+			icon = location.GetMapIcon();
+
+		Color color;
+		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.GetInstance();
+		if (roles && roles.GetFaction(AROR_EFactionRole.RESISTANCE))
+			color = roles.GetFaction(AROR_EFactionRole.RESISTANCE).GetFactionColor();
+
+		AROR_NotificationManagerComponent.Send_S(new AROR_Notification(AROR_ENotificationType.HEADLINE, "Resistance HQ established", icon, color));
+	}
+
+	//------------------------------------------------------------------------------------------------
 	protected IEntity SpawnHQ(vector position)
 	{
 		Resource resource = Resource.Load(m_sHQPrefab);
@@ -373,7 +419,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 
 		SCR_SpawnPoint spawnPoint = SCR_SpawnPoint.Cast(hq);
 		if (spawnPoint)
-			spawnPoint.SetFactionKey(m_sResistanceFactionKey);
+			spawnPoint.SetFactionKey(GetResistanceFactionKey());
 		else
 			Print("[AROR] HQ prefab is not an SCR_SpawnPoint; players will have nowhere to spawn", LogLevel.ERROR);
 
@@ -394,6 +440,11 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	{
 		if (!Replication.IsServer() || m_bPlaythroughReady || !IsAdmin(playerId))
 			return;
+
+		if (m_aSetupOfferedPlayerIds.Contains(playerId))
+			return;
+
+		m_aSetupOfferedPlayerIds.Insert(playerId);
 
 #ifdef WORKBENCH
 		if (m_bWorkbenchAutoNewPlaythrough)
@@ -506,6 +557,14 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	{
 		super.OnPlayerRoleChange(playerId, roleFlags);
 		TryOfferSetup(playerId);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! A rejoining admin gets the setup screen again
+	override void OnPlayerDisconnected(int playerId, KickCauseCode cause, int timeout)
+	{
+		super.OnPlayerDisconnected(playerId, cause, timeout);
+		m_aSetupOfferedPlayerIds.RemoveItem(playerId);
 	}
 
 	//------------------------------------------------------------------------------------------------
