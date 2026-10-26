@@ -16,6 +16,8 @@ class AROR_GarrisonFaction
 	ResourceName m_sCrew;
 	[Attribute("{73530808E4B455BA}Prefabs/Weapons/Tripods/Tripod_M3_M2HB.et", UIWidgets.ResourceNamePicker, desc: "Static machine-gun prefab; requires one usable crew compartment", params: "et")]
 	ResourceName m_sStaticMG;
+	[Attribute("", desc: "Optional static weapon variants after the default MG. Fresh garrisons distribute their authored gun positions across this list; each weapon must have exactly one usable crew compartment.")]
+	ref array<ResourceName> m_aStaticVariants;
 	[Attribute("{0FBF8F010F81A4E5}Prefabs/Vehicles/Wheeled/LAV25/LAV25.et", UIWidgets.ResourceNamePicker, desc: "Unmanned armour parked inside larger military garrisons", params: "et")]
 	ResourceName m_sParkedArmour;
 	[Attribute("", desc: "Random manned defence choices. Every selected hull is fully crewed using native pilot/turret compartments.")]

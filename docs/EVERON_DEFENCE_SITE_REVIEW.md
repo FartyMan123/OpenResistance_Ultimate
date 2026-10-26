@@ -1,5 +1,7 @@
 # Everon military defence site review
 
+**Historical baseline:** Chicken now trials equipped fortified replacements at 14 ordinary outposts and four military outposts, excluding Chotain castle. Seventeen footprints have since been reduced after the first larger-layout audit failed; current compact revisions are not natively accepted. Their bindings are in [FORTIFIED_OUTPOST_TRIALS.json](FORTIFIED_OUTPOST_TRIALS.json); grounding and native acceptance are pending. The measurements and table below describe the earlier layouts and do not certify the new footprints. See [the current trial steps](FORTIFIED_OUTPOSTS.md).
+
 All 23 military sites select a perimeter preset: 23 measured placements and 0 unmeasured drafts. The latest native audit passed all 23 current footprints, including relocated East Resources, with no further relocation suggestions. Full model/navigation/lifecycle acceptance remains outstanding.
 
 The airport anchor stays fixed. Authorised Factory/resource moves affect Chicken only; Rowan scene files remain untouched. East Resources now uses the measured clearing at 6179.36,166.438,6457.14, yaw 45, about 866m from its former flag, with 1.18671m relief. Native terrain and pad gates remain active.

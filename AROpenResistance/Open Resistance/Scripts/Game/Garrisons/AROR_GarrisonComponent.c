@@ -7,6 +7,10 @@ class AROR_GarrisonComponent : ScriptComponent
 	protected bool m_bHasGarrison;
 	[Attribute("0", desc: "Defence level override, 0 = type/random recipe", params: "0 4 1")]
 	protected int m_iDefenceLevel;
+	[Attribute("0", desc: "Static weapon count override; zero uses the defence-level recipe. Authored positions and crew staging are required for every added weapon.", params: "0 6 1")]
+	protected int m_iStaticWeaponCountOverride;
+	[Attribute("0", desc: "Omit the spare uncrewed armour hull in a compact compound. The manned vehicle recipe and all static crews remain unchanged.")]
+	protected bool m_bOmitParkedArmour;
 	[Attribute("", desc: "Optional authored world-space positions for statics/vehicles. Otherwise use bounded clear terrain search.")]
 	protected ref array<vector> m_aDefencePositions;
 	[Attribute("0", desc: "Perimeter half-width in metres; zero uses the standard location-type preset. Independent of capture radius.", params: "0 64 1")]
@@ -85,6 +89,15 @@ class AROR_GarrisonComponent : ScriptComponent
 	bool IsRestoreQuarantined() { return m_bRestoreQuarantined; }
 	bool IsCapacityWaiting() { return m_iCapacityWaitSince >= 0 && !m_bDeploymentClosed; }
 	int GetLevel() { return m_iLevel; }
+	//! Designer recipe override, available to read-only editor audits before a roster exists.
+	int GetDefenceLevelOverride() { return m_iDefenceLevel; }
+	bool AllowsParkedArmour() { return !m_bOmitParkedArmour; }
+	int GetStaticWeaponCount(int level)
+	{
+		if (m_iStaticWeaponCountOverride > 0)
+			return Math.Clamp(m_iStaticWeaponCountOverride, 1, 6);
+		return AROR_GarrisonPolicy.StaticCount(level);
+	}
 	AROR_EFactionRole GetRosterRole() { return m_eRosterRole; }
 	string GetRosterFaction() { return m_sFactionKey; }
 	string GetAssetFaction() { return m_sAssetFactionKey; }
@@ -473,11 +486,18 @@ class AROR_GarrisonComponent : ScriptComponent
 			}
 			group++;
 		}
-		for (int mg = 0; mg < AROR_GarrisonPolicy.StaticCount(m_iLevel); mg++)
-			AddSlot(faction.m_sStaticMG, 1, group++);
+		int staticVariants = 1;
+		if (faction.m_aStaticVariants)
+			staticVariants += faction.m_aStaticVariants.Count();
+		for (int mg = 0; mg < GetStaticWeaponCount(m_iLevel); mg++)
+		{
+			int staticVariant = Math.Mod(mg, staticVariants);
+			int weapon = AddSlot(StaticPrefab(faction, staticVariant), 1, group++);
+			m_aSlots[weapon].m_iVariant = staticVariant;
+		}
 		if (m_Location.GetLocationType() != AROR_ELocationType.OUTPOST)
 		{
-			if (m_iLevel >= 3)
+			if (m_iLevel >= 3 && !m_bOmitParkedArmour)
 				AddSlot(faction.m_sParkedArmour, 2);
 			for (int hull = 0; hull < AROR_GarrisonPolicy.MannedCount(m_iLevel); hull++)
 			{
@@ -492,6 +512,16 @@ class AROR_GarrisonComponent : ScriptComponent
 		m_bGenerated = true;
 		Print(string.Format("[AROR GARRISON] %1 roster role=%2 level=%3 personnel reservation=%4", m_Location.GetId(), m_eRosterRole, m_iLevel, ReservedPersonnel()), LogLevel.NORMAL);
 		return true;
+	}
+	protected ResourceName StaticPrefab(AROR_GarrisonFaction faction, int variant)
+	{
+		if (variant > 0 && faction.m_aStaticVariants && variant <= faction.m_aStaticVariants.Count())
+		{
+			ResourceName weapon = faction.m_aStaticVariants[variant - 1];
+			if (!weapon.IsEmpty())
+				return weapon;
+		}
+		return faction.m_sStaticMG;
 	}
 	protected ResourceName InfantryPrefab(AROR_GarrisonFaction faction, int variant)
 	{
@@ -1452,7 +1482,7 @@ class AROR_GarrisonComponent : ScriptComponent
 			switch (slot.m_iKind)
 			{
 				case 0: slot.m_sPrefab = InfantryPrefab(faction, slot.m_iVariant); break;
-				case 1: slot.m_sPrefab = faction.m_sStaticMG; break;
+				case 1: slot.m_sPrefab = StaticPrefab(faction, slot.m_iVariant); break;
 				case 2: slot.m_sPrefab = faction.m_sParkedArmour; break;
 				case 4: slot.m_sPrefab = faction.m_sCrew; break;
 				case 3:
