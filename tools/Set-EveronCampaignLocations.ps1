@@ -139,7 +139,7 @@ foreach ($row in $rows) {
 	[void]$builder.AppendLine(('   ID "{0}"' -f $flagIds[$row.Type]))
 	[void]$builder.AppendLine('   components {')
 	[void]$builder.AppendLine('    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {')
-	[void]$builder.AppendLine('     m_bEnabled 0')
+	[void]$builder.AppendLine('     m_bAutoPlace 0')
 	[void]$builder.AppendLine('    }')
 	# Raising the model base must not raise the capture context above the player.
 	# Preserve its original 1.6-metre world height above physical terrain.

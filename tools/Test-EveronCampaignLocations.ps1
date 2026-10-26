@@ -81,7 +81,7 @@ foreach ($layer in @('CivilianLocations.layer','MilitaryInstallations.layer')) {
 	$text = [IO.File]::ReadAllText((Join-Path $addonRoot "Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/$layer"))
 	$expectedFlags = 0
 	if ($layer -eq 'MilitaryInstallations.layer') { $expectedFlags = 23 }
-	if ([regex]::Matches($text,'m_bEnabled 0').Count -ne $expectedFlags) { throw "Every baked flag must disable random runtime search: $layer" }
+	if ([regex]::Matches($text,'m_bAutoPlace 0').Count -ne $expectedFlags) { throw "Every baked flag must disable random runtime search: $layer" }
 	$blocks = [regex]::Split($text,'(?m)(?=^GenericEntity AROR_Location_)') | Where-Object { $_.StartsWith('GenericEntity AROR_Location_') }
 	foreach ($block in $blocks) {
 		$id = [regex]::Match($block,'m_sId "([^"]+)"').Groups[1].Value

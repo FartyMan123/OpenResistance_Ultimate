@@ -26,7 +26,7 @@ GenericEntity : "{3D1925CD1FA54115}Prefabs/Locations/AROR_Location_Outpost.et" {
    ID "6AACA42C3DE4F4A5"
    components {
     AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
+     m_bAutoPlace 0
     }
     ActionsManagerComponent "{6AAE5E8DE935135E}" {
      ActionContexts {

@@ -4,5 +4,6 @@ enum AROR_EFactionRole
 {
 	RESISTANCE,
 	OCCUPIERS,
-	INVADERS
+	INVADERS,
+	CIVILIANS	//!< Non-playable civilians; no support, income or capture
 }

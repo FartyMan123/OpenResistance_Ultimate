@@ -39,7 +39,7 @@ foreach ($preset in $definition.Presets) {
  $lines.Add(('   ID "{0}"' -f $preset.FlagId))
  $lines.Add('   components {')
  $lines.Add('    AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {')
- $lines.Add('     m_bEnabled 0')
+ $lines.Add('     m_bAutoPlace 0')
  $lines.Add('    }')
  $lines.Add('    ActionsManagerComponent "{6AAE5E8DE935135E}" {')
  $lines.Add('     ActionContexts {')

@@ -9,7 +9,7 @@ class AROR_ForceProfile
 	int m_iMinimumWarLevel = 1;
 	[Attribute("0", desc: "Classify a mounted support vehicle as light armed transport in map intelligence. Uses the existing crew-only ground execution policy.")]
 	bool m_bLightVehicle;
-	[Attribute("1", UIWidgets.ComboBox, desc: "Campaign role", enums: ParamEnumArray.FromEnum(AROR_EFactionRole))]
+	[Attribute("1", UIWidgets.ComboBox, desc: "Campaign role", enums: AROR_FactionRoles.MilitaryRoleParams())]
 	AROR_EFactionRole m_eRole;
 	[Attribute("AROR_OCCUPIERS", desc: "Required campaign faction key from AROR_FactionRolesComponent")]
 	string m_sFactionKey;

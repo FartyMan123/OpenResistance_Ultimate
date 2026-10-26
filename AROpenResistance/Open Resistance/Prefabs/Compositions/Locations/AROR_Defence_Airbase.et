@@ -13,7 +13,7 @@ GenericEntity : "{ED619C5A68ED5FAB}Prefabs/Locations/AROR_Location_Airport.et" {
    ID "6AACA42BFC76C266"
    components {
     AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
+     m_bAutoPlace 0
     }
     ActionsManagerComponent "{6AAE5E8DE935135E}" {
      ActionContexts {

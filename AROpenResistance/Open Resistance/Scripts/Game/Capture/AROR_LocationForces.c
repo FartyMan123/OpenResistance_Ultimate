@@ -1,11 +1,21 @@
 //! Counts living characters inside a location's radius, per role, split into players and AI.
-//! Characters whose faction fills no role are ignored.
+//! Characters whose faction fills no role are ignored. Arrays are indexed by role and sized from AROR_FactionRoles,
+//! so every role (including Civilians) has a slot.
 class AROR_LocationForces : Managed
 {
-	protected static const int ROLE_COUNT = 3;
+	protected ref array<int> m_aPlayers = {};
+	protected ref array<int> m_aAI = {};
 
-	protected ref array<int> m_aPlayers = {0, 0, 0};
-	protected ref array<int> m_aAI = {0, 0, 0};
+	//------------------------------------------------------------------------------------------------
+	void AROR_LocationForces()
+	{
+		int roleCount = AROR_FactionRoles.Count();
+		for (int i = 0; i < roleCount; i++)
+		{
+			m_aPlayers.Insert(0);
+			m_aAI.Insert(0);
+		}
+	}
 
 	protected vector m_vCenter;
 	protected float m_fRadius;

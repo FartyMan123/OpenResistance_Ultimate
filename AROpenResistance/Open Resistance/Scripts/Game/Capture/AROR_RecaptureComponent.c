@@ -39,7 +39,8 @@ class AROR_RecaptureComponent : SCR_BaseGameModeComponent
 		float defenderWeight = DEFENDER_WEIGHT * forces.GetTotal(defender);
 
 		// Strongest attacking AI role (only AI roles recapture; the Resistance uses the flag)
-		array<AROR_EFactionRole> aiRoles = {AROR_EFactionRole.OCCUPIERS, AROR_EFactionRole.INVADERS};
+		array<AROR_EFactionRole> aiRoles = {};
+		AROR_FactionRoles.GetAIMilitary(aiRoles);
 		AROR_EFactionRole attacker;
 		float attackerWeight;
 		foreach (AROR_EFactionRole role : aiRoles)
