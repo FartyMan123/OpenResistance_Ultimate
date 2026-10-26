@@ -337,6 +337,26 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
+	// Player loadout slots: server -> owning client (see AROR_PlayerLoadoutsComponent)
+	//------------------------------------------------------------------------------------------------
+	void AROR_SendLoadoutSlots_S(int filledMask)
+	{
+		if (AROR_IsLocal())
+			AROR_RpcDo_LoadoutSlots(filledMask);
+		else
+			Rpc(AROR_RpcDo_LoadoutSlots, filledMask);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Owner)]
+	protected void AROR_RpcDo_LoadoutSlots(int filledMask)
+	{
+		AROR_PlayerLoadoutsComponent loadouts = AROR_PlayerLoadoutsComponent.GetInstance();
+		if (loadouts)
+			loadouts.OnLocalSlotsReceived(filledMask);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! Bank Transfer: move personal money to another online player, or to Resistance funds
 	void AROR_RequestBankTransfer(int targetPlayerId, bool toResistance, int amount)
 	{
