@@ -10,7 +10,7 @@ class AROR_GroundQRFRecipe
 	int m_iMinimumWarLevel = 1;
 	[Attribute("5", desc: "Last war level using this equipment-pool recipe", params: "1 5 1")]
 	int m_iMaximumWarLevel = 5;
-	[Attribute("1", UIWidgets.ComboBox, desc: "Responding campaign role", enums: ParamEnumArray.FromEnum(AROR_EFactionRole))]
+	[Attribute("1", UIWidgets.ComboBox, desc: "Responding campaign role", enums: AROR_FactionRoles.MilitaryRoleParams())]
 	AROR_EFactionRole m_eRole;
 	[Attribute("AROR_OCCUPIERS", desc: "Required faction from the shared role mapping")]
 	string m_sFactionKey;

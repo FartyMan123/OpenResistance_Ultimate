@@ -238,7 +238,8 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	//------------------------------------------------------------------------------------------------
 	// Server: requests from the admin (arrive through SCR_PlayerController RPCs)
 	//------------------------------------------------------------------------------------------------
-	void RequestNewPlaythrough_S(int playerId, vector hqPosition, string playthroughName)
+	//! presetIds: faction preset ID per role, indexed by AROR_EFactionRole (null or empty entries use the defaults)
+	void RequestNewPlaythrough_S(int playerId, vector hqPosition, string playthroughName, array<string> presetIds = null)
 	{
 		if (!CanAcceptSetupRequest(playerId))
 			return;
@@ -256,6 +257,11 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			SendSetupResult(playerId, false, "Failed to spawn the Resistance HQ");
 			return;
 		}
+
+		// Before the initial save point, so the first save already holds the admin's choice
+		AROR_FactionPresetsComponent factionPresets = AROR_FactionPresetsComponent.GetInstance();
+		if (factionPresets)
+			factionPresets.SetPresets_S(presetIds);
 
 		SaveGameManager saveManager = SaveGameManager.Get();
 		if (saveManager)

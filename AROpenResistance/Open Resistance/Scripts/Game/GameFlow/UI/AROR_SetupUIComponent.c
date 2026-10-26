@@ -17,15 +17,26 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 	protected string m_sDefaultPlaythroughName;
 
 	static const string DIALOG_MAIN = "main";
+	static const string DIALOG_FACTIONS = "factions";
 	static const string DIALOG_HQ_CONFIRM = "hq_confirm";
 	static const string DIALOG_LOAD = "load";
 
 	protected static const string PRESET_MAIN = "aror_setup_main";
+	protected static const string PRESET_FACTIONS = "aror_setup_factions";
 	protected static const string PRESET_HQ_CONFIRM = "aror_setup_hq_confirm";
 	protected static const string PRESET_LOAD = "aror_setup_load";
 
 	protected AROR_GameFlowComponent m_GameFlow;
 	protected bool m_bPickingHQ;
+
+	//! New campaign: faction preset ID chosen per role, indexed by AROR_EFactionRole
+	protected ref array<string> m_aChosenPresetIds = {};
+
+	// Base-game presets used by the "Quick start" testing button
+	protected static const string BASE_PRESET_RESISTANCE = "FIA";
+	protected static const string BASE_PRESET_OCCUPIERS = "US_ARMY";
+	protected static const string BASE_PRESET_INVADERS = "USSR_ARMY";
+	protected static const string BASE_PRESET_CIVILIANS = "EVERON_CIV";
 
 	//! Weak reference: owned by the dialog's widgets, becomes null once the dialog is gone
 	protected AROR_SetupMainDialog m_MainDialog;
@@ -70,9 +81,18 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 			m_MainDialog = null;
 
 			if (tag == "new")
-				StartHQPicking();
+				OpenFactionsDialog();
+			else if (tag == "quick")
+				QuickStart();
 			else if (tag == "load")
 				RequestSaveList();
+		}
+		else if (dialogId == DIALOG_FACTIONS)
+		{
+			if (tag == "confirm")
+				StartHQPicking();
+			else if (tag == "back")
+				OpenMainDialog();
 		}
 		else if (dialogId == DIALOG_HQ_CONFIRM)
 		{
@@ -92,7 +112,49 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	// New campaign: pick the HQ on the map
+	// New campaign: choose faction presets, then pick the HQ on the map
+	//------------------------------------------------------------------------------------------------
+	protected void OpenFactionsDialog()
+	{
+		m_aChosenPresetIds.Clear();
+
+		AROR_SetupFactionsDialog dialog = new AROR_SetupFactionsDialog(this);
+		SCR_ConfigurableDialogUi.CreateFromPreset(m_sDialogPresets, PRESET_FACTIONS, dialog);
+		dialog.ShowRole();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Testing shortcut: skip the Factions step with the base-game presets selected, then pick the HQ
+	protected void QuickStart()
+	{
+		m_aChosenPresetIds.Clear();
+		SetChosenPresetId(AROR_EFactionRole.RESISTANCE, BASE_PRESET_RESISTANCE);
+		SetChosenPresetId(AROR_EFactionRole.OCCUPIERS, BASE_PRESET_OCCUPIERS);
+		SetChosenPresetId(AROR_EFactionRole.INVADERS, BASE_PRESET_INVADERS);
+		SetChosenPresetId(AROR_EFactionRole.CIVILIANS, BASE_PRESET_CIVILIANS);
+		StartHQPicking();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	string GetChosenPresetId(AROR_EFactionRole role)
+	{
+		if (role < m_aChosenPresetIds.Count())
+			return m_aChosenPresetIds[role];
+
+		return string.Empty;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	void SetChosenPresetId(AROR_EFactionRole role, string presetId)
+	{
+		while (m_aChosenPresetIds.Count() <= role)
+		{
+			m_aChosenPresetIds.Insert(string.Empty);
+		}
+
+		m_aChosenPresetIds[role] = presetId;
+	}
+
 	//------------------------------------------------------------------------------------------------
 	protected void StartHQPicking()
 	{
@@ -131,7 +193,7 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 
 		SCR_PlayerController playerController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
 		if (playerController)
-			playerController.AROR_RequestNewPlaythrough(m_vPickedPosition, m_sDefaultPlaythroughName);
+			playerController.AROR_RequestNewPlaythrough(m_vPickedPosition, m_sDefaultPlaythroughName, m_aChosenPresetIds);
 	}
 
 	//------------------------------------------------------------------------------------------------

@@ -1,0 +1,56 @@
+name: Reforger release compatibility watch
+on:
+  schedule:
+    - cron: '41 2 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Preview without creating labels or issues
+        type: boolean
+        default: false
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: reforger-release-compatibility-watch
+  cancel-in-progress: false
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: tools/tests/reforger-releases
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test checker
+        run: python -m unittest discover -s tests -v
+      - name: Install SteamCMD
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/steamcmd"
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/steamcmd/steamcmd_linux.tar.gz" https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz
+          tar -xzf "$RUNNER_TEMP/steamcmd/steamcmd_linux.tar.gz" -C "$RUNNER_TEMP/steamcmd"
+      - name: Read Steam public build IDs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p appinfo
+          for app_id in 1874880 1890860; do
+            "$RUNNER_TEMP/steamcmd/steamcmd.sh" +login anonymous +app_info_update 1 +app_info_print "$app_id" +quit > "appinfo/$app_id.txt"
+            test -s "appinfo/$app_id.txt"
+          done
+      - name: Check Reforger releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ inputs.dry_run || false }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$DRY_RUN" = "true" ]; then python check_releases.py --dry-run; else python check_releases.py; fi

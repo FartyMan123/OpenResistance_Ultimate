@@ -16,7 +16,7 @@ $grp GenericEntity : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -50,7 +50,7 @@ $grp GenericEntity : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -84,7 +84,7 @@ $grp GenericEntity : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -118,7 +118,7 @@ $grp GenericEntity : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -152,7 +152,7 @@ $grp GenericEntity : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -186,7 +186,7 @@ $grp GenericEntity : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -219,7 +219,7 @@ $grp GenericEntity : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -252,7 +252,7 @@ $grp GenericEntity : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -286,7 +286,7 @@ $grp GenericEntity : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -319,7 +319,7 @@ $grp GenericEntity : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -352,7 +352,7 @@ $grp GenericEntity : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -386,7 +386,7 @@ $grp GenericEntity : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -420,7 +420,7 @@ $grp GenericEntity : "{1B645C4060E84216}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -457,7 +457,7 @@ GenericEntity AROR_Location_everon_airport : "{37786477B1914A61}Prefabs/Composit
    ID "6AACA42BFC76C266"
    components {
     AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
+     m_bAutoPlace 0
     }
     ActionsManagerComponent "{6AAE5E8DE935135E}" {
      ActionContexts {
@@ -1111,7 +1111,7 @@ $grp GenericEntity : "{3D67A8A2E6AB69B5}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -1440,7 +1440,7 @@ $grp GenericEntity : "{3D67A8A2E6AB69B5}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -1772,7 +1772,7 @@ $grp GenericEntity : "{6B5025C036D84B66}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -2392,7 +2392,7 @@ $grp GenericEntity : "{6B5025C036D84B66}Prefabs/Compositions/Locations/AROR_Defe
     ID "6AACA42C3DE4F4A5"
     components {
      AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-      m_bEnabled 0
+      m_bAutoPlace 0
      }
      ActionsManagerComponent "{6AAE5E8DE935135E}" {
       ActionContexts {
@@ -2818,7 +2818,7 @@ GenericEntity AROR_Location_everon_outpost_quarry : "{796C32EF26719D2E}Prefabs/C
    ID "6AACA42C3DE4F4A5"
    components {
     AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
+     m_bAutoPlace 0
     }
     ActionsManagerComponent "{6AAE5E8DE935135E}" {
      ActionContexts {
@@ -3019,7 +3019,7 @@ GenericEntity AROR_Location_everon_factory_north_ridge : "{7DB3028CC7602D89}Pref
    ID "6AACA42C2C775A3A"
    components {
     AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
+     m_bAutoPlace 0
     }
     ActionsManagerComponent "{6AAE5E8DE935135E}" {
      ActionContexts {
@@ -3353,7 +3353,7 @@ GenericEntity AROR_Location_everon_resources_north_ridge_east : "{BC294CFD17A22D
    ID "6AACA42C07095538"
    components {
     AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
+     m_bAutoPlace 0
     }
     ActionsManagerComponent "{6AAE5E8DE935135E}" {
      ActionContexts {
@@ -3683,7 +3683,7 @@ GenericEntity AROR_Location_everon_resources_north_ridge_west : "{C3CE3C983BD347
    ID "6AACA42C07095538"
    components {
     AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
+     m_bAutoPlace 0
     }
     ActionsManagerComponent "{6AAE5E8DE935135E}" {
      ActionContexts {
@@ -4033,7 +4033,7 @@ GenericEntity AROR_Location_everon_military_outpost_lamentin : "{FE70433EF98B3C4
    ID "6AACA42C3DE4F4A5"
    components {
     AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
+     m_bAutoPlace 0
     }
     ActionsManagerComponent "{6AAE5E8DE935135E}" {
      ActionContexts {

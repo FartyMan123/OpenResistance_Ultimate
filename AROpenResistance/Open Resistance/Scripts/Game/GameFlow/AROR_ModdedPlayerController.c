@@ -39,12 +39,13 @@ modded class SCR_PlayerController
 	//------------------------------------------------------------------------------------------------
 	// Client -> server
 	//------------------------------------------------------------------------------------------------
-	void AROR_RequestNewPlaythrough(vector hqPosition, string playthroughName)
+	//! presetIds: faction preset ID per role, indexed by AROR_EFactionRole
+	void AROR_RequestNewPlaythrough(vector hqPosition, string playthroughName, array<string> presetIds)
 	{
 		if (Replication.IsServer())
-			AROR_RpcAsk_NewPlaythrough(hqPosition, playthroughName);
+			AROR_RpcAsk_NewPlaythrough(hqPosition, playthroughName, presetIds);
 		else
-			Rpc(AROR_RpcAsk_NewPlaythrough, hqPosition, playthroughName);
+			Rpc(AROR_RpcAsk_NewPlaythrough, hqPosition, playthroughName, presetIds);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -162,11 +163,11 @@ modded class SCR_PlayerController
 
 	//------------------------------------------------------------------------------------------------
 	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
-	protected void AROR_RpcAsk_NewPlaythrough(vector hqPosition, string playthroughName)
+	protected void AROR_RpcAsk_NewPlaythrough(vector hqPosition, string playthroughName, array<string> presetIds)
 	{
 		AROR_GameFlowComponent gameFlow = AROR_GameFlowComponent.GetInstance();
 		if (gameFlow)
-			gameFlow.RequestNewPlaythrough_S(GetPlayerId(), hqPosition, playthroughName);
+			gameFlow.RequestNewPlaythrough_S(GetPlayerId(), hqPosition, playthroughName, presetIds);
 	}
 
 	//------------------------------------------------------------------------------------------------

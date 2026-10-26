@@ -2,7 +2,7 @@
 [BaseContainerProps()]
 class AROR_GarrisonFaction
 {
-	[Attribute("1", UIWidgets.ComboBox, desc: "Campaign role served by this asset catalogue", enums: ParamEnumArray.FromEnum(AROR_EFactionRole))]
+	[Attribute("1", UIWidgets.ComboBox, desc: "Campaign role served by this asset catalogue", enums: AROR_FactionRoles.MilitaryRoleParams())]
 	AROR_EFactionRole m_eRole;
 	[Attribute("AROR_OCCUPIERS", desc: "Configured campaign faction key for this role; must match the faction-role mapping")]
 	string m_sFactionKey;

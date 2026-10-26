@@ -13,7 +13,7 @@ GenericEntity : "{DFDDE00B63706BEF}Prefabs/Locations/AROR_Location_Resources.et"
    ID "6AACA42C07095538"
    components {
     AROR_CaptureFlagPlacementComponent "{F9A38254AA9B454D}" {
-     m_bEnabled 0
+     m_bAutoPlace 0
     }
     ActionsManagerComponent "{6AAE5E8DE935135E}" {
      ActionContexts {
