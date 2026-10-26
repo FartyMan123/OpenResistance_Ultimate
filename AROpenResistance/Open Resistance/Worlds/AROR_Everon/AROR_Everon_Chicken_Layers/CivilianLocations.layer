@@ -210,6 +210,9 @@ $grp GenericEntity : "{A744BF492EFD2B54}Prefabs/Locations/AROR_Location_Town.et"
   coords 4948.837 38.124 9075.68
  }
 }
+GenericEntity : "{C38B03DA66A87173}Prefabs/Props/Locations/AROR_Prop_Arsenal.et" {
+ coords 5483.174 96.044 6088.039
+}
 $grp GenericEntity : "{CCD444F168F300B9}Prefabs/Locations/AROR_Location_City.et" {
  AROR_Location_everon_saint_philippe {
   components {
