@@ -4,7 +4,7 @@ Chicken explicitly enables physical Invader ground QRFs for native acceptance te
 
 A [resource-aware ground planning preview](QRF_SELECTION_PLANNER.md) now evaluates affordable tiers, route/ETA, stock and runtime capacity through a readiness-provider seam. It has no automatic caller, default stock or dispatch side effects. Enabled capture responses use the existing money-backed ground selector.
 
-The new [QRF tactical commander](QRF_TACTICAL_COMMANDER.md) shares report-driven search, delivery/support, withdrawal, retention and finite two-wave logic between Occupiers and Invaders. Prepared Invader tiers 3/4/5 split 3+2, 4+3 and 4+4 elements under a six-live-ground-package ceiling. Ground dispatch is enabled in Chicken; compilation and runtime acceptance remain outstanding.
+The new [QRF tactical commander](QRF_TACTICAL_COMMANDER.md) shares report-driven search, delivery/support, withdrawal, retention and finite two-wave logic between Occupiers and Invaders. War-5 Invader responses 3/4/5 split 3+2, 4+3 and 4+4 elements under a six-live-ground-package ceiling; earlier equipment bands have their own smaller recipes. Ground dispatch is enabled in Chicken; compilation and runtime acceptance remain outstanding.
 
 Confirmed against current CLAUDE/ARCHITECTURE and shared role mapping: **Invaders = REDFOR / `AROR_INVADERS`, with USSR assets**. Occupiers remain BLUFOR / `AROR_OCCUPIERS`, with US assets. Vehicles, crew and infantry resolve through their campaign role; native USSR affiliations are converted once at spawning under the existing declared-asset policy.
 
@@ -29,9 +29,11 @@ The scheduler smoke runner checks rejection and zero created operations when the
 
 The existing shared REAPER adapter already chooses the USSR pilot and Invader profiles by role. It provides the same landing, unloading, departure, report-driven gunship support, advisory traffic avoidance and retention paths. Its current air package remains one transport/fireteam plus one gunship, repeated at levels 1-5 when explicitly tested. This configuration does not claim that Mi-8 flight, weapon crew or seating has been verified in-engine. It does not enable mixed ground/air recipes or independent escort ratios.
 
-## Authored ground escalation
+## War-gated ground escalation
 
-All elements below belong to one operation. Level is the authored tier; the list is not multiplied by level. Each Ural/BTR includes its own fireteam and required crew; each BRDM includes crew only. Reservations use actual configured profile budgets, not the nominal estimates from the general roster CSV.
+War levels 1–2 use Ural infantry trucks and PKM-UAZ escorts, levels 3–4 introduce BTRs, and level 5 permits the larger combined BTR/BRDM mixes below. Aggression independently requests response intensity 1–5 within that pool. Profile minimum-war gates also reject locked assets in a mislabeled recipe. No new aircraft are enabled. See [QRF_STRATEGY_ECONOMY.md](QRF_STRATEGY_ECONOMY.md) for the full early/middle matrix.
+
+All elements below belong to one operation at war level 5. Level is the authored tier; the list is not multiplied by level. Each Ural/BTR includes its own fireteam and required crew; each BRDM includes crew only. Reservations use actual configured profile budgets, not the nominal estimates from the general roster CSV.
 
 | Tier / recipe | Ural transport | BTR-70 APC | BRDM-2 | Reserved groups | Reserved personnel slots | Vehicles |
 |---|---:|---:|---:|---:|---:|---:|
@@ -41,13 +43,15 @@ All elements below belong to one operation. Level is the authored tier; the list
 | 4 / `invader_ground_l4` | 3 | 2 | 2 | 12 | 52 | 7 |
 | 5 / `invader_ground_l5` | 3 | 3 | 2 | 14 | 62 | 8 |
 
-All five fit Chicken's configured 20-group/128-slot/10-vehicle ceiling in isolation; other active/pending/retained forces can reduce available capacity. These are deliberately ground-only variants while the mixed land/air parent execution is unfinished, not implementations of the general roster's air-containing combined-arms entries. The previous Invader `combined_arms_l1` Ural/BTR alias remains available for compatibility.
+All five fit Chicken's configured 20-group/128-slot/10-vehicle ceiling in isolation; other active/pending/retained forces can reduce available capacity. These war-5 recipes are deliberately ground-only variants while the mixed land/air parent execution is unfinished, not implementations of the general roster's air-containing combined-arms entries. The previous Invader `combined_arms_l1` Ural/BTR alias remains available for compatibility.
 
 **Invaders Ground QRF Recipe Id** is configured as `invader_ground_l1`. It overrides the shared recipe only for Invaders. Occupiers continue using `combined_arms_l1`. Clearing the Invader override falls back to the shared recipe; clear both relevant recipe selections for a future explicit air test. None of these settings enables Invader operation admission.
 
 ## Later territory and factory integration
 
-When that work is ready, territory/garrison ownership supplies trusted defense assignments and stable location IDs. Invader origins must be controlled by the Invader role. The resolver uses the nearest eligible friendly OUTPOST, MILITARY_BASE or AIRPORT. The offshore corridor is excluded. Chicken has no authored safe Invader fallback coordinate: let the USSR gain a second installation before capturing a site for the first QRF test. Capturing its only land base leaves no usable friendly origin. Stock/readiness-aware origin selection remains planned.
+Territory/garrison ownership supplies trusted defense assignments and stable location IDs. Invader origins must be controlled by the Invader role. The resolver uses the nearest eligible friendly OUTPOST, MILITARY_BASE or AIRPORT and can skip a failed origin on a bounded capture-planning retry. The offshore corridor is excluded. Chicken explicitly requires a friendly land origin, disabling configured-coordinate fallback after territory loss: let the USSR gain a second installation before capturing a site for the first QRF test. Capturing its only land base leaves no usable friendly origin. Stock/readiness-aware origin selection remains planned.
+
+Chicken also opts into a tier-1 capture response without collateral when no paid recipe fits. This applies independently to both AI roles, retains actor/origin/cooldown gates, and records overhead or confirmed losses as ordinary bank spending or saved QRF debt. It does not fund the USSR bank or enable combat-triggered responses. Initial garrisons already remain independent of bank funds.
 
 The future military-resource provider must supply available vehicles, crew, infantry, ammunition/fuel and reserve/commit/release behavior without duplicating Rowan's economy or persistence. Recipes currently reserve executor capacity only. Factories do not generate replacement units through this change. Aircraft readiness, road/LZ suitability and ETA must be checked before automatic selection is enabled. Do not tie resource production to damage callbacks or grant free replacements on cleanup.
 

@@ -9,6 +9,7 @@ class AROR_QRFFunding
 	int m_iRecovered;
 	bool m_bActivated;
 	bool m_bClosed;
+	bool m_bUnsecured;
 	ref array<ref AROR_QRFAssetAccount> m_aAssets = {};
 
 	void Register_S(IEntity entity, int value, bool vehicle, string faction, string nativeFaction)
@@ -59,6 +60,9 @@ class AROR_QRFFunding
 	}
 	int Reserved()
 	{
+		// Emergency baseline responses create real liabilities, not fictitious collateral.
+		if (m_bUnsecured)
+			return 0;
 		int physical;
 		foreach (AROR_QRFAssetAccount asset : m_aAssets)
 		{
@@ -71,5 +75,14 @@ class AROR_QRFFunding
 		if (!m_bActivated && !m_bClosed)
 			reserved += m_iOverhead;
 		return Math.Max(0, reserved);
+	}
+	bool HasUnsettledAssets()
+	{
+		foreach (AROR_QRFAssetAccount asset : m_aAssets)
+		{
+			if (!asset.m_bSettled && asset.m_Entity)
+				return true;
+		}
+		return false;
 	}
 }

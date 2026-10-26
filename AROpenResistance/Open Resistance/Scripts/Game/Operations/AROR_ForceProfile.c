@@ -5,6 +5,10 @@ class AROR_ForceProfile
 	string m_sId;
 	[Attribute("1", desc: "Enable this profile for selection")]
 	bool m_bEnabled;
+	[Attribute("1", desc: "Minimum campaign war level permitting this profile in a QRF recipe", params: "1 5 1")]
+	int m_iMinimumWarLevel = 1;
+	[Attribute("0", desc: "Classify a mounted support vehicle as light armed transport in map intelligence. Uses the existing crew-only ground execution policy.")]
+	bool m_bLightVehicle;
 	[Attribute("1", UIWidgets.ComboBox, desc: "Campaign role", enums: ParamEnumArray.FromEnum(AROR_EFactionRole))]
 	AROR_EFactionRole m_eRole;
 	[Attribute("AROR_OCCUPIERS", desc: "Required campaign faction key from AROR_FactionRolesComponent")]
@@ -62,6 +66,12 @@ class AROR_ForceProfile
 			return m_iQRFWeight;
 		return m_iAttackWeight;
 	}
+	int GetSpottingKind()
+	{
+		if (m_bLightVehicle)
+			return 5;
+		return m_eType;
+	}
 
 	int GetGroupBudget()
 	{
@@ -78,6 +88,10 @@ class AROR_ForceProfile
 
 	bool IsValid()
 	{
+		if (m_bLightVehicle && m_eType != AROR_EForceType.ARMOUR)
+			return false;
+		if (m_iMinimumWarLevel < 1 || m_iMinimumWarLevel > 5)
+			return false;
 		if (m_iPersonnelLossValue < 0 || m_iPersonnelLossValue > 100000)
 			return false;
 		if (m_iVehicleLossValue < -1 || m_iVehicleLossValue > 100000 || m_iEscortLossValue < 0 || m_iEscortLossValue > 100000)

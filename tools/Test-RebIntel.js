@@ -9,7 +9,7 @@ function runRebIntelTests(sources) {
   const roles={RESISTANCE:0,OCCUPIERS:1,INVADERS:2};
   const apps={HOME:0,BANK:1,TEST:2,REBINTEL:3};
   const env={AROR_EFactionRole:roles,AROR_EPhoneApp:apps,Replication:{IsServer:()=>server,BumpMe:()=>bumps++},
-    Math:{Clamp:(x,a,b)=>Math.max(a,Math.min(b,x)),Round:Math.round,Min:Math.min,Max:Math.max},
+    Math:{Floor:Math.floor,Clamp:(x,a,b)=>Math.max(a,Math.min(b,x)),Round:Math.round,Min:Math.min,Max:Math.max},
     Print(){},LogLevel:{NORMAL:0},string:{Empty:'',Format:(s,...a)=>s.replace(/%([1-9])/g,(_,n)=>a[n-1])},
     FrameSlot:{SetPos:(w,x,y)=>Object.assign(w,{x,y}),SetSize:(w,width,height)=>Object.assign(w,{width,height})},
     Color:{FromRGBA:(...rgba)=>rgba},RichTextWidget:{Cast:x=>x},ImageWidget:{Cast:x=>x},
@@ -18,6 +18,7 @@ function runRebIntelTests(sources) {
   const names=['PressureForLevel','WarLevel','GetWarPressure','GetWarLevel','HasWarState','GetAggressionPercent','IsEnemyRole','SetWarPressure_S','RestoreQRFStrategy_S',
     'IsQRFStrategyEnabled','AreInvaderOperationsEnabled','Style','Place','Label','ForceName','WarText','AggressionText','ResponseText','Init','Refresh','SetVisible','Layout',
     'OnPhoneButton','OpenApp','IsLandscapeApp','IsSettled','OnBack','RequestClose'];
+  names.push('ResponseLevel','GetAggression','GetAggressionLevel','SetAggression_S');
   function compile(src,name){
     const m=src.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
     if(!m)throw Error('Missing method '+name);
@@ -28,20 +29,22 @@ function runRebIntelTests(sources) {
     return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
   }
   const policy={};env.AROR_QRFStrategicPolicy=policy;
-  for(const n of ['PressureForLevel','WarLevel'])policy[n]=compile(sources.policy,n);
-  const manager={m_iOccupierPressure:0,m_iInvaderPressure:0,m_bWarStateReady:false,m_bStrategyRestored:false,m_bQRFStrategicEconomy:true,m_bInvaderOperationsEnabled:false,
+  for(const n of ['PressureForLevel','WarLevel','ResponseLevel'])policy[n]=compile(sources.policy,n);
+  const manager={m_iClock:0,m_iOccupierPressure:0,m_iInvaderPressure:0,m_iOccupierAggression:0,m_iInvaderAggression:0,m_bWarStateReady:false,m_bStrategyRestored:false,m_bQRFStrategicEconomy:true,m_bInvaderOperationsEnabled:false,
     m_QRFFinance:{SetDebt_S(){}}};
-  for(const n of names.slice(2,11))manager[n]=compile(sources.manager,n);
+  for(const n of [...names.slice(2,11),'GetAggression','GetAggressionLevel','SetAggression_S'])manager[n]=compile(sources.manager,n);
   check(!manager.HasWarState(),'no invented readings before server initialization');
   manager.RestoreQRFStrategy_S(100,700,0,0);
   check(manager.HasWarState()&&manager.GetWarLevel(1)===2&&manager.GetWarLevel(2)===5,'restore publishes separate role readings');
-  check(manager.GetAggressionPercent(1)===10&&manager.GetAggressionPercent(2)===70,'aggression uses existing saved pressure');
+  check(manager.GetAggressionPercent(1)===10&&manager.GetAggressionPercent(2)===70,'legacy restore seeds aggression once from old pressure');
   let before=bumps;manager.SetWarPressure_S(1,100);
   check(bumps===before,'unchanged pressure does not replicate again');
   manager.SetWarPressure_S(1,185);
-  check(manager.GetWarLevel(1)===2&&manager.GetAggressionPercent(1)===19&&bumps===before+1,'within-level pressure changes refresh aggression');
+  check(manager.GetWarLevel(1)===2&&manager.GetAggressionPercent(1)===10&&bumps===before+1,'equipment progress changes do not mutate aggression');
+  manager.SetAggression_S(1,185);check(manager.GetWarLevel(1)===2&&manager.GetAggressionPercent(1)===18&&manager.GetAggressionLevel(1)===1,'aggression changes independently of equipment progress');
   check(manager.GetWarPressure(2)===700,'Occupier change leaves Invader state untouched');
   manager.SetWarPressure_S(1,-40);manager.SetWarPressure_S(2,1500);
+  manager.SetAggression_S(1,-40);manager.SetAggression_S(2,1500);
   check(manager.GetAggressionPercent(1)===0&&manager.GetAggressionPercent(2)===100,'aggression bounded at both ends');
   before=bumps;manager.SetWarPressure_S(0,900);
   check(bumps===before&&manager.GetWarPressure(0)===0,'unsupported role cannot change summary');
@@ -84,7 +87,7 @@ function runRebIntelTests(sources) {
   for(const scale of [0.28,0.44,0.6]){
     app.Layout(0,0,scale);
     check(app.m_aWar[0].text.includes('2 / 5')&&app.m_aWar[1].text.includes('5 / 5'),'rendered cards retain role identity');
-    check(app.m_aAggression[0].text==='Aggression   10%'&&app.m_aAggression[1].text==='Aggression   70%','displayed aggression agrees with role readings');
+    check(app.m_aAggression[0].text==='Aggression   1 / 5 (10%)'&&app.m_aAggression[1].text==='Aggression   4 / 5 (70%)','displayed aggression agrees with role readings');
     check(Math.abs(app.m_aBars[0].width/(738*scale)-0.1)<1e-8&&Math.abs(app.m_aBars[1].width/(738*scale)-0.7)<1e-8,'bar lengths match percentages across scales');
     check(app.m_aCards[1].y+app.m_aCards[1].height<=fakeWidgets.RebIntelApp.height,'both cards fit inside portrait screen');
   }
@@ -98,7 +101,7 @@ function runRebIntelTests(sources) {
   check(!sources.app.includes('AROR_OperationManagerComponent.GetInstance()'),'client does not use server-only scheduler singleton');
   check(!sources.app.includes('Rpc(')&&!sources.app.includes('SetWarPressure_S('),'app has no authority to mutate campaign state');
   const phone={m_bClosing:false,m_fTurn:0,m_fTurnTarget:0,m_eApp:apps.HOME};
-  for(const n of names.slice(22))phone[n]=compile(sources.menu,n);
+  for(const n of ['OnPhoneButton','OpenApp','IsLandscapeApp','IsSettled','OnBack','RequestClose'])phone[n]=compile(sources.menu,n);
   phone.OnPhoneButton('RebIntelTileButton');check(phone.m_eApp===apps.REBINTEL&&phone.m_fTurnTarget===0,'RebIntel tile opens portrait app');
   phone.OnPhoneButton('HomeButton');check(phone.m_eApp===apps.HOME,'frame Home returns from RebIntel');
   phone.OnPhoneButton('BankTileButton');check(phone.m_eApp===apps.BANK,'Bank remains accessible');
@@ -108,6 +111,7 @@ function runRebIntelTests(sources) {
   check(phone.m_eApp===apps.REBINTEL&&phone.m_fTurnTarget===0,'return from landscape can reopen RebIntel');
   phone.OnBack();check(phone.m_bClosing,'Escape closes phone from RebIntel');
   check(/\[RplProp\(\)\]\s*protected int m_iOccupierPressure/.test(sources.manager)&&/\[RplProp\(\)\]\s*protected int m_iInvaderPressure/.test(sources.manager)&&/\[RplProp\(\)\]\s*protected bool m_bWarStateReady/.test(sources.manager),'summary fields included in engine replication');
+  check(/\[RplProp\(\)\]\s*protected int m_iOccupierAggression/.test(sources.manager)&&/\[RplProp\(\)\]\s*protected int m_iInvaderAggression/.test(sources.manager),'independent aggression is included in engine replication');
   return {assertions,note:'Native rendering, replication/JIP and Enforce compilation still require Workbench.'};
 }
 if(typeof module!=='undefined')module.exports={runRebIntelTests};

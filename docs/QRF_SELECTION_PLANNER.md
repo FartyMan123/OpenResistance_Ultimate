@@ -4,7 +4,7 @@ The Invader framework now has a server planning entry point, `PreviewInvaderQRF_
 
 ## Selection inputs
 
-`AROR_QRFSelectionContext` supplies commander-assessed desired tier, minimum tier, location tier ceiling, explicit permission to downgrade and arrival deadline. These are trusted server policy inputs. Automatic threat scoring and location-importance policy are not implemented here; no player positions or unseen player counts are queried.
+`AROR_QRFSelectionContext` supplies the equipment war level (`m_iWarLevel`, default 1), commander-assessed desired response intensity, minimum tier, location tier ceiling, explicit permission to downgrade and arrival deadline. Callers must supply the current role's war level when previewing its current capabilities. These are trusted server policy inputs. Automatic threat scoring and location-importance policy are not implemented here; no player positions or unseen player counts are queried.
 
 `AROR_QRFReadinessProvider.CaptureReadiness_S(role, factionKey, targetLocationId, now)` is the extension seam for the future military-resource owner. Register an implementation through `RegisterQRFReadinessProvider_S(provider)`; the default implementation returns null. A missing provider or snapshot rejects planning instead of creating free stock.
 
@@ -25,7 +25,7 @@ The preview verifies an active campaign/executor, an existing Invader-controlled
 The executor caps a copied snapshot against actual remaining shared groups/personnel/vehicles, including pending and retained forces. It does not modify the provider's snapshot. The pure `AROR_QRFSelectionPolicy.Select` then:
 
 1. Validates context, role/faction, timestamps, route and ETA.
-2. Resolves complete ground recipes against their enabled faction-matching profiles.
+2. Resolves complete ground recipes against their war range and enabled faction-matching profiles, including each profile's minimum equipment unlock.
 3. Counts repeated profile requirements correctly: two BTR entries require two ready BTR packages.
 4. Checks aggregate profile personnel reservations, groups and vehicles.
 5. Chooses the highest affordable authored tier within desired tier, minimum and location ceiling. Ties keep configuration order; tactical family weighting is not yet implemented.

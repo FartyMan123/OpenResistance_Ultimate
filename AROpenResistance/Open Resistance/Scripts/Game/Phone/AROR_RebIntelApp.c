@@ -1,5 +1,5 @@
-//! Read-only portrait app. The operation manager owns and replicates its campaign pressure.
-//! No client requests, threat/contact data or independent aggression simulation are introduced.
+//! Read-only portrait app. The server owns separate equipment progress and aggression.
+//! No client requests or threat/contact data are exposed.
 class AROR_RebIntelApp
 {
 	protected Widget m_wRoot;
@@ -69,7 +69,7 @@ class AROR_RebIntelApp
 		Style(m_wTitle, "RebIntel", true);
 		Style(m_wSubtitle, "OPPOSING FORCES / OVERVIEW", false);
 		m_wSubtitle.SetColor(Color.FromRGBA(103, 208, 171, 255));
-		Style(m_wFooter, "Aggression reflects campaign pressure.\nWar level shapes response strength.", false);
+		Style(m_wFooter, "War level unlocks equipment.\nAggression sets response level.", false);
 		m_wFooter.SetColor(Color.FromRGBA(168, 184, 196, 255));
 		SetVisible(false, 1);
 		return true;
@@ -178,7 +178,7 @@ class AROR_RebIntelApp
 	{
 		if (!manager || !manager.HasWarState())
 			return "Aggression   --";
-		return string.Format("Aggression   %1", manager.GetAggressionPercent(role)) + "%";
+		return string.Format("Aggression   %1 / 5 (%2", manager.GetAggressionLevel(role), manager.GetAggressionPercent(role)) + "%)";
 	}
 
 	protected static string ResponseText(AROR_OperationManagerComponent manager, AROR_EFactionRole role)

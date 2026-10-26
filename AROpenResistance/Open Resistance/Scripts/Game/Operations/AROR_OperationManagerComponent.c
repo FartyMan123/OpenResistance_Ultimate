@@ -9,8 +9,12 @@ class AROR_OperationManagerComponentClass : SCR_BaseGameModeComponentClass
 
 class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 {
-	[Attribute("0", desc: "Enable money-backed, war-level QRF selection and bounded threat prioritisation. Requires Economy. Explicit recipe fixtures remain available when disabled.")]
+	[Attribute("0", desc: "Enable money-backed QRFs: war level gates equipment, aggression sets response intensity. Requires Economy. Explicit recipe fixtures remain available when disabled.")]
 	protected bool m_bQRFStrategicEconomy;
+	[Attribute("0", desc: "After a hostile player capture, allow an unsecured tier-1 ground response if no paid recipe is affordable. Overhead and confirmed losses still debit Economy or become saved debt; capacity and cooldowns remain authoritative.")]
+	protected bool m_bMinimumCaptureQRF;
+	[Attribute("2", desc: "Maximum fresh planning attempts after a capture QRF fails before activation. Retries retain the original capture age and normal role cooldown.", params: "0 3 1")]
+	protected int m_iCapturePlanningRetries;
 	[Attribute("0", desc: "Share last-seen QRF vehicle markers after visual observation by living Resistance players")]
 	protected bool m_bQRFSpotting;
 	[Attribute("0", desc: "Temporary debugging: show all spawned QRF vehicles on Resistance maps without observation, range or line-of-sight checks", category: "QRF spotting")]
@@ -26,8 +30,18 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 	[Attribute("90", desc: "Seconds before unrefreshed last-seen QRF markers expire", params: "15 300 5")]
 	protected int m_iQRFSpotLifetime;
 	protected ref AROR_QRFSpotting m_QRFSpotting = new AROR_QRFSpotting();
-	[Attribute("2", desc: "Initial war level for each AI role; saved pressure subsequently drives levels 1-5", params: "1 5 1")]
+	[Attribute("1", desc: "Initial equipment-pool war level for each AI role; saved capture progress drives levels 1-5", params: "1 5 1")]
 	protected int m_iStartingWarLevel;
+	[Attribute("20", desc: "Initial aggression percentage for each AI role; controls response intensity independently of equipment", params: "0 100 1")]
+	protected int m_iStartingAggression;
+	[Attribute("25", desc: "Long-term war progress per newly recorded capture loss. Combat and quiet time do not change this progress.", params: "0 100 1")]
+	protected int m_iCaptureWarPressure;
+	[Attribute("150", desc: "Aggression points added per newly recorded capture loss, on a 0-1000 scale", params: "0 1000 5")]
+	protected int m_iCaptureAggression;
+	[Attribute("600", desc: "Seconds without validated evidence or confirmed QRF losses before aggression starts cooling", params: "60 3600 30")]
+	protected int m_iAggressionQuietTime;
+	[Attribute("20", desc: "Aggression points removed each quiet minute, on a 0-1000 scale. Equipment war progress is retained.", params: "0 1000 1")]
+	protected int m_iAggressionDecay;
 	[Attribute("50", desc: "Fixed QRF deployment overhead, charged once when ACTIVE", params: "0 100000 1")]
 	protected int m_iQRFBaseOverhead;
 	[Attribute("10", desc: "Additional overhead per bound response tier", params: "0 10000 1")]
@@ -42,6 +56,10 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 	[RplProp()]
 	protected int m_iInvaderPressure;
 	[RplProp()]
+	protected int m_iOccupierAggression;
+	[RplProp()]
+	protected int m_iInvaderAggression;
+	[RplProp()]
 	protected bool m_bWarStateReady;
 	protected int m_iOccupierEvidenceAt;
 	protected int m_iInvaderEvidenceAt;
@@ -49,13 +67,17 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 	protected int m_iInvaderLastThreat;
 	protected bool m_bStrategyRestored;
 	protected int m_iNextStrategyTick;
-	protected int m_iNextWarDecay;
+	protected int m_iNextAggressionDecay;
 	protected int m_iAppliedOccupierLoss;
 	protected int m_iAppliedInvaderLoss;
 
 	bool IsQRFStrategyEnabled()
 	{
 		return m_bQRFStrategicEconomy;
+	}
+	bool AllowsMinimumCaptureQRF()
+	{
+		return m_bQRFStrategicEconomy && m_bMinimumCaptureQRF;
 	}
 	void SetQRFObserverMapOpen_S(int playerId, bool open)
 	{
@@ -97,10 +119,52 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 	{
 		return m_bWarStateReady;
 	}
-	//! Display estimate from the existing 0-1000 war pressure, not a separate AI modifier.
+	int GetAggression(AROR_EFactionRole role)
+	{
+		if (role == AROR_EFactionRole.OCCUPIERS)
+			return m_iOccupierAggression;
+		if (role == AROR_EFactionRole.INVADERS)
+			return m_iInvaderAggression;
+		return 0;
+	}
 	int GetAggressionPercent(AROR_EFactionRole role)
 	{
-		return Math.Round(Math.Clamp(GetWarPressure(role), 0, 1000) / 10.0);
+		// Keep displayed percentage thresholds aligned with response-level thresholds.
+		return Math.Floor(Math.Clamp(GetAggression(role), 0, 1000) / 10.0);
+	}
+	int GetAggressionLevel(AROR_EFactionRole role)
+	{
+		return AROR_QRFStrategicPolicy.ResponseLevel(GetAggression(role));
+	}
+	//! Read-only save snapshot includes confirmed losses not yet applied by the policy tick.
+	int GetAggressionForSave(AROR_EFactionRole role)
+	{
+		int unapplied;
+		if (role == AROR_EFactionRole.OCCUPIERS)
+			unapplied = m_QRFFinance.m_iOccupierLossValue - m_iAppliedOccupierLoss;
+		else if (role == AROR_EFactionRole.INVADERS)
+			unapplied = m_QRFFinance.m_iInvaderLossValue - m_iAppliedInvaderLoss;
+		else
+			return 0;
+		int pending = Math.Max(0, unapplied) + m_QRFFinance.PendingLossValue(role);
+		int aggression = GetAggression(role);
+		if (m_bQRFStrategicEconomy)
+			aggression += AROR_QRFStrategicPolicy.LossAggression(pending);
+		return Math.Clamp(aggression, 0, 1000);
+	}
+	//! Trusted server integration seam; public UI only reads the replicated summary.
+	void SetAggression_S(AROR_EFactionRole role, int value)
+	{
+		if (!Replication.IsServer() || !IsEnemyRole(role))
+			return;
+		value = Math.Clamp(value, 0, 1000);
+		if (GetAggression(role) == value)
+			return;
+		if (role == AROR_EFactionRole.OCCUPIERS)
+			m_iOccupierAggression = value;
+		else
+			m_iInvaderAggression = value;
+		Replication.BumpMe();
 	}
 	//! Trusted server/admin seam; no new unprotected client RPC is added.
 	void SetWarLevel_S(AROR_EFactionRole role, int level)
@@ -124,12 +188,21 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 		if (before != GetWarLevel(role))
 			Print(string.Format("[AROR STRATEGY] role=%1 war level %2 -> %3", role, before, GetWarLevel(role)), LogLevel.NORMAL);
 	}
-	void RestoreQRFStrategy_S(int occupierPressure, int invaderPressure, int occupierDebt, int invaderDebt)
+	void RestoreQRFStrategy_S(int occupierPressure, int invaderPressure, int occupierDebt, int invaderDebt, int occupierAggression = -1, int invaderAggression = -1)
 	{
 		if (!Replication.IsServer())
 			return;
 		SetWarPressure_S(AROR_EFactionRole.OCCUPIERS, occupierPressure);
 		SetWarPressure_S(AROR_EFactionRole.INVADERS, invaderPressure);
+		// Version 1 stored a single pressure for both concepts. Preserve its readings once.
+		if (occupierAggression < 0)
+			occupierAggression = occupierPressure;
+		if (invaderAggression < 0)
+			invaderAggression = invaderPressure;
+		SetAggression_S(AROR_EFactionRole.OCCUPIERS, occupierAggression);
+		SetAggression_S(AROR_EFactionRole.INVADERS, invaderAggression);
+		m_iOccupierLastThreat = m_iClock;
+		m_iInvaderLastThreat = m_iClock;
 		m_QRFFinance.SetDebt_S(AROR_EFactionRole.OCCUPIERS, occupierDebt);
 		m_QRFFinance.SetDebt_S(AROR_EFactionRole.INVADERS, invaderDebt);
 		m_bStrategyRestored = true;
@@ -154,7 +227,13 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 				return;
 			m_iInvaderEvidenceAt = m_iClock + 30;
 		}
-		SetWarPressure_S(role, GetWarPressure(role) + 5);
+		SetAggression_S(role, GetAggression(role) + 5);
+	}
+	//! Called once per queued capture or existing response; retries do not call this.
+	protected void RecordCaptureEscalation_S(AROR_EFactionRole role)
+	{
+		SetWarPressure_S(role, GetWarPressure(role) + m_iCaptureWarPressure);
+		SetAggression_S(role, GetAggression(role) + m_iCaptureAggression);
 	}
 	protected string QueueQRFThreat_S(AROR_EFactionRole role, string targetId, bool captured = false)
 	{
@@ -170,7 +249,7 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 				if (captured && !operation.m_bCaptureThreatRecorded)
 				{
 					operation.m_bCaptureThreatRecorded = true;
-					SetWarPressure_S(role, GetWarPressure(role) + 80);
+					RecordCaptureEscalation_S(role);
 				}
 				return operation.GetId();
 			}
@@ -196,7 +275,7 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 		}
 		threat.m_iLastSeen = m_iClock;
 		if (captured && !threat.m_bCaptured)
-			SetWarPressure_S(role, GetWarPressure(role) + 80);
+			RecordCaptureEscalation_S(role);
 		threat.m_bCaptured = threat.m_bCaptured || captured;
 		if (m_iClock >= threat.m_iNextEvidence)
 		{
@@ -213,7 +292,7 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 			int lifetime = m_iQRFThreatLifetime;
 			if (expired.m_bCaptured)
 				lifetime = Math.Max(lifetime, 600);
-			if (!HasLocation(expired.m_sLocationId) || m_iClock - expired.m_iLastSeen > lifetime)
+			if (!HasLocation(expired.m_sLocationId) || !IsCaptureThreatRelevant(expired) || m_iClock - expired.m_iLastSeen > lifetime)
 				m_aQRFThreats.Remove(index);
 		}
 		array<AROR_EFactionRole> roles = {AROR_EFactionRole.OCCUPIERS, AROR_EFactionRole.INVADERS};
@@ -232,18 +311,16 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 			if (!best)
 				continue;
 			best.m_iNextAttempt = m_iClock + 15;
-			if (best.m_iTierRoll < 0)
-				best.m_iTierRoll = Math.RandomInt(0, 100);
-			// Keep random variation fixed, but let new validated evidence change a queued ceiling.
-			best.m_iDesiredTier = AROR_QRFStrategicPolicy.DesiredTier(GetWarLevel(role), best.m_iReports, best.m_bCaptured, best.m_iTierRoll, best.m_iImportance);
+			// Queued intensity follows current aggression; admission freezes intensity and equipment.
+			best.m_iDesiredTier = GetAggressionLevel(role);
 			AROR_OperationExecutorComponent executor = AROR_OperationExecutorComponent.Cast(GetOwner().FindComponent(AROR_OperationExecutorComponent));
 			// Leave unaffordable/capacity-blocked threats queued, without consuming cooldown.
-			if (!executor || !executor.CanFundQRFThreat_S(role, best.m_iDesiredTier))
+			if (!executor || !executor.CanFundQRFThreat_S(role, best.m_iDesiredTier, best.m_bCaptured, best.m_sLocationId))
 			{
 				if (m_iClock >= best.m_iNextWaitLog)
 				{
 					best.m_iNextWaitLog = m_iClock + 30;
-					Print(string.Format("[AROR STRATEGY] waiting role=%1 target=%2 desiredTier=%3 available=%4 debt=%5; no affordable recipe/actor capacity or executor unavailable", role, best.m_sLocationId, best.m_iDesiredTier, m_QRFFinance.Available(role), m_QRFFinance.Debt(role)), LogLevel.NORMAL);
+					Print(string.Format("[AROR STRATEGY] waiting role=%1 target=%2 desiredTier=%3 available=%4 debt=%5; recipe, actor capacity, safe friendly origin or executor unavailable", role, best.m_sLocationId, best.m_iDesiredTier, m_QRFFinance.Available(role), m_QRFFinance.Debt(role)), LogLevel.NORMAL);
 				}
 				continue;
 			}
@@ -261,12 +338,26 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 			if (created.m_iRequestedTier == 0)
 			{
 				created.m_iRequestedTier = best.m_iDesiredTier;
+				created.m_iPoolWarLevel = GetWarLevel(role);
 				created.m_iThreatPriority = best.Score(m_iClock);
 				created.m_bCaptureThreatRecorded = best.m_bCaptured;
+				created.m_iCaptureReportedAt = best.m_iFirstSeen;
+				created.m_iPlanningRetries = best.m_iPlanningRetries;
+				created.m_sRejectedOrigins = best.m_sRejectedOrigins;
 				Print(string.Format("[AROR STRATEGY] admitted %1 war=%2 desiredTier=%3 priority=%4", id, GetWarLevel(role), created.m_iRequestedTier, created.m_iThreatPriority), LogLevel.NORMAL);
 			}
 			m_aQRFThreats.RemoveItem(best);
 		}
+	}
+	protected bool IsCaptureThreatRelevant(AROR_QRFThreat threat)
+	{
+		if (!threat.m_bCaptured)
+			return true;
+		AROR_LocationManagerComponent locations = AROR_LocationManagerComponent.GetInstance();
+		if (!locations)
+			return false;
+		AROR_LocationComponent location = locations.GetLocationById(threat.m_sLocationId);
+		return location && location.GetControllingRole() != threat.m_eRole;
 	}
 	[Attribute("0", desc: "Allow physical Invader attacks and QRF requests. Shared default is off; opt in per scenario after configuring role assets and land origins.")]
 	protected bool m_bInvaderOperationsEnabled;
@@ -457,7 +548,7 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 			if (campaign && campaign.IsAdvanceActive() && location.GetControllingRole() == AROR_EFactionRole.RESISTANCE)
 			{
 				RecordStrategicEvidence(previousRole);
-				SetWarPressure_S(previousRole, GetWarPressure(previousRole) + 80);
+				RecordCaptureEscalation_S(previousRole);
 			}
 			return string.Empty;
 		}
@@ -474,9 +565,11 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 	//! Existing requests keep their force, deadline and cooldown; only pre-search intel changes.
 	string ReportAttackAt_S(AROR_EFactionRole defendingRole, string locationId, vector reportedPosition)
 	{
+		// Local defensive reactions and recent-contact safety do not dispatch QRFs.
+		// The opt-in below controls admission only, not trusted combat observation.
+		ReportCombatContact_S(defendingRole, locationId, reportedPosition);
 		if (!m_bCombatQRFs)
 			return string.Empty;
-		ReportCombatContact_S(defendingRole, locationId, reportedPosition);
 		string id = ReportAttack_S(defendingRole, locationId);
 		AROR_Operation operation = GetOperation(id);
 		if (operation && !operation.IsTerminal() && operation.GetQRFSearchPlan())
@@ -510,6 +603,46 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 		if (result != AROR_EOperationState.SUCCEEDED && result != AROR_EOperationState.FAILED && result != AROR_EOperationState.CANCELLED)
 			return false;
 		return ChangeState_S(GetOperation(operationId), result, reason);
+	}
+	//! Only an explicit pre-activation route/launch failure may retry a capture.
+	//! Never re-escalate war pressure or bypass the normal request cooldown.
+	bool ReportQRFPlanningFailure_S(string operationId, string reason)
+	{
+		if (!IsReady())
+			return false;
+		AROR_Operation operation = GetOperation(operationId);
+		if (!operation || operation.GetType() != AROR_EOperationType.QRF || operation.GetState() != AROR_EOperationState.SPAWNING)
+			return false;
+		if (!ResolveOperation_S(operationId, AROR_EOperationState.FAILED, reason))
+			return false;
+		if (!m_bQRFStrategicEconomy || !operation.m_bCaptureThreatRecorded)
+			return true;
+		if (operation.m_iPlanningRetries >= Math.Clamp(m_iCapturePlanningRetries, 0, 3) || m_iClock - operation.m_iCaptureReportedAt >= 600)
+			return true;
+		if (m_aQRFThreats.Count() >= 32 || HasPendingQRFThreat(operation.GetRole(), operation.GetTargetLocationId()))
+			return true;
+		AROR_LocationManagerComponent locations = AROR_LocationManagerComponent.GetInstance();
+		AROR_LocationComponent target;
+		if (locations)
+			target = locations.GetLocationById(operation.GetTargetLocationId());
+		if (!target || target.GetControllingRole() != AROR_EFactionRole.RESISTANCE)
+			return true;
+		AROR_QRFThreat retry = new AROR_QRFThreat();
+		retry.m_eRole = operation.GetRole();
+		retry.m_sLocationId = operation.GetTargetLocationId();
+		retry.m_bCaptured = true;
+		retry.m_iFirstSeen = operation.m_iCaptureReportedAt;
+		retry.m_iLastSeen = operation.m_iCaptureReportedAt;
+		retry.m_iReports = 1;
+		retry.m_iImportance = AROR_QRFStrategicPolicy.Importance(target.GetLocationType());
+		retry.m_iPlanningRetries = operation.m_iPlanningRetries + 1;
+		retry.m_iNextAttempt = Math.Max(m_iClock + 15, GetNextRequestTime(operation.GetRole(), AROR_EOperationType.QRF));
+		retry.m_sRejectedOrigins = operation.m_sRejectedOrigins;
+		if (operation.m_TacticalCommander && !operation.m_TacticalCommander.m_sOriginLocationId.IsEmpty())
+			retry.m_sRejectedOrigins += "|" + operation.m_TacticalCommander.m_sOriginLocationId + "|";
+		m_aQRFThreats.Insert(retry);
+		Print(string.Format("[AROR STRATEGY] capture planning retry=%1 target=%2 earliest=%3; original age and cooldown retained", retry.m_iPlanningRetries, retry.m_sLocationId, retry.m_iNextAttempt), LogLevel.WARNING);
+		return true;
 	}
 
 	protected bool IsReady()
@@ -661,6 +794,35 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 		}
 	}
 
+	//! Evidence/losses change short-term aggression; equipment progress never decays here.
+	protected void UpdateAggression_S()
+	{
+		if (!Replication.IsServer() || !m_bQRFStrategicEconomy)
+			return;
+		if (m_QRFFinance.m_iOccupierLossValue > m_iAppliedOccupierLoss)
+		{
+			int occupierLoss = m_QRFFinance.m_iOccupierLossValue - m_iAppliedOccupierLoss;
+			SetAggression_S(AROR_EFactionRole.OCCUPIERS, GetAggression(AROR_EFactionRole.OCCUPIERS) + AROR_QRFStrategicPolicy.LossAggression(occupierLoss));
+			m_iAppliedOccupierLoss = m_QRFFinance.m_iOccupierLossValue;
+			m_iOccupierLastThreat = m_iClock;
+		}
+		if (m_QRFFinance.m_iInvaderLossValue > m_iAppliedInvaderLoss)
+		{
+			int invaderLoss = m_QRFFinance.m_iInvaderLossValue - m_iAppliedInvaderLoss;
+			SetAggression_S(AROR_EFactionRole.INVADERS, GetAggression(AROR_EFactionRole.INVADERS) + AROR_QRFStrategicPolicy.LossAggression(invaderLoss));
+			m_iAppliedInvaderLoss = m_QRFFinance.m_iInvaderLossValue;
+			m_iInvaderLastThreat = m_iClock;
+		}
+		if (m_iClock >= m_iNextAggressionDecay)
+		{
+			m_iNextAggressionDecay = m_iClock + 60;
+			if (m_iClock - m_iOccupierLastThreat >= m_iAggressionQuietTime)
+				SetAggression_S(AROR_EFactionRole.OCCUPIERS, GetAggression(AROR_EFactionRole.OCCUPIERS) - m_iAggressionDecay);
+			if (m_iClock - m_iInvaderLastThreat >= m_iAggressionQuietTime)
+				SetAggression_S(AROR_EFactionRole.INVADERS, GetAggression(AROR_EFactionRole.INVADERS) - m_iAggressionDecay);
+		}
+	}
+
 	protected void Tick()
 	{
 		if (!Replication.IsServer() || s_Instance != this)
@@ -690,30 +852,9 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 		{
 			m_iNextStrategyTick = m_iClock + 5;
 			m_QRFFinance.Tick_S();
-			if (m_bQRFStrategicEconomy && m_QRFFinance.m_iOccupierLossValue > m_iAppliedOccupierLoss)
-			{
-				int occupierLoss = m_QRFFinance.m_iOccupierLossValue - m_iAppliedOccupierLoss;
-				SetWarPressure_S(AROR_EFactionRole.OCCUPIERS, GetWarPressure(AROR_EFactionRole.OCCUPIERS) + Math.Clamp(occupierLoss / 100, 1, 30));
-				m_iAppliedOccupierLoss = m_QRFFinance.m_iOccupierLossValue;
-				m_iOccupierLastThreat = m_iClock;
-			}
-			if (m_bQRFStrategicEconomy && m_QRFFinance.m_iInvaderLossValue > m_iAppliedInvaderLoss)
-			{
-				int invaderLoss = m_QRFFinance.m_iInvaderLossValue - m_iAppliedInvaderLoss;
-				SetWarPressure_S(AROR_EFactionRole.INVADERS, GetWarPressure(AROR_EFactionRole.INVADERS) + Math.Clamp(invaderLoss / 100, 1, 30));
-				m_iAppliedInvaderLoss = m_QRFFinance.m_iInvaderLossValue;
-				m_iInvaderLastThreat = m_iClock;
-			}
+			UpdateAggression_S();
 			if (m_bQRFStrategicEconomy)
 				ProcessQRFThreats();
-		}
-		if (m_bQRFStrategicEconomy && m_iClock >= m_iNextWarDecay)
-		{
-			m_iNextWarDecay = m_iClock + 60;
-			if (m_iClock - m_iOccupierLastThreat >= 600)
-				SetWarPressure_S(AROR_EFactionRole.OCCUPIERS, GetWarPressure(AROR_EFactionRole.OCCUPIERS) - 2);
-			if (m_iClock - m_iInvaderLastThreat >= 600)
-				SetWarPressure_S(AROR_EFactionRole.INVADERS, GetWarPressure(AROR_EFactionRole.INVADERS) - 2);
 		}
 		ProcessOperations(AROR_EOperationType.QRF);
 		ProcessOperations(AROR_EOperationType.ATTACK);
@@ -741,6 +882,12 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 		}
 		s_Instance = this;
 		bool strategyValid = m_iStartingWarLevel >= 1 && m_iStartingWarLevel <= 5;
+		if (m_iStartingAggression < 0 || m_iStartingAggression > 100)
+			strategyValid = false;
+		if (m_iCaptureWarPressure < 0 || m_iCaptureWarPressure > 100 || m_iCaptureAggression < 0 || m_iCaptureAggression > 1000)
+			strategyValid = false;
+		if (m_iAggressionQuietTime < 60 || m_iAggressionQuietTime > 3600 || m_iAggressionDecay < 0 || m_iAggressionDecay > 1000)
+			strategyValid = false;
 		if (m_iQRFBaseOverhead < 0 || m_iQRFBaseOverhead > 100000 || m_iQRFTierOverhead < 0 || m_iQRFTierOverhead > 10000)
 			strategyValid = false;
 		if (m_iQRFThreatLifetime < 30 || m_iQRFThreatLifetime > 900)
@@ -761,6 +908,8 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 		{
 			m_iOccupierPressure = AROR_QRFStrategicPolicy.PressureForLevel(m_iStartingWarLevel);
 			m_iInvaderPressure = m_iOccupierPressure;
+			m_iOccupierAggression = m_iStartingAggression * 10;
+			m_iInvaderAggression = m_iOccupierAggression;
 		}
 		m_bWarStateReady = true;
 		Replication.BumpMe();

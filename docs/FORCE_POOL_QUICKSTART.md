@@ -1,6 +1,6 @@
 # Prepared Chicken force-pool test
 
-**Current Chicken fixture:** [paid strategic selection](QRF_STRATEGY_ECONOMY.md), war level 2, tactical coordination and [FIA spotting](QRF_SPOTTING.md) are enabled. Responses come from five authored ground tiers with finite waves; Ground capture responses are enabled for both AI roles; combat/REAPER dispatch remain off. This supersedes older forced-profile/level-5 instructions below. The exact [truck/IFV regression test](TRUCK_IFV_QRF_TEST.md) requires strategic economy off. Compile and reload before testing these additions.
+**Current Chicken fixture:** [strategic selection](QRF_STRATEGY_ECONOMY.md) starts at war level 1 and aggression 20%. War gates light/mechanized/combined equipment pools; aggression requests response intensity 1–5. Ground capture responses are enabled for both AI roles, with tactical waves and spotting; combat/flight dispatch remain off. The exact [truck/APC regression fixture](TRUCK_IFV_QRF_TEST.md) requires strategic economy off. Compile and reload before native acceptance.
 
 The legacy homogeneous pool supports randomized strength levels 1-5 and supported profiles; see [RESPONSE_SCALE.md](RESPONSE_SCALE.md). Current strategic recipes use an explicit element list rather than multiplying one profile. The [REAPER test](AIRBORNE_QRF_PROTOTYPE.md) is a separate explicit configuration, currently disabled. Aircraft research remains in [AIR_OPERATIONS_RESEARCH.md](AIR_OPERATIONS_RESEARCH.md).
 

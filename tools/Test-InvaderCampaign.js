@@ -60,6 +60,8 @@ function runInvaderCampaignTests(sources, catalogue) {
   campaignReady=false;evaluate();check(!campaign.m_bSeeded&&bank.balances[2]===10000,'no grant before campaign setup');campaignReady=true;
   evaluate();evaluate();check(campaign.m_bSeeded&&bank.balances[2]===30000&&bank.payments.length===0,'opening grant paid once with initial preparation delay');
   check(campaign.GetExternalSupportBonus()===1800,'bonus exposed for the existing income authority');
+  war=5;check(campaign.GetExternalSupportBonus()===4050,'war capability can increase strategic backing while aggression remains low');
+  war=2;aggression=100;check(campaign.GetExternalSupportBonus()===4500,'aggression can increase strategic backing without changing the equipment war level');aggression=10;
   const income=compile(sources.income,'GetExternalSupport');
   check(income.call({m_iOccupiersExternalSupport:500,m_iInvadersExternalSupport:500},2)===2300&&income.call({m_iOccupiersExternalSupport:500,m_iInvadersExternalSupport:500},1)===500,'only Invader external payout gains escalation bonus');
   campaign.Survey_S();check(campaign.m_aSites.length===3,'survey excludes fixed corridor');

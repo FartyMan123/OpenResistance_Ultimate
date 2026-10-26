@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - Separate QRF capability and aggression (2026-10-26)
+
+- War level gates QRF equipment; independent per-role aggression requests response intensity 1–5. Capture advances slow war progress and faster aggression; combat/losses affect aggression only, and quiet time cools aggression. Capture-only dispatch remains configured in Chicken.
+- Add light M2 Humvee/PKM-UAZ escorts and three complete ground equipment bands, preserving existing capacity, staged waves, pricing/debt and minimum-capture funding rules. Start fresh Chicken at war 1/aggression 20%. Add a light-vehicle spotting class with ground observation range.
+- Persist independent aggression in operation-manager schema 2, migrate schema 1, and carry pending loss aggression/debt in read-only save snapshots. Update RebIntel, readiness preview equipment context, resource/price checks and regression coverage. Native compile/Play and balance remain pending; historical entries below describe earlier snapshots.
+
+
 ## Unreleased - Measured flag-model base correction (2026-10-24)
 
 ### Native editor audit

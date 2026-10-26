@@ -53,10 +53,10 @@ modded class AROR_OperationExecutorComponent
 	}
 
 	protected ref AROR_ReaperLandingSearch m_ReaperLandingSearch;
-	override bool CanFundQRFThreat_S(AROR_EFactionRole role, int desired)
+	override bool CanFundQRFThreat_S(AROR_EFactionRole role, int desired, bool captured = false, string targetId = "")
 	{
 		if (!GetGroundQRFRecipeId(role).IsEmpty() || !m_bReaperQRFTest)
-			return super.CanFundQRFThreat_S(role, desired);
+			return super.CanFundQRFThreat_S(role, desired, captured, targetId);
 		if (!Replication.IsServer() || !m_Operations)
 			return false;
 		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.GetInstance();
@@ -72,8 +72,12 @@ modded class AROR_OperationExecutorComponent
 		}
 		return false;
 	}
-	protected int AffordableReaperTier(AROR_ForceProfile profile, int desired)
+	protected int AffordableReaperTier(AROR_ForceProfile profile, int desired, int warLevel = 0)
 	{
+		if (warLevel == 0)
+			warLevel = m_Operations.GetWarLevel(profile.m_eRole);
+		if (profile.m_iMinimumWarLevel > warLevel)
+			return 0;
 		if (!AROR_EconomyComponent.GetInstance() || m_Operations.GetQRFFinance().Debt(profile.m_eRole) > 0)
 			return 0;
 		for (int tier = Math.Clamp(desired, 1, 5); tier >= 1; tier--)
@@ -190,10 +194,12 @@ modded class AROR_OperationExecutorComponent
 		int level = 1;
 		if (m_Operations.IsQRFStrategyEnabled())
 		{
-			level = AffordableReaperTier(profile, Math.Max(1, operation.m_iRequestedTier));
+			if (operation.m_iRequestedTier < 1)
+				operation.m_iRequestedTier = m_Operations.GetAggressionLevel(operation.GetRole());
+			level = AffordableReaperTier(profile, operation.m_iRequestedTier, QRFPoolWarLevel(operation));
 			if (level == 0)
 			{
-				ReportSpawnWait(operation, "No affordable complete airborne pair within the desired war tier");
+				ReportSpawnWait(operation, "No unlocked affordable airborne pair within the requested aggression level");
 				return;
 			}
 		}

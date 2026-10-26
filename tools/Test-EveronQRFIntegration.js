@@ -16,7 +16,7 @@ function runEveronQRFIntegrationTests(sources) {
     const args=m[1].replace(/\b(?:int|bool|string|vector|AROR_\w+)\s+/g,'');
     let body=m[2].replace(/\b(?:bool|int|string|Faction|AROR_\w+)\s+(\w+)/g,'let $1').replace(/let (\w+);/g,'let $1=0;')
       .replace(/(?<![.\w])m_\w+/g,x=>'this.'+x);
-    for(const method of ['IsReady','IsEnemyRole','QueueQRFThreat_S','RequestOperation_S','HasPendingQRFThreat','ReportLocationCapture_S','IsCapturableType','IsCapturableLocation','ReportAttack_S','ReportCombatContact_S','GetOperation','RecordStrategicEvidence','SetWarPressure_S','GetWarPressure'])
+    for(const method of ['IsReady','IsEnemyRole','QueueQRFThreat_S','RequestOperation_S','HasPendingQRFThreat','ReportLocationCapture_S','IsCapturableType','IsCapturableLocation','ReportAttack_S','ReportCombatContact_S','GetOperation','RecordStrategicEvidence','RecordCaptureEscalation_S','SetWarPressure_S','GetWarPressure'])
       body=body.replace(new RegExp('(?<![.\\w])'+method+'\\(', 'g'),'this.'+method+'(');
     return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
   }
@@ -52,20 +52,20 @@ function runEveronQRFIntegrationTests(sources) {
   manager.GetOperation=()=>null;
   const damageAt=compile(sources.manager,'ReportAttackAt_S'),beforeDamageQueue=queued,beforeDamageRequests=requested;
   check(manager.ReportAttack_S(1,'site')===''&&queued===beforeDamageQueue&&requested===beforeDamageRequests,'combat disabled blocks plain damage request');
-  check(damageAt.call(manager,1,'site',[0,0,0])===''&&queued===beforeDamageQueue&&combatContacts===0,'combat disabled blocks positioned damage, pressure and contact side effects');
+  check(damageAt.call(manager,1,'site',[0,0,0])===''&&queued===beforeDamageQueue&&combatContacts===1,'combat dispatch disabled still permits a trusted contact snapshot for local defence, without requesting a QRF');
   check(capture.call(manager,1,'site')==='queued'&&queued===beforeDamageQueue+1,'capture still queues a paid response with combat reports disabled');
   manager.m_bCombatQRFs=true;
-  check(damageAt.call(manager,1,'site',[0,0,0])==='queued'&&queued===beforeDamageQueue+2&&combatContacts===1,'explicit combat opt-in retains strategic response path');
+  check(damageAt.call(manager,1,'site',[0,0,0])==='queued'&&queued===beforeDamageQueue+2&&combatContacts===2,'explicit combat opt-in retains strategic response path');
   manager.m_bQRFStrategicEconomy=false;
   check(manager.ReportAttack_S(1,'site')==='operation'&&requested===beforeDamageRequests+1,'explicit combat opt-in retains non-strategic response path');
   let invaderPressure=100,evidence=0;
-  manager.m_bInvaderOperationsEnabled=false;manager.RecordStrategicEvidence=()=>evidence++;manager.GetWarPressure=()=>invaderPressure;manager.SetWarPressure_S=(r,n)=>invaderPressure=n;
+  manager.m_bInvaderOperationsEnabled=false;manager.RecordStrategicEvidence=()=>evidence++;manager.RecordCaptureEscalation_S=()=>invaderPressure+=25;manager.GetWarPressure=()=>invaderPressure;manager.SetWarPressure_S=(r,n)=>invaderPressure=n;
   env.AROR_InvaderCampaignComponent.GetInstance=()=>({IsAdvanceActive:()=>true});const requestsBefore=requested,queuesBefore=queued;
-  check(capture.call(manager,2,'site')===''&&invaderPressure===180&&evidence===1&&requested===requestsBefore&&queued===queuesBefore,'Resistance capture raises territorial Invader pressure without physical dispatch');
-  target.owner=1;capture.call(manager,2,'site');check(invaderPressure===180,'AI-versus-AI capture cannot escalate the territorial war by itself');target.owner=0;
-  env.AROR_InvaderCampaignComponent.GetInstance=()=>null;capture.call(manager,2,'site');check(invaderPressure===180,'disabled territorial campaign retains Invader admission opt-out');
+  check(capture.call(manager,2,'site')===''&&invaderPressure===125&&evidence===1&&requested===requestsBefore&&queued===queuesBefore,'Resistance capture raises territorial Invader progress without physical dispatch');
+  target.owner=1;capture.call(manager,2,'site');check(invaderPressure===125,'AI-versus-AI capture cannot escalate the territorial war by itself');target.owner=0;
+  env.AROR_InvaderCampaignComponent.GetInstance=()=>null;capture.call(manager,2,'site');check(invaderPressure===125,'disabled territorial campaign retains Invader admission opt-out');
   manager.m_bInvaderOperationsEnabled=true;manager.m_bQRFStrategicEconomy=true;const invaderQueued=queued;
-  check(capture.call(manager,2,'site')==='queued'&&queued===invaderQueued+1&&invaderPressure===180,'enabled Invader capture uses strategic dispatch without duplicate fallback pressure');
+  check(capture.call(manager,2,'site')==='queued'&&queued===invaderQueued+1&&invaderPressure===125,'enabled Invader capture uses strategic dispatch without duplicate fallback progress');
   const invaderDamageQueued=queued;manager.m_bCombatQRFs=false;
   check(manager.ReportAttack_S(2,'site')===''&&queued===invaderDamageQueued,'enabled Invader admission still rejects combat-driven QRFs');
   check(!sources.observer.includes('SetControllingRole_S'),'observer does not change territory authority');

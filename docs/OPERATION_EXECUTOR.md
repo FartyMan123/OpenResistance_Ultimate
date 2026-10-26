@@ -1,6 +1,6 @@
 # Infantry executor and QRF testing in Everon_Chicken
 
-**Current Chicken fixture:** [paid strategic selection](QRF_STRATEGY_ECONOMY.md) is enabled, initially war level 2, with five authored ground tiers per role and [FIA spotting markers](QRF_SPOTTING.md). Tactical coordination and finite waves are enabled. Ground capture responses are enabled for both AI roles; combat/REAPER dispatch remain off. To restore the exact two-vehicle fixture, disable strategic economy and use the [Truck/IFV test](TRUCK_IFV_QRF_TEST.md). New strategy/marker/return behavior requires fresh compilation and Play verification.
+**Current Chicken fixture:** [strategic selection](QRF_STRATEGY_ECONOMY.md) starts at war level 1 and aggression 20%. War gates light/mechanized/combined equipment pools; aggression requests response intensity 1–5. Ground capture responses are enabled for both AI roles, with tactical waves and spotting; combat/flight dispatch remain off. The exact [truck/APC regression fixture](TRUCK_IFV_QRF_TEST.md) requires strategic economy off. Compile and reload before native acceptance.
 
 Chicken has preconfigured force pools and ground execution paths. The infantry-only instructions below apply when `m_aForceProfiles` is empty and strategic economy is disabled. The [REAPER airborne experiment](AIRBORNE_QRF_PROTOTYPE.md) is a separate explicit fixture; normal weighted airborne selection remains excluded.
 

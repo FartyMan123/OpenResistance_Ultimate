@@ -107,8 +107,9 @@ class AROR_DefenceLayout
 	{
 		if (attempt == 0)
 			return vector.Zero;
-		float angle = (attempt - 1) * 45 * Math.DEG2RAD;
-		return Vector(Math.Sin(angle) * 1.5, 0, Math.Cos(angle) * 1.5);
+		float angle = Math.Mod(attempt - 1, 8) * 45 * Math.DEG2RAD;
+		int ring = Math.Min(3, (attempt - 1) / 8 + 1);
+		return Vector(Math.Sin(angle) * ring * 1.5, 0, Math.Cos(angle) * ring * 1.5);
 	}
 	static bool ClearMGArc(BaseWorld world, vector point, float yaw)
 	{

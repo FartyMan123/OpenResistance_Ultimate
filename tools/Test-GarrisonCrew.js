@@ -4,24 +4,28 @@ function runGarrisonCrewTests(source) {
  let assertions=0,clock=0;
  const check=(ok,message)=>{assertions++;if(!ok)throw Error(message);};
  const deleted=[];
- const env={Replication:{IsServer:()=>true},Math:{Max:Math.max,Min:Math.min,Mod:(a,b)=>a%b},
+ const env={Replication:{IsServer:()=>true},Math:{Max:Math.max,Min:Math.min,Mod:(a,b)=>a%b,Clamp:(v,a,b)=>Math.max(a,Math.min(b,v))},
   vector:{Zero:[0,0,0],DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])},
   string:{Format:(s,...a)=>s.replace(/%(\d+)/g,(_,n)=>String(a[n-1]))},Print:()=>{},LogLevel:{NORMAL:0},
   GetGame:()=>({GetWorld:()=>({GetWorldTime:()=>clock}),GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:e=>e.player?1:0})}),
   ECloseDoorAfterActions:{CLOSE_DOOR:0},SCR_EntityHelper:{DeleteEntityAndChildren:e=>deleted.push(e)}};
  for(const name of ['BaseCompartmentManagerComponent','SCR_AIVehicleUsageComponent','DamageManagerComponent','CompartmentAccessComponent','FactionAffiliationComponent','AIWaypoint'])env[name]={Cast:x=>x};
  env.ChimeraCharacter={Cast:e=>e&&e.character?e:null};
- const names=['IsPlayerOrForeignAsset','MaintainCrewSeats_S','HasMountedDefence','CrewAndOrder','AssignMembers','HasDormantReserve'];
+ const names=['IsPlayerOrForeignAsset','MaintainCrewSeats_S','HasMountedDefence','CrewAndOrder','AssignMembers','HasDormantReserve','InfantryDefenceGoal'];
  function compile(name){
   const m=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
   if(!m)throw Error('Missing actual method '+name);
   const args=m[1].replace(/\b(?:AROR_\w+|IEntity|bool)\s+/g,'');
   let body=m[2].replace(/array<\w+> (\w+) = \{\};/g,'let $1=[];')
    .replace(/foreach \(\w+ (\w+) : ([^)]+)\)/g,'for(const $1 of $2)')
-   .replace(/\b(?:bool|int|IEntity|ChimeraCharacter|DamageManagerComponent|CompartmentAccessComponent|FactionAffiliationComponent|Base\w+|AIWaypoint|SCR_\w+|AROR_\w+) (\w+);/g,'let $1=0;')
-   .replace(/\b(?:bool|int|IEntity|ChimeraCharacter|DamageManagerComponent|CompartmentAccessComponent|FactionAffiliationComponent|Base\w+|AIWaypoint|SCR_\w+|AROR_\w+) (\w+) =/g,'let $1 =')
+   .replace(/\b(?:bool|int|float|vector|IEntity|NavmeshWorldComponent|ChimeraAIWorld|ChimeraCharacter|DamageManagerComponent|CompartmentAccessComponent|FactionAffiliationComponent|Base\w+|AIWaypoint|SCR_\w+|AROR_\w+) (\w+);/g,'let $1=0;')
+   .replace(/\b(?:bool|int|float|vector|IEntity|NavmeshWorldComponent|ChimeraAIWorld|ChimeraCharacter|DamageManagerComponent|CompartmentAccessComponent|FactionAffiliationComponent|Base\w+|AIWaypoint|SCR_\w+|AROR_\w+) (\w+) =/g,'let $1 =')
    .replace(/(?<![.\w])m_\w+/g,x=>'this.'+x).replace(/\.Count\(\)/g,'.length');
-  for(const n of [...names,'Spawn'])body=body.replace(new RegExp('(?<![.\\w])'+n+'\\(', 'g'),'this.'+n+'(');
+  for(const n of [...names,'Spawn','GetOwner','GetDefenceCenter','GetDefenceHalfExtent'])body=body.replace(new RegExp('(?<![.\\w])'+n+'\\(', 'g'),'this.'+n+'(');
+  body=body.replace('lead.m_vPosition - this.GetDefenceCenter()','lead.m_vPosition.map((v,i)=>v-this.GetDefenceCenter()[i])')
+   .replace('contact.m_vPosition - this.GetDefenceCenter()','contact.m_vPosition.map((v,i)=>v-this.GetDefenceCenter()[i])')
+   .replace('this.GetDefenceCenter() + this.GetOwner().VectorToParent(local)','this.GetDefenceCenter().map((v,i)=>v+this.GetOwner().VectorToParent(local)[i])')
+   .replace('let reachable=0;','let reachable=[0,0,0];');
   return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
  }
  const compiled=Object.fromEntries(names.slice(0,4).map(n=>[n,compile(n)]));
@@ -109,6 +113,38 @@ function runGarrisonCrewTests(source) {
  check(save.requests.length===0&&save.waypoints.length===0,'saving observes state without seating or issuing orders');
  const client=fixture();env.Replication.IsServer=()=>false;client.tick();
  check(client.requests.length===0&&client.waypoints.length===0,'clients cannot seat garrison crew or issue orders');
+ env.Replication.IsServer=()=>true;
+ let contact=null,walkable=true,queries=0;
+ const originalGame=env.GetGame;
+ env.ChimeraAIWorld={Cast:x=>x};
+ const soldiers={GetReachablePoint(point,radius,out){queries++;out.splice(0,3,...point);return walkable;}};
+ env.GetGame=()=>({...originalGame(),GetWorld:()=>({...originalGame().GetWorld(),GetSurfaceY:()=>0}),GetAIWorld:()=>({GetNavmeshWorldComponent:()=>soldiers})});
+ env.AROR_OperationManagerComponent={GetInstance:()=>({GetRecentCombatContact:()=>contact,ReportAttack_S(){throw Error('Patrol must not dispatch a QRF');}})};
+ const goal=compile('InfantryDefenceGoal');
+ const patrol=fixture();patrol.slots.slice(1).forEach(s=>{s.m_iKind=0;s.m_iVehicle=-1;});
+ Object.assign(patrol.slots[1],{m_vPosition:[7,0,7]});
+ Object.assign(patrol.state,{m_bLocalDefencePatrols:true,m_iInfantryOrderInterval:45,InfantryDefenceGoal:goal,
+  GetDefenceHalfExtent:()=>18,GetDefenceCenter:()=>[0,0,0],GetOwner:()=>({VectorToLocal:v=>v.slice(),VectorToParent:v=>v.slice()})});
+ Object.assign(patrol.state.m_Location,{GetRadius:()=>150,IsPositionInside:p=>Math.hypot(p[0],p[2])<=150});
+ Object.assign(patrol.pending,{m_iNextFootOrder:0,m_iPatrolLeg:0,m_iContactSequence:0});
+ const firstPatrol=goal.call(patrol.state,patrol.pending,patrol.slots[1]);
+ const secondPatrol=goal.call(patrol.state,patrol.pending,patrol.slots[1]);
+ check(firstPatrol[0]===3.5&&secondPatrol[0]===7,'mobile fireteams alternate bounded interior and home-sector tasks');
+ contact={m_sLocationId:'crew-fixture',m_vPosition:[140,0,0],m_iSequence:3};
+ const reaction=goal.call(patrol.state,patrol.pending,patrol.slots[1]);
+ check(reaction[0]===8&&reaction[2]===0&&patrol.pending.m_iContactSequence===3,'recent reported contact directs a mobile team to its own defensive edge');
+ contact={...contact,m_sLocationId:'other-site'};
+ goal.call(patrol.state,patrol.pending,patrol.slots[1]);
+ check(patrol.pending.m_iContactSequence===0,'a neighbouring location report does not redirect this site\'s patrol');
+ walkable=false;
+ check(goal.call(patrol.state,patrol.pending,patrol.slots[1])===patrol.slots[1].m_vPosition,'unwalkable patrol target falls back to the established defence position');walkable=true;contact=null;
+ patrol.tick();const firstOrders=patrol.waypoints.length,firstQueries=queries;
+ patrol.at(1000);patrol.tick();
+ check(patrol.waypoints.length===firstOrders&&queries===firstQueries,'patrol path queries and waypoints are throttled between tactical orders');
+ patrol.at(60000);patrol.tick();
+ check(patrol.waypoints.length===firstOrders+1,'patrol can update its sector after the configured interval');
+ const mountedPatrol=fixture(1);mountedPatrol.state.m_bLocalDefencePatrols=true;mountedPatrol.tick();mountedPatrol.occupy();mountedPatrol.at(1000);mountedPatrol.tick();mountedPatrol.at(60000);mountedPatrol.tick();
+ check(mountedPatrol.waypoints.length===0&&mountedPatrol.pending.m_bMountedDefence,'local patrols never issue infantry orders to a manned static');
  return {assertions,note:'Native compartments and AI mocked; Workbench compile and sustained mounted-defence acceptance still required.'};
 }
 if(typeof require==='function'&&typeof module!=='undefined'&&require.main===module){

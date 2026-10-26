@@ -2,12 +2,12 @@
 
 Status: source implementation and offline checks complete; **new Workbench compilation, multiplayer and combat acceptance are pending**. Both opposing roles use the same framework. Chicken enables strategic economy and visual spotting; Chicken also enables Invader ground capture responses; combat/REAPER dispatch remain disabled.
 
-## What happens after an attack
+## What happens after a capture
 
-1. An assigned defender's validated hostile damage, or a canonical settlement/outpost capture event, supplies a trusted role/location report. No player RPC can create a threat or change war level.
+1. A canonical enabled settlement/military capture supplies a trusted role/location threat. Chicken keeps combat-triggered QRFs off: validated damage can update recent contacts and bounded aggression but cannot request a response. No player RPC can create a threat or change war level.
 2. The manager coalesces reports into at most 32 pending threats. Repeated reports for one role/location contribute evidence at most every 30 seconds. A live QRF for the same target is reused.
 3. Every five seconds, each role considers its highest-scoring eligible threat. Importance, sustained fighting, capture and bounded waiting age affect priority. An unaffordable threat waits; after its retry is deferred, another candidate can be considered on a subsequent tick. Existing per-role cooldown, outstanding-operation limits and conflicting-target checks still govern admission.
-4. Random variation is rolled once for that queued threat; its ceiling can still react to new evidence/war pressure while waiting. On admission the desired intent is fixed. The executor finds the highest authored tier at or below that intent which fits money and actor budgets. The complete allocation is reserved atomically before spawning; a second response cannot reuse its collateral. No affordable tier means the threat remains queued before admission. A race or later capacity change can still block an admitted operation until its normal spawn timeout.
+4. Current aggression requests intensity 1–5 while war level selects the equipment pool. Admission freezes both values. The executor prefers the highest authored tier at or below that intent which fits money and actor budgets. The complete allocation is reserved atomically before spawning; a second response cannot reuse its collateral. Chicken's explicit minimum-capture opt-in can instead admit only tier 1 without collateral when no paid recipe fits. Actor limits and safe friendly origins still apply; blocked threats remain queued. A race or later capacity change can still block an admitted operation until its normal spawn timeout.
 5. Existing construction, boarding, route planning and tactical execution deliver the response. The activation fee is charged once when the response becomes ACTIVE. Later waves belong to that allocation and do not charge another deployment fee.
 6. Vehicles unload, infantry investigates the reported contact/town and searches sectors, and support vehicles receive separate road cover orders. Physical progress and timeout diagnostics distinguish arrival from merely issuing an order. Native AI retains navigation, perception and combat.
 7. Normal withdrawal sends survivors toward a friendly origin. Ground recovery requires living personnel within 100 m and a surviving vehicle within 125 m of that origin in Chicken, with no player-commanded groups. The executor exposes both recovery radii as attributes. A returned package leaves the tactical roster without a casualty/loss notification. When no operating or virtual-reserve package remains, a response with recovered survivors can complete its task; that result never flips ownership or declares a territorial victory.
@@ -42,7 +42,21 @@ If another system spends reserved funds, a later bill consumes what the bank can
 
 The Bank phone app currently displays the ordinary balance. It does not display reserved QRF collateral or debt. Server inspection uses `manager.GetQRFFinance().Available(role)` and `.Debt(role)`.
 
-## Five ground tiers for 3–4 capable players
+### Minimum capture response
+
+`m_bMinimumCaptureQRF` defaults off in the shared manager and is explicitly on in Chicken. It requires strategic economy, a recorded capture threat, the existing Economy and a complete tier-1 ground recipe. Paid selection remains preferred. If no paid recipe is available, tier 1 can deploy without collateral even while debt remains. It never grants funds or changes the bank's non-negative spending rules: the one activation overhead and confirmed asset losses are paid from the ordinary bank or added to the same saved QRF debt. Future funds service debt before new paid responses. Retained physical survivors remain observed after terminal operation state so later confirmed losses are billed once.
+
+Initial garrison rosters likewise do not require faction funds. They retain their separate personnel cap, placement checks and saved casualties; they do not replenish automatically. These two provisional policies preserve an opponent at low funds while leaving stronger QRFs dependent on the economy.
+
+### Ground planning and capture retries
+
+Chicken sets `m_bQRFRequireFriendlyOrigin`: dispatch needs a currently friendly outpost, military base or airport. Configured role coordinates cannot substitute for lost land territory, and the offshore corridor cannot launch ground vehicles. Losing the USSR's only land base therefore leaves its capture threat waiting for a valid origin; the minimum-funding policy does not override that requirement.
+
+Plan each ground package's delivery point before constructing its vehicle/groups. Search the normal objective area first, then optionally a nearby reachable road within `m_fQRFMaximumRoadDismount` (300 m by default, maximum 350 m). The fallback checks a soldier-navmesh dismount point and package separation; it does not certify the entire foot route. Infantry must still physically enter the objective's security area before starting the hold. Military objectives follow the actual defence flag when it remains inside the canonical capture radius.
+
+Explicit launch/approach failures before activation can requeue up to two further planning attempts. They retain the original capture timestamp, ten-minute capture lifetime and ordinary role cooldown, avoid previously failed origins, and do not add capture pressure again. Active package failures do not restart the deployment. A pending capture threat is discarded when its defending role regains the target. This is bounded recovery, not a guarantee that every site has a usable route.
+
+## War-5 combined responses for 3–4 capable players
 
 These are initial tuning values, not a claim of measured difficulty. Infantry/crew counts below assume the current four-person fireteam prefabs and are estimates until each faction's full tier is verified in Play. US armour currently means another LAV; USSR armour uses a BRDM, not a main battle tank.
 
@@ -58,32 +72,46 @@ Machine-readable values: [QRF_PRICES.csv](QRF_PRICES.csv). The needed-funds colu
 
 For example, a tier-2 US deployment pays 70. Losing one LAV and two soldiers adds 850, for a total 920 campaign cost; the other surviving assets do not incur replacement charges. Losing a truck with its driver costs 225 in addition to that response's overhead.
 
-## War level
+## War level and aggression
 
-Each AI role has independent server pressure, clamped to 0–1,000. Initial war level is an attribute; Chicken starts at 2.
+Each enemy role has two independent server-owned values on a 0–1,000 scale. New Chicken campaigns start at war level 1 and 20% aggression (response level 2). Loaded campaigns retain their saved values.
 
-| War level | Minimum pressure | Ordinary desired tier |
+| War level | Minimum saved war progress | Eligible ground pool |
 |---|---:|---|
-| 1 | 0 | 1 |
-| 2 | 100 | 70% tier 2; 30% tier 1 |
-| 3 | 250 | 70% tier 3; 30% tier 2 |
-| 4 | 450 | 70% tier 4; 30% tier 3 |
-| 5 | 700 | 70% tier 5; 30% tier 4 |
+| 1 | 0 | Infantry trucks and light armed escorts |
+| 2 | 100 | Infantry trucks and light armed escorts |
+| 3 | 250 | Mechanized responses with APC/IFV support |
+| 4 | 450 | Mechanized responses with APC/IFV support |
+| 5 | 700 | Larger combined-arms mixes with wheeled armour support |
 
-Validated hostile evidence adds five pressure at most once per role per 30 seconds. A captured settlement adds 80 once per queued threat/active response. Newly observed asset losses add bounded pressure according to value. After ten minutes without new evidence/losses, pressure decays by two per minute. A captured target, at least three spaced threat reports, or a strategic site with importance 160+ can raise that threat's response ceiling one level, capped at 5. These bonuses do not stack. Affordability/capacity can still lower the actual bound tier.
+A newly recorded capture loss adds 25 war progress and 150 aggression by default. Repeated reports for the same queued capture/active response do not repeat that award; planning retries do not award it. Validated combat evidence adds five aggression at most once per role per 30 seconds. Confirmed QRF losses add bounded aggression. Combat and losses do not unlock equipment. After ten quiet minutes, aggression cools by 20 points (two percentage points) per minute; war progress does not decay. Starting values, capture increments and cooling are designer attributes. Repeated real recaptures can still advance war progress; this is provisional campaign pacing.
 
-`SetWarLevel_S(role, level)` is a trusted server integration/debug seam. No new unrestricted admin/client RPC is introduced. Policy defaults and importance thresholds are currently code policy; starting level, overhead, report expiry and profile prices are designer attributes. There is no automatic inspection of the players' inventories or real-time positions for difficulty selection.
+Aggression directly requests response levels 1–5: 0–19% / 20–39% / 40–59% / 60–79% / 80–100%. Threat importance and report count affect queue priority, not response strength. There is no random tier bonus. Money/capacity can downgrade the requested level, and the explicit minimum-capture policy can admit level 1 without collateral. Every selection still respects the war pool. Both war pool and desired response level freeze at operation admission; its later waves keep the same recipe and allocation.
+
+| Response | War 1–2 | War 3–4 |
+|---|---|---|
+| 1 | 1 truck | 1 APC/IFV |
+| 2 | 1 truck + 1 light escort | 1 truck + 1 APC/IFV |
+| 3 | 2 trucks + 1 light escort | 1 truck + 2 APCs/IFVs + 1 light escort |
+| 4 | 3 trucks + 2 light escorts | 2 trucks + 2 APCs/IFVs + 1 light escort |
+| 5 | 4 trucks + 2 light escorts | 3 trucks + 3 APCs/IFVs + 1 light escort |
+
+War-5 mixes/prices are listed above. US light escort is the M2 Humvee; USSR light escort is the PKM UAZ, a functional light-support counterpart with different firepower. The new escort profiles are QRF-only and do not add weight to the separate scheduled-attack pool. Each escort uses mounted crew only and reports a light armed vehicle map contact using ground spotting range. Trucks and APCs carry their configured fireteams. Late support remains LAV/BRDM, with no tank or newly enabled aircraft claim. This progression controls QRFs; it does not rewrite saved garrison recipes.
+
+Recipes expose minimum/maximum war levels, and profiles independently expose their minimum unlock. A mislabeled early recipe cannot introduce a locked profile. The readiness-provider preview now accepts an explicit war level too; it still has no automatic dispatch caller. Legacy fixed truck/APC fixtures remain available when strategic selection is disabled.
+
+Trusted server integrations use `SetWarLevel_S(role, level)` for equipment progress and `SetAggression_S(role, points)` for intensity. RebIntel reads replicated values and shows both response level and aggression percentage. It cannot mutate them. The existing Invader campaign reads the separate war level/aggression for ambition and external backing; simulated victories do not increase either value.
 
 ## Priority and scope
 
 Score = location importance + 15 × capped report count + capture bonus + bounded waiting credit. Factory/airport importance is highest, followed by military base/port, city, outpost, resources and ordinary settlements. Reports cap at six; capture adds 80; waiting adds at most 60. Ties retain queue order. Ordinary unrefreshed threats expire after 180 seconds in Chicken; capture threats remain eligible for at least 600 seconds. Retry eligibility is delayed 15 seconds. Ranking does not preempt an already ACTIVE response or mutate its bound recipe.
 
-The damage, settlement capture and separately enabled military-site capture adapters supply current automatic inputs. The military-site capture opt-in also covers airport/factory/port/resource events after alignment with Rowan placements. Their importance is ready for trusted callers/garrison integration. No physical stock, production, territory ownership, garrison system or economy income authority is duplicated. Invader admission remains off at every existing dispatch gate.
+The damage adapter is separately opt-in for dispatch; Chicken enables settlement and military capture inputs, including airport/factory/port/resource events. Their importance is ready for trusted callers/garrison integration. No physical stock, production, territory ownership or economy income authority is duplicated. Chicken enables Invader ground capture admission; the shared default remains off.
 
 ## Persistence and verification
 
-Economy persists bank debits. `AROR_OperationManagerComponentSerializer` version 1 persists both roles' war pressure and QRF debt. It also reads any confirmed losses not yet processed by the five-second finance tick into the save's debt value without changing bank state while serializing. Session allocations, actor registrations, threats, cooldowns and contact/spotting reports are not serialized. Save/load does not restore a working deployed QRF or its collateral ledger; that remains a separate lifecycle milestone. Missing entities without confirmed destruction are not retrospectively charged. The native save path must be tested through a save-enabled mission, since the bare Chicken world reports saving disabled.
+Economy persists bank debits. `AROR_OperationManagerComponentSerializer` version 2 persists both roles' war progress, aggression and QRF debt. Version 1 saves migrate their old shared pressure into both axes once, preserving war level and the prior aggression percentage; subsequent changes are independent. Partial version-2 aggression records and unsupported versions are rejected before applying state. Read-only snapshots include confirmed losses not yet processed by the finance/policy tick in debt and aggression without changing live state or bank balances while serializing. The quiet-time grace restarts on restore. Session allocations, actor registrations, threats, cooldowns and contact/spotting reports are not serialized. Save/load does not restore a working deployed QRF or its collateral ledger; that remains a separate lifecycle milestone. Missing entities without confirmed destruction are not retrospectively charged. The native save path must be tested through a save-enabled mission, since the bare Chicken world reports saving disabled.
 
-`tools/Test-QRFStrategy.js` runs source-adapted policy/account/queue/selection bodies with mocked native services. It covers war thresholds, bounded selection, collateral, payment idempotency, loss/retirement, external-spend debt, queue priority/expiry, role gates, airborne downgrade, returned-package completion and spotting packet rules. Run with Node where installed; the same test body was evaluated in the tool V8 host here. Workbench's optional scheduler smoke-test switch also runs the new pure strategic checks without bank mutations or spawning.
+`tools/Test-QRFStrategy.js` runs source-adapted policy/account/queue/selection bodies with mocked native services. It covers war thresholds, aggression levels, bounded selection, collateral, payment idempotency, loss/retirement, external-spend debt, queue priority/expiry, role gates, airborne downgrade, returned-package completion and spotting packet rules. Run with Node where installed; the same test body was evaluated in the tool V8 host here. Workbench's optional scheduler smoke-test switch also runs the new pure strategic checks without bank mutations or spawning.
 
-After stopping Play, compile Game scripts and reload Chicken. Test a normal defender attack, let both infantry and vehicles complete their investigation, then inspect `[AROR STRATEGY]`, `[AROR FINANCE]` and `[AROR TACTICAL]`. Verify one overhead payment, a deliberate vehicle loss charged once, a loss-free package's retirement, low-funds downgrade/wait, debt repayment after external spending/income, and a tier-3+ reserve under the live cap. Test full withdrawal/return and save/load separately. Keep Invader admission disabled until an explicit USSR test has appropriate controlled targets and origins.
+After stopping Play, compile Game scripts and reload Chicken. Confirm fighting alone requests no QRF, then clear and capture the site. Inspect `[AROR STRATEGY]`, `[AROR FINANCE]` and `[AROR TACTICAL]`. Verify paid selection, zero-funds tier-1 fallback, one overhead payment, deliberate losses charged once, debt repayment and a tier-3+ reserve under the live cap. Exercise pre-activation route failure and bounded retries without empty spawned hulls. Test full hold/withdrawal/return and save/load separately. For USSR acceptance, provide at least two friendly land installations before capturing one. See [GAMEPLAY_READINESS.md](GAMEPLAY_READINESS.md) for the ordered handoff.

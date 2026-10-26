@@ -20,6 +20,7 @@ function runDefenceLayoutTests(source,presets={}) {
   if(name==='TerrainFits')body=body.replace(/return false;/g,'return {ok:false,relief};').replace('return relief <= maxRelief;','return {ok:relief<=maxRelief,relief};');
   if(name==='SiteSearchOffset')body=body.replace('(candidate - 1) / 8','Math.Floor((candidate - 1) / 8)');
   if(name==='DenseSiteSearchOffset')body=body.replace('remaining / (ring * 2)','Math.Floor(remaining / (ring * 2))');
+  if(name==='RepairOffset')body=body.replace('(attempt - 1) / 8','Math.Floor((attempt - 1) / 8)');
   return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
  }
  const half=compile('HalfExtent'),point=compile('LocalPosition'),facing=compile('Facing'),repair=compile('RepairOffset'),terrain=compile('TerrainFits'),arc=compile('ClearMGArc');
@@ -53,7 +54,8 @@ function runDefenceLayoutTests(source,presets={}) {
  const a=point(0,0,18),b=point(0,1,18);check(Math.abs(a[0]+b[0])<1e-8&&Math.abs(a[2]+b[2])<1e-8,'first two outpost teams occupy opposed sectors');
  check([0,1,2,3].map(i=>facing(1,i)).join(',')==='0,270,90,180','MGs face outward on all four sides');
  check(facing(3,0)===180&&facing(2,0)===180,'hulls face south entrance');
- for(let i=0;i<9;i++){const offset=repair(i);check(Math.hypot(offset[0],offset[2])<=1.500001,'repair remains within 1.5m rather than scattering');}
+ for(let i=0;i<25;i++){const offset=repair(i),radius=Math.hypot(offset[0],offset[2]);check(radius<=4.500001,'local repair remains inside a bounded 4.5m area');
+  const expected=i===0?0:Math.min(3,Math.floor((i-1)/8)+1)*1.5;check(Math.abs(radius-expected)<1e-6,'repair tries complete 1.5m, 3m and 4.5m rings');}
  let samples=0,water=false,slope=0,oneHill=false;
  const world={GetSurfaceY:(x,z)=>{samples++;return 10+slope*x+(oneHill&&x>10&&z>10?3:0);},GetOceanHeight:()=>water?10:0};
  check(terrain(world,[0,10,0],18,2,0,0).ok&&samples===49,'complete flat footprint sampled');

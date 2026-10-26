@@ -2,7 +2,7 @@
 
 The [USSR/Invader framework](INVADER_QRF_FRAMEWORK.md) is staged with levels 1-5 and operation admission disabled; the current US/Occupier test remains selected.
 
-This guide describes the fixed `combined_arms_l1` regression fixture. **Normal Chicken now enables strategic economy at starting war level 2**, which can select one truck plus two IFVs or the lighter truck/IFV tier. See [QRF strategy and prices](QRF_STRATEGY_ECONOMY.md).
+This guide describes the fixed `combined_arms_l1` regression fixture. **Normal Chicken now starts at war level 1 with independent aggression**, so ordinary capture responses use trucks/light escorts until equipment unlocks permit APCs. Disable strategic economy explicitly to run this fixed truck/APC fixture; see [QRF strategy and prices](QRF_STRATEGY_ECONOMY.md).
 
 For this exact two-vehicle test, set `m_bQRFStrategicEconomy = 0` on the operation manager and retain `m_sGroundQRFRecipeId = "combined_arms_l1"` on the executor. The helicopter override remains disabled. This authored tier 1 has **two elements**, not two copies of a profile and not a level-2 response. Re-enable strategic economy afterward to test payments and war-level selection.
 

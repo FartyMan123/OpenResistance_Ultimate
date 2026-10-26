@@ -12,4 +12,7 @@ class AROR_GarrisonGroup
 	bool m_bMountedDefence;
 	int m_iNextSeatAttempt;
 	int m_iSeatAttempts;
+	int m_iNextFootOrder;
+	int m_iPatrolLeg;
+	int m_iContactSequence;
 }

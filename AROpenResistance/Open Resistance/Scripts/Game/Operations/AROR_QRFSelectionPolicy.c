@@ -2,6 +2,7 @@
 class AROR_QRFSelectionContext
 {
 	int m_iDesiredTier = 1;
+	int m_iWarLevel = 1;
 	int m_iMinimumTier = 1;
 	int m_iLocationTierCeiling = 5;
 	bool m_bAllowDowngrade = true;
@@ -28,8 +29,10 @@ class AROR_QRFSelectionPolicy
 		decision.m_sReason = "Missing selection context or readiness; no resources assumed";
 		if (!context || !readiness || !recipes || !profiles)
 			return decision;
-		decision.m_sReason = "Invalid desired tier, location ceiling or arrival deadline";
+		decision.m_sReason = "Invalid war level, desired tier, location ceiling or arrival deadline";
 		if (context.m_iDesiredTier < 1 || context.m_iDesiredTier > 5)
+			return decision;
+		if (context.m_iWarLevel < 1 || context.m_iWarLevel > 5)
 			return decision;
 		if (context.m_iMinimumTier < 1 || context.m_iLocationTierCeiling > 5)
 			return decision;
@@ -54,7 +57,7 @@ class AROR_QRFSelectionPolicy
 			if (decision.m_Recipe && recipe.m_iLevel <= decision.m_Recipe.m_iLevel)
 				continue;
 			array<AROR_ForceProfile> elements = {};
-			if (!recipe.Resolve(profiles, role, factionKey, elements))
+			if (!recipe.Resolve(profiles, role, factionKey, elements, context.m_iWarLevel))
 				continue;
 			int groups = 0;
 			int members = 0;
