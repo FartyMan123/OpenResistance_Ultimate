@@ -45,8 +45,22 @@ class AROR_ResistanceArsenalComponent : ScriptComponent
 			return;
 		}
 
+		// Vanilla FactionInit disables arsenals when ArsenalManager is missing or the type flag is off.
+		// Re-enable after that CallLater(FactionInit) has run.
+		GetGame().GetCallqueue().CallLater(EnsureArsenalEnabled, 100);
+
 		// Storage may init after world props; retry briefly
 		TryBindStorage();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void EnsureArsenalEnabled()
+	{
+		if (!m_Arsenal)
+			return;
+
+		if (!m_Arsenal.IsArsenalEnabled())
+			m_Arsenal.SetArsenalEnabled(true, true);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -89,6 +103,7 @@ class AROR_ResistanceArsenalComponent : ScriptComponent
 	override void OnDelete(IEntity owner)
 	{
 		GetGame().GetCallqueue().Remove(TryBindStorage);
+		GetGame().GetCallqueue().Remove(EnsureArsenalEnabled);
 
 		if (m_bListening)
 		{
