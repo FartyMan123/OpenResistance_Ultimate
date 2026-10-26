@@ -468,6 +468,10 @@ class AROR_HiCommMap
 	//! Grid spacings (m), finest first; the finest one at least MIN_GRID_PIXELS apart is used
 	protected static const float MIN_GRID_PIXELS = 55;
 
+	//! Renderer limits: points per line command (2400 vertices max), smallest polygon drawn (twice the area, px²)
+	protected static const int MAX_LINE_POINTS = 300;
+	protected static const float MIN_POLYGON_AREA = 1;
+
 	// Phosphor palette (packed sRGB). Dark tones are picked to stay distinct after conversion to the engine's
 	// linear 8-bit canvas colours: deep sea darkest, land lighter with height.
 	static const int SEA_DEEP = 0x020D0B;
@@ -1009,17 +1013,17 @@ class AROR_HiCommMap
 		if (maxX < 0 || maxY < 0 || minX > m_fWidth || minY > m_fHeight)
 			return;
 
-		if (minX >= 0 && minY >= 0 && maxX <= m_fWidth && maxY <= m_fHeight)
+		array<float> clipped = vertices;
+		if (minX < 0 || minY < 0 || maxX > m_fWidth || maxY > m_fHeight)
 		{
-			target.Insert(Polygon(vertices, color));
-			return;
+			clipped = ClipEdge(vertices, 0, 0, false);
+			clipped = ClipEdge(clipped, 0, m_fWidth, true);
+			clipped = ClipEdge(clipped, 1, 0, false);
+			clipped = ClipEdge(clipped, 1, m_fHeight, true);
 		}
 
-		array<float> clipped = ClipEdge(vertices, 0, 0, false);
-		clipped = ClipEdge(clipped, 0, m_fWidth, true);
-		clipped = ClipEdge(clipped, 1, 0, false);
-		clipped = ClipEdge(clipped, 1, m_fHeight, true);
-		if (clipped.Count() >= 6)
+		// Skip slivers (e.g. a coastal cell barely touching land): invisible, and they fail triangulation
+		if (clipped.Count() >= 6 && Math.AbsFloat(DoubleArea(clipped)) > MIN_POLYGON_AREA)
 			target.Insert(Polygon(clipped, color));
 	}
 
@@ -1168,16 +1172,44 @@ class AROR_HiCommMap
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! The renderer limits one line to 2400 vertices (about 400 points), so long runs go out in overlapping chunks
 	protected static void FlushRun(array<ref CanvasWidgetCommand> target, array<float> run, Color color, float width)
 	{
-		if (run.Count() >= 4)
+		int count = run.Count() / 2;
+		int start = 0;
+		while (count - start >= 2)
 		{
+			int end = Math.Min(start + MAX_LINE_POINTS, count);
 			array<float> points = {};
-			points.Copy(run);
+			for (int i = start; i < end; i++)
+			{
+				points.Insert(run[i * 2]);
+				points.Insert(run[i * 2 + 1]);
+			}
+
 			target.Insert(Line(points, color, width, false));
+			if (end >= count)
+				break;
+
+			start = end - 1;
 		}
 
 		run.Clear();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Twice the signed area; near zero means a sliver the renderer cannot triangulate
+	protected static float DoubleArea(array<float> vertices)
+	{
+		float area;
+		int count = vertices.Count() / 2;
+		for (int i = 0; i < count; i++)
+		{
+			int next = Math.Mod(i + 1, count);
+			area += vertices[i * 2] * vertices[next * 2 + 1] - vertices[next * 2] * vertices[i * 2 + 1];
+		}
+
+		return area;
 	}
 
 	//------------------------------------------------------------------------------------------------
