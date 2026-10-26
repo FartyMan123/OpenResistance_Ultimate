@@ -1249,7 +1249,7 @@ modded class AROR_OperationExecutorComponent
 	override void OnPostInit(IEntity owner)
 	{
 		super.OnPostInit(owner);
-		if (GetGame().InPlayMode() && Replication.IsServer() && m_bEnabled && m_bReaperQRFTest)
+		if (GetGame().InPlayMode() && Replication.IsServer() && m_bExecuteOperations && m_bReaperQRFTest)
 			Print("[AROR REAPER] Experimental airborne QRF override ENABLED: response level controls complete transport/fireteam/gunship packages; disable Reaper QRF Test on the executor to restore ground responses", LogLevel.WARNING);
 	}
 
