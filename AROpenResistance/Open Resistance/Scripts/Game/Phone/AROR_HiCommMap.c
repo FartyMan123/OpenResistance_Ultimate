@@ -4,8 +4,10 @@
 //! coastline, then one elevation contour level per step.
 class AROR_HiCommTerrain
 {
-	//! Samples per side; 160 gives 80 m cells on Everon
-	static const int RESOLUTION = 160;
+	//! Samples per side for the two levels of detail: 160 gives 80 m cells on Everon (zoomed in), 80 gives
+	//! 160 m cells for the zoomed-out view, where a fine cell would be only a few pixels wide
+	static const int FINE_RESOLUTION = 160;
+	static const int COARSE_RESOLUTION = 80;
 
 	//! Contour levels (m) built after the coastline; every second one is a major contour
 	protected static const int CONTOUR_START = 50;
@@ -15,8 +17,12 @@ class AROR_HiCommTerrain
 	static const int LINE_COAST = 0;
 	static const int LINE_CONTOUR = 1;
 	static const int LINE_CONTOUR_MAJOR = 2;
+	static const int LINE_ROAD = 3;
 
-	protected static ref AROR_HiCommTerrain s_Instance;
+	protected static ref AROR_HiCommTerrain s_Fine;
+	protected static ref AROR_HiCommTerrain s_Coarse;
+
+	protected int m_iResolution;
 
 	protected vector m_vMin;
 	protected vector m_vMax;
@@ -25,15 +31,16 @@ class AROR_HiCommTerrain
 	protected ref array<float> m_aHeights = {};
 	protected int m_iStep;
 
-	//! Elevation bands for land shading (m per band) and water/coast band codes
-	static const int LAND_BANDS = 8;
-	protected static const float LAND_BAND_HEIGHT = 40;
-	static const int SEA_SHALLOW = -1;
-	static const int SEA_MID = -2;
-	static const int SEA_DEEP = -3;
-	static const int SHORE = -4;
+	//! Shading layers, drawn bottom to top over the deep-sea background: shallow water, land, then high ground
+	static const int FILL_SHALLOW = 0;
+	static const int FILL_LAND = 1;
+	static const int FILL_HIGH = 2;		//!< Above HIGH_LEVEL
+	static const int FILL_HIGHER = 3;	//!< Above HIGHER_LEVEL
+	protected static const float SHALLOW_LEVEL = -8;
+	protected static const int HIGH_LEVEL = 100;
+	protected static const int HIGHER_LEVEL = 200;
 
-	//! Shaded terrain: convex polygons as flat world x,z pairs, their band (see CellBand) and bounds (minX, minZ, maxX, maxZ)
+	//! Shaded terrain: convex polygons as flat world x,z pairs, their layer (FILL_*) and bounds (minX, minZ, maxX, maxZ)
 	ref array<ref array<float>> m_aLand = {};
 	ref array<int> m_aLandBands = {};
 	ref array<float> m_aLandBounds = {};
@@ -44,25 +51,53 @@ class AROR_HiCommTerrain
 	ref array<float> m_aLineBounds = {};
 
 	//------------------------------------------------------------------------------------------------
-	//! Cached; starts again only if the bounds change (another world)
-	static AROR_HiCommTerrain Get(vector min, vector max)
+	//! Cached per level of detail; starts again only if the bounds change (another world)
+	static AROR_HiCommTerrain Get(vector min, vector max, bool fine)
 	{
-		if (!s_Instance || s_Instance.m_vMin != min || s_Instance.m_vMax != max)
-		{
-			s_Instance = new AROR_HiCommTerrain();
-			s_Instance.m_vMin = min;
-			s_Instance.m_vMax = max;
-			s_Instance.m_fCellX = (max[0] - min[0]) / RESOLUTION;
-			s_Instance.m_fCellZ = (max[2] - min[2]) / RESOLUTION;
-		}
+		AROR_HiCommTerrain terrain = s_Coarse;
+		if (fine)
+			terrain = s_Fine;
 
-		return s_Instance;
+		if (terrain && terrain.m_vMin == min && terrain.m_vMax == max)
+			return terrain;
+
+		int resolution = COARSE_RESOLUTION;
+		if (fine)
+			resolution = FINE_RESOLUTION;
+
+		terrain = new AROR_HiCommTerrain();
+		terrain.m_iResolution = resolution;
+		terrain.m_vMin = min;
+		terrain.m_vMax = max;
+		terrain.m_fCellX = (max[0] - min[0]) / resolution;
+		terrain.m_fCellZ = (max[2] - min[2]) / resolution;
+		if (fine)
+			s_Fine = terrain;
+		else
+			s_Coarse = terrain;
+
+		return terrain;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Cell size (m) along x
+	float GetCellSize()
+	{
+		return m_fCellX;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! The land and coastline (first build step) are ready
+	bool HasLand()
+	{
+		return m_iStep > 0;
 	}
 
 	//------------------------------------------------------------------------------------------------
 	bool IsComplete()
 	{
-		return m_iStep > CONTOUR_COUNT;
+		// Step 0: land and coast; then one contour level per step; then the roads
+		return m_iStep > CONTOUR_COUNT + 1;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -75,8 +110,13 @@ class AROR_HiCommTerrain
 		if (m_iStep == 0)
 		{
 			SampleHeights();
-			BuildLand();
+			BuildFill(SHALLOW_LEVEL, FILL_SHALLOW);
+			BuildFill(0, FILL_LAND);
 			BuildContour(0, LINE_COAST);
+		}
+		else if (m_iStep > CONTOUR_COUNT)
+		{
+			BuildRoads();
 		}
 		else
 		{
@@ -86,6 +126,12 @@ class AROR_HiCommTerrain
 				kind = LINE_CONTOUR_MAJOR;
 
 			BuildContour(level, kind);
+
+			// High ground layers are built in ascending order, so they draw over the land below them
+			if (level == HIGH_LEVEL)
+				BuildFill(HIGH_LEVEL, FILL_HIGH);
+			else if (level == HIGHER_LEVEL)
+				BuildFill(HIGHER_LEVEL, FILL_HIGHER);
 		}
 
 		m_iStep++;
@@ -93,13 +139,56 @@ class AROR_HiCommTerrain
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Every road of the terrain's road network (the same network AI vehicles drive on), as polylines
+	protected void BuildRoads()
+	{
+		ChimeraAIWorld aiWorld = ChimeraAIWorld.Cast(GetGame().GetAIWorld());
+		if (!aiWorld)
+			return;
+
+		RoadNetworkManager network = aiWorld.GetRoadNetworkManager();
+		if (!network)
+			return;
+
+		array<BaseRoad> roads = {};
+		network.GetRoadsInAABB(Vector(m_vMin[0], -1000, m_vMin[2]), Vector(m_vMax[0], 5000, m_vMax[2]), roads);
+		foreach (BaseRoad road : roads)
+		{
+			if (!road)
+				continue;
+
+			array<vector> points = {};
+			road.GetPoints(points);
+			if (points.Count() < 2)
+				continue;
+
+			array<float> line = {};
+			float spacing = m_fCellX * 0.5;
+			foreach (int index, vector point : points)
+			{
+				int last = line.Count() - 2;
+				bool isLast = index == points.Count() - 1;
+				if (last >= 0 && !isLast && Math.AbsFloat(point[0] - line[last]) + Math.AbsFloat(point[2] - line[last + 1]) < spacing)
+					continue;
+
+				line.Insert(point[0]);
+				line.Insert(point[2]);
+			}
+
+			m_aLines.Insert(line);
+			m_aLineKinds.Insert(LINE_ROAD);
+			AppendBounds(line, m_aLineBounds);
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------
 	protected void SampleHeights()
 	{
 		m_aHeights.Clear();
 		BaseWorld world = GetGame().GetWorld();
-		for (int row = 0; row <= RESOLUTION; row++)
+		for (int row = 0; row <= m_iResolution; row++)
 		{
-			for (int column = 0; column <= RESOLUTION; column++)
+			for (int column = 0; column <= m_iResolution; column++)
 			{
 				float height = -1;
 				if (world)
@@ -113,67 +202,40 @@ class AROR_HiCommTerrain
 	//------------------------------------------------------------------------------------------------
 	protected float Height(int column, int row)
 	{
-		return m_aHeights[row * (RESOLUTION + 1) + column];
+		return m_aHeights[row * (m_iResolution + 1) + column];
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Shading band of a whole cell: land 1-LAND_BANDS by elevation, water SEA_SHALLOW/SEA_MID by depth,
-	//! SEA_DEEP (not drawn, the background) or SHORE for cells the coastline crosses
-	protected int CellBand(int column, int row)
+	//! Smooth fill of everything above a level, drawn in layers (shallow water, land, high ground): cells fully
+	//! above merge into one rectangle per row run; cells the level crosses get their exact (convex) part, cut along
+	//! the interpolated contour, so fills follow the contour lines instead of stepping cell by cell
+	protected void BuildFill(float level, int band)
 	{
-		int caseIndex = CellCase(column, row, 0);
-		if (caseIndex != 0 && caseIndex != 15)
-			return SHORE;
-
-		float average = (Height(column, row) + Height(column + 1, row) + Height(column + 1, row + 1) + Height(column, row + 1)) * 0.25;
-		if (caseIndex == 15)
-		{
-			int elevationBand = Math.Floor(average / LAND_BAND_HEIGHT);
-			return 1 + Math.ClampInt(elevationBand, 0, LAND_BANDS - 1);
-		}
-
-		if (average > -6)
-			return SEA_SHALLOW;
-
-		if (average > -25)
-			return SEA_MID;
-
-		return SEA_DEEP;
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! Cells of one band merge into a rectangle per row run; coastal cells get shallow water plus their exact
-	//! (convex) land part, so the fill matches the interpolated coastline
-	protected void BuildLand()
-	{
-		for (int row = 0; row < RESOLUTION; row++)
+		for (int row = 0; row < m_iResolution; row++)
 		{
 			int runStart = -1;
-			int runBand = SEA_DEEP;
-			for (int column = 0; column <= RESOLUTION; column++)
+			for (int column = 0; column <= m_iResolution; column++)
 			{
-				int band = SEA_DEEP;
-				if (column < RESOLUTION)
-					band = CellBand(column, row);
+				int caseIndex = 0;
+				if (column < m_iResolution)
+					caseIndex = CellCase(column, row, level);
 
-				if (runStart >= 0 && band != runBand)
+				if (caseIndex == 15)
 				{
-					AddRun(runStart, column, row, runBand);
-					runStart = -1;
-				}
+					if (runStart < 0)
+						runStart = column;
 
-				if (band == SHORE)
-				{
-					AddRun(column, column + 1, row, SEA_SHALLOW);
-					AddLand(CoastalCellPolygon(column, row), 1);
 					continue;
 				}
 
-				if (runStart < 0 && band != SEA_DEEP)
+				if (runStart >= 0)
 				{
-					runStart = column;
-					runBand = band;
+					AddRun(runStart, column, row, band);
+					runStart = -1;
 				}
+
+				if (caseIndex != 0)
+					AddLand(LevelCellPolygon(column, row, level), band);
 			}
 		}
 	}
@@ -189,8 +251,8 @@ class AROR_HiCommTerrain
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Corners bl, br, tr, tl in order: land corners plus the shoreline crossing on every edge that changes
-	protected array<float> CoastalCellPolygon(int column, int row)
+	//! Corners bl, br, tr, tl in order: corners above the level plus the crossing on every edge that changes
+	protected array<float> LevelCellPolygon(int column, int row, float level)
 	{
 		array<int> columns = {column, column + 1, column + 1, column};
 		array<int> rows = {row, row, row + 1, row + 1};
@@ -198,8 +260,8 @@ class AROR_HiCommTerrain
 		for (int corner = 0; corner < 4; corner++)
 		{
 			int next = Math.Mod(corner + 1, 4);
-			float height = Height(columns[corner], rows[corner]);
-			float nextHeight = Height(columns[next], rows[next]);
+			float height = Height(columns[corner], rows[corner]) - level;
+			float nextHeight = Height(columns[next], rows[next]) - level;
 			if (height > 0)
 			{
 				polygon.Insert(m_vMin[0] + columns[corner] * m_fCellX);
@@ -250,13 +312,13 @@ class AROR_HiCommTerrain
 	//------------------------------------------------------------------------------------------------
 	protected int HorizontalEdge(int column, int row)
 	{
-		return (row * (RESOLUTION + 1) + column) * 2;
+		return (row * (m_iResolution + 1) + column) * 2;
 	}
 
 	//------------------------------------------------------------------------------------------------
 	protected int VerticalEdge(int column, int row)
 	{
-		return (row * (RESOLUTION + 1) + column) * 2 + 1;
+		return (row * (m_iResolution + 1) + column) * 2 + 1;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -264,8 +326,8 @@ class AROR_HiCommTerrain
 	protected void EdgePoint(int edge, float level, out float x, out float z)
 	{
 		int point = edge / 2;
-		int column = Math.Mod(point, RESOLUTION + 1);
-		int row = point / (RESOLUTION + 1);
+		int column = Math.Mod(point, m_iResolution + 1);
+		int row = point / (m_iResolution + 1);
 		int otherColumn = column;
 		int otherRow = row;
 		if (Math.Mod(edge, 2) == 0)
@@ -289,9 +351,9 @@ class AROR_HiCommTerrain
 	{
 		array<int> segmentA = {};
 		array<int> segmentB = {};
-		for (int row = 0; row < RESOLUTION; row++)
+		for (int row = 0; row < m_iResolution; row++)
 		{
-			for (int column = 0; column < RESOLUTION; column++)
+			for (int column = 0; column < m_iResolution; column++)
 			{
 				int caseIndex = CellCase(column, row, level);
 				if (caseIndex == 0 || caseIndex == 15)
@@ -455,52 +517,81 @@ class AROR_HiCommTerrain
 }
 
 //! HICOMM's zoomable strategic map, drawn on two CanvasWidgets in screen pixels (north up):
-//! - base: sea, land, contours, adaptive grid, coastline glow and scanlines; rebuilt only when the view changes
-//! - overlay: everything that moves (radar sweep, locations, squads, orders, selection); rebuilt every frame
+//! - base: sea, land, contours, roads, grid, coastline and scanlines. It is drawn for a margin around the view
+//!   and sits in a clipping frame, so panning only slides it; it is redrawn when the zoom changes, when panning
+//!   nears the margin, or when the view settles. Zoomed out it uses the coarse terrain (fewer shapes).
+//! - overlay: everything that moves (locations, squads, orders, selection); rebuilt every frame
+//! Zoom is smooth: zoom requests set a target that the view eases towards each frame.
 class AROR_HiCommMap
 {
 	static const float MIN_ZOOM = 1;
 	static const float MAX_ZOOM = 12;
 
-	//! The base layer is rebuilt at most this often while panning/zooming (ms)
-	protected static const int STATIC_REBUILD_MS = 40;
+	//! Base layer: extra drawn area on each side (fraction of the view), fastest redraw while zooming (ms),
+	//! and how long the view must be still before a recentring redraw (ms)
+	protected static const float BASE_MARGIN = 0.35;
+	protected static const int BASE_REBUILD_MS = 30;
+	protected static const int BASE_SETTLE_MS = 250;
+
+	//! How quickly the zoom eases towards its target (per second)
+	protected static const float ZOOM_SMOOTHING = 12;
+
+	//! The fine terrain is used once its cells are at least this many pixels wide
+	protected static const float FINE_CELL_PIXELS = 6;
 
 	//! Grid spacings (m), finest first; the finest one at least MIN_GRID_PIXELS apart is used
 	protected static const float MIN_GRID_PIXELS = 55;
 
 	//! Renderer limits: points per line command (2400 vertices max), smallest polygon drawn (twice the area, px²)
 	protected static const int MAX_LINE_POINTS = 300;
-	protected static const float MIN_POLYGON_AREA = 1;
+	protected static const float MIN_POLYGON_AREA = 2;
 
 	// Phosphor palette (packed sRGB). Dark tones are picked to stay distinct after conversion to the engine's
 	// linear 8-bit canvas colours: deep sea darkest, land lighter with height.
 	static const int SEA_DEEP = 0x020D0B;
-	static const int SEA_MID = 0x06160F;
 	static const int SEA_SHALLOW = 0x0D1C16;
 	static const int COAST = 0x7CE6A8;
 	static const int CONTOUR = 0x3C7E58;
 	static const int GRID = 0x2A6446;
+	static const int ROAD = 0xC8A866;
 
 	//------------------------------------------------------------------------------------------------
 	//! Land shade per elevation band (0 = lowest)
-	protected static int LandShade(int band)
+	protected static int FillShade(int layer)
 	{
-		array<int> shades = {0x0D2216, 0x0D2618, 0x162A1C, 0x162E1C, 0x1C3222, 0x1C3726, 0x223C2A, 0x26422E};
-		return shades[Math.ClampInt(band, 0, shades.Count() - 1)];
+		if (layer == AROR_HiCommTerrain.FILL_SHALLOW)
+			return SEA_SHALLOW;
+
+		array<int> shades = {0x0D2216, 0x162A1C, 0x1C3222};
+		return shades[Math.ClampInt(layer - AROR_HiCommTerrain.FILL_LAND, 0, shades.Count() - 1)];
 	}
 
 	protected CanvasWidget m_wBase;
 	protected CanvasWidget m_wOverlay;
 	protected vector m_vMin;
 	protected vector m_vMax;
-	protected float m_fWidth;
+	protected float m_fWidth;	//!< View size (pixels)
 	protected float m_fHeight;
 	protected float m_fZoom = 1;
+	protected float m_fTargetZoom = 1;
+	protected vector m_vZoomAnchor;	//!< Screen point the zoom keeps still
 	protected vector m_vCentre;
 	protected bool m_bHasView;
 
+	// What the base layer was last drawn for
 	protected bool m_bStaticDirty = true;
+	protected bool m_bHasBase;
+	protected bool m_bBaseFine;
+	protected vector m_vBaseCentre;
+	protected float m_fBaseZoom;
+	protected float m_fBaseWidth;
+	protected float m_fBaseHeight;
 	protected int m_iLastStaticBuild;
+	protected int m_iLastViewChange;
+
+	//! Clipping rectangle for the commands being built (base canvas or view)
+	protected float m_fClipWidth;
+	protected float m_fClipHeight;
 
 	protected ref array<ref CanvasWidgetCommand> m_aBase = {};
 	protected ref array<ref CanvasWidgetCommand> m_aOverlay = {};
@@ -513,7 +604,7 @@ class AROR_HiCommMap
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Sets the map area and the canvas size (pixels); keeps the current view if nothing changed
+	//! Sets the map area and the view size (pixels); keeps the current view if nothing changed
 	void SetView(vector min, vector max, float width, float height)
 	{
 		if (!m_bHasView || min != m_vMin || max != m_vMax)
@@ -521,7 +612,10 @@ class AROR_HiCommMap
 			m_vMin = min;
 			m_vMax = max;
 			m_bHasView = true;
-			Fit();
+			m_fZoom = MIN_ZOOM;
+			m_fTargetZoom = MIN_ZOOM;
+			m_vCentre = Vector((m_vMin[0] + m_vMax[0]) * 0.5, 0, (m_vMin[2] + m_vMax[2]) * 0.5);
+			m_bStaticDirty = true;
 		}
 
 		if (Math.AbsFloat(width - m_fWidth) > 0.5 || Math.AbsFloat(height - m_fHeight) > 0.5)
@@ -539,6 +633,12 @@ class AROR_HiCommMap
 	}
 
 	//------------------------------------------------------------------------------------------------
+	float GetTargetZoom()
+	{
+		return m_fTargetZoom;
+	}
+
+	//------------------------------------------------------------------------------------------------
 	float GetWidth()
 	{
 		return m_fWidth;
@@ -551,11 +651,17 @@ class AROR_HiCommMap
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! At zoom 1 the whole map area fits the shorter side of the canvas
+	//! At zoom 1 the whole map area fits the shorter side of the view
 	float PixelsPerMetre()
 	{
+		return PixelsPerMetreAt(m_fZoom);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected float PixelsPerMetreAt(float zoom)
+	{
 		float span = Math.Max(Math.Max(m_vMax[0] - m_vMin[0], m_vMax[2] - m_vMin[2]), 1);
-		return m_fZoom * Math.Min(m_fWidth, m_fHeight) / span;
+		return zoom * Math.Min(m_fWidth, m_fHeight) / span;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -573,26 +679,57 @@ class AROR_HiCommMap
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Zooms by factor, keeping the world point under (x, y) where it is
+	//! Smooth zoom by factor, keeping the world point under (x, y) where it is
 	void ZoomAt(float factor, float x, float y)
 	{
-		vector before = ScreenToWorld(x, y);
-		m_fZoom = Math.Clamp(m_fZoom * factor, MIN_ZOOM, MAX_ZOOM);
-		vector after = ScreenToWorld(x, y);
-		m_vCentre = m_vCentre + before - after;
-		ClampCentre();
-		m_bStaticDirty = true;
+		SetTargetZoom(m_fTargetZoom * factor, x, y);
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Moves the view by screen pixels (drag direction: the map follows the cursor)
+	//! Smooth zoom to an absolute level (the slider), around (x, y)
+	void SetTargetZoom(float zoom, float x, float y)
+	{
+		m_fTargetZoom = Math.Clamp(zoom, MIN_ZOOM, MAX_ZOOM);
+		m_vZoomAnchor = Vector(x, y, 0);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Eases the zoom towards its target; call once per frame
+	void Animate(float deltaTime)
+	{
+		if (Math.AbsFloat(m_fTargetZoom - m_fZoom) < m_fZoom * 0.001)
+		{
+			if (m_fZoom != m_fTargetZoom)
+				ApplyZoom(m_fTargetZoom / m_fZoom);
+
+			return;
+		}
+
+		// Exponential easing in log space: the same feel at every zoom level
+		float step = Math.Clamp(deltaTime * ZOOM_SMOOTHING, 0, 1);
+		ApplyZoom(Math.Pow(m_fTargetZoom / m_fZoom, step));
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void ApplyZoom(float factor)
+	{
+		vector before = ScreenToWorld(m_vZoomAnchor[0], m_vZoomAnchor[1]);
+		m_fZoom = Math.Clamp(m_fZoom * factor, MIN_ZOOM, MAX_ZOOM);
+		vector after = ScreenToWorld(m_vZoomAnchor[0], m_vZoomAnchor[1]);
+		m_vCentre = m_vCentre + before - after;
+		ClampCentre();
+		m_iLastViewChange = System.GetTickCount();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Moves the view by screen pixels (drag direction: the map follows the cursor). The base layer just slides.
 	void Pan(float dx, float dy)
 	{
 		float scale = PixelsPerMetre();
 		m_vCentre[0] = m_vCentre[0] - dx / scale;
 		m_vCentre[2] = m_vCentre[2] + dy / scale;
 		ClampCentre();
-		m_bStaticDirty = true;
+		m_iLastViewChange = System.GetTickCount();
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -600,15 +737,16 @@ class AROR_HiCommMap
 	{
 		m_vCentre = Vector(position[0], 0, position[2]);
 		ClampCentre();
-		m_bStaticDirty = true;
+		m_iLastViewChange = System.GetTickCount();
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Whole map, zooming out smoothly around the centre
 	void Fit()
 	{
-		m_fZoom = MIN_ZOOM;
 		m_vCentre = Vector((m_vMin[0] + m_vMax[0]) * 0.5, 0, (m_vMin[2] + m_vMax[2]) * 0.5);
-		m_bStaticDirty = true;
+		SetTargetZoom(MIN_ZOOM, m_fWidth * 0.5, m_fHeight * 0.5);
+		m_iLastViewChange = System.GetTickCount();
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -622,8 +760,13 @@ class AROR_HiCommMap
 	//! Grid line spacing (m) for the current zoom
 	float GetGridSpacing()
 	{
+		return GridSpacingFor(PixelsPerMetre());
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static float GridSpacingFor(float scale)
+	{
 		array<float> spacings = {50, 100, 200, 500, 1000, 2000};
-		float scale = PixelsPerMetre();
 		foreach (float spacing : spacings)
 		{
 			if (spacing * scale >= MIN_GRID_PIXELS)
@@ -646,63 +789,123 @@ class AROR_HiCommMap
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Rebuilds the base layer if the view changed (rate-limited) or more terrain finished building
+	//! Where the base canvas goes relative to the view's top-left (pixels), and its size. Canvas content does not
+	//! scale with the widget, so the size stays as drawn; while zooming it is redrawn every few frames.
+	void GetBaseRect(out float x, out float y, out float width, out float height)
+	{
+		width = m_fBaseWidth;
+		height = m_fBaseHeight;
+		vector centre = WorldToScreen(m_vBaseCentre);
+		x = centre[0] - width * 0.5;
+		y = centre[1] - height * 0.5;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Builds terrain in the background and redraws the base layer when needed (see class comment)
 	void UpdateBase()
 	{
-		AROR_HiCommTerrain terrain = AROR_HiCommTerrain.Get(m_vMin, m_vMax);
-		if (terrain.BuildStep())
-			m_bStaticDirty = true;
+		AROR_HiCommTerrain coarse = AROR_HiCommTerrain.Get(m_vMin, m_vMax, false);
+		AROR_HiCommTerrain fine = AROR_HiCommTerrain.Get(m_vMin, m_vMax, true);
+
+		// Coarse first so the map appears quickly, then the fine detail in the background
+		bool wantFine = fine.GetCellSize() * PixelsPerMetre() >= FINE_CELL_PIXELS;
+		if (!coarse.IsComplete())
+		{
+			if (coarse.BuildStep() && !(wantFine && fine.HasLand()))
+				m_bStaticDirty = true;
+		}
+		else if (!fine.IsComplete())
+		{
+			if (fine.BuildStep() && wantFine)
+				m_bStaticDirty = true;
+		}
+
+		bool useFine = wantFine && fine.HasLand();
+		AROR_HiCommTerrain terrain = coarse;
+		if (useFine)
+			terrain = fine;
 
 		int now = System.GetTickCount();
-		if (!m_bStaticDirty || now - m_iLastStaticBuild < STATIC_REBUILD_MS)
+		bool rebuild = m_bStaticDirty || !m_bHasBase || useFine != m_bBaseFine;
+
+		// Zoom changed: the base is drawn at a fixed scale, so redraw (rate-limited while zooming)
+		if (!rebuild && Math.AbsFloat(m_fZoom / Math.Max(m_fBaseZoom, 0.001) - 1) > 0.002)
+			rebuild = now - m_iLastStaticBuild >= BASE_REBUILD_MS;
+
+		// Panned towards the edge of the drawn margin, or settled off-centre: recentre
+		if (!rebuild && m_bHasBase)
+		{
+			vector offset = WorldToScreen(m_vBaseCentre) - Vector(m_fWidth * 0.5, m_fHeight * 0.5, 0);
+			float slackX = m_fWidth * BASE_MARGIN * 0.7;
+			float slackY = m_fHeight * BASE_MARGIN * 0.7;
+			if (Math.AbsFloat(offset[0]) > slackX || Math.AbsFloat(offset[1]) > slackY)
+				rebuild = true;
+			else if (now - m_iLastViewChange > BASE_SETTLE_MS && (Math.AbsFloat(offset[0]) > 2 || Math.AbsFloat(offset[1]) > 2))
+				rebuild = true;
+		}
+
+		if (!rebuild)
 			return;
 
 		m_bStaticDirty = false;
 		m_iLastStaticBuild = now;
+		m_bBaseFine = useFine;
 		BuildBase(terrain);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Base canvas pixels for a world position (the base is drawn around m_vBaseCentre at m_fBaseZoom)
+	protected vector BaseToScreen(vector position)
+	{
+		float scale = PixelsPerMetreAt(m_fBaseZoom);
+		return Vector(m_fBaseWidth * 0.5 + (position[0] - m_vBaseCentre[0]) * scale, m_fBaseHeight * 0.5 - (position[2] - m_vBaseCentre[2]) * scale, 0);
 	}
 
 	//------------------------------------------------------------------------------------------------
 	protected void BuildBase(AROR_HiCommTerrain terrain)
 	{
+		m_bHasBase = true;
+		m_vBaseCentre = m_vCentre;
+		m_fBaseZoom = m_fZoom;
+		m_fBaseWidth = m_fWidth * (1 + BASE_MARGIN * 2);
+		m_fBaseHeight = m_fHeight * (1 + BASE_MARGIN * 2);
+		m_fClipWidth = m_fBaseWidth;
+		m_fClipHeight = m_fBaseHeight;
+
 		m_aBase.Clear();
-		m_aBase.Insert(Polygon({0, 0, m_fWidth, 0, m_fWidth, m_fHeight, 0, m_fHeight}, Rgb(SEA_DEEP, 1)));
+		m_aBase.Insert(Polygon({0, 0, m_fBaseWidth, 0, m_fBaseWidth, m_fBaseHeight, 0, m_fBaseHeight}, Rgb(SEA_DEEP, 1)));
 
-		float minX, minZ, maxX, maxZ;
-		GetVisibleBounds(minX, minZ, maxX, maxZ);
+		// World bounds of the drawn area
+		float scale = PixelsPerMetreAt(m_fBaseZoom);
+		float minX = m_vBaseCentre[0] - m_fBaseWidth * 0.5 / scale;
+		float maxX = m_vBaseCentre[0] + m_fBaseWidth * 0.5 / scale;
+		float minZ = m_vBaseCentre[2] - m_fBaseHeight * 0.5 / scale;
+		float maxZ = m_vBaseCentre[2] + m_fBaseHeight * 0.5 / scale;
 
-		// Shaded water and land (elevation bands)
-		array<ref Color> landShades = {};
-		for (int shade = 0; shade < AROR_HiCommTerrain.LAND_BANDS; shade++)
+		// Shaded layers: shallow water, land, high ground (smooth contour-traced fills, built bottom to top)
+		array<ref Color> shades = {};
+		for (int layer = AROR_HiCommTerrain.FILL_SHALLOW; layer <= AROR_HiCommTerrain.FILL_HIGHER; layer++)
 		{
-			landShades.Insert(Rgb(LandShade(shade), 1));
+			shades.Insert(Rgb(FillShade(layer), 1));
 		}
 
-		Color shallow = Rgb(SEA_SHALLOW, 1);
-		Color middle = Rgb(SEA_MID, 1);
 		foreach (int i, array<float> polygon : terrain.m_aLand)
 		{
 			if (Outside(terrain.m_aLandBounds, i, minX, minZ, maxX, maxZ))
 				continue;
 
-			int band = terrain.m_aLandBands[i];
-			Color color = shallow;
-			if (band == AROR_HiCommTerrain.SEA_MID)
-				color = middle;
-			else if (band > 0)
-				color = landShades[Math.ClampInt(band - 1, 0, landShades.Count() - 1)];
-
-			AddPolygon(m_aBase, ToScreen(polygon), color);
+			int layer = Math.ClampInt(terrain.m_aLandBands[i], 0, shades.Count() - 1);
+			AddPolygon(m_aBase, ToScreen(polygon), shades[layer]);
 		}
 
 		// Contours: faint when zoomed out, clearer as you zoom in
-		float contourAlpha = Math.Clamp(0.25 + m_fZoom * 0.08, 0.25, 0.7);
+		float contourAlpha = Math.Clamp(0.25 + m_fBaseZoom * 0.08, 0.25, 0.7);
 		Color minor = Rgb(CONTOUR, contourAlpha * 0.6);
 		Color major = Rgb(CONTOUR, contourAlpha);
 		foreach (int i, array<float> line : terrain.m_aLines)
 		{
 			int kind = terrain.m_aLineKinds[i];
-			if (kind == AROR_HiCommTerrain.LINE_COAST || Outside(terrain.m_aLineBounds, i, minX, minZ, maxX, maxZ))
+			if (kind == AROR_HiCommTerrain.LINE_COAST || kind == AROR_HiCommTerrain.LINE_ROAD || Outside(terrain.m_aLineBounds, i, minX, minZ, maxX, maxZ))
 				continue;
 
 			if (kind == AROR_HiCommTerrain.LINE_CONTOUR_MAJOR)
@@ -711,7 +914,18 @@ class AROR_HiCommMap
 				AddPolyline(m_aBase, ToScreen(line), minor, 1, false);
 		}
 
-		AddGrid(minX, minZ, maxX, maxZ);
+		AddGrid(minX, minZ, maxX, maxZ, scale);
+
+		// Roads: warm tone so routes stand out from the green terrain, wider as you zoom in
+		Color road = Rgb(ROAD, Math.Clamp(0.45 + m_fBaseZoom * 0.05, 0.45, 0.85));
+		float roadWidth = Math.Clamp(1 + m_fBaseZoom * 0.15, 1, 2.5);
+		foreach (int i, array<float> line : terrain.m_aLines)
+		{
+			if (terrain.m_aLineKinds[i] != AROR_HiCommTerrain.LINE_ROAD || Outside(terrain.m_aLineBounds, i, minX, minZ, maxX, maxZ))
+				continue;
+
+			AddPolyline(m_aBase, ToScreen(line), road, roadWidth, false);
+		}
 
 		// Coastline with a phosphor glow
 		Color glow = Rgb(COAST, 0.16);
@@ -728,9 +942,9 @@ class AROR_HiCommMap
 
 		// CRT scanlines
 		Color scanline = Srgb(0, 0, 0, 0.22);
-		for (float y = 0; y < m_fHeight; y += 3)
+		for (float y = 0; y < m_fBaseHeight; y += 3)
 		{
-			m_aBase.Insert(Line({0, y, m_fWidth, y}, scanline, 1, false));
+			m_aBase.Insert(Line({0, y, m_fBaseWidth, y}, scanline, 1, false));
 		}
 
 		m_wBase.SetDrawCommands(m_aBase);
@@ -738,30 +952,30 @@ class AROR_HiCommMap
 
 	//------------------------------------------------------------------------------------------------
 	//! Adaptive grid: finer lines as you zoom in, 1 km lines always brighter
-	protected void AddGrid(float minX, float minZ, float maxX, float maxZ)
+	protected void AddGrid(float minX, float minZ, float maxX, float maxZ, float scale)
 	{
-		float spacing = GetGridSpacing();
+		float spacing = GridSpacingFor(scale);
 		Color minorColor = Rgb(GRID, 0.35);
 		Color majorColor = Rgb(GRID, 0.8);
 
 		for (float x = Math.Ceil(minX / spacing) * spacing; x <= maxX; x += spacing)
 		{
-			float screenX = WorldToScreen(Vector(x, 0, 0))[0];
+			float screenX = BaseToScreen(Vector(x, 0, 0))[0];
 			Color color = minorColor;
 			if (IsMultiple(x, 1000))
 				color = majorColor;
 
-			m_aBase.Insert(Line({screenX, 0, screenX, m_fHeight}, color, 1, false));
+			m_aBase.Insert(Line({screenX, 0, screenX, m_fBaseHeight}, color, 1, false));
 		}
 
 		for (float z = Math.Ceil(minZ / spacing) * spacing; z <= maxZ; z += spacing)
 		{
-			float screenY = WorldToScreen(Vector(0, 0, z))[1];
+			float screenY = BaseToScreen(Vector(0, 0, z))[1];
 			Color color = minorColor;
 			if (IsMultiple(z, 1000))
 				color = majorColor;
 
-			m_aBase.Insert(Line({0, screenY, m_fWidth, screenY}, color, 1, false));
+			m_aBase.Insert(Line({0, screenY, m_fBaseWidth, screenY}, color, 1, false));
 		}
 	}
 
@@ -780,11 +994,12 @@ class AROR_HiCommMap
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! World points -> base canvas pixels
 	protected array<float> ToScreen(array<float> worldPoints)
 	{
-		float scale = PixelsPerMetre();
-		float offsetX = m_fWidth * 0.5 - m_vCentre[0] * scale;
-		float offsetY = m_fHeight * 0.5 + m_vCentre[2] * scale;
+		float scale = PixelsPerMetreAt(m_fBaseZoom);
+		float offsetX = m_fBaseWidth * 0.5 - m_vBaseCentre[0] * scale;
+		float offsetY = m_fBaseHeight * 0.5 + m_vBaseCentre[2] * scale;
 		array<float> screen = {};
 		for (int i = 0; i < worldPoints.Count(); i += 2)
 		{
@@ -801,6 +1016,8 @@ class AROR_HiCommMap
 	void BeginOverlay()
 	{
 		m_aOverlay.Clear();
+		m_fClipWidth = m_fWidth;
+		m_fClipHeight = m_fHeight;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -979,13 +1196,25 @@ class AROR_HiCommMap
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Lookup table, built once: colours are converted hundreds of times per frame
+	protected static ref array<float> s_aLinear;
+
 	protected static float ToLinear(int channel)
 	{
-		float value = Math.Clamp(channel / 255.0, 0, 1);
-		if (value <= 0.04045)
-			return value / 12.92;
+		if (!s_aLinear)
+		{
+			s_aLinear = {};
+			for (int i = 0; i < 256; i++)
+			{
+				float value = i / 255.0;
+				if (value <= 0.04045)
+					s_aLinear.Insert(value / 12.92);
+				else
+					s_aLinear.Insert(Math.Pow((value + 0.055) / 1.055, 2.4));
+			}
+		}
 
-		return Math.Pow((value + 0.055) / 1.055, 2.4);
+		return s_aLinear[Math.ClampInt(channel, 0, 255)];
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -1010,21 +1239,73 @@ class AROR_HiCommMap
 			maxY = Math.Max(maxY, vertices[i + 1]);
 		}
 
-		if (maxX < 0 || maxY < 0 || minX > m_fWidth || minY > m_fHeight)
+		if (maxX < 0 || maxY < 0 || minX > m_fClipWidth || minY > m_fClipHeight)
 			return;
 
-		array<float> clipped = vertices;
-		if (minX < 0 || minY < 0 || maxX > m_fWidth || maxY > m_fHeight)
+		// Smaller than a pixel: invisible, and not worth cleaning
+		if (maxX - minX < 1 && maxY - minY < 1)
+			return;
+
+		bool inside = minX >= 0 && minY >= 0 && maxX <= m_fClipWidth && maxY <= m_fClipHeight;
+
+		// Fast path for the many axis-aligned rectangles (terrain row runs): already clean
+		if (inside && count == 8 && (maxX - minX) * (maxY - minY) * 2 > MIN_POLYGON_AREA && IsAxisAlignedQuad(vertices))
 		{
-			clipped = ClipEdge(vertices, 0, 0, false);
-			clipped = ClipEdge(clipped, 0, m_fWidth, true);
-			clipped = ClipEdge(clipped, 1, 0, false);
-			clipped = ClipEdge(clipped, 1, m_fHeight, true);
+			target.Insert(Polygon(vertices, color));
+			return;
 		}
 
-		// Skip slivers (e.g. a coastal cell barely touching land): invisible, and they fail triangulation
-		if (clipped.Count() >= 6 && Math.AbsFloat(DoubleArea(clipped)) > MIN_POLYGON_AREA)
-			target.Insert(Polygon(clipped, color));
+		array<float> clipped = vertices;
+		if (!inside)
+		{
+			clipped = ClipEdge(vertices, 0, 0, false);
+			clipped = ClipEdge(clipped, 0, m_fClipWidth, true);
+			clipped = ClipEdge(clipped, 1, 0, false);
+			clipped = ClipEdge(clipped, 1, m_fClipHeight, true);
+		}
+
+		// The renderer cannot triangulate repeated or collinear points (left by contour cuts and clipping) or
+		// slivers, so clean the outline and skip anything below a pixel; such shapes are invisible anyway
+		array<float> clean = CleanPolygon(clipped);
+		if (clean.Count() >= 6 && Math.AbsFloat(DoubleArea(clean)) > MIN_POLYGON_AREA)
+			target.Insert(Polygon(clean, color));
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Four points alternating horizontal and vertical edges (a rectangle as built by AddRun)
+	protected static bool IsAxisAlignedQuad(array<float> vertices)
+	{
+		return vertices[1] == vertices[3] && vertices[2] == vertices[4] && vertices[5] == vertices[7] && vertices[6] == vertices[0];
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Drops points that repeat their neighbour or lie on the line between their neighbours
+	protected static array<float> CleanPolygon(array<float> vertices)
+	{
+		array<float> result = {};
+		int count = vertices.Count() / 2;
+		for (int i = 0; i < count; i++)
+		{
+			int previous = Math.Mod(i + count - 1, count);
+			int next = Math.Mod(i + 1, count);
+			float x = vertices[i * 2];
+			float y = vertices[i * 2 + 1];
+			float inX = x - vertices[previous * 2];
+			float inY = y - vertices[previous * 2 + 1];
+			float outX = vertices[next * 2] - x;
+			float outY = vertices[next * 2 + 1] - y;
+			if (inX * inX + inY * inY < 0.0625)
+				continue;
+
+			// Collinear: the turn at this point encloses (almost) no area
+			if (Math.AbsFloat(inX * outY - inY * outX) < 0.01)
+				continue;
+
+			result.Insert(x);
+			result.Insert(y);
+		}
+
+		return result;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -1221,7 +1502,7 @@ class AROR_HiCommMap
 		float dx = x1 - x0;
 		float dy = y1 - y0;
 		array<float> p = {-dx, dx, -dy, dy};
-		array<float> q = {x0, m_fWidth - x0, y0, m_fHeight - y0};
+		array<float> q = {x0, m_fClipWidth - x0, y0, m_fClipHeight - y0};
 		for (int i = 0; i < 4; i++)
 		{
 			if (Math.AbsFloat(p[i]) < 0.00001)
