@@ -18,10 +18,12 @@ typedef func AROR_OnManpowerChanged;
 //! by the player's identity so it survives reconnects and restarts.
 class AROR_EconomyComponent : SCR_BaseGameModeComponent
 {
-	[Attribute("0", desc: "Resistance manpower when a new campaign starts", params: "0 inf", category: "Starting values")]
+	// DEBUG: raised for HICOMM squad testing (squads cost funds and manpower); rebalance later
+	[Attribute("40", desc: "Resistance manpower when a new campaign starts", params: "0 inf", category: "Starting values")]
 	protected int m_iStartingManpower;
 
-	[Attribute("1000", desc: "Resistance funds when a new campaign starts", params: "0 inf", category: "Starting values")]
+	// DEBUG: raised for HICOMM squad testing; rebalance later
+	[Attribute("20000", desc: "Resistance funds when a new campaign starts", params: "0 inf", category: "Starting values")]
 	protected int m_iStartingResistanceFunds;
 
 	[Attribute("10000", desc: "Occupiers funds when a new campaign starts", params: "0 inf", category: "Starting values")]

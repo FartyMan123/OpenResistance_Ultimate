@@ -317,6 +317,81 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
+	// HICOMM: client -> server (validated by AROR_HighCommandComponent)
+	//------------------------------------------------------------------------------------------------
+	void AROR_RequestHiCommRaise(int typeIndex)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_HiCommRaise(typeIndex);
+		else
+			Rpc(AROR_RpcAsk_HiCommRaise, typeIndex);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! locationId for attack/defend, position for move (hold uses the squad's own position)
+	void AROR_RequestHiCommOrder(int squadId, AROR_EHighCommandOrder order, string locationId, vector position)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_HiCommOrder(squadId, order, locationId, position);
+		else
+			Rpc(AROR_RpcAsk_HiCommOrder, squadId, order, locationId, position);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	void AROR_RequestHiCommSetLeader(int targetPlayerId, bool leader)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_HiCommSetLeader(targetPlayerId, leader);
+		else
+			Rpc(AROR_RpcAsk_HiCommSetLeader, targetPlayerId, leader);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	void AROR_RequestHiCommRename(string name)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_HiCommRename(name);
+		else
+			Rpc(AROR_RpcAsk_HiCommRename, name);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_HiCommRaise(int typeIndex)
+	{
+		AROR_HighCommandComponent highCommand = AROR_HighCommandComponent.GetInstance();
+		if (highCommand)
+			highCommand.RequestRaise_S(GetPlayerId(), typeIndex);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_HiCommOrder(int squadId, int order, string locationId, vector position)
+	{
+		AROR_HighCommandComponent highCommand = AROR_HighCommandComponent.GetInstance();
+		if (highCommand)
+			highCommand.RequestOrder_S(GetPlayerId(), squadId, order, locationId, position);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_HiCommSetLeader(int targetPlayerId, bool leader)
+	{
+		AROR_HighCommandComponent highCommand = AROR_HighCommandComponent.GetInstance();
+		if (highCommand)
+			highCommand.RequestSetLeader_S(GetPlayerId(), targetPlayerId, leader);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_HiCommRename(string name)
+	{
+		AROR_HighCommandComponent highCommand = AROR_HighCommandComponent.GetInstance();
+		if (highCommand)
+			highCommand.RequestRename_S(GetPlayerId(), name);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! True if this controller belongs to the local player (e.g. the host or Workbench player)
 	protected bool AROR_IsLocal()
 	{

@@ -230,10 +230,32 @@ Depends on: Game Mode, Factions and Game Flow. Readiness temporarily uses Game F
 Extension points: inherited game-mode prefabs configure faction bindings on `AROR_FactionRolesComponent` and evaluation cadence on the commander manager. Server systems subscribe to the manager's typed evaluation event and receive the commander whose turn is being evaluated. The Operations system consumes this event for optional configured attack targets; autonomous target selection remains planned. Each role is evaluated independently; Resistance never receives automatic evaluations.
 
 Sub-systems (Planned):
-- Player-directed Resistance orders with server validation.
+- Player-directed Resistance orders with server validation: in progress as High Command (below), which uses its own leader/squad state rather than the Resistance commander context.
 - Enemy target selection and distinct Occupier/Invader strategy policies.
 - Garrisons and military resources; Operations provides attack/QRF scheduling, weighted force selection and optional ground execution requiring runtime verification.
 - Versioned persistence and client summaries when mutable strategic state is introduced.
+
+### High Command — In progress
+Purpose: let Resistance Leaders raise AI squads and order them to attack or defend locations, through the HICOMM phone app. Functionality first; features and balance are added later. See `docs/HIGH_COMMAND.md`.
+
+Key classes/prefabs/configs:
+- `AROR_HighCommandComponent` on `AROR_GameMode_Base.et`: leaders, resistance name, squad catalogue (`AROR_HighCommandSquadType`: callsign, member prefabs, funds and manpower cost), raised squads (`AROR_HighCommandSquad`) and their orders (`AROR_EHighCommandOrder`: attack, defend).
+- `AROR_HiCommApp` and `AROR_HiCommMap` (Phone): the client app; see Phone.
+- Client requests use `AROR_RequestHiComm*` RPCs on the modded `SCR_PlayerController`.
+
+Leaders: the host (listen-server/Workbench player; connected admins on a dedicated server) is always a Resistance Leader and can delegate or revoke other players. Only leaders get past HICOMM's login screen. Each leader has their own command: they see every squad but order only their own. A revoked or disconnected leader's squads keep their orders and become unassigned; the host can take them over by ordering them.
+
+Squads: bought with Resistance funds AND manpower (Economy spending API), up to a per-leader cap. A squad is an empty base-game AI group at the Resistance HQ whose members are spawned from the type's character prefabs through the engine's AI spawn queue and given the Resistance faction. Attack orders target enemy-held locations, defend orders Resistance-held ones; move orders send squads to any land point on the map, where they automatically stand by (hold) on arrival; hold orders stand squads by where they are. Each order replaces the squad's waypoint (base-game attack, defend and move waypoints). Squads that never spawn are refunded; wiped-out squads are removed without a refund.
+
+Server/client: all leadership, purchases, spawning and orders are server-authoritative and validated per request. A compact snapshot (host and delegate IDs, resistance name, one summary row per squad with strength, order and position) replicates as strings on the game-mode component and is refreshed every few seconds; clients never touch squads directly.
+
+Persistence: nothing is saved; leaders, name and squads are session-only. Squads are refunded at 100% of their cost when the campaign ends (game-mode end), and the Economy serializer saves Resistance funds/manpower as if every living squad had been refunded, so any loaded save keeps their value.
+
+Depends on: Game Mode, Factions, Locations (targets, HQ), Economy, Game Flow (HQ exists after setup), Phone, Notifications (request feedback).
+
+Extension points: squad catalogue, per-leader cap, group/waypoint prefabs and the HICOMM map bounds are attributes on the component in inherited game-mode prefabs; extender maps set the map bounds for their terrain.
+
+Sub-systems (Planned): more order types (recon, ambush, waypoint chains), platoons, live enemy intel on the map, squad persistence decisions, a saved resistance name, and balance of costs/caps.
 
 ### Operations — In progress
 Purpose: schedule enemy attacks and defensive QRF responses independently for Occupiers and Invaders, tracking each request through execution and a terminal outcome.
@@ -312,7 +334,7 @@ Key classes: `AROR_EconomyComponent`, `AROR_EconomyComponentSerializer`, `AROR_I
   - The Resistance also gains manpower per held town and per held city.
   - Resistance players get a dispatch card notification with the amounts.
   - Rates and the interval are attributes on `AROR_IncomeComponent`.
-- **Persistence**: funds, manpower and player money are saved with the game mode (nothing is written while everything is still at its starting values). Income timing is not saved.
+- **Persistence**: funds, manpower and player money are saved with the game mode (nothing is written while everything is still at its starting values). Income timing is not saved. Saved Resistance funds and manpower include the full cost of living High Command squads, which are not saved themselves (see High Command).
 - **Rules**: balances never go below zero; spending only succeeds if the balance covers it. All changes happen on the server.
 - Extension points: other systems and extender mods call the server API to add, spend and read balances (`AddFactionFunds_S`, `SpendFactionFunds_S`, `AddPlayerMoney_S`, `SpendPlayerMoney_S`, `AddManpower_S`, `SpendManpower_S`) and can trigger a payment (`AROR_IncomeComponent.PayIncome_S`).
 
@@ -324,7 +346,7 @@ Key classes: `AROR_PhoneMenu` (menu, preset `AROR_PhoneMenu`), `AROR_PhoneCompon
 - **Menu**: registered through `chimeraMenus.conf` and the input config via **Override in addon**, which layers our entries on top of the base configs rather than replacing them.
 - **Look**: a phone frame image over a wallpaper, with a status bar (in-game clock, signal, battery). It slides up from the bottom when opened.
 - **Orientation**: apps open in portrait or landscape. Landscape apps turn the whole phone 90 degrees and scale it up, with the frame staying on; app content is hidden while it turns and laid out for the new size afterwards.
-- **Apps**: launched from tiles on the home screen; the frame's home button returns to the home screen. **Bank** (portrait) shows the account holder, the player's personal money and the Resistance funds live from the Economy; transfers are planned. **RebIntel** (portrait, `AROR_RebIntelApp`) shows each enemy role's equipment war level, independent aggression percentage/response level and scenario response-policy status. Default force labels are US/USSR; alternate role bindings use their configured faction names and colours. The app reads the operation manager's replicated summary and has no campaign mutation or dispatch API. The operation manager owns both replicated/saved axes; the app remains read-only. A landscape test app exercises the turn.
+- **Apps**: launched from tiles on the home screen; the frame's home button returns to the home screen. **Bank** (portrait) shows the account holder, the player's personal money and the Resistance funds live from the Economy; transfers are planned. **RebIntel** (portrait, `AROR_RebIntelApp`) shows each enemy role's equipment war level, independent aggression percentage/response level and scenario response-policy status. Default force labels are US/USSR; alternate role bindings use their configured faction names and colours. The app reads the operation manager's replicated summary and has no campaign mutation or dispatch API. The operation manager owns both replicated/saved axes; the app remains read-only. **HICOMM** (landscape, `AROR_HiCommApp`) is the High Command app in a phosphor-terminal style: a login screen (Resistance Leaders only), a Command screen (resistance name, leaders, host delegation), **Strategic Command** (orders only, RTS-style: multi-select, quick orders, attack/defend a location) and **Unit Management** (raise squads, order of battle). Its zoomable radar map uses two canvases: a base layer (coastline, contours and adaptive grid traced from terrain sampled once per client, rebuilt only when the view changes) and a per-frame overlay (locations coloured by controlling role, squads, orders, selection); it reads only replicated state and sends requests to High Command. The layout declares fixed widget pools that each screen fills per frame. A landscape test app exercises the turn.
 - **Esc** closes the phone from any screen.
 - Extension points: planned app registration so extender mods can add apps.
 

@@ -91,6 +91,30 @@ FrameWidgetClass {
       Anchor 0 0 0 0
      }
     }
+    ImageWidgetClass "{6AB4E0F1A2B90000}" {
+     Name "HiCommTile"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0000}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90001}" {
+     Name "HiCommTileGlyph"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0001}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90002}" {
+     Name "HiCommTileLabel"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0002}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90003}" {
+     Name "HiCommTileButton"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0003}" {
+      Anchor 0 0 0 0
+     }
+    }
    }
   }
   FrameWidgetClass "{6AB4E0F1A2B53001}" {
@@ -315,6 +339,2159 @@ FrameWidgetClass {
         Anchor 0 0 0 0
        }
       }
+     }
+    }
+   }
+  }
+  FrameWidgetClass "{6AB4E0F1A2B90130}" {
+   Name "HiCommApp"
+   Slot FrameWidgetSlot "{6AB4E0F1A2BA0130}" {
+    Anchor 0 0 0 0
+   }
+   {
+    ImageWidgetClass "{6AB4E0F1A2B90004}" {
+     Name "HiCommBackground"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0004}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B90005}" {
+     Name "HiCommPanel0"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0005}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B90006}" {
+     Name "HiCommPanel1"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0006}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B90007}" {
+     Name "HiCommPanel2"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0007}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B90008}" {
+     Name "HiCommPanel3"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0008}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B90009}" {
+     Name "HiCommPanel4"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0009}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B9000A}" {
+     Name "HiCommPanel5"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA000A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B9000B}" {
+     Name "HiCommPanel6"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA000B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B9000C}" {
+     Name "HiCommPanel7"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA000C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B9000D}" {
+     Name "HiCommPanel8"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA000D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B9000E}" {
+     Name "HiCommPanel9"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA000E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B9000F}" {
+     Name "HiCommPanel10"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA000F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B90010}" {
+     Name "HiCommPanel11"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0010}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B90011}" {
+     Name "HiCommPanel12"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0011}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B90012}" {
+     Name "HiCommPanel13"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0012}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B90013}" {
+     Name "HiCommPanel14"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0013}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B90014}" {
+     Name "HiCommPanel15"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0014}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B90015}" {
+     Name "HiCommPanel16"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0015}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B90016}" {
+     Name "HiCommPanel17"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0016}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B90017}" {
+     Name "HiCommPanel18"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0017}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B90018}" {
+     Name "HiCommPanel19"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0018}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B90019}" {
+     Name "HiCommPanel20"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0019}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B9001A}" {
+     Name "HiCommPanel21"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA001A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B9001B}" {
+     Name "HiCommPanel22"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA001B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B9001C}" {
+     Name "HiCommPanel23"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA001C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    CanvasWidgetClass "{6AB4E0F1A2B9001D}" {
+     Name "HiCommMapCanvas"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA001D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    CanvasWidgetClass "{6AB4E0F1A2B90131}" {
+     Name "HiCommMapOverlay"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0131}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9001E}" {
+     Name "HiCommMapLabel0"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA001E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9001F}" {
+     Name "HiCommMapLabel1"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA001F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90020}" {
+     Name "HiCommMapLabel2"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0020}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90021}" {
+     Name "HiCommMapLabel3"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0021}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90022}" {
+     Name "HiCommMapLabel4"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0022}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90023}" {
+     Name "HiCommMapLabel5"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0023}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90024}" {
+     Name "HiCommMapLabel6"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0024}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90025}" {
+     Name "HiCommMapLabel7"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0025}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90026}" {
+     Name "HiCommMapLabel8"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0026}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90027}" {
+     Name "HiCommMapLabel9"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0027}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90028}" {
+     Name "HiCommMapLabel10"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0028}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90029}" {
+     Name "HiCommMapLabel11"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0029}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9002A}" {
+     Name "HiCommMapLabel12"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA002A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9002B}" {
+     Name "HiCommMapLabel13"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA002B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9002C}" {
+     Name "HiCommMapLabel14"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA002C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9002D}" {
+     Name "HiCommMapLabel15"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA002D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9002E}" {
+     Name "HiCommMapLabel16"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA002E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9002F}" {
+     Name "HiCommMapLabel17"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA002F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90030}" {
+     Name "HiCommMapLabel18"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0030}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90031}" {
+     Name "HiCommMapLabel19"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0031}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90032}" {
+     Name "HiCommMapLabel20"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0032}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90033}" {
+     Name "HiCommMapLabel21"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0033}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90034}" {
+     Name "HiCommMapLabel22"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0034}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90035}" {
+     Name "HiCommMapLabel23"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0035}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90036}" {
+     Name "HiCommMapLabel24"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0036}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90037}" {
+     Name "HiCommMapLabel25"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0037}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90038}" {
+     Name "HiCommMapLabel26"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0038}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90039}" {
+     Name "HiCommMapLabel27"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0039}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9003A}" {
+     Name "HiCommMapLabel28"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA003A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9003B}" {
+     Name "HiCommMapLabel29"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA003B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9003C}" {
+     Name "HiCommMapLabel30"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA003C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9003D}" {
+     Name "HiCommMapLabel31"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA003D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9003E}" {
+     Name "HiCommMapLabel32"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA003E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9003F}" {
+     Name "HiCommMapLabel33"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA003F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90040}" {
+     Name "HiCommMapLabel34"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0040}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90041}" {
+     Name "HiCommMapLabel35"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0041}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90042}" {
+     Name "HiCommMapLabel36"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0042}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90043}" {
+     Name "HiCommMapLabel37"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0043}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90044}" {
+     Name "HiCommMapLabel38"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0044}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90045}" {
+     Name "HiCommMapLabel39"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0045}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90046}" {
+     Name "HiCommMapLabel40"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0046}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90047}" {
+     Name "HiCommMapLabel41"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0047}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90048}" {
+     Name "HiCommMapLabel42"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0048}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90049}" {
+     Name "HiCommMapLabel43"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0049}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9004A}" {
+     Name "HiCommMapLabel44"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA004A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9004B}" {
+     Name "HiCommMapLabel45"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA004B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9004C}" {
+     Name "HiCommMapLabel46"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA004C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9004D}" {
+     Name "HiCommMapLabel47"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA004D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9004E}" {
+     Name "HiCommMapLabel48"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA004E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9004F}" {
+     Name "HiCommMapLabel49"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA004F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90050}" {
+     Name "HiCommMapLabel50"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0050}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90051}" {
+     Name "HiCommMapLabel51"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0051}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90052}" {
+     Name "HiCommMapLabel52"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0052}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90053}" {
+     Name "HiCommMapLabel53"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0053}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90054}" {
+     Name "HiCommMapLabel54"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0054}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90055}" {
+     Name "HiCommMapLabel55"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0055}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90056}" {
+     Name "HiCommMapLabel56"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0056}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90057}" {
+     Name "HiCommMapLabel57"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0057}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90058}" {
+     Name "HiCommMapLabel58"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0058}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90059}" {
+     Name "HiCommMapLabel59"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0059}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9005A}" {
+     Name "HiCommMapLabel60"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA005A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9005B}" {
+     Name "HiCommMapLabel61"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA005B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9005C}" {
+     Name "HiCommMapLabel62"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA005C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9005D}" {
+     Name "HiCommMapLabel63"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA005D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9005E}" {
+     Name "HiCommMapLabel64"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA005E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9005F}" {
+     Name "HiCommMapLabel65"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA005F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90060}" {
+     Name "HiCommMapLabel66"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0060}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90061}" {
+     Name "HiCommMapLabel67"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0061}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90062}" {
+     Name "HiCommMapLabel68"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0062}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90063}" {
+     Name "HiCommMapLabel69"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0063}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90064}" {
+     Name "HiCommMapLabel70"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0064}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90065}" {
+     Name "HiCommMapLabel71"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0065}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90132}" {
+     Name "HiCommMapLabel72"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0132}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90133}" {
+     Name "HiCommMapLabel73"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0133}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90134}" {
+     Name "HiCommMapLabel74"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0134}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90135}" {
+     Name "HiCommMapLabel75"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0135}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90136}" {
+     Name "HiCommMapLabel76"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0136}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90137}" {
+     Name "HiCommMapLabel77"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0137}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90138}" {
+     Name "HiCommMapLabel78"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0138}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90139}" {
+     Name "HiCommMapLabel79"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0139}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9013A}" {
+     Name "HiCommMapLabel80"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA013A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9013B}" {
+     Name "HiCommMapLabel81"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA013B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9013C}" {
+     Name "HiCommMapLabel82"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA013C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9013D}" {
+     Name "HiCommMapLabel83"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA013D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9013E}" {
+     Name "HiCommMapLabel84"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA013E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9013F}" {
+     Name "HiCommMapLabel85"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA013F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90140}" {
+     Name "HiCommMapLabel86"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0140}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90141}" {
+     Name "HiCommMapLabel87"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0141}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90142}" {
+     Name "HiCommMapLabel88"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0142}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90143}" {
+     Name "HiCommMapLabel89"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0143}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90144}" {
+     Name "HiCommMapLabel90"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0144}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90145}" {
+     Name "HiCommMapLabel91"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0145}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90146}" {
+     Name "HiCommMapLabel92"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0146}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90147}" {
+     Name "HiCommMapLabel93"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0147}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90148}" {
+     Name "HiCommMapLabel94"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0148}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90149}" {
+     Name "HiCommMapLabel95"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0149}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9014A}" {
+     Name "HiCommMapLabel96"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA014A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9014B}" {
+     Name "HiCommMapLabel97"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA014B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9014C}" {
+     Name "HiCommMapLabel98"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA014C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9014D}" {
+     Name "HiCommMapLabel99"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA014D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9014E}" {
+     Name "HiCommMapLabel100"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA014E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9014F}" {
+     Name "HiCommMapLabel101"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA014F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90150}" {
+     Name "HiCommMapLabel102"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0150}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90151}" {
+     Name "HiCommMapLabel103"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0151}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90152}" {
+     Name "HiCommMapLabel104"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0152}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90153}" {
+     Name "HiCommMapLabel105"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0153}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90154}" {
+     Name "HiCommMapLabel106"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0154}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90155}" {
+     Name "HiCommMapLabel107"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0155}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90156}" {
+     Name "HiCommMapLabel108"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0156}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90157}" {
+     Name "HiCommMapLabel109"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0157}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90158}" {
+     Name "HiCommMapLabel110"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0158}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90159}" {
+     Name "HiCommMapLabel111"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0159}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9015A}" {
+     Name "HiCommMapLabel112"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA015A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9015B}" {
+     Name "HiCommMapLabel113"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA015B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9015C}" {
+     Name "HiCommMapLabel114"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA015C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9015D}" {
+     Name "HiCommMapLabel115"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA015D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9015E}" {
+     Name "HiCommMapLabel116"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA015E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9015F}" {
+     Name "HiCommMapLabel117"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA015F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90160}" {
+     Name "HiCommMapLabel118"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0160}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90161}" {
+     Name "HiCommMapLabel119"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0161}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90162}" {
+     Name "HiCommMapLabel120"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0162}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90163}" {
+     Name "HiCommMapLabel121"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0163}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90164}" {
+     Name "HiCommMapLabel122"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0164}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90165}" {
+     Name "HiCommMapLabel123"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0165}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90166}" {
+     Name "HiCommMapLabel124"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0166}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90167}" {
+     Name "HiCommMapLabel125"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0167}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90168}" {
+     Name "HiCommMapLabel126"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0168}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90169}" {
+     Name "HiCommMapLabel127"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0169}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90066}" {
+     Name "HiCommMapButton"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0066}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90067}" {
+     Name "HiCommText0"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0067}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB469137227A3A2}" {
+      Font "{35056A4D752AB4A3}UI/Fonts/Default/default14.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90068}" {
+     Name "HiCommText1"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0068}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90069}" {
+     Name "HiCommText2"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0069}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9006A}" {
+     Name "HiCommText3"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA006A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9006B}" {
+     Name "HiCommText4"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA006B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9006C}" {
+     Name "HiCommText5"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA006C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9006D}" {
+     Name "HiCommText6"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA006D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9006E}" {
+     Name "HiCommText7"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA006E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9006F}" {
+     Name "HiCommText8"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA006F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90070}" {
+     Name "HiCommText9"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0070}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90071}" {
+     Name "HiCommText10"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0071}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90072}" {
+     Name "HiCommText11"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0072}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90073}" {
+     Name "HiCommText12"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0073}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90074}" {
+     Name "HiCommText13"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0074}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90075}" {
+     Name "HiCommText14"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0075}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90076}" {
+     Name "HiCommText15"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0076}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90077}" {
+     Name "HiCommText16"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0077}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90078}" {
+     Name "HiCommText17"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0078}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90079}" {
+     Name "HiCommText18"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0079}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9007A}" {
+     Name "HiCommText19"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA007A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9007B}" {
+     Name "HiCommText20"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA007B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9007C}" {
+     Name "HiCommText21"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA007C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9007D}" {
+     Name "HiCommText22"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA007D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9007E}" {
+     Name "HiCommText23"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA007E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9007F}" {
+     Name "HiCommText24"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA007F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90080}" {
+     Name "HiCommText25"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0080}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90081}" {
+     Name "HiCommText26"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0081}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90082}" {
+     Name "HiCommText27"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0082}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90083}" {
+     Name "HiCommText28"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0083}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90084}" {
+     Name "HiCommText29"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0084}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90085}" {
+     Name "HiCommText30"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0085}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90086}" {
+     Name "HiCommText31"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0086}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90087}" {
+     Name "HiCommText32"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0087}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90088}" {
+     Name "HiCommText33"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0088}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90089}" {
+     Name "HiCommText34"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0089}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9008A}" {
+     Name "HiCommText35"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA008A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9008B}" {
+     Name "HiCommText36"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA008B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9008C}" {
+     Name "HiCommText37"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA008C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9008D}" {
+     Name "HiCommText38"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA008D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9008E}" {
+     Name "HiCommText39"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA008E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9008F}" {
+     Name "HiCommText40"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA008F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90090}" {
+     Name "HiCommText41"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0090}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90091}" {
+     Name "HiCommText42"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0091}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90092}" {
+     Name "HiCommText43"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0092}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90093}" {
+     Name "HiCommText44"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0093}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90094}" {
+     Name "HiCommText45"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0094}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90095}" {
+     Name "HiCommText46"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0095}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90096}" {
+     Name "HiCommText47"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0096}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90097}" {
+     Name "HiCommText48"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0097}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90098}" {
+     Name "HiCommText49"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0098}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90099}" {
+     Name "HiCommText50"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0099}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9009A}" {
+     Name "HiCommText51"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA009A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9009B}" {
+     Name "HiCommText52"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA009B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9009C}" {
+     Name "HiCommText53"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA009C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9009D}" {
+     Name "HiCommText54"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA009D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9009E}" {
+     Name "HiCommText55"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA009E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B9009F}" {
+     Name "HiCommText56"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA009F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900A0}" {
+     Name "HiCommText57"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00A0}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900A1}" {
+     Name "HiCommText58"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00A1}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900A2}" {
+     Name "HiCommText59"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00A2}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900A3}" {
+     Name "HiCommText60"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00A3}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900A4}" {
+     Name "HiCommText61"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00A4}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900A5}" {
+     Name "HiCommText62"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00A5}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900A6}" {
+     Name "HiCommText63"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00A6}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900A7}" {
+     Name "HiCommText64"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00A7}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900A8}" {
+     Name "HiCommText65"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00A8}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900A9}" {
+     Name "HiCommText66"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00A9}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900AA}" {
+     Name "HiCommText67"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00AA}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900AB}" {
+     Name "HiCommText68"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00AB}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900AC}" {
+     Name "HiCommText69"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00AC}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900AD}" {
+     Name "HiCommText70"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00AD}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900AE}" {
+     Name "HiCommText71"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00AE}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900AF}" {
+     Name "HiCommText72"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00AF}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900B0}" {
+     Name "HiCommText73"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00B0}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900B1}" {
+     Name "HiCommText74"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00B1}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900B2}" {
+     Name "HiCommText75"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00B2}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900B3}" {
+     Name "HiCommText76"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00B3}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900B4}" {
+     Name "HiCommText77"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00B4}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900B5}" {
+     Name "HiCommText78"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00B5}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900B6}" {
+     Name "HiCommText79"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00B6}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900B7}" {
+     Name "HiCommBtnBg0"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00B7}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900B8}" {
+     Name "HiCommBtnBg1"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00B8}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900B9}" {
+     Name "HiCommBtnBg2"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00B9}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900BA}" {
+     Name "HiCommBtnBg3"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00BA}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900BB}" {
+     Name "HiCommBtnBg4"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00BB}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900BC}" {
+     Name "HiCommBtnBg5"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00BC}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900BD}" {
+     Name "HiCommBtnBg6"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00BD}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900BE}" {
+     Name "HiCommBtnBg7"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00BE}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900BF}" {
+     Name "HiCommBtnBg8"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00BF}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900C0}" {
+     Name "HiCommBtnBg9"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00C0}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900C1}" {
+     Name "HiCommBtnBg10"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00C1}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900C2}" {
+     Name "HiCommBtnBg11"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00C2}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900C3}" {
+     Name "HiCommBtnBg12"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00C3}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900C4}" {
+     Name "HiCommBtnBg13"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00C4}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900C5}" {
+     Name "HiCommBtnBg14"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00C5}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900C6}" {
+     Name "HiCommBtnBg15"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00C6}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900C7}" {
+     Name "HiCommBtnBg16"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00C7}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900C8}" {
+     Name "HiCommBtnBg17"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00C8}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900C9}" {
+     Name "HiCommBtnBg18"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00C9}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900CA}" {
+     Name "HiCommBtnBg19"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00CA}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900CB}" {
+     Name "HiCommBtnBg20"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00CB}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900CC}" {
+     Name "HiCommBtnBg21"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00CC}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900CD}" {
+     Name "HiCommBtnBg22"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00CD}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900CE}" {
+     Name "HiCommBtnBg23"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00CE}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900CF}" {
+     Name "HiCommBtnBg24"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00CF}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900D0}" {
+     Name "HiCommBtnBg25"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00D0}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900D1}" {
+     Name "HiCommBtnBg26"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00D1}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900D2}" {
+     Name "HiCommBtnBg27"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00D2}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900D3}" {
+     Name "HiCommBtnBg28"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00D3}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900D4}" {
+     Name "HiCommBtnBg29"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00D4}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900D5}" {
+     Name "HiCommBtnBg30"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00D5}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900D6}" {
+     Name "HiCommBtnBg31"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00D6}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900D7}" {
+     Name "HiCommBtnBg32"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00D7}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900D8}" {
+     Name "HiCommBtnBg33"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00D8}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900D9}" {
+     Name "HiCommBtnBg34"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00D9}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900DA}" {
+     Name "HiCommBtnBg35"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00DA}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900DB}" {
+     Name "HiCommBtnBg36"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00DB}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900DC}" {
+     Name "HiCommBtnBg37"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00DC}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900DD}" {
+     Name "HiCommBtnBg38"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00DD}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2B900DE}" {
+     Name "HiCommBtnBg39"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00DE}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900DF}" {
+     Name "HiCommBtnLabel0"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00DF}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900E0}" {
+     Name "HiCommBtnLabel1"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00E0}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900E1}" {
+     Name "HiCommBtnLabel2"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00E1}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900E2}" {
+     Name "HiCommBtnLabel3"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00E2}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900E3}" {
+     Name "HiCommBtnLabel4"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00E3}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900E4}" {
+     Name "HiCommBtnLabel5"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00E4}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900E5}" {
+     Name "HiCommBtnLabel6"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00E5}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900E6}" {
+     Name "HiCommBtnLabel7"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00E6}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900E7}" {
+     Name "HiCommBtnLabel8"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00E7}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900E8}" {
+     Name "HiCommBtnLabel9"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00E8}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900E9}" {
+     Name "HiCommBtnLabel10"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00E9}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900EA}" {
+     Name "HiCommBtnLabel11"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00EA}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900EB}" {
+     Name "HiCommBtnLabel12"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00EB}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900EC}" {
+     Name "HiCommBtnLabel13"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00EC}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900ED}" {
+     Name "HiCommBtnLabel14"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00ED}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900EE}" {
+     Name "HiCommBtnLabel15"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00EE}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900EF}" {
+     Name "HiCommBtnLabel16"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00EF}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900F0}" {
+     Name "HiCommBtnLabel17"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00F0}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900F1}" {
+     Name "HiCommBtnLabel18"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00F1}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900F2}" {
+     Name "HiCommBtnLabel19"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00F2}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900F3}" {
+     Name "HiCommBtnLabel20"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00F3}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900F4}" {
+     Name "HiCommBtnLabel21"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00F4}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900F5}" {
+     Name "HiCommBtnLabel22"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00F5}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900F6}" {
+     Name "HiCommBtnLabel23"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00F6}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900F7}" {
+     Name "HiCommBtnLabel24"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00F7}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900F8}" {
+     Name "HiCommBtnLabel25"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00F8}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900F9}" {
+     Name "HiCommBtnLabel26"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00F9}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900FA}" {
+     Name "HiCommBtnLabel27"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00FA}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900FB}" {
+     Name "HiCommBtnLabel28"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00FB}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900FC}" {
+     Name "HiCommBtnLabel29"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00FC}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900FD}" {
+     Name "HiCommBtnLabel30"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00FD}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900FE}" {
+     Name "HiCommBtnLabel31"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00FE}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B900FF}" {
+     Name "HiCommBtnLabel32"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA00FF}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90100}" {
+     Name "HiCommBtnLabel33"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0100}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90101}" {
+     Name "HiCommBtnLabel34"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0101}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90102}" {
+     Name "HiCommBtnLabel35"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0102}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90103}" {
+     Name "HiCommBtnLabel36"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0103}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90104}" {
+     Name "HiCommBtnLabel37"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0104}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90105}" {
+     Name "HiCommBtnLabel38"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0105}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2B90106}" {
+     Name "HiCommBtnLabel39"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0106}" {
+      Anchor 0 0 0 0
+     }
+    }
+    EditBoxWidgetClass "{6AB4E0F1A2B90107}" {
+     Name "HiCommNameEdit"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0107}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90108}" {
+     Name "HiCommBtn0"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0108}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90109}" {
+     Name "HiCommBtn1"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0109}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9010A}" {
+     Name "HiCommBtn2"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA010A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9010B}" {
+     Name "HiCommBtn3"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA010B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9010C}" {
+     Name "HiCommBtn4"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA010C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9010D}" {
+     Name "HiCommBtn5"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA010D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9010E}" {
+     Name "HiCommBtn6"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA010E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9010F}" {
+     Name "HiCommBtn7"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA010F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90110}" {
+     Name "HiCommBtn8"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0110}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90111}" {
+     Name "HiCommBtn9"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0111}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90112}" {
+     Name "HiCommBtn10"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0112}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90113}" {
+     Name "HiCommBtn11"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0113}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90114}" {
+     Name "HiCommBtn12"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0114}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90115}" {
+     Name "HiCommBtn13"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0115}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90116}" {
+     Name "HiCommBtn14"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0116}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90117}" {
+     Name "HiCommBtn15"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0117}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90118}" {
+     Name "HiCommBtn16"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0118}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90119}" {
+     Name "HiCommBtn17"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0119}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9011A}" {
+     Name "HiCommBtn18"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA011A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9011B}" {
+     Name "HiCommBtn19"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA011B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9011C}" {
+     Name "HiCommBtn20"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA011C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9011D}" {
+     Name "HiCommBtn21"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA011D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9011E}" {
+     Name "HiCommBtn22"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA011E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9011F}" {
+     Name "HiCommBtn23"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA011F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90120}" {
+     Name "HiCommBtn24"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0120}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90121}" {
+     Name "HiCommBtn25"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0121}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90122}" {
+     Name "HiCommBtn26"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0122}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90123}" {
+     Name "HiCommBtn27"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0123}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90124}" {
+     Name "HiCommBtn28"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0124}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90125}" {
+     Name "HiCommBtn29"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0125}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90126}" {
+     Name "HiCommBtn30"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0126}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90127}" {
+     Name "HiCommBtn31"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0127}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90128}" {
+     Name "HiCommBtn32"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0128}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B90129}" {
+     Name "HiCommBtn33"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA0129}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9012A}" {
+     Name "HiCommBtn34"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA012A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9012B}" {
+     Name "HiCommBtn35"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA012B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9012C}" {
+     Name "HiCommBtn36"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA012C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9012D}" {
+     Name "HiCommBtn37"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA012D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9012E}" {
+     Name "HiCommBtn38"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA012E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2B9012F}" {
+     Name "HiCommBtn39"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BA012F}" {
+      Anchor 0 0 0 0
      }
     }
    }

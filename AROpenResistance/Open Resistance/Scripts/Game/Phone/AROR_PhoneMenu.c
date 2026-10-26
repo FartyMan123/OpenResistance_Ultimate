@@ -25,7 +25,8 @@ enum AROR_EPhoneApp
 	HOME,
 	BANK,	//!< Portrait: account holder, personal money and Resistance funds
 	TEST,	//!< Landscape test app
-	REBINTEL	//!< Portrait: public enemy war level and aggression summary
+	REBINTEL,	//!< Portrait: public enemy war level and aggression summary
+	HICOMM	//!< Landscape: Resistance high command (leaders only, see AROR_HiCommApp)
 }
 
 //! The phone (see ARCHITECTURE.md -> Phone). A menu (preset AROR_PhoneMenu, registered in chimeraMenus.conf), so it
@@ -68,6 +69,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	protected static const float TILE_LEFT = 70;
 	protected static const float TILE_SIZE = 180;
 	protected static const float TILE_SPACING = 60;
+	protected static const float TILE_ROW_SPACING = 110;	//!< From the bottom of one tile row to the top of the next (room for labels)
 
 	// Bank screen rectangles (screen pixels of AROR_Bank_AppHome)
 	protected static const float BANK_NAME_X = 150;
@@ -127,6 +129,11 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	protected RichTextWidget m_wRebIntelTileLabel;
 	protected Widget m_wRebIntelTileButton;
 	protected ref AROR_RebIntelApp m_RebIntel;
+	protected ImageWidget m_wHiCommTile;
+	protected RichTextWidget m_wHiCommTileGlyph;
+	protected RichTextWidget m_wHiCommTileLabel;
+	protected Widget m_wHiCommTileButton;
+	protected ref AROR_HiCommApp m_HiComm;
 
 	protected Widget m_wBankApp;
 	protected ImageWidget m_wBankBackground;
@@ -184,6 +191,8 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			OpenApp(AROR_EPhoneApp.TEST);
 		else if (buttonName == "RebIntelTileButton")
 			OpenApp(AROR_EPhoneApp.REBINTEL);
+		else if (buttonName == "HiCommTileButton")
+			OpenApp(AROR_EPhoneApp.HICOMM);
 		else if (buttonName == "BankTransferButton")
 			AROR_NotificationManagerComponent.ShowHint("Transfers are coming soon");
 		else if (buttonName == "AppBackButton" || buttonName == "HomeButton")
@@ -209,7 +218,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	//------------------------------------------------------------------------------------------------
 	protected static bool IsLandscapeApp(AROR_EPhoneApp app)
 	{
-		return app == AROR_EPhoneApp.TEST;
+		return app == AROR_EPhoneApp.TEST || app == AROR_EPhoneApp.HICOMM;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -259,6 +268,12 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		m_wRebIntelTileButton = root.FindAnyWidget("RebIntelTileButton");
 		m_RebIntel = new AROR_RebIntelApp();
 		bool rebIntelReady = m_RebIntel.Init(root);
+		m_wHiCommTile = ImageWidget.Cast(root.FindAnyWidget("HiCommTile"));
+		m_wHiCommTileGlyph = RichTextWidget.Cast(root.FindAnyWidget("HiCommTileGlyph"));
+		m_wHiCommTileLabel = RichTextWidget.Cast(root.FindAnyWidget("HiCommTileLabel"));
+		m_wHiCommTileButton = root.FindAnyWidget("HiCommTileButton");
+		m_HiComm = new AROR_HiCommApp();
+		bool hiCommReady = m_HiComm.Init(root);
 
 		m_wBankApp = root.FindAnyWidget("BankApp");
 		m_wBankBackground = ImageWidget.Cast(root.FindAnyWidget("BankBackground"));
@@ -275,7 +290,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		m_wTestBackLabel = RichTextWidget.Cast(root.FindAnyWidget("AppBackLabel"));
 		m_wTestBackButton = root.FindAnyWidget("AppBackButton");
 
-		if (!m_wDim || !m_wPhonePortrait || !m_wPhoneLandscape || !m_wStatusBar || !m_wHome || !m_wBankApp || !m_wTestApp || !rebIntelReady || !m_wRebIntelTile || !m_wRebIntelTileGlyph || !m_wRebIntelTileLabel || !m_wRebIntelTileButton)
+		if (!m_wDim || !m_wPhonePortrait || !m_wPhoneLandscape || !m_wStatusBar || !m_wHome || !m_wBankApp || !m_wTestApp || !rebIntelReady || !m_wRebIntelTile || !m_wRebIntelTileGlyph || !m_wRebIntelTileLabel || !m_wRebIntelTileButton || !hiCommReady || !m_wHiCommTile || !m_wHiCommTileGlyph || !m_wHiCommTileLabel || !m_wHiCommTileButton)
 		{
 			Print("[AROR] Phone layout is missing widgets", LogLevel.ERROR);
 			Close();
@@ -285,7 +300,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		ApplyStyle();
 
 		m_ButtonHandler = new AROR_PhoneButtonHandler(this);
-		array<Widget> buttons = {m_wBankTileButton, m_wTestTileButton, m_wRebIntelTileButton, m_wBankTransferButton, m_wTestBackButton, m_wHomeButton};
+		array<Widget> buttons = {m_wBankTileButton, m_wTestTileButton, m_wRebIntelTileButton, m_wHiCommTileButton, m_wBankTransferButton, m_wTestBackButton, m_wHomeButton};
 		foreach (Widget button : buttons)
 		{
 			if (button)
@@ -312,6 +327,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		if (s_Instance == this)
 			s_Instance = null;
 		m_RebIntel = null;
+		m_HiComm = null;
 
 		super.OnMenuClose();
 	}
@@ -391,6 +407,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		bool showBank = portraitSettled && m_eApp == AROR_EPhoneApp.BANK;
 		bool showTest = landscapeSettled && m_eApp == AROR_EPhoneApp.TEST;
 		bool showRebIntel = portraitSettled && m_eApp == AROR_EPhoneApp.REBINTEL;
+		bool showHiComm = landscapeSettled && m_eApp == AROR_EPhoneApp.HICOMM;
 
 		m_wStatusBar.SetVisible(portraitSettled);
 		m_wHome.SetVisible(showHome);
@@ -402,6 +419,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		m_wBankApp.SetOpacity(contentOpacity);
 		m_wTestApp.SetOpacity(contentOpacity);
 		m_RebIntel.SetVisible(showRebIntel, contentOpacity);
+		m_HiComm.SetVisible(showHiComm, contentOpacity);
 
 		// Home button: an invisible click area over the frame's home button (bottom bezel in portrait, right in landscape)
 		if (m_wHomeButton)
@@ -430,6 +448,9 @@ class AROR_PhoneMenu : ChimeraMenuBase
 
 		if (showTest)
 			LayoutTestApp(centerX - SCREEN_HEIGHT * scale * 0.5, centerY - SCREEN_WIDTH * scale * 0.5, scale);
+
+		if (showHiComm)
+			m_HiComm.Layout(centerX - SCREEN_HEIGHT * scale * 0.5, centerY - SCREEN_WIDTH * scale * 0.5, scale);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -476,6 +497,16 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		SetFontSize(m_wRebIntelTileLabel, 32 * scale);
 		CentreText(m_wRebIntelTileLabel, (tileLeft + TILE_SIZE * 0.5) * scale, (TILE_TOP + TILE_SIZE + 34) * scale);
 		Place(m_wRebIntelTileButton, tileLeft * scale, TILE_TOP * scale, TILE_SIZE * scale, (TILE_SIZE + 60) * scale);
+
+		// HICOMM (landscape), first tile of the second row
+		tileLeft = TILE_LEFT;
+		float tileTop = TILE_TOP + TILE_SIZE + TILE_ROW_SPACING;
+		Place(m_wHiCommTile, tileLeft * scale, tileTop * scale, TILE_SIZE * scale, TILE_SIZE * scale);
+		SetFontSize(m_wHiCommTileGlyph, 64 * scale);
+		CentreText(m_wHiCommTileGlyph, (tileLeft + TILE_SIZE * 0.5) * scale, (tileTop + TILE_SIZE * 0.5) * scale);
+		SetFontSize(m_wHiCommTileLabel, 32 * scale);
+		CentreText(m_wHiCommTileLabel, (tileLeft + TILE_SIZE * 0.5) * scale, (tileTop + TILE_SIZE + 34) * scale);
+		Place(m_wHiCommTileButton, tileLeft * scale, tileTop * scale, TILE_SIZE * scale, (TILE_SIZE + 60) * scale);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -560,10 +591,11 @@ class AROR_PhoneMenu : ChimeraMenuBase
 
 		SetColor(m_wTestTile, Color.FromRGBA(79, 107, 46, 255));
 		SetColor(m_wRebIntelTile, Color.FromRGBA(25, 102, 84, 255));
+		SetColor(m_wHiCommTile, Color.FromRGBA(10, 22, 15, 255));
 		SetColor(m_wTestBackBackground, Color.FromRGBA(255, 255, 255, 40));
 
 		// Buttons only catch clicks; the visuals are the widgets underneath
-		array<Widget> buttons = {m_wBankTileButton, m_wTestTileButton, m_wRebIntelTileButton, m_wBankTransferButton, m_wTestBackButton, m_wHomeButton};
+		array<Widget> buttons = {m_wBankTileButton, m_wTestTileButton, m_wRebIntelTileButton, m_wHiCommTileButton, m_wBankTransferButton, m_wTestBackButton, m_wHomeButton};
 		foreach (Widget button : buttons)
 		{
 			SetColor(button, Color.FromRGBA(0, 0, 0, 0));
@@ -575,6 +607,10 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		StyleText(m_wTestTileLabel, "Test", false);
 		StyleText(m_wRebIntelTileGlyph, "RI", true);
 		StyleText(m_wRebIntelTileLabel, "RebIntel", false);
+		StyleText(m_wHiCommTileGlyph, "HC", true);
+		StyleText(m_wHiCommTileLabel, "HICOMM", false);
+		if (m_wHiCommTileGlyph)
+			m_wHiCommTileGlyph.SetColor(Color.FromRGBA(134, 240, 172, 255));
 		StyleText(m_wBankName, string.Empty, true);
 		StyleText(m_wBankPersonal, string.Empty, true);
 		StyleText(m_wBankResistance, string.Empty, true);
@@ -582,7 +618,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		StyleText(m_wTestBody, "The phone turned to landscape. Press Back to return, or Esc to close the phone.", false);
 		StyleText(m_wTestBackLabel, "Back", true);
 
-		array<Widget> texts = {m_wClock, m_wBankTileLabel, m_wTestTileGlyph, m_wTestTileLabel, m_wRebIntelTileGlyph, m_wRebIntelTileLabel, m_wBankName, m_wBankPersonal, m_wBankResistance, m_wTestTitle, m_wTestBody, m_wTestBackLabel};
+		array<Widget> texts = {m_wClock, m_wBankTileLabel, m_wTestTileGlyph, m_wTestTileLabel, m_wRebIntelTileGlyph, m_wRebIntelTileLabel, m_wHiCommTileGlyph, m_wHiCommTileLabel, m_wBankName, m_wBankPersonal, m_wBankResistance, m_wTestTitle, m_wTestBody, m_wTestBackLabel};
 		foreach (Widget text : texts)
 		{
 			if (text)

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased - HICOMM high command, first functional pass (2026-10-26)
+
+- Add `AROR_HighCommandComponent` (game mode): Resistance Leaders (host automatic, host delegates/revokes), resistance name, squads raised with Resistance funds and manpower at the HQ, and attack/defend/move/hold orders (squads stand by on reaching a move point). All requests are validated by the server; a compact string snapshot replicates to clients. Squads are session-only and refunded at 100% when the campaign ends; the Economy save includes their refund.
+- Add the landscape HICOMM phone app: login (leaders only), Command (name, leaders), Strategic Command (RTS-style multi-select and quick orders on a zoomable phosphor map: terrain-traced coastline, elevation and depth shading, contours, adaptive grid, location ownership) and Unit Management (raise squads, order of battle). The phone layout gains pooled HICOMM widgets and an HC home tile.
+- DEBUG: the Resistance starts with $20,000 and 40 manpower for squad testing. Compiles and raises/orders squads in Workbench (Chicken); move/hold, map input and multiplayer still need testing. Share Tech Mono (OFL) is staged for HICOMM text but not yet registered as a font resource. See `docs/HIGH_COMMAND.md`.
+
 ## Unreleased - Separate QRF capability and aggression (2026-10-26)
 
 - War level gates QRF equipment; independent per-role aggression requests response intensity 1–5. Capture advances slow war progress and faster aggression; combat/losses affect aggression only, and quiet time cools aggression. Capture-only dispatch remains configured in Chicken.
