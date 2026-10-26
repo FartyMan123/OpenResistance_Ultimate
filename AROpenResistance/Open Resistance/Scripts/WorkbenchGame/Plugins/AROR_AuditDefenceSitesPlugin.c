@@ -56,7 +56,17 @@ class AROR_AuditDefenceSitesPlugin : AROR_GroundCampaignFlagsPlugin
 		}
 		return false;
 	}
-	protected bool CheckSite(BaseWorld world, IEntity root, IEntity flag, AROR_LocationComponent location, vector center, float half, float yaw, out float relief, out int blocked, out int badArcs)
+	protected int AuditDefenceLevel(AROR_LocationComponent location)
+	{
+		int level = 3;
+		if (location.GetLocationType() == AROR_ELocationType.OUTPOST) level = 1;
+		AROR_GarrisonComponent garrison = AROR_GarrisonComponent.Cast(location.GetOwner().FindComponent(AROR_GarrisonComponent));
+		if (garrison && garrison.GetDefenceLevelOverride() > 0)
+			level = Math.Clamp(garrison.GetDefenceLevelOverride(), 1, 4);
+		if (location.GetLocationType() == AROR_ELocationType.AIRPORT) level = 4;
+		return level;
+	}
+	protected bool CheckSite(BaseWorld world, IEntity root, IEntity flag, AROR_LocationComponent location, vector center, float half, float yaw, out float relief, out int blocked, out int badArcs, bool reportFailures = false)
 	{
 		blocked = 0;
 		badArcs = 0;
@@ -84,19 +94,23 @@ class AROR_AuditDefenceSitesPlugin : AROR_GroundCampaignFlagsPlugin
 				vector point = WorldOffset(center, local, yaw);
 				point[1] = world.GetSurfaceY(point[0], point[2]);
 				if (!ClearBox(world, point, 1.25, ownEntities))
+				{
 					blocked++;
+					if (reportFailures && blocked <= 8)
+						Print(string.Format("[AROR DEFENCE DETAIL] id=%1 wallSide=%2 segment=%3 point=%4 blocked by scene geometry", location.GetId(), side, segment, point), LogLevel.WARNING);
+				}
 			}
 		}
-		int level = 3;
-		if (location.GetLocationType() == AROR_ELocationType.OUTPOST) level = 1;
-		if (location.GetLocationType() == AROR_ELocationType.AIRPORT) level = 4;
+		int level = AuditDefenceLevel(location);
 		for (int kind = 0; kind <= 3; kind++)
 		{
 			int count = 0;
 			if (kind == 0) count = AROR_GarrisonPolicy.InfantryTeams(level);
 			if (kind == 1) count = AROR_GarrisonPolicy.StaticCount(level);
-			if (kind == 2 && level >= 3) count = 1;
-			if (kind == 3) count = AROR_GarrisonPolicy.MannedCount(level);
+			if (kind == 1 && garrison) count = garrison.GetStaticWeaponCount(level);
+			if (kind == 2 && level >= 3 && location.GetLocationType() != AROR_ELocationType.OUTPOST) count = 1;
+			if (kind == 2 && garrison && !garrison.AllowsParkedArmour()) count = 0;
+			if (kind == 3 && location.GetLocationType() != AROR_ELocationType.OUTPOST) count = AROR_GarrisonPolicy.MannedCount(level);
 			for (int ordinal = 0; ordinal < count; ordinal++)
 			{
 				vector point = WorldOffset(center, AROR_DefenceLayout.LocalPosition(kind, ordinal, half), yaw);
@@ -114,8 +128,18 @@ class AROR_AuditDefenceSitesPlugin : AROR_GroundCampaignFlagsPlugin
 				float size = 5;
 				if (kind == 0) size = 2.5;
 				if (kind == 1) size = 1.5;
-				if (!ClearBox(world, point, size, flagOnly)) blocked++;
-				if (kind == 1 && !AROR_DefenceLayout.ClearMGArc(world, point, facing)) badArcs++;
+				if (!ClearBox(world, point, size, flagOnly))
+				{
+					blocked++;
+					if (reportFailures)
+						Print(string.Format("[AROR DEFENCE DETAIL] id=%1 kind=%2 ordinal=%3 point=%4 blocked spawn pad", location.GetId(), kind, ordinal, point), LogLevel.WARNING);
+				}
+				if (kind == 1 && !AROR_DefenceLayout.ClearMGArc(world, point, facing))
+				{
+					badArcs++;
+					if (reportFailures)
+						Print(string.Format("[AROR DEFENCE DETAIL] id=%1 kind=1 ordinal=%2 point=%3 facing=%4 blocked gun arc", location.GetId(), ordinal, point, facing), LogLevel.WARNING);
+				}
 			}
 		}
 		return blocked == 0 && badArcs == 0;
@@ -127,7 +151,7 @@ class AROR_AuditDefenceSitesPlugin : AROR_GroundCampaignFlagsPlugin
 
 	//! Both full-island and targeted runs use the dense grid and the same configured
 	//! physical footprint checks. Suggestions are evidence, not automatic edits.
-	protected void RunSiteAudit(string targetId)
+	protected void RunSiteAudit(string targetId, bool searchAlternatives = true)
 	{
 		WorldEditor editor = Workbench.GetModule(WorldEditor);
 		if (!editor) return;
@@ -163,7 +187,10 @@ class AROR_AuditDefenceSitesPlugin : AROR_GroundCampaignFlagsPlugin
 		array<float> chosenYaws = {};
 		int expected = 23;
 		if (!targetId.IsEmpty()) expected = 1;
-		Print(string.Format("[AROR DEFENCE AUDIT] begin reviewed=%1 grid=25 radius=per-site orientations=8; read-only, this may take several minutes", expected), LogLevel.NORMAL);
+		if (searchAlternatives)
+			Print(string.Format("[AROR DEFENCE AUDIT] begin reviewed=%1 grid=25 radius=per-site orientations=8; read-only, this may take several minutes", expected), LogLevel.NORMAL);
+		else
+			Print(string.Format("[AROR DEFENCE AUDIT] begin reviewed=%1 mode=current-only; read-only, checking the actual saved placements without relocation search", expected), LogLevel.NORMAL);
 		BaseWorld world = api.GetWorld();
 		foreach (AROR_LocationComponent site : locations)
 		{
@@ -194,6 +221,7 @@ class AROR_AuditDefenceSitesPlugin : AROR_GroundCampaignFlagsPlugin
 			if (rings * 25 < searchRadius) rings++;
 			int side = rings * 2 + 1;
 			int candidateCount = side * side; // Complete square grid, radially filtered below.
+			if (!searchAlternatives) candidateCount = 1;
 			Print(string.Format("[AROR DEFENCE AUDIT] id=%1 searchRadius=%2", site.GetId(), searchRadius), LogLevel.NORMAL);
 			for (int candidate = 0; candidate < candidateCount && !found; candidate++)
 			{
@@ -202,12 +230,15 @@ class AROR_AuditDefenceSitesPlugin : AROR_GroundCampaignFlagsPlugin
 				vector proposed = center + offset;
 				if (garrison && !garrison.IsDefenceCenterAllowed(proposed, half)) continue;
 				// These are proposed NEW location centres, so the old capture circle is not a search boundary.
-				for (int orientation = 0; orientation < 8; orientation++)
+				int orientations = 8;
+				if (!searchAlternatives) orientations = 1;
+				for (int orientation = 0; orientation < orientations; orientation++)
 				{
 					float proposedYaw = angles[0] + orientation * 45;
 					float relief;
 					int blocked, badArcs;
-					bool clear = CheckSite(world, root, flag, site, proposed, half, proposedYaw, relief, blocked, badArcs);
+					bool reportFailures = candidate == 0 && orientation == 0;
+					bool clear = CheckSite(world, root, flag, site, proposed, half, proposedYaw, relief, blocked, badArcs, reportFailures);
 					bool overlap = OverlapsOtherSite(proposed, half, site, locations, proposedYaw);
 					if (clear && !overlap)
 					{
@@ -234,7 +265,13 @@ class AROR_AuditDefenceSitesPlugin : AROR_GroundCampaignFlagsPlugin
 					break;
 				}
 			}
-			if (!found) Print(string.Format("[AROR DEFENCE AUDIT] id=%1 needs an authored clearing or smaller tailored compound; no suitable bounded candidate", site.GetId()), LogLevel.WARNING);
+			if (!found)
+			{
+				if (searchAlternatives)
+					Print(string.Format("[AROR DEFENCE AUDIT] id=%1 needs an authored clearing or smaller tailored compound; no suitable bounded candidate", site.GetId()), LogLevel.WARNING);
+				else
+					Print(string.Format("[AROR DEFENCE AUDIT] id=%1 current footprint needs correction; no relocation search requested", site.GetId()), LogLevel.WARNING);
+			}
 		}
 		Print(string.Format("[AROR DEFENCE AUDIT] current suitable=%1 suggested relocations=%2 reviewed=%3. No files/entities changed; driving, navmesh and actual model joints remain Play checks.", accepted, suggestions, reviewed), LogLevel.NORMAL);
 	}

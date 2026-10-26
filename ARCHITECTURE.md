@@ -105,12 +105,13 @@ Purpose: defend flag-capturable military installations with a saved roster whose
 
 - `AROR_GarrisonComponent` (on military location templates) owns the roster, losses and placement results; `AROR_GarrisonManagerComponent` (game mode) activates and retires defenders by player proximity and paces spawning. `AROR_GarrisonFaction` binds each role to the infantry, crew and vehicle assets it uses.
 - Defence layouts (`AROR_DefenceLayout`, `AROR_DefencePositionComponent` and the `AROR_Defence_*` compositions) define where defenders and vehicles stand. Editor tools audit and ground these sites.
+- Garrison catalogues can provide static weapon variants; authored recipes can override their count. Logical variants and losses use the existing roster save data. Optional equipped compositions carry native weapon, ammunition, equipment and medical containers for Resistance looting; the base-game inventory owns their items and replication, while `AROR_OutpostSupplyComponent` reports observed contents without restocking. Native stock/depletion and inventory save/load acceptance remain pending.
 - Server/client: roster, spawning and saves are server-owned; clients see the replicated defenders. A replicated gate stops capture while a defence is still deploying.
 - Saved: the roster (what remains and what was lost) per location, through Persistence. Defenders are not refilled when players leave and return.
 - Depends on: Locations, Location Capture, Factions, Operations (damage reporting).
 - Extension points: scenario and editor settings (activation range, capacity, defence levels, layouts); role asset catalogues can be replaced for extender factions.
 - Planned: preset-driven units and vehicles (see Factions), restoring exact inventory and live positions, replenishment.
-- Feature detail: `docs/GARRISONS_AND_REGIONAL_SUPPORT.md`, `docs/MILITARY_DEFENCE_PRESETS.md`.
+- Feature detail: `docs/GARRISONS_AND_REGIONAL_SUPPORT.md`, `docs/MILITARY_DEFENCE_PRESETS.md`, `docs/FORTIFIED_OUTPOSTS.md`.
 
 ### Game Flow — In progress
 Purpose: the lifecycle from world boot to play, separating **scenario data** (from the world, never saved) from **playthrough data** (from a save).
