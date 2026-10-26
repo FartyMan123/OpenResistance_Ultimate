@@ -2,6 +2,16 @@
 modded class SCR_ArsenalComponent
 {
 	//------------------------------------------------------------------------------------------------
+	//! Resistance stock is the budget — never gate the HQ arsenal on vanilla supplies.
+	override bool IsArsenalUsingSupplies()
+	{
+		if (AROR_ResistanceArsenalComponent.IsResistanceArsenal(GetOwner()))
+			return false;
+
+		return super.IsArsenalUsingSupplies();
+	}
+
+	//------------------------------------------------------------------------------------------------
 	override bool GetAvailablePrefabs(out notnull array<ResourceName> availablePrefabs)
 	{
 		if (!AROR_ResistanceArsenalComponent.IsResistanceArsenal(GetOwner()))

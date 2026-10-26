@@ -1,57 +1,9 @@
-GenericEntity : "{EF070B8345288C8B}Prefabs/Props/Military/MilitaryCrates/CrateStack_01/Dst/CrateStack_01_Dst_2_base.et" {
- ID "F0DBA538AC2A0552"
+GenericEntity : "{54986385A6AF77B2}Prefabs/Props/Military/Arsenal/ArsenalBoxes/ArsenalBox_Base.et" {
+ ID "56F2C6D6F7C6DAFA"
  components {
   Persistence "{6AB47ED0C4F89A21}" {
   }
   AROR_ResistanceArsenalComponent "{6AB47ECFA824AB69}" {
   }
-  SCR_ArsenalComponent "{6AB47ECDE013C37F}" {
-   m_eSupportedArsenalItemTypes 8388606
-   m_bAllowGetFactionFromParent 1
-  }
-  SCR_DestructionMultiPhaseComponent "{5624A88D86EFE8BA}" {
-   EnableDamage 0
-  }
-  SCR_ResourceComponent "{6AB47ECDCD26AD51}" {
-   m_aDisabledResourceTypes {
-    SUPPLIES ELECTRICITY
-   }
-  }
-  SCR_UniversalInventoryStorageComponent "{6AB47ECF6B59B4A9}" {
-  }
-  SCR_ArsenalInventoryStorageManagerComponent "{6AB47ECDED73CD7C}" {
-  }
-  InventoryItemComponent "{6AB47ED1A01B0001}" {
-   Attributes ItemAttributeCollection "{6AB47ED1A01B0002}" {
-    ItemDisplayName UIInfo "{6AB47ED1A01B0003}" {
-     Name "Arsenal"
-    }
-   }
-  }
-  ActionsManagerComponent "{6AB47ECD500FD80A}" {
-   ActionContexts {
-    UserActionContext "{6AB47ED1A01B0004}" {
-     UIInfo SCR_ActionContextUIInfo "{6AB47ED1A01B0005}" {
-      Name "Arsenal"
-     }
-     ContextName "arsenal"
-     Position PointInfo "{6AB47ED1A01B0006}" {
-      Offset 0 0.75 0
-     }
-     Radius 1.5
-    }
-   }
-   additionalActions {
-    SCR_OpenStorageAction "{6AB47ED1A01B0007}" {
-     ParentContextList {
-      "arsenal"
-     }
-     UIInfo SCR_ActionUIInfo "{6AB47ED1A01B0008}" {
-      Name "Open Arsenal"
-     }
-    }
-   }
-  }
  }
- coords 5438.903 188.161 7136.816
 }
