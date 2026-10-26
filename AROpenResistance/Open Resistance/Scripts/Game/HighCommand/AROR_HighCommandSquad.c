@@ -27,6 +27,7 @@ class AROR_HighCommandSquad
 	vector m_vTarget;	//!< Order position: the location centre, Move point or Hold position
 
 	bool m_bFormed;		//!< Members have spawned at least once
+	bool m_bAssaulting;	//!< Attack order: reached the target and attacking (before that it is moving there)
 	int m_iAlive;
 	vector m_vPosition;
 	ref array<IEntity> m_aAffiliated = {};	//!< Members already given the Resistance faction

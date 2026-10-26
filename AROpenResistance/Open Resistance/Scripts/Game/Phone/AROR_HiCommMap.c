@@ -522,6 +522,8 @@ class AROR_HiCommTerrain
 //!   nears the margin, or when the view settles. Zoomed out it uses the coarse terrain (fewer shapes).
 //! - overlay: everything that moves (locations, squads, orders, selection); rebuilt every frame
 //! Zoom is smooth: zoom requests set a target that the view eases towards each frame.
+//! Game map mode: while a SCR_MapEntity is set (the real game map, phosphor-skinned and opened in HICOMM), view,
+//! zoom and pan delegate to it and no base layer is drawn; the overlay draws over the game map unchanged.
 class AROR_HiCommMap
 {
 	static const float MIN_ZOOM = 1;
@@ -535,6 +537,9 @@ class AROR_HiCommMap
 
 	//! How quickly the zoom eases towards its target (per second)
 	protected static const float ZOOM_SMOOTHING = 12;
+
+	//! Game map zoom/pan animation length (seconds)
+	protected static const float GAME_MAP_ZOOM_SECONDS = 0.2;
 
 	//! The fine terrain is used once its cells are at least this many pixels wide
 	protected static const float FINE_CELL_PIXELS = 6;
@@ -593,6 +598,9 @@ class AROR_HiCommMap
 	protected float m_fClipWidth;
 	protected float m_fClipHeight;
 
+	//! The real game map, once open and initialised (see SetGameMap)
+	protected SCR_MapEntity m_GameMap;
+
 	protected ref array<ref CanvasWidgetCommand> m_aBase = {};
 	protected ref array<ref CanvasWidgetCommand> m_aOverlay = {};
 
@@ -601,6 +609,30 @@ class AROR_HiCommMap
 	{
 		m_wBase = base;
 		m_wOverlay = overlay;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Follow the real game map (null returns to the procedural map)
+	void SetGameMap(SCR_MapEntity gameMap)
+	{
+		m_GameMap = gameMap;
+		m_bStaticDirty = true;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	bool UsesGameMap()
+	{
+		return m_GameMap && m_GameMap.IsOpen() && m_GameMap.GetMinZoom() > 0;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Zoom levels are relative: 1 shows the whole map
+	float GetMaxZoomLevel()
+	{
+		if (UsesGameMap())
+			return Math.Max(m_GameMap.GetMaxZoom() / m_GameMap.GetMinZoom(), 1);
+
+		return MAX_ZOOM;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -629,12 +661,18 @@ class AROR_HiCommMap
 	//------------------------------------------------------------------------------------------------
 	float GetZoom()
 	{
+		if (UsesGameMap())
+			return m_GameMap.GetCurrentZoom() / m_GameMap.GetMinZoom();
+
 		return m_fZoom;
 	}
 
 	//------------------------------------------------------------------------------------------------
 	float GetTargetZoom()
 	{
+		if (UsesGameMap())
+			return m_GameMap.GetTargetZoomPPU() / m_GameMap.GetMinZoom();
+
 		return m_fTargetZoom;
 	}
 
@@ -654,6 +692,9 @@ class AROR_HiCommMap
 	//! At zoom 1 the whole map area fits the shorter side of the view
 	float PixelsPerMetre()
 	{
+		if (UsesGameMap())
+			return m_GameMap.GetCurrentZoom();
+
 		return PixelsPerMetreAt(m_fZoom);
 	}
 
@@ -667,6 +708,13 @@ class AROR_HiCommMap
 	//------------------------------------------------------------------------------------------------
 	vector WorldToScreen(vector position)
 	{
+		if (UsesGameMap())
+		{
+			int screenX, screenY;
+			m_GameMap.WorldToScreen(position[0], position[2], screenX, screenY, true);
+			return Vector(screenX, screenY, 0);
+		}
+
 		float scale = PixelsPerMetre();
 		return Vector(m_fWidth * 0.5 + (position[0] - m_vCentre[0]) * scale, m_fHeight * 0.5 - (position[2] - m_vCentre[2]) * scale, 0);
 	}
@@ -674,6 +722,15 @@ class AROR_HiCommMap
 	//------------------------------------------------------------------------------------------------
 	vector ScreenToWorld(float x, float y)
 	{
+		if (UsesGameMap())
+		{
+			int screenX = x;
+			int screenY = y;
+			float worldX, worldZ;
+			m_GameMap.ScreenToWorld(screenX, screenY, worldX, worldZ);
+			return Vector(worldX, 0, worldZ);
+		}
+
 		float scale = PixelsPerMetre();
 		return Vector(m_vCentre[0] + (x - m_fWidth * 0.5) / scale, 0, m_vCentre[2] - (y - m_fHeight * 0.5) / scale);
 	}
@@ -682,6 +739,12 @@ class AROR_HiCommMap
 	//! Smooth zoom by factor, keeping the world point under (x, y) where it is
 	void ZoomAt(float factor, float x, float y)
 	{
+		if (UsesGameMap())
+		{
+			GameMapZoomAt(m_GameMap.GetTargetZoomPPU() * factor, x, y);
+			return;
+		}
+
 		SetTargetZoom(m_fTargetZoom * factor, x, y);
 	}
 
@@ -689,14 +752,36 @@ class AROR_HiCommMap
 	//! Smooth zoom to an absolute level (the slider), around (x, y)
 	void SetTargetZoom(float zoom, float x, float y)
 	{
+		if (UsesGameMap())
+		{
+			GameMapZoomAt(zoom * m_GameMap.GetMinZoom(), x, y);
+			return;
+		}
+
 		m_fTargetZoom = Math.Clamp(zoom, MIN_ZOOM, MAX_ZOOM);
 		m_vZoomAnchor = Vector(x, y, 0);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Smooth game-map zoom to a pixels-per-metre value, keeping the world point under (x, y) where it is
+	protected void GameMapZoomAt(float targetPPU, float x, float y)
+	{
+		targetPPU = Math.Clamp(targetPPU, m_GameMap.GetMinZoom(), m_GameMap.GetMaxZoom());
+		float currentPPU = m_GameMap.GetCurrentZoom();
+		vector anchor = ScreenToWorld(x, y);
+		vector centre = ScreenToWorld(m_fWidth * 0.5, m_fHeight * 0.5);
+		vector newCentre = anchor + (centre - anchor) * (currentPPU / targetPPU);
+		m_GameMap.ZoomPanSmooth(targetPPU, newCentre[0], newCentre[2], GAME_MAP_ZOOM_SECONDS);
 	}
 
 	//------------------------------------------------------------------------------------------------
 	//! Eases the zoom towards its target; call once per frame
 	void Animate(float deltaTime)
 	{
+		// The game map animates its own zoom
+		if (UsesGameMap())
+			return;
+
 		if (Math.AbsFloat(m_fTargetZoom - m_fZoom) < m_fZoom * 0.001)
 		{
 			if (m_fZoom != m_fTargetZoom)
@@ -725,6 +810,19 @@ class AROR_HiCommMap
 	//! Moves the view by screen pixels (drag direction: the map follows the cursor). The base layer just slides.
 	void Pan(float dx, float dy)
 	{
+		if (UsesGameMap())
+		{
+			// The game map pans in unscaled pixels
+			WorkspaceWidget workspace = GetGame().GetWorkspace();
+			if (dx != 0)
+				m_GameMap.Pan(EMapPanMode.HORIZONTAL, workspace.DPIUnscale(dx));
+
+			if (dy != 0)
+				m_GameMap.Pan(EMapPanMode.VERTICAL, workspace.DPIUnscale(dy));
+
+			return;
+		}
+
 		float scale = PixelsPerMetre();
 		m_vCentre[0] = m_vCentre[0] - dx / scale;
 		m_vCentre[2] = m_vCentre[2] + dy / scale;
@@ -735,6 +833,12 @@ class AROR_HiCommMap
 	//------------------------------------------------------------------------------------------------
 	void CentreOn(vector position)
 	{
+		if (UsesGameMap())
+		{
+			m_GameMap.ZoomPanSmooth(m_GameMap.GetTargetZoomPPU(), position[0], position[2], GAME_MAP_ZOOM_SECONDS);
+			return;
+		}
+
 		m_vCentre = Vector(position[0], 0, position[2]);
 		ClampCentre();
 		m_iLastViewChange = System.GetTickCount();
@@ -744,6 +848,12 @@ class AROR_HiCommMap
 	//! Whole map, zooming out smoothly around the centre
 	void Fit()
 	{
+		if (UsesGameMap())
+		{
+			m_GameMap.ZoomPanSmooth(m_GameMap.GetMinZoom(), (m_vMin[0] + m_vMax[0]) * 0.5, (m_vMin[2] + m_vMax[2]) * 0.5, GAME_MAP_ZOOM_SECONDS);
+			return;
+		}
+
 		m_vCentre = Vector((m_vMin[0] + m_vMax[0]) * 0.5, 0, (m_vMin[2] + m_vMax[2]) * 0.5);
 		SetTargetZoom(MIN_ZOOM, m_fWidth * 0.5, m_fHeight * 0.5);
 		m_iLastViewChange = System.GetTickCount();
@@ -804,6 +914,10 @@ class AROR_HiCommMap
 	//! Builds terrain in the background and redraws the base layer when needed (see class comment)
 	void UpdateBase()
 	{
+		// The game map draws the terrain itself
+		if (UsesGameMap())
+			return;
+
 		AROR_HiCommTerrain coarse = AROR_HiCommTerrain.Get(m_vMin, m_vMax, false);
 		AROR_HiCommTerrain fine = AROR_HiCommTerrain.Get(m_vMin, m_vMax, true);
 

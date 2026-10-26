@@ -137,8 +137,16 @@ class AROR_HiCommApp
 	//! Squads closer than this on screen (pixels) are drawn as one stack
 	protected static const float SQUAD_CLUSTER_PIXELS = 22;
 
+	//! Phosphor-skinned game map: our map config (colour overrides on the base map) and the tint multiplied over
+	//! everything the map draws. The tint darkens the map's land, whose colour the configs do not expose.
+	protected static const ResourceName GAME_MAP_CONFIG = "{6AB4E0F1A2C0A001}Configs/Map/AROR_HiCommMap.conf";
+	protected static const float GAME_MAP_TINT_R = 0.42;
+	protected static const float GAME_MAP_TINT_G = 0.62;
+	protected static const float GAME_MAP_TINT_B = 0.5;
+
 	//! Map: pick radius and drag threshold (pixels), order ping length (ms), keyboard pan (px/s), wheel zoom step
 	protected static const float PICK_RADIUS = 18;
+	protected static const float ORDER_PICK_RADIUS = 60;	//!< Attack/defend clicks snap to a location this close (pixels)
 	protected static const float DRAG_THRESHOLD = 6;
 	protected static const int PING_MS = 900;
 	protected static const float PAN_SPEED = 700;
@@ -153,6 +161,9 @@ class AROR_HiCommApp
 	protected CanvasWidget m_wMapCanvas;
 	protected CanvasWidget m_wMapOverlay;
 	protected Widget m_wMapClip;	//!< Clipping frame the base canvas slides in
+	protected Widget m_wGameMapRoot;	//!< Holds the real game map (base-game Map.layout)
+	protected bool m_bUseGameMap;	//!< Terrain view (game map, experimental: its phosphor skin does not apply yet) or tactical view
+	protected bool m_bGameMapOpen;
 	protected Widget m_wMapButton;
 	protected EditBoxWidget m_wNameEdit;
 
@@ -227,7 +238,7 @@ class AROR_HiCommApp
 	protected int m_iLoginStart;
 	protected ref AROR_HiCommGlobe m_Globe = new AROR_HiCommGlobe();
 	protected ref array<int> m_aSelected = {};	//!< Selected squad IDs
-	protected AROR_EHighCommandOrder m_eSelectedOrder = AROR_EHighCommandOrder.ATTACK;
+	protected AROR_EHighCommandOrder m_eSelectedOrder = AROR_EHighCommandOrder.MOVE;
 	protected string m_sSelectedTarget;
 	protected bool m_bNameEditFilled;
 
@@ -275,6 +286,7 @@ class AROR_HiCommApp
 		m_wBackground = ImageWidget.Cast(phoneRoot.FindAnyWidget("HiCommBackground"));
 		m_wMapCanvas = CanvasWidget.Cast(phoneRoot.FindAnyWidget("HiCommMapCanvas"));
 		m_wMapClip = phoneRoot.FindAnyWidget("HiCommMapClip");
+		m_wGameMapRoot = phoneRoot.FindAnyWidget("HiCommGameMap");
 		m_wMapOverlay = CanvasWidget.Cast(phoneRoot.FindAnyWidget("HiCommMapOverlay"));
 		m_wMapButton = phoneRoot.FindAnyWidget("HiCommMapButton");
 		m_wNameEdit = EditBoxWidget.Cast(phoneRoot.FindAnyWidget("HiCommNameEdit"));
@@ -357,6 +369,9 @@ class AROR_HiCommApp
 	//------------------------------------------------------------------------------------------------
 	void SetVisible(bool visible, float opacity)
 	{
+		if (!visible)
+			CloseGameMap();
+
 		m_wRoot.SetVisible(visible);
 		m_wRoot.SetOpacity(opacity);
 	}
@@ -407,7 +422,14 @@ class AROR_HiCommApp
 				DrawUnits(highCommand);
 		}
 
-		m_wMapClip.SetVisible(showMap);
+		if (!showMap)
+			CloseGameMap();
+
+		bool gameMapShown = showMap && m_Map.UsesGameMap();
+		if (m_wGameMapRoot)
+			m_wGameMapRoot.SetVisible(showMap && m_bGameMapOpen);
+
+		m_wMapClip.SetVisible(showMap && !gameMapShown);
 		m_wMapCanvas.SetVisible(showMap);
 		m_wMapOverlay.SetVisible(showMap || m_eScreen == AROR_EHiCommScreen.LOGIN);
 		m_wMapButton.SetVisible(showMap);
@@ -565,7 +587,6 @@ class AROR_HiCommApp
 		}
 
 		TextRight(1675, 24, 22, "CR " + funds + "    MP " + manpower, m_Amber);
-		TextRight(1675, 56, 20, GetWarSummary(), m_GreenDim);
 		Panel(30, 92, 1645, 2, m_Border);
 	}
 
@@ -810,6 +831,17 @@ class AROR_HiCommApp
 		m_Map.UpdateBase();
 
 		// The base layer is drawn with a margin and slides inside the clipping frame as the view pans
+		// Terrain view: the real game map under the overlay (the procedural map shows until it is ready)
+		if (m_bUseGameMap && m_wGameMapRoot)
+		{
+			Place(m_wGameMapRoot, m_fMapX * m_fScale, m_fMapY * m_fScale, m_fMapWidth * m_fScale, m_fMapHeight * m_fScale);
+			OpenGameMap();
+		}
+		else
+		{
+			CloseGameMap();
+		}
+
 		float baseX, baseY, baseWidth, baseHeight;
 		m_Map.GetBaseRect(baseX, baseY, baseWidth, baseHeight);
 		PlaceRaw(m_wMapCanvas, workspace.DPIUnscale(baseX), workspace.DPIUnscale(baseY), workspace.DPIUnscale(baseWidth), workspace.DPIUnscale(baseHeight));
@@ -861,8 +893,8 @@ class AROR_HiCommApp
 
 		// Zoom slider, on its own small panel below the map buttons
 		m_fSliderX = m_fRightEdge - 34;
-		m_fSliderTop = m_fMapY + PANEL_MARGIN + 64;
-		AddPanelRect(m_fSliderX - 10, m_fSliderTop - 14, 48, SLIDER_HEIGHT + 28);
+		m_fSliderTop = m_fMapY + PANEL_MARGIN + 110;
+		AddPanelRect(m_fSliderX - 10, m_fSliderTop - 56, 48, SLIDER_HEIGHT + 112);
 
 		// The legend sits right of the order of battle when it reaches down that far
 		m_fLegendLeft = m_fMapX + PANEL_MARGIN;
@@ -947,8 +979,16 @@ class AROR_HiCommApp
 			Text(left + 12, top + 54, inner, 48, 15, "No squads yet. Raise one in Unit Management.", m_GreenDim);
 
 		float half = (inner - 8) * 0.5;
-		Button(left + 12, m_fOobBottom - 88, half, 36, "ALL MINE", "selall", STYLE_NORMAL, 14);
-		Button(left + 20 + half, m_fOobBottom - 88, half, 36, "NONE", "selnone", STYLE_NORMAL, 14);
+		int allStyle = STYLE_NORMAL;
+		if (AllOwnSelected(highCommand, squads, localId))
+			allStyle = STYLE_SELECTED;
+
+		int noneStyle = STYLE_NORMAL;
+		if (m_aSelected.IsEmpty())
+			noneStyle = STYLE_SELECTED;
+
+		Button(left + 12, m_fOobBottom - 88, half, 36, "ALL MINE", "selall", allStyle, 14);
+		Button(left + 20 + half, m_fOobBottom - 88, half, 36, "NONE", "selnone", noneStyle, 14);
 
 		int held, total;
 		CountSites(held, total);
@@ -1012,7 +1052,11 @@ class AROR_HiCommApp
 		OrderButton(x, top + 156, half, "MOVE", AROR_EHighCommandOrder.MOVE);
 		OrderButton(x + half + 10, top + 156, half, "ATTACK", AROR_EHighCommandOrder.ATTACK);
 		OrderButton(x, top + 204, half, "DEFEND", AROR_EHighCommandOrder.DEFEND);
-		Button(x + half + 10, top + 204, half, 42, "HOLD", "hold", STYLE_NORMAL, 18);
+		int holdStyle = STYLE_NORMAL;
+		if (AllSelectedHolding(highCommand, localId))
+			holdStyle = STYLE_SELECTED;
+
+		Button(x + half + 10, top + 204, half, 42, "HOLD", "hold", holdStyle, 18);
 
 		// Target: what the chosen order will act on
 		string targetText;
@@ -1026,7 +1070,7 @@ class AROR_HiCommApp
 			}
 			else
 			{
-				Text(x, top + 262, width, 56, 16, "Left-click open ground, or right-click it to move now.", m_GreenDim);
+				Text(x, top + 262, width, 56, 16, "Right-click to move there now, or left-click to plan it.", m_GreenDim);
 			}
 		}
 		else
@@ -1040,7 +1084,7 @@ class AROR_HiCommApp
 			}
 			else
 			{
-				Text(x, top + 262, width, 56, 16, "Click a location, or right-click it to order now.", m_GreenDim);
+				Text(x, top + 262, width, 56, 16, "Right-click near a location to order now, or left-click to plan it.", m_GreenDim);
 			}
 		}
 
@@ -1095,6 +1139,74 @@ class AROR_HiCommApp
 	}
 
 	//------------------------------------------------------------------------------------------------
+	// Map: the real game map (terrain view)
+	//------------------------------------------------------------------------------------------------
+	//! Opens the base game's map inside HICOMM with our phosphor config. The view switches over once the map has
+	//! initialised (its open event); until then the procedural map stays visible.
+	protected void OpenGameMap()
+	{
+		if (m_bGameMapOpen)
+			return;
+
+		SCR_MapEntity gameMap = SCR_MapEntity.GetMapInstance();
+		if (!gameMap || gameMap.IsOpen())
+			return;
+
+		// Our normal-map location icons would otherwise attach to this map too
+		AROR_LocationMapIconsComponent.SetSuppressed(true);
+		MapConfiguration config = gameMap.SetupMapConfig(EMapEntityMode.PLAIN, GAME_MAP_CONFIG, m_wGameMapRoot);
+		if (!config)
+		{
+			AROR_LocationMapIconsComponent.SetSuppressed(false);
+			Print("[AROR] HICOMM could not set up the game map config; using the tactical map", LogLevel.WARNING);
+			m_bUseGameMap = false;
+			return;
+		}
+
+		SCR_MapEntity.GetOnMapOpen().Insert(OnGameMapOpened);
+		gameMap.OpenMap(config);
+		m_bGameMapOpen = true;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void OnGameMapOpened(MapConfiguration config)
+	{
+		SCR_MapEntity.GetOnMapOpen().Remove(OnGameMapOpened);
+		SCR_MapEntity gameMap = SCR_MapEntity.GetMapInstance();
+		if (!m_bGameMapOpen || !gameMap)
+			return;
+
+		if (gameMap.GetMapWidget())
+			gameMap.GetMapWidget().SetColor(new Color(GAME_MAP_TINT_R, GAME_MAP_TINT_G, GAME_MAP_TINT_B, 1));
+
+		gameMap.ZoomOut();
+		m_Map.SetGameMap(gameMap);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void CloseGameMap()
+	{
+		if (!m_bGameMapOpen)
+			return;
+
+		m_bGameMapOpen = false;
+		SCR_MapEntity.GetOnMapOpen().Remove(OnGameMapOpened);
+		m_Map.SetGameMap(null);
+		SCR_MapEntity gameMap = SCR_MapEntity.GetMapInstance();
+		if (gameMap && gameMap.IsOpen())
+			gameMap.CloseMap();
+
+		AROR_LocationMapIconsComponent.SetSuppressed(false);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! The phone is closing: release the game map
+	void Shutdown()
+	{
+		CloseGameMap();
+	}
+
+	//------------------------------------------------------------------------------------------------
 	// Map: input
 	//------------------------------------------------------------------------------------------------
 	//! Mouse drag (pan / box select), keyboard pan and zoom, hover
@@ -1113,7 +1225,7 @@ class AROR_HiCommApp
 		{
 			float appY = m_fMapY + GetGame().GetWorkspace().DPIUnscale(cursor[1]) / m_fScale;
 			float position = 1 - Math.Clamp((appY - m_fSliderTop) / SLIDER_HEIGHT, 0, 1);
-			float zoom = AROR_HiCommMap.MIN_ZOOM * Math.Pow(AROR_HiCommMap.MAX_ZOOM / AROR_HiCommMap.MIN_ZOOM, position);
+			float zoom = Math.Pow(m_Map.GetMaxZoomLevel(), position);
 			m_Map.SetTargetZoom(zoom, m_Map.GetWidth() * 0.5, m_Map.GetHeight() * 0.5);
 		}
 
@@ -1277,51 +1389,88 @@ class AROR_HiCommApp
 			return;
 		}
 
-		string locationId = PickLocation(point);
-		if (!locationId.IsEmpty())
-		{
-			SetTarget(locationId);
+		// With squads selected, a left click plans the chosen order (EXECUTE sends it)
+		if (m_aSelected.IsEmpty())
 			return;
-		}
 
-		if (m_eSelectedOrder == AROR_EHighCommandOrder.MOVE && !m_aSelected.IsEmpty())
+		if (m_eSelectedOrder == AROR_EHighCommandOrder.MOVE)
 		{
+			// The exact point, so squads can be sent up to a building or a treeline, not only to locations
 			m_vMoveTarget = m_Map.ScreenToWorld(point[0], point[1]);
 			m_bHasMoveTarget = true;
 			return;
 		}
 
-		if (!additive)
-			m_aSelected.Clear();
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! RTS quick orders for the selection: right-click a location to attack it (enemy) or defend it (ours),
-	//! right-click open ground to move there
-	protected void MapRightClick(vector point)
-	{
-		string locationId = PickLocation(point);
-		AROR_LocationComponent target = FindLocation(locationId);
-		if (m_aSelected.IsEmpty())
+		string locationId = PickLocationFor(point, m_eSelectedOrder);
+		if (locationId.IsEmpty())
 		{
-			if (target)
-				SetTarget(locationId);
-
+			AROR_NotificationManagerComponent.ShowHint(NoTargetHint(m_eSelectedOrder));
 			return;
 		}
 
-		if (!target)
+		SetTarget(locationId);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Right click sends the chosen order at once: MOVE to the exact point, ATTACK the nearest enemy-held location,
+	//! DEFEND the nearest Resistance-held one. It never silently turns into a different order.
+	protected void MapRightClick(vector point)
+	{
+		if (m_aSelected.IsEmpty())
+			return;
+
+		if (m_eSelectedOrder == AROR_EHighCommandOrder.MOVE)
 		{
 			IssueOrder(AROR_EHighCommandOrder.MOVE, string.Empty, m_Map.ScreenToWorld(point[0], point[1]));
 			return;
 		}
 
-		AROR_EHighCommandOrder order = AROR_EHighCommandOrder.ATTACK;
-		if (target.GetControllingRole() == AROR_EFactionRole.RESISTANCE)
-			order = AROR_EHighCommandOrder.DEFEND;
+		string locationId = PickLocationFor(point, m_eSelectedOrder);
+		AROR_LocationComponent target = FindLocation(locationId);
+		if (!target)
+		{
+			AROR_NotificationManagerComponent.ShowHint(NoTargetHint(m_eSelectedOrder));
+			return;
+		}
 
 		SetTarget(locationId);
-		IssueOrder(order, locationId, target.GetCenter());
+		IssueOrder(m_eSelectedOrder, locationId, target.GetCenter());
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Nearest location the order can target (attack: not ours; defend: ours), within a generous radius
+	protected string PickLocationFor(vector point, AROR_EHighCommandOrder order)
+	{
+		float best = GetGame().GetWorkspace().DPIScale(ORDER_PICK_RADIUS);
+		string picked;
+		foreach (int i, vector locationPoint : m_aHitLocationPositions)
+		{
+			AROR_LocationComponent location = FindLocation(m_aHitLocationIds[i]);
+			if (!location)
+				continue;
+
+			string problem = AROR_HighCommandComponent.GetOrderTargetProblem(order, location);
+			if (!problem.IsEmpty())
+				continue;
+
+			float distance = vector.Distance(point, locationPoint);
+			if (distance < best)
+			{
+				best = distance;
+				picked = m_aHitLocationIds[i];
+			}
+		}
+
+		return picked;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static string NoTargetHint(AROR_EHighCommandOrder order)
+	{
+		if (order == AROR_EHighCommandOrder.DEFEND)
+			return "No Resistance-held location there. Click closer to one, or choose MOVE.";
+
+		return "No enemy-held location there. Click closer to one, or choose MOVE.";
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -1388,16 +1537,11 @@ class AROR_HiCommApp
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Target, with the order that fits it: attack enemy ground, defend our own
+	//! Location the planned attack/defend order will act on
 	protected void SetTarget(string locationId)
 	{
 		m_sSelectedTarget = locationId;
 		m_bHasMoveTarget = false;
-		AROR_LocationComponent target = FindLocation(locationId);
-		if (target && target.GetControllingRole() == AROR_EFactionRole.RESISTANCE)
-			m_eSelectedOrder = AROR_EHighCommandOrder.DEFEND;
-		else
-			m_eSelectedOrder = AROR_EHighCommandOrder.ATTACK;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -1516,6 +1660,45 @@ class AROR_HiCommApp
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Every selected squad under our command is standing by (HOLD shows as active)
+	protected bool AllSelectedHolding(AROR_HighCommandComponent highCommand, int localId)
+	{
+		int holding;
+		foreach (int squadId : m_aSelected)
+		{
+			AROR_HighCommandSquadInfo squad = highCommand.GetSquadInfo(squadId);
+			if (!squad || !highCommand.CanCommand(localId, squad.m_iOwnerId))
+				continue;
+
+			if (squad.m_eOrder != AROR_EHighCommandOrder.HOLD)
+				return false;
+
+			holding++;
+		}
+
+		return holding > 0;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! The selection is exactly our own squads (ALL MINE shows as active)
+	protected bool AllOwnSelected(AROR_HighCommandComponent highCommand, array<AROR_HighCommandSquadInfo> squads, int localId)
+	{
+		int own;
+		foreach (AROR_HighCommandSquadInfo squad : squads)
+		{
+			if (!highCommand.CanCommand(localId, squad.m_iOwnerId))
+				continue;
+
+			if (!m_aSelected.Contains(squad.m_iId))
+				return false;
+
+			own++;
+		}
+
+		return own > 0 && own == m_aSelected.Count();
+	}
+
+	//------------------------------------------------------------------------------------------------
 	protected static bool IsShiftDown()
 	{
 		return Debug.KeyState(KeyCode.KC_LSHIFT) || Debug.KeyState(KeyCode.KC_RSHIFT);
@@ -1556,7 +1739,9 @@ class AROR_HiCommApp
 			m_Map.DrawLine(Vector(m_vCursor[0], 0, 0), Vector(m_vCursor[0], height, 0), crosshair, 1);
 		}
 
-		DrawGridLabels(width, height);
+		// The game map draws its own grid and grid labels
+		if (!m_Map.UsesGameMap())
+			DrawGridLabels(width, height);
 		DrawLocations(highCommand, markerScale, zoom, width, height);
 		DrawSquads(highCommand, squads, localId, markerScale, zoom, unit);
 
@@ -1629,7 +1814,7 @@ class AROR_HiCommApp
 	//! Slider position (app units) of a zoom level
 	protected float SliderY(float zoom)
 	{
-		float position = Math.Log2(Math.Max(zoom, AROR_HiCommMap.MIN_ZOOM) / AROR_HiCommMap.MIN_ZOOM) / Math.Log2(AROR_HiCommMap.MAX_ZOOM / AROR_HiCommMap.MIN_ZOOM);
+		float position = Math.Log2(Math.Max(zoom, 1)) / Math.Log2(Math.Max(m_Map.GetMaxZoomLevel(), 1.01));
 		return m_fSliderTop + (1 - Math.Clamp(position, 0, 1)) * SLIDER_HEIGHT;
 	}
 
@@ -2040,11 +2225,12 @@ class AROR_HiCommApp
 			right -= 46;
 		}
 
+		Button(m_fSliderX - 6, m_fSliderTop - 50, 40, 36, "+", "zoomin", STYLE_NORMAL, 20);
+		Button(m_fSliderX - 6, m_fSliderTop + SLIDER_HEIGHT + 14, 40, 36, "-", "zoomout", STYLE_NORMAL, 20);
+
 		Button(right - 56, top, 56, 40, "HQ", "hq", STYLE_NORMAL, 15);
 		Button(right - 118, top, 56, 40, "SEL", "centresel", STYLE_NORMAL, 15);
 		Button(right - 180, top, 56, 40, "FIT", "fit", STYLE_NORMAL, 15);
-		Button(right - 226, top, 40, 40, "-", "zoomout", STYLE_NORMAL, 20);
-		Button(right - 272, top, 40, 40, "+", "zoomin", STYLE_NORMAL, 20);
 
 		// Read-out along the bottom strip, right of the legend
 		string readout = string.Format("ZOOM %1X", Math.Round(m_Map.GetZoom() * 10) / 10) + "  //  GRID " + SpacingText(m_Map.GetGridSpacing());
@@ -2206,6 +2392,10 @@ class AROR_HiCommApp
 		else if (verb == "oob")
 		{
 			m_bShowOrderOfBattle = !m_bShowOrderOfBattle;
+		}
+		else if (verb == "mapmode")
+		{
+			m_bUseGameMap = !m_bUseGameMap;
 		}
 		else if (verb == "help")
 		{
@@ -2693,22 +2883,6 @@ class AROR_HiCommApp
 			if (location.GetControllingRole() == AROR_EFactionRole.RESISTANCE)
 				held++;
 		}
-	}
-
-	//------------------------------------------------------------------------------------------------
-	protected string GetWarSummary()
-	{
-		AROR_OperationManagerComponent operations;
-		IEntity gameMode = GetGame().GetGameMode();
-		if (gameMode)
-			operations = AROR_OperationManagerComponent.Cast(gameMode.FindComponent(AROR_OperationManagerComponent));
-
-		if (!operations || !operations.HasWarState())
-			return "OCC W-  //  INV W-";
-
-		string occupiers = string.Format("OCC W%1 AGG %2", operations.GetWarLevel(AROR_EFactionRole.OCCUPIERS), operations.GetAggressionPercent(AROR_EFactionRole.OCCUPIERS)) + "%";
-		string invaders = string.Format("INV W%1 AGG %2", operations.GetWarLevel(AROR_EFactionRole.INVADERS), operations.GetAggressionPercent(AROR_EFactionRole.INVADERS)) + "%";
-		return occupiers + "  //  " + invaders;
 	}
 
 	//------------------------------------------------------------------------------------------------

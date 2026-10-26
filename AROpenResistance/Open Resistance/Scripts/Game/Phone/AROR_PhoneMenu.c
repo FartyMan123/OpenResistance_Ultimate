@@ -334,6 +334,11 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		if (s_Instance == this)
 			s_Instance = null;
 		m_RebIntel = null;
+
+		// HICOMM may have the game map open inside the phone
+		if (m_HiComm)
+			m_HiComm.Shutdown();
+
 		m_HiComm = null;
 
 		super.OnMenuClose();

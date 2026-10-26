@@ -396,12 +396,16 @@ class AROR_HighCommandComponent : SCR_BaseGameModeComponent
 			problem = GetOrderTargetProblem(order, target);
 			if (problem.IsEmpty())
 			{
-				ResourceName prefab = m_sAttackWaypointPrefab;
+				// Attack: move to the site first. The attack waypoint completes at once when no enemy is in sight
+				// yet, which left far-away squads standing still; the assault starts on arrival (see Update_S).
+				ResourceName prefab = m_sMoveWaypointPrefab;
+				float radius = Math.Max(target.GetRadius() * 0.5, 25);
 				if (order == AROR_EHighCommandOrder.DEFEND)
 					prefab = m_sDefendWaypointPrefab;
 
 				position = target.GetCenter();
-				if (!IssueWaypoint_S(squad, prefab, position, Math.Max(target.GetRadius() * 0.5, 25)))
+				squad.m_bAssaulting = false;
+				if (!IssueWaypoint_S(squad, prefab, position, radius))
 					problem = "Order failed: the waypoint prefab is not set or invalid";
 
 				description = OrderVerb(order) + " " + target.GetName();
@@ -868,6 +872,29 @@ class AROR_HighCommandComponent : SCR_BaseGameModeComponent
 					if (squad.m_iOwnerId > 0)
 						Reply(squad.m_iOwnerId, squad.m_sCallsign + " in position at grid " + GridReference(squad.m_vTarget) + ", standing by");
 				}
+			}
+
+			// Reached the attack target: assault it (attack waypoint now that enemies are close), then hold the
+			// site with a defend waypoint once the attack waypoint is done
+			if (squad.m_eOrder == AROR_EHighCommandOrder.ATTACK && !squad.m_bAssaulting)
+			{
+				AROR_LocationManagerComponent locationManager = AROR_LocationManagerComponent.GetInstance();
+				AROR_LocationComponent target;
+				if (locationManager)
+					target = locationManager.GetLocationById(squad.m_sTargetId);
+
+				if (target && vector.DistanceXZ(squad.m_vPosition, target.GetCenter()) <= Math.Max(target.GetRadius(), m_fMoveArrivalRadius * 2))
+				{
+					squad.m_bAssaulting = true;
+					IssueWaypoint_S(squad, m_sAttackWaypointPrefab, target.GetCenter(), Math.Max(target.GetRadius() * 0.5, 25));
+					if (squad.m_iOwnerId > 0)
+						Reply(squad.m_iOwnerId, squad.m_sCallsign + " assaulting " + target.GetName());
+				}
+			}
+			else if (squad.m_eOrder == AROR_EHighCommandOrder.ATTACK && squad.m_bAssaulting && squad.m_Group && squad.m_Waypoint && squad.m_Group.GetCurrentWaypoint() != squad.m_Waypoint)
+			{
+				// The attack waypoint finished: dig in at the site rather than idling
+				IssueWaypoint_S(squad, m_sDefendWaypointPrefab, squad.m_vTarget, m_fHoldRadius * 2);
 			}
 		}
 
