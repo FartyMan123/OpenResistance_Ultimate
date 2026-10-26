@@ -125,7 +125,7 @@ Phases (mapped onto the base-game states PREGAME → GAME → POSTGAME):
 - `AROR_GameFlowComponent` (server, game mode) holds PREGAME until a playthrough exists and keeps player controls disabled until then; other systems can ask whether the playthrough is ready.
 - **Setup UI** (`AROR_SetupUIComponent`, client) is built from base-game configurable dialogs with our own presets (`Configs/UI/AROR_SetupDialogs.conf`).
 - **Staging spawn** (`AROR_StagingSpawn.et`): before a playthrough exists, players spawn there as the Resistance and move freely. Afterwards it is disabled and players are moved to the HQ.
-- **Resistance HQ**: placed on land and outside every location's radius (checked on the client, enforced by the server). A dynamic location of type HQ that carries the Resistance spawn point; players always spawn there.
+- **Resistance HQ**: placed on land, outside every location's radius, and on a clear 10×10 m pad free of buildings and props (checked on the client, enforced by the server; invalid picks are rejected). A dynamic location of type HQ that carries the Resistance spawn point; players always spawn there. A new playthrough also spawns an arsenal beside the HQ via `SpawnArsenal` before the initial save.
 - Planned: playthrough settings chosen at setup and editable mid-game, with lifecycle events (scenario ready, playthrough created/loaded, settings changed) for other systems.
 - Server/client: the server owns phase transitions and all generated state; admin actions are client → server requests checked against admin roles.
 - Depends on: Game Mode, Locations, Persistence.
@@ -139,7 +139,7 @@ Purpose: persistent campaign saves, built on the **base-game save system** (`Sav
   - Each component with saved state has a matching `ScriptedComponentSerializer`. Serializers write a version first and keep loading older versions.
   - Locations are referenced by **stable ID**, never by position in a list.
 - Save generated results, not random seeds, so saves survive map and code changes.
-- Saved so far: location control, settlement support, the Resistance HQ, faction presets per role, faction funds, manpower, player money, garrison rosters, QRF war level, aggression and debt, and the Invader campaign state.
+- Saved so far: location control, settlement support, the Resistance HQ, arsenals, faction presets per role, faction funds, manpower, player money, Resistance item stock, per-player arsenal loadout slots, garrison rosters, QRF war level, aggression and debt, and the Invader campaign state.
 - Boot rule: if a save is active when the world loads it is restored; otherwise setup starts. A new playthrough writes an initial save point, so new and loaded games share one restore path.
 - Limits: about 101 playthroughs and save points per mission; old autosaves need pruning.
 - Planned: periodic autosave and saves on key events and shutdown; verification on a dedicated server.
@@ -162,7 +162,7 @@ Core factions live in `AROR_FactionManager.et`. The three military factions are 
 | `AROR_CIVILIANS` | civilian | `EVERON_CIV` |
 
 **Faction presets — In progress**
-- A preset (`AROR_FactionPreset`, one `.conf` each) lists what an army makes available in eight fixed categories: **Units** (AI characters, at most one per unit type), **Vehicles** (empty, no crew), **Gear**, **Equipment**, **Weapons**, **Weapon accessories**, **Ammunition** and **Vehicle ammunition** (munitions loaded onto vehicles and aircraft as items, such as helicopter rockets; vehicle-mounted guns rearm through the supply system instead). Every entry is a prefab with a **base cost**, grouped by type (e.g. RIFLEMAN, MOTOR_TRUCK, RIFLE); apart from units, a type can have any number of entries.
+- A preset (`AROR_FactionPreset`, one `.conf` each) lists what an army makes available in eight fixed categories: **Units** (AI characters, at most one per unit type), **Vehicles** (empty, no crew), **Gear**, **Equipment**, **Weapons**, **Weapon accessories**, **Ammunition** and **Vehicle ammunition** (munitions loaded onto vehicles and aircraft as items, such as helicopter rockets; vehicle-mounted guns rearm through the supply system instead). Every entry is a prefab with a **base cost** and a **minimum war level** (default 1) when it becomes available, grouped by type (e.g. RIFLEMAN, MOTOR_TRUCK, RIFLE); apart from units, a type can have any number of entries.
 - Presets only make things available; the systems that use them (garrisons, QRFs, shops, recruitment) decide what to pick. Each preset lists the roles it can be used for.
 - `AROR_FactionPresetRegistry` (`Configs/FactionPresets/AROR_FactionPresetRegistry.conf`) lists the available presets. The base-game presets (`FIA`, `US_ARMY`, `USSR_ARMY`, `EVERON_CIV`) are built into the core, written the same way an extender would.
 - `AROR_FactionPresetsComponent` (game mode) loads the presets on every machine and answers queries for a role's preset. The server owns which preset each role uses: chosen by the admin per role when creating a campaign (defaults otherwise), replicated, and saved (`AROR_FactionPresetsComponentSerializer`). A saved preset that no longer exists falls back to the role's default.
@@ -223,7 +223,7 @@ Purpose: our own markers on any open map (player map, deploy screen, setup scree
 ### Economy — In progress
 Purpose: money and manpower for the campaign: balances, and periodic income from held locations. General purchasing rules come later.
 
-- `AROR_EconomyComponent` (game mode): **faction funds** per role, Resistance **manpower**, and **personal money** per player. Server-owned; funds and manpower replicate to everyone, a player's money only to that player. Player money is keyed by identity ID so it survives reconnects.
+- `AROR_EconomyComponent` (game mode): **faction funds** per role, Resistance **manpower**, and **personal money** per player. Server-owned; funds and manpower replicate to everyone, a player's money only to that player. Player money is keyed by identity ID so it survives reconnects. Players can transfer personal money to another online player or donate it to Resistance funds (Bank Transfer RPCs on the player controller).
 - `AROR_IncomeComponent` (game mode, server): every **15 minutes** (not during setup) each role is paid for what it holds:
   - Money = held Resources × $500 × (1 + 0.3 per held Factory + 0.5 per held Port), plus $5 per inhabitant of held towns and cities.
   - The Occupiers and Invaders also receive fixed **external support** ($500 each).
@@ -234,12 +234,23 @@ Purpose: money and manpower for the campaign: balances, and periodic income from
 - Used by: Operations (QRF costs), High Command (squad purchases), the phone's Bank app, admin tools.
 - Extension points: server API to add, spend and read balances, and to trigger a payment.
 
+### Resistance Storage — In progress
+Purpose: the Resistance's shared item stock for the campaign (what gear is on hand), separate from Economy money and manpower.
+
+- `AROR_ResistanceStorageComponent` (game mode): a ledger of **item prefab + quantity**. Any inventory item can be stocked; slot, type and volume stay on the item when it is later spawned or equipped. Starts empty.
+- Server API: `Add_S` / `Take_S` (atomic) by prefab; `GetQuantity` / `GetEntries` on every machine; `AddEntity_S` deposits a world/inventory item by unpacking nested contents (vest cargo, weapon attachments, magazines, and so on) into **separate stock lines**, then deleting the entity. Magazine fill and item health are not preserved.
+- Server-owned; stock replicates to all clients as parallel prefab/quantity arrays. Change invoker for future UI.
+- Saved: the stock ledger (`AROR_ResistanceStorageComponentSerializer`).
+- Admin: Economy → More can fill stock with one of every Resistance preset item (excl. units/vehicles).
+- **Arsenal**: Prefab inherits vanilla `ArsenalBox_Base` plus `AROR_ResistanceArsenalComponent` (same entity as `SCR_ArsenalComponent`). Lists stocked prefabs (qty > 0), sorted by Resistance preset category then path, with stock quantity on each slot. Takes call `Take_S`; refunds call `AddEntity_S`. Supplies are never the budget (`IsArsenalUsingSupplies` forced off). Game mode has `SCR_ArsenalManagerComponent` so vanilla type flags do not disable the box; Resistance arsenals also force-enable. Modded `SCR_ArsenalComponent`, arsenal slot UI, and `SCR_ResourcePlayerControllerInventoryComponent` implement the bridge. Access: open the box like a normal arsenal. Empty stock shows an empty arsenal until admin Fill or deposits. Placement is not HQ-exclusive; Game Flow spawns the first one beside the HQ via `SpawnArsenal`.
+- **Loadout slots**: `AROR_PlayerLoadoutsComponent` (game mode) holds **three** kits per player, keyed by identity ID (same as personal money) and saved with the playthrough (`AROR_PlayerLoadoutsComponentSerializer`). F-key actions (`AROR_SaveLoadoutSlotAction` / `AROR_LoadLoadoutSlotAction`) save a snapshot of worn gear or load a slot. Load **swaps with stock**: deposit current gear via `AddEntity_S`, take the kit’s flat prefab counts via `Take_S`, then re-equip with vanilla `SCR_PlayerArsenalLoadout` apply. Fails with a hint if stock would be short. Slot occupancy is pushed only to the owning client. Magazine fill and item health follow Storage (not preserved). Wire the six actions in Workbench onto the arsenal’s **inherited** `ActionsManagerComponent` as `additionalActions +` (do not add a second ActionsManager — that breaks the prefab / spawn).
+
 ### Phone — In progress
 Purpose: an in-game phone that hosts player-facing apps. Client only.
 
 - `AROR_PhoneMenu` (a menu registered in `chimeraMenus.conf`) and `AROR_PhoneComponent` (game mode), which opens it with a rebindable keybind (**Ctrl+Y**) for living players when no other menu is open. Esc closes it.
 - A phone frame over a wallpaper with a status bar. Apps open in portrait, or turn the whole phone to landscape and enlarge it. The frame's home button returns to the home screen.
-- Apps: **Bank** (account holder, personal money, Resistance funds, live from the Economy; transfers planned), **RebIntel** (read-only enemy war level and aggression from Operations), **HICOMM** (landscape High Command app for Resistance Leaders: leadership, a zoomable map for orders, squad purchases) and a landscape test app.
+- Apps: **Bank** (account holder, personal money, Resistance funds, live from the Economy; Transfer screen sends personal money to an online player or Resistance funds), **RebIntel** (read-only enemy war level and aggression from Operations), **HICOMM** (landscape High Command app for Resistance Leaders: leadership, a zoomable map for orders, squad purchases) and a landscape test app.
 - Depends on: Economy, Notifications (hints), Operations (RebIntel), High Command (HICOMM).
 - Planned: app registration so extender mods can add apps.
 
@@ -255,7 +266,7 @@ Purpose: tell players what is happening in the campaign, plus quiet personal fee
 ### Admin Tools — In progress
 Purpose: in-game testing and admin tools, opened with **Ctrl+T** (`AROR_AdminMenuComponent`, game mode).
 
-- Sub-menus: teleport, Game Master, settlement support, test notifications, and economy (give money, pay income now).
+- Sub-menus: teleport, Game Master, settlement support, test notifications, and economy (give money, pay income now, fill Resistance stock from the Resistance preset).
 - Each tool asks the server, which applies the change.
 - Currently available to **every player** while "Menu Available" is on; **restricting it to server admins is required before public servers**, both for opening the menu and for the server accepting its requests.
 

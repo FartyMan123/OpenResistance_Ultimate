@@ -144,12 +144,31 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Admin menu: add one of every Resistance preset item (excl. units/vehicles) to Resistance Storage
+	void AROR_RequestAdminFillResistanceStock()
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_AdminFillResistanceStock();
+		else
+			Rpc(AROR_RpcAsk_AdminFillResistanceStock);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
 	protected void AROR_RpcAsk_AdminPayIncome()
 	{
 		AROR_AdminMenuComponent adminMenu = AROR_AdminMenuComponent.GetInstance();
 		if (adminMenu)
 			adminMenu.PayIncomeNow_S(GetPlayerId());
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_AdminFillResistanceStock()
+	{
+		AROR_AdminMenuComponent adminMenu = AROR_AdminMenuComponent.GetInstance();
+		if (adminMenu)
+			adminMenu.FillResistanceStock_S(GetPlayerId());
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -315,6 +334,148 @@ modded class SCR_PlayerController
 		AROR_EconomyComponent economy = AROR_EconomyComponent.GetInstance();
 		if (economy)
 			economy.OnLocalPlayerMoneyReceived(money);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	// Player loadout slots: server -> owning client (see AROR_PlayerLoadoutsComponent)
+	//------------------------------------------------------------------------------------------------
+	void AROR_SendLoadoutSlots_S(int filledMask)
+	{
+		if (AROR_IsLocal())
+			AROR_RpcDo_LoadoutSlots(filledMask);
+		else
+			Rpc(AROR_RpcDo_LoadoutSlots, filledMask);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Owner)]
+	protected void AROR_RpcDo_LoadoutSlots(int filledMask)
+	{
+		AROR_PlayerLoadoutsComponent loadouts = AROR_PlayerLoadoutsComponent.GetInstance();
+		if (loadouts)
+			loadouts.OnLocalSlotsReceived(filledMask);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Bank Transfer: move personal money to another online player, or to Resistance funds
+	void AROR_RequestBankTransfer(int targetPlayerId, bool toResistance, int amount)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_BankTransfer(targetPlayerId, toResistance, amount);
+		else
+			Rpc(AROR_RpcAsk_BankTransfer, targetPlayerId, toResistance, amount);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_BankTransfer(int targetPlayerId, bool toResistance, int amount)
+	{
+		int fromPlayerId = GetPlayerId();
+		string failReason;
+		bool ok = AROR_TryBankTransfer_S(fromPlayerId, targetPlayerId, toResistance, amount, failReason);
+
+		string message;
+		if (ok)
+		{
+			if (toResistance)
+				message = string.Format("Transferred %1 to Resistance Fund", AROR_EconomyComponent.FormatMoney(amount));
+			else
+			{
+				string targetName = GetGame().GetPlayerManager().GetPlayerName(targetPlayerId);
+				message = string.Format("Transferred %1 to %2", AROR_EconomyComponent.FormatMoney(amount), targetName);
+			}
+		}
+		else if (!failReason.IsEmpty())
+		{
+			message = failReason;
+		}
+		else
+		{
+			message = "Transfer failed";
+		}
+
+		AROR_SendBankTransferResult_S(ok, message);
+
+		if (ok && !toResistance)
+		{
+			string fromName = GetGame().GetPlayerManager().GetPlayerName(fromPlayerId);
+			SCR_PlayerController targetController = SCR_PlayerController.Cast(GetGame().GetPlayerManager().GetPlayerController(targetPlayerId));
+			if (targetController)
+				targetController.AROR_ShowHint_S(string.Format("Received %1 from %2", AROR_EconomyComponent.FormatMoney(amount), fromName), false, 0, string.Empty);
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server: validate and perform the transfer; failReason is set when it returns false
+	protected static bool AROR_TryBankTransfer_S(int fromPlayerId, int targetPlayerId, bool toResistance, int amount, out string failReason)
+	{
+		failReason = string.Empty;
+
+		AROR_EconomyComponent economy = AROR_EconomyComponent.GetInstance();
+		if (!economy)
+		{
+			failReason = "Bank unavailable";
+			return false;
+		}
+
+		if (amount <= 0)
+		{
+			failReason = "Enter a valid amount";
+			return false;
+		}
+
+		if (toResistance)
+		{
+			if (!economy.DonatePlayerMoneyToResistance_S(fromPlayerId, amount))
+			{
+				failReason = "Insufficient funds";
+				return false;
+			}
+
+			return true;
+		}
+
+		if (targetPlayerId <= 0 || targetPlayerId == fromPlayerId)
+		{
+			failReason = "Choose a recipient";
+			return false;
+		}
+
+		if (!economy.TransferPlayerMoney_S(fromPlayerId, targetPlayerId, amount))
+		{
+			if (economy.GetPlayerMoney_S(fromPlayerId) < amount)
+				failReason = "Insufficient funds";
+			else
+				failReason = "Recipient unavailable";
+
+			return false;
+		}
+
+		return true;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	void AROR_SendBankTransferResult_S(bool success, string message)
+	{
+		if (AROR_IsLocal())
+			AROR_RpcDo_BankTransferResult(success, message);
+		else
+			Rpc(AROR_RpcDo_BankTransferResult, success, message);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Owner)]
+	protected void AROR_RpcDo_BankTransferResult(bool success, string message)
+	{
+		if (!message.IsEmpty())
+			AROR_NotificationManagerComponent.ShowHint(message);
+
+		if (!success)
+			return;
+
+		AROR_PhoneMenu phone = AROR_PhoneMenu.GetInstance();
+		if (phone)
+			phone.OnBankTransferSucceeded();
 	}
 
 	//------------------------------------------------------------------------------------------------

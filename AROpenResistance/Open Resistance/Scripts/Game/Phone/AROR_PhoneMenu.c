@@ -24,6 +24,7 @@ enum AROR_EPhoneApp
 {
 	HOME,
 	BANK,	//!< Portrait: account holder, personal money and Resistance funds
+	BANK_TRANSFER,	//!< Portrait: transfer personal money to a player or Resistance funds
 	TEST,	//!< Landscape test app
 	REBINTEL,	//!< Portrait: public enemy war level and aggression summary
 	HICOMM	//!< Landscape: Resistance high command (leaders only, see AROR_HiCommApp)
@@ -143,6 +144,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	protected RichTextWidget m_wBankPersonal;
 	protected RichTextWidget m_wBankResistance;
 	protected Widget m_wBankTransferButton;
+	protected ref AROR_BankTransferApp m_BankTransfer;
 
 	protected Widget m_wTestApp;
 	protected ImageWidget m_wTestPanel;
@@ -196,9 +198,27 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		else if (buttonName == "HiCommTileButton")
 			OpenApp(AROR_EPhoneApp.HICOMM);
 		else if (buttonName == "BankTransferButton")
-			AROR_NotificationManagerComponent.ShowHint("Transfers are coming soon");
+		{
+			OpenApp(AROR_EPhoneApp.BANK_TRANSFER);
+			return;
+		}
+		else if (buttonName == "BankTransferBackButton")
+		{
+			OpenApp(AROR_EPhoneApp.BANK);
+			return;
+		}
+		else if (m_BankTransfer && m_BankTransfer.OnButton(buttonName))
+			return;
 		else if (buttonName == "AppBackButton" || buttonName == "HomeButton")
 			OpenApp(AROR_EPhoneApp.HOME);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Client: transfer RPC succeeded; clear the amount field on the Transfer screen
+	void OnBankTransferSucceeded()
+	{
+		if (m_BankTransfer)
+			m_BankTransfer.OnTransferSucceeded();
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -283,7 +303,13 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		m_wBankName = RichTextWidget.Cast(root.FindAnyWidget("BankName"));
 		m_wBankPersonal = RichTextWidget.Cast(root.FindAnyWidget("BankPersonal"));
 		m_wBankResistance = RichTextWidget.Cast(root.FindAnyWidget("BankResistance"));
-		m_wBankTransferButton = root.FindAnyWidget("BankTransferButton");
+		// Prefer the Bank home hit-target (not a similarly named widget elsewhere)
+		if (m_wBankApp)
+			m_wBankTransferButton = m_wBankApp.FindAnyWidget("BankTransferButton");
+		if (!m_wBankTransferButton)
+			m_wBankTransferButton = root.FindAnyWidget("BankTransferButton");
+		m_BankTransfer = new AROR_BankTransferApp();
+		bool bankTransferReady = m_BankTransfer.Init(root);
 
 		m_wTestApp = root.FindAnyWidget("App");
 		m_wTestPanel = ImageWidget.Cast(root.FindAnyWidget("AppPanel"));
@@ -295,6 +321,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 
 		// Checked in groups: one long condition exceeds the script compiler's expression limit
 		bool ready = m_wDim && m_wPhonePortrait && m_wPhoneLandscape && m_wStatusBar && m_wHome && m_wBankApp && m_wTestApp;
+		ready = ready && m_wBankTransferButton && bankTransferReady;
 		ready = ready && rebIntelReady && m_wRebIntelTile && m_wRebIntelTileGlyph && m_wRebIntelTileLabel && m_wRebIntelTileButton;
 		ready = ready && hiCommReady && m_wHiCommTile && m_wHiCommTileGlyph && m_wHiCommTileCanvas && m_wHiCommTileLabel && m_wHiCommTileButton;
 		if (!ready)
@@ -308,6 +335,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 
 		m_ButtonHandler = new AROR_PhoneButtonHandler(this);
 		array<Widget> buttons = {m_wBankTileButton, m_wTestTileButton, m_wRebIntelTileButton, m_wHiCommTileButton, m_wBankTransferButton, m_wTestBackButton, m_wHomeButton};
+		m_BankTransfer.CollectButtons(buttons);
 		foreach (Widget button : buttons)
 		{
 			if (button)
@@ -340,6 +368,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			m_HiComm.Shutdown();
 
 		m_HiComm = null;
+		m_BankTransfer = null;
 
 		super.OnMenuClose();
 	}
@@ -417,6 +446,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		bool landscapeSettled = IsSettled() && m_fTurn >= 1;
 		bool showHome = portraitSettled && m_eApp == AROR_EPhoneApp.HOME;
 		bool showBank = portraitSettled && m_eApp == AROR_EPhoneApp.BANK;
+		bool showBankTransfer = portraitSettled && m_eApp == AROR_EPhoneApp.BANK_TRANSFER;
 		bool showTest = landscapeSettled && m_eApp == AROR_EPhoneApp.TEST;
 		bool showRebIntel = portraitSettled && m_eApp == AROR_EPhoneApp.REBINTEL;
 		bool showHiComm = landscapeSettled && m_eApp == AROR_EPhoneApp.HICOMM;
@@ -430,6 +460,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		m_wHome.SetOpacity(contentOpacity);
 		m_wBankApp.SetOpacity(contentOpacity);
 		m_wTestApp.SetOpacity(contentOpacity);
+		m_BankTransfer.SetVisible(showBankTransfer, contentOpacity);
 		m_RebIntel.SetVisible(showRebIntel, contentOpacity);
 		m_HiComm.SetVisible(showHiComm, contentOpacity);
 
@@ -455,6 +486,8 @@ class AROR_PhoneMenu : ChimeraMenuBase
 
 		if (showBank)
 			LayoutBank(portraitLeft, portraitTop, scale);
+		if (showBankTransfer)
+			m_BankTransfer.Layout(portraitLeft, portraitTop, scale);
 		if (showRebIntel)
 			m_RebIntel.Layout(portraitLeft, portraitTop, scale);
 
@@ -554,7 +587,12 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		SetFontSize(m_wBankResistance, FitFontSize(resistance, BANK_BALANCE_FONT, BANK_BALANCE_WIDTH) * scale);
 		PlaceTextLeft(m_wBankResistance, BANK_BALANCE_X * scale, (BANK_RESISTANCE_Y + BANK_BALANCE_HEIGHT * 0.5) * scale);
 
-		Place(m_wBankTransferButton, BANK_TRANSFER_X * scale, BANK_TRANSFER_Y * scale, BANK_TRANSFER_WIDTH * scale, BANK_TRANSFER_HEIGHT * scale);
+		if (m_wBankTransferButton)
+		{
+			m_wBankTransferButton.SetVisible(true);
+			m_wBankTransferButton.SetEnabled(true);
+			Place(m_wBankTransferButton, BANK_TRANSFER_X * scale, BANK_TRANSFER_Y * scale, BANK_TRANSFER_WIDTH * scale, BANK_TRANSFER_HEIGHT * scale);
+		}
 	}
 
 	//------------------------------------------------------------------------------------------------

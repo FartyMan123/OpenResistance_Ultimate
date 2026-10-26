@@ -313,6 +313,56 @@ class AROR_EconomyComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Server only. Moves personal money from one online player to another. Rejects non-positive amounts,
+	//! self-transfers, and offline or unknown targets.
+	bool TransferPlayerMoney_S(int fromPlayerId, int toPlayerId, int amount)
+	{
+		if (!Replication.IsServer() || amount <= 0 || fromPlayerId == toPlayerId)
+			return false;
+
+		if (GetPlayerKey(fromPlayerId).IsEmpty() || GetPlayerKey(toPlayerId).IsEmpty())
+			return false;
+
+		if (!IsPlayerOnline(toPlayerId))
+			return false;
+
+		if (!SpendPlayerMoney_S(fromPlayerId, amount))
+			return false;
+
+		AddPlayerMoney_S(toPlayerId, amount);
+		return true;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server only. Moves personal money into Resistance faction funds.
+	bool DonatePlayerMoneyToResistance_S(int fromPlayerId, int amount)
+	{
+		if (!Replication.IsServer() || amount <= 0)
+			return false;
+
+		if (GetPlayerKey(fromPlayerId).IsEmpty())
+			return false;
+
+		if (!SpendPlayerMoney_S(fromPlayerId, amount))
+			return false;
+
+		AddFactionFunds_S(AROR_EFactionRole.RESISTANCE, amount);
+		return true;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server: true if the session player ID is currently connected
+	protected static bool IsPlayerOnline(int playerId)
+	{
+		if (playerId <= 0)
+			return false;
+
+		array<int> playerIds = {};
+		GetGame().GetPlayerManager().GetPlayers(playerIds);
+		return playerIds.Contains(playerId);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! Server: saved player balances, for the serializer
 	void GetPlayerMoneyEntries(notnull array<string> keys, notnull array<int> balances)
 	{

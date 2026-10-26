@@ -205,6 +205,380 @@ FrameWidgetClass {
     }
    }
   }
+  FrameWidgetClass "{6AB4E0F1A2BC0001}" {
+   Name "BankTransferApp"
+   Slot FrameWidgetSlot "{6AB4E0F1A2BC1001}" {
+    Anchor 0 0 0 0
+   }
+   {
+    ImageWidgetClass "{6AB4E0F1A2BC0002}" {
+     Name "BankTransferBackground"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1002}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC0003}" {
+     Name "BankTransferBalanceLabel"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1003}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC0004}" {
+     Name "BankTransferBalance"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1004}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC0005}" {
+     Name "BankTransferToLabel"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1005}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC0006}" {
+     Name "BankTransferRecipientBg"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1006}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC0007}" {
+     Name "BankTransferRecipientLabel"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1007}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC0008}" {
+     Name "BankTransferRecipientCaret"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1008}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC0009}" {
+     Name "BankTransferRecipientButton"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1009}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC000A}" {
+     Name "BankTransferAmountLabel"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC100A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC000B}" {
+     Name "BankTransferAmountBg"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC100B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    EditBoxWidgetClass "{6AB4E0F1A2BC000C}" {
+     Name "BankTransferAmountEdit"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC100C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC000D}" {
+     Name "BankTransferBackButton"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC100D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC000E}" {
+     Name "BankTransferConfirmButton"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC100E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC0010}" {
+     Name "BankTransferOptionBg0"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1010}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC0011}" {
+     Name "BankTransferOptionLabel0"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1011}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC0012}" {
+     Name "BankTransferOptionButton0"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1012}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC0013}" {
+     Name "BankTransferOptionBg1"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1013}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC0014}" {
+     Name "BankTransferOptionLabel1"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1014}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC0015}" {
+     Name "BankTransferOptionButton1"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1015}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC0016}" {
+     Name "BankTransferOptionBg2"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1016}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC0017}" {
+     Name "BankTransferOptionLabel2"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1017}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC0018}" {
+     Name "BankTransferOptionButton2"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1018}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC0019}" {
+     Name "BankTransferOptionBg3"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1019}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC001A}" {
+     Name "BankTransferOptionLabel3"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC101A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC001B}" {
+     Name "BankTransferOptionButton3"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC101B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC001C}" {
+     Name "BankTransferOptionBg4"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC101C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC001D}" {
+     Name "BankTransferOptionLabel4"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC101D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC001E}" {
+     Name "BankTransferOptionButton4"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC101E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC001F}" {
+     Name "BankTransferOptionBg5"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC101F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC0020}" {
+     Name "BankTransferOptionLabel5"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1020}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC0021}" {
+     Name "BankTransferOptionButton5"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1021}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC0022}" {
+     Name "BankTransferOptionBg6"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1022}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC0023}" {
+     Name "BankTransferOptionLabel6"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1023}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC0024}" {
+     Name "BankTransferOptionButton6"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1024}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC0025}" {
+     Name "BankTransferOptionBg7"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1025}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC0026}" {
+     Name "BankTransferOptionLabel7"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1026}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC0027}" {
+     Name "BankTransferOptionButton7"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1027}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC0028}" {
+     Name "BankTransferOptionBg8"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1028}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC0029}" {
+     Name "BankTransferOptionLabel8"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1029}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC002A}" {
+     Name "BankTransferOptionButton8"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC102A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC002B}" {
+     Name "BankTransferOptionBg9"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC102B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC002C}" {
+     Name "BankTransferOptionLabel9"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC102C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC002D}" {
+     Name "BankTransferOptionButton9"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC102D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC002E}" {
+     Name "BankTransferOptionBg10"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC102E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC002F}" {
+     Name "BankTransferOptionLabel10"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC102F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC0030}" {
+     Name "BankTransferOptionButton10"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1030}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC0031}" {
+     Name "BankTransferOptionBg11"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1031}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC0032}" {
+     Name "BankTransferOptionLabel11"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1032}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC0033}" {
+     Name "BankTransferOptionButton11"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1033}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC0034}" {
+     Name "BankTransferOptionBg12"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1034}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC0035}" {
+     Name "BankTransferOptionLabel12"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1035}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC0036}" {
+     Name "BankTransferOptionButton12"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1036}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC0037}" {
+     Name "BankTransferOptionBg13"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1037}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC0038}" {
+     Name "BankTransferOptionLabel13"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1038}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC0039}" {
+     Name "BankTransferOptionButton13"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC1039}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC003A}" {
+     Name "BankTransferOptionBg14"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC103A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC003B}" {
+     Name "BankTransferOptionLabel14"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC103B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC003C}" {
+     Name "BankTransferOptionButton14"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC103C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB4E0F1A2BC003D}" {
+     Name "BankTransferOptionBg15"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC103D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB4E0F1A2BC003E}" {
+     Name "BankTransferOptionLabel15"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC103E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB4E0F1A2BC003F}" {
+     Name "BankTransferOptionButton15"
+     Slot FrameWidgetSlot "{6AB4E0F1A2BC103F}" {
+      Anchor 0 0 0 0
+     }
+    }
+   }
+  }
   FrameWidgetClass "{6AB4E0F1A2B56018}" {
    Name "RebIntelApp"
    Slot FrameWidgetSlot "{6AB4E0F1A2B57018}" {

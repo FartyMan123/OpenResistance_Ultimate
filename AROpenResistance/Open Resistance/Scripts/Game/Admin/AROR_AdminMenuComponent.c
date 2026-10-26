@@ -19,6 +19,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	protected static const string PRESET_MORE = "aror_admin_more";
 	protected static const string PRESET_SUPPORT = "aror_admin_support";
 	protected static const string PRESET_ECONOMY = "aror_admin_economy";
+	protected static const string PRESET_ECONOMY_MORE = "aror_admin_economy_more";
 	protected static const string PRESET_FUNDS = "aror_admin_funds";
 
 	//! Money added per admin button press
@@ -91,6 +92,12 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	protected void OpenEconomyMoreDialog()
+	{
+		OpenDialog(PRESET_ECONOMY_MORE, GetEconomyText());
+	}
+
+	//------------------------------------------------------------------------------------------------
 	protected void OpenFundsDialog()
 	{
 		OpenDialog(PRESET_FUNDS, GetEconomyText());
@@ -104,12 +111,23 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 		if (!economy)
 			return "No AROR_EconomyComponent on the game mode.";
 
-		return string.Format("Funds: Resistance %1 | Occupiers %2 | Invaders %3\nResistance manpower: %4\nYour money: %5",
+		int stockLines;
+		AROR_ResistanceStorageComponent storage = AROR_ResistanceStorageComponent.GetInstance();
+		if (storage)
+		{
+			array<ResourceName> prefabs = {};
+			array<int> quantities = {};
+			storage.GetEntries(prefabs, quantities);
+			stockLines = prefabs.Count();
+		}
+
+		return string.Format("Funds: Resistance %1 | Occupiers %2 | Invaders %3\nResistance manpower: %4\nYour money: %5\nResistance stock lines: %6",
 			economy.GetFactionFunds(AROR_EFactionRole.RESISTANCE),
 			economy.GetFactionFunds(AROR_EFactionRole.OCCUPIERS),
 			economy.GetFactionFunds(AROR_EFactionRole.INVADERS),
 			economy.GetManpower(),
-			economy.GetLocalPlayerMoney());
+			economy.GetLocalPlayerMoney(),
+			stockLines);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -147,6 +165,60 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 
 		Print(string.Format("[AROR] Admin: player %1 triggered an income payment", playerId), LogLevel.NORMAL);
 		income.PayIncome_S();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server: add one of every Resistance preset item (gear, equipment, weapons, accessories,
+	//! ammunition, vehicle ammunition — not units or vehicles) to Resistance Storage
+	void FillResistanceStock_S(int playerId)
+	{
+		if (!Replication.IsServer() || !m_bMenuAvailable)
+			return;
+
+		AROR_FactionPresetsComponent presets = AROR_FactionPresetsComponent.GetInstance();
+		AROR_ResistanceStorageComponent storage = AROR_ResistanceStorageComponent.GetInstance();
+		if (!presets || !storage)
+		{
+			Print("[AROR] Admin: cannot fill Resistance stock (missing presets or storage)", LogLevel.WARNING);
+			return;
+		}
+
+		AROR_FactionPreset preset = presets.GetPreset(AROR_EFactionRole.RESISTANCE);
+		if (!preset)
+		{
+			Print("[AROR] Admin: Resistance has no faction preset", LogLevel.WARNING);
+			return;
+		}
+
+		array<ResourceName> prefabs = {};
+		CollectResistanceStockPrefabs(preset, prefabs);
+		storage.AddMany_S(prefabs, 1);
+		Print(string.Format("[AROR] Admin: player %1 filled Resistance stock from preset '%2' (%3 prefabs)", playerId, preset.GetId(), prefabs.Count()), LogLevel.NORMAL);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Item categories only (excludes units and vehicles)
+	protected static void CollectResistanceStockPrefabs(notnull AROR_FactionPreset preset, notnull array<ResourceName> outPrefabs)
+	{
+		CollectCategoryPrefabs(preset, AROR_EFactionPresetCategory.GEAR, outPrefabs);
+		CollectCategoryPrefabs(preset, AROR_EFactionPresetCategory.EQUIPMENT, outPrefabs);
+		CollectCategoryPrefabs(preset, AROR_EFactionPresetCategory.WEAPONS, outPrefabs);
+		CollectCategoryPrefabs(preset, AROR_EFactionPresetCategory.WEAPON_ACCESSORIES, outPrefabs);
+		CollectCategoryPrefabs(preset, AROR_EFactionPresetCategory.AMMUNITION, outPrefabs);
+		CollectCategoryPrefabs(preset, AROR_EFactionPresetCategory.VEHICLE_AMMUNITION, outPrefabs);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static void CollectCategoryPrefabs(notnull AROR_FactionPreset preset, AROR_EFactionPresetCategory category, notnull array<ResourceName> outPrefabs)
+	{
+		array<AROR_FactionPresetEntry> entries = {};
+		preset.GetAllEntries(category, entries);
+		foreach (AROR_FactionPresetEntry entry : entries)
+		{
+			ResourceName prefab = entry.GetPrefab();
+			if (!prefab.IsEmpty())
+				outPrefabs.Insert(prefab);
+		}
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -338,6 +410,12 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 			return;
 		}
 
+		if (tag == "open_economy_more")
+		{
+			OpenEconomyMoreDialog();
+			return;
+		}
+
 		if (tag == "open_funds")
 		{
 			OpenFundsDialog();
@@ -357,6 +435,16 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 				incomeController.AROR_RequestAdminPayIncome();
 
 			GetGame().GetCallqueue().CallLater(OpenEconomyDialog, REFRESH_DELAY_MS);
+			return;
+		}
+
+		if (tag == "storage_fill_resistance")
+		{
+			SCR_PlayerController storageController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
+			if (storageController)
+				storageController.AROR_RequestAdminFillResistanceStock();
+
+			GetGame().GetCallqueue().CallLater(OpenEconomyMoreDialog, REFRESH_DELAY_MS);
 			return;
 		}
 
@@ -500,6 +588,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 		GetGame().GetCallqueue().Remove(HandleAction);
 		GetGame().GetCallqueue().Remove(OpenGameMaster);
 		GetGame().GetCallqueue().Remove(OpenEconomyDialog);
+		GetGame().GetCallqueue().Remove(OpenEconomyMoreDialog);
 		GetGame().GetCallqueue().Remove(OpenFundsDialog);
 		GetGame().GetCallqueue().Remove(OpenSupportDialog);
 		StopTeleportPicking();
