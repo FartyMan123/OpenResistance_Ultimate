@@ -136,7 +136,7 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 						AddVehicle(entry, result);
 						break;
 					case EEntityCatalogType.WEAPONS_TRIPOD:
-						AddEntry(result.m_aVehicles, "AROR_FactionPresetVehicle", AROR_EVehicleType, AROR_EVehicleType.STATIC_WEAPON, entry.GetPrefab());
+						AddEntry(result.m_aVehicles, "AROR_FactionPresetVehicle", AROR_EVehicleType, AROR_EVehicleType.STATIC_MG, entry.GetPrefab());
 						break;
 					case EEntityCatalogType.ITEM:
 						AddItem(entry, result);
@@ -235,7 +235,7 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 			return AROR_EVehicleType.BOAT;
 
 		if (entry.HasEditableEntityLabel(EEditableEntityLabel.VEHICLE_TURRET))
-			return AROR_EVehicleType.STATIC_WEAPON;
+			return AROR_EVehicleType.STATIC_MG;
 
 		if (entry.HasEditableEntityLabel(EEditableEntityLabel.VEHICLE_HELICOPTER))
 		{

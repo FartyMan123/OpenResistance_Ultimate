@@ -59,6 +59,13 @@ SCR_BaseGameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" 
   }
   AROR_EconomyComponent "{F317694D57DF9B7A}" {
   }
+  AROR_ResistanceStorageComponent "{B8E41C72A05F3D19}" {
+  }
+  AROR_PlayerLoadoutsComponent "{6AB4F1B2C3D4E501}" {
+  }
+  SCR_ArsenalManagerComponent "{6AB4F0A1C2D3E401}" {
+   m_eArsenalTypesEnabled 7
+  }
   AROR_IncomeComponent "{3C7E9B2A51D84F06}" {
   }
   AROR_FactionPresetsComponent "{5C71FA2147F19FB3}" {
@@ -99,6 +106,7 @@ SCR_BaseGameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" 
   }
   AROR_GameFlowComponent "{6AAA8D6D8EB1E454}" {
    m_sHQPrefab "{3EC420BD9621F356}Prefabs/Locations/AROR_Location_HQ.et"
+   m_sArsenalPrefab "{274839CB791B6A7B}Prefabs/Props/Locations/AROR_Prop_Arsenal.et"
    m_bWorkbenchAutoNewPlaythrough 1
   }
   AROR_LocationManagerComponent "{6AA2823B57AE5CD7}" {
