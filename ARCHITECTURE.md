@@ -139,7 +139,7 @@ Purpose: persistent campaign saves, built on the **base-game save system** (`Sav
   - Each component with saved state has a matching `ScriptedComponentSerializer`. Serializers write a version first and keep loading older versions.
   - Locations are referenced by **stable ID**, never by position in a list.
 - Save generated results, not random seeds, so saves survive map and code changes.
-- Saved so far: location control, settlement support, the Resistance HQ, faction presets per role, faction funds, manpower, player money, garrison rosters, QRF war level, aggression and debt, and the Invader campaign state.
+- Saved so far: location control, settlement support, the Resistance HQ, faction presets per role, faction funds, manpower, player money, garrison rosters, QRF war level, aggression and debt, the Invader campaign state and active Resistance missions.
 - Boot rule: if a save is active when the world loads it is restored; otherwise setup starts. A new playthrough writes an initial save point, so new and loaded games share one restore path.
 - Limits: about 101 playthroughs and save points per mission; old autosaves need pruning.
 - Planned: periodic autosave and saves on key events and shutdown; verification on a dedicated server.
@@ -194,6 +194,19 @@ Purpose: Resistance Leaders raise AI squads and command them through the **HICOM
 - Feature detail: `docs/HIGH_COMMAND.md`.
 - Planned: more order types, platoons, enemy intel on the map, balance.
 
+### Missions (OPS) — In progress
+Purpose: Resistance side missions, offered on a board and run through the **OPS** phone app, paid in Resistance funds and manpower.
+
+- `AROR_MissionBoardComponent` (game mode): keeps a board of mission offers (rerolled as offers expire or are taken) and the active missions. Only **Resistance Leaders** (see High Command) accept or abort them; active missions are capped. A mission's enemies and props spawn when a Resistance player comes near, and its leftovers are removed once players leave.
+- Mission types (`AROR_EMissionType`), one `AROR_Mission` subclass each: **Supply Theft**, **Convoy Ambush**, **Prisoner Rescue**, **Supply Sabotage**, **Officer Assassination** and **Arms Cache Recovery**. Each picks its target from Locations (usually an enemy-held site), takes its units and vehicles from the enemy role's faction preset, and checks its own objectives and failure conditions. Rewards, time limits and guard counts are per type (`AROR_MissionType`) and rise with the target's threat level.
+- Results: success pays the Resistance through Economy; start, success and failure are announced through Notifications; a short network log is kept for OPS.
+- Server/client: everything is decided on the server; a compact snapshot (missions and log) replicates to every client. Clients request through RPCs on the player controller. Active missions are drawn on the game map (Map Markers), in OPS and in HICOMM.
+- Saved: active missions (identity, target, rewards, time left) through `AROR_MissionBoardComponentSerializer`; a loaded mission deploys again from the start. Offers are not saved; the board rerolls.
+- Depends on: Locations, Factions (presets), Economy, High Command (leaders), Notifications, Phone, Map Markers.
+- Extension points: per-type settings and board size, caps, ranges and prefabs on the component; new mission types through `modded enum AROR_EMissionType` plus an `AROR_Mission` subclass returned from a modded `CreateMission`.
+- Feature detail: `docs/MISSIONS.md`.
+- Planned: enemy aggression and support effects, item rewards, more mission types, balance.
+
 ### Operations (Attacks & QRF) — In progress
 Purpose: enemy **attacks** and defensive **quick reaction forces (QRF)** for the Occupiers and Invaders: deciding when to respond, choosing and paying for a force, spawning and directing it, and cleaning up afterwards.
 
@@ -217,7 +230,7 @@ Purpose: our own markers on any open map (player map, deploy screen, setup scree
 
 - `AROR_LocationMapIconsComponent` (game mode) draws an icon per location, tinted by the controlling faction's colour, and keeps it positioned as the map pans and zooms. Each location prefab chooses its icon image (white, so it can be tinted).
 - Hovering shows a pulsing selector; clicking opens an info card (name, type, controller; population and support for settlements) that updates live.
-- QRF last-seen markers (from Operations) are currently drawn by the same component. Moving the map framework into its own system, with each feature providing its own layer, is under discussion.
+- QRF last-seen markers (from Operations) and active Resistance missions (from Missions) are currently drawn by the same component. Moving the map framework into its own system, with each feature providing its own layer, is under discussion.
 - Not replicated or saved; reads replicated location state. No base-game marker configs are used.
 
 ### Economy — In progress
@@ -231,7 +244,7 @@ Purpose: money and manpower for the campaign: balances, and periodic income from
   - Resistance players get an income notification. Rates and the interval are attributes.
 - Rules: balances never go below zero; spending succeeds only if the balance covers it. All changes happen on the server.
 - Saved: funds, manpower and player money (`AROR_EconomyComponentSerializer`); Resistance funds and manpower include the refund for living High Command squads. Income timing is not saved.
-- Used by: Operations (QRF costs), High Command (squad purchases), the phone's Bank app, admin tools.
+- Used by: Operations (QRF costs), High Command (squad purchases), Missions (rewards), the phone's Bank app, admin tools.
 - Extension points: server API to add, spend and read balances, and to trigger a payment.
 
 ### Phone — In progress
@@ -239,8 +252,8 @@ Purpose: an in-game phone that hosts player-facing apps. Client only.
 
 - `AROR_PhoneMenu` (a menu registered in `chimeraMenus.conf`) and `AROR_PhoneComponent` (game mode), which opens it with a rebindable keybind (**Ctrl+Y**) for living players when no other menu is open. Esc closes it.
 - A phone frame over a wallpaper with a status bar. Apps open in portrait, or turn the whole phone to landscape and enlarge it. The frame's home button returns to the home screen.
-- Apps: **Bank** (account holder, personal money, Resistance funds, live from the Economy; transfers planned), **RebIntel** (read-only enemy war level and aggression from Operations), **HICOMM** (landscape High Command app for Resistance Leaders: leadership, a zoomable map for orders, squad purchases) and a landscape test app.
-- Depends on: Economy, Notifications (hints), Operations (RebIntel), High Command (HICOMM).
+- Apps: **Bank** (account holder, personal money, Resistance funds, live from the Economy; transfers planned), **RebIntel** (read-only enemy war level and aggression from Operations), **HICOMM** (landscape High Command app for Resistance Leaders: leadership, a zoomable map for orders, squad purchases), **OPS** (landscape mission board from Missions: browse operations, dossier with an area map; leaders accept and abort) and a landscape test app.
+- Depends on: Economy, Notifications (hints), Operations (RebIntel), High Command (HICOMM), Missions (OPS).
 - Planned: app registration so extender mods can add apps.
 
 ### Notifications — In progress

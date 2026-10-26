@@ -393,6 +393,44 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
+	// OPS missions: client -> server (validated by AROR_MissionBoardComponent)
+	//------------------------------------------------------------------------------------------------
+	void AROR_RequestMissionAccept(int missionId)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_MissionAccept(missionId);
+		else
+			Rpc(AROR_RpcAsk_MissionAccept, missionId);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	void AROR_RequestMissionAbort(int missionId)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_MissionAbort(missionId);
+		else
+			Rpc(AROR_RpcAsk_MissionAbort, missionId);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_MissionAccept(int missionId)
+	{
+		AROR_MissionBoardComponent board = AROR_MissionBoardComponent.GetInstance();
+		if (board)
+			board.RequestAccept_S(GetPlayerId(), missionId);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_MissionAbort(int missionId)
+	{
+		AROR_MissionBoardComponent board = AROR_MissionBoardComponent.GetInstance();
+		if (board)
+			board.RequestAbort_S(GetPlayerId(), missionId);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! True if this controller belongs to the local player (e.g. the host or Workbench player)
 	protected bool AROR_IsLocal()
 	{
