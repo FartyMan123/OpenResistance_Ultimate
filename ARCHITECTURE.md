@@ -138,7 +138,7 @@ Purpose: persistent campaign saves, built on the **base-game save system** (`Sav
   - Each component with saved state has a matching `ScriptedComponentSerializer`. Serializers write a version first and keep loading older versions.
   - Locations are referenced by **stable ID**, never by position in a list.
 - Save generated results, not random seeds, so saves survive map and code changes.
-- Saved so far: location control, settlement support, the Resistance HQ, faction presets per role, faction funds, manpower, player money, garrison rosters, QRF war level, aggression and debt, and the Invader campaign state.
+- Saved so far: location control, settlement support, the Resistance HQ, faction presets per role, faction funds, manpower, player money, Resistance item stock, garrison rosters, QRF war level, aggression and debt, and the Invader campaign state.
 - Boot rule: if a save is active when the world loads it is restored; otherwise setup starts. A new playthrough writes an initial save point, so new and loaded games share one restore path.
 - Limits: about 101 playthroughs and save points per mission; old autosaves need pruning.
 - Planned: periodic autosave and saves on key events and shutdown; verification on a dedicated server.
@@ -233,6 +233,16 @@ Purpose: money and manpower for the campaign: balances, and periodic income from
 - Used by: Operations (QRF costs), High Command (squad purchases), the phone's Bank app, admin tools.
 - Extension points: server API to add, spend and read balances, and to trigger a payment.
 
+### Resistance Storage — In progress
+Purpose: the Resistance's shared item stock for the campaign (what gear is on hand), separate from Economy money and manpower.
+
+- `AROR_ResistanceStorageComponent` (game mode): a ledger of **item prefab + quantity**. Any inventory item can be stocked; slot, type and volume stay on the item when it is later spawned or equipped. Starts empty.
+- Server API: `Add_S` / `Take_S` (atomic) by prefab; `GetQuantity` / `GetEntries` on every machine; `AddEntity_S` deposits a world/inventory item by unpacking nested contents (vest cargo, weapon attachments, magazines, and so on) into **separate stock lines**, then deleting the entity. Magazine fill and item health are not preserved.
+- Server-owned; stock replicates to all clients as parallel prefab/quantity arrays. Change invoker for future UI.
+- Saved: the stock ledger (`AROR_ResistanceStorageComponentSerializer`).
+- Admin: Economy sub-menu can fill stock with one of every Resistance preset item (excl. units/vehicles).
+- Planned: player deposit/withdraw, arsenal UI stock gating.
+
 ### Phone — In progress
 Purpose: an in-game phone that hosts player-facing apps. Client only.
 
@@ -254,7 +264,7 @@ Purpose: tell players what is happening in the campaign, plus quiet personal fee
 ### Admin Tools — In progress
 Purpose: in-game testing and admin tools, opened with **Ctrl+T** (`AROR_AdminMenuComponent`, game mode).
 
-- Sub-menus: teleport, Game Master, settlement support, test notifications, and economy (give money, pay income now).
+- Sub-menus: teleport, Game Master, settlement support, test notifications, and economy (give money, pay income now, fill Resistance stock from the Resistance preset).
 - Each tool asks the server, which applies the change.
 - Currently available to **every player** while "Menu Available" is on; **restricting it to server admins is required before public servers**, both for opening the menu and for the server accepting its requests.
 

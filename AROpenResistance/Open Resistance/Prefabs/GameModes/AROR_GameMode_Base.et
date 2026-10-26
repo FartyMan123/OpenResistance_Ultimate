@@ -51,6 +51,8 @@ SCR_BaseGameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" 
   }
   AROR_EconomyComponent "{F317694D57DF9B7A}" {
   }
+  AROR_ResistanceStorageComponent "{B8E41C72A05F3D19}" {
+  }
   AROR_IncomeComponent "{3C7E9B2A51D84F06}" {
   }
   AROR_FactionPresetsComponent "{5C71FA2147F19FB3}" {

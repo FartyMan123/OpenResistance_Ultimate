@@ -144,12 +144,31 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Admin menu: add one of every Resistance preset item (excl. units/vehicles) to Resistance Storage
+	void AROR_RequestAdminFillResistanceStock()
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_AdminFillResistanceStock();
+		else
+			Rpc(AROR_RpcAsk_AdminFillResistanceStock);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
 	protected void AROR_RpcAsk_AdminPayIncome()
 	{
 		AROR_AdminMenuComponent adminMenu = AROR_AdminMenuComponent.GetInstance();
 		if (adminMenu)
 			adminMenu.PayIncomeNow_S(GetPlayerId());
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_AdminFillResistanceStock()
+	{
+		AROR_AdminMenuComponent adminMenu = AROR_AdminMenuComponent.GetInstance();
+		if (adminMenu)
+			adminMenu.FillResistanceStock_S(GetPlayerId());
 	}
 
 	//------------------------------------------------------------------------------------------------
