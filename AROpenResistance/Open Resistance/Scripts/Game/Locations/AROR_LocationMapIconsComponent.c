@@ -42,6 +42,8 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 
 	//! Set while another feature uses map clicks (HQ pick, teleport) so clicks do not open the popup
 	protected static bool s_bInfoPopupSuppressed;
+	protected static bool s_bSuppressed;
+	protected bool m_bHandlingMap;	//!< The open map is one we attached to (so its close is ours to handle)
 
 	protected Widget m_wIconParent;
 	protected ref AROR_QRFMapIntel m_QRFIntel = new AROR_QRFMapIntel();
@@ -57,8 +59,20 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! While set, maps that open are ignored entirely (HICOMM opens the game map inside the phone and draws its
+	//! own location icons there)
+	static void SetSuppressed(bool suppressed)
+	{
+		s_bSuppressed = suppressed;
+	}
+
+	//------------------------------------------------------------------------------------------------
 	protected void OnMapOpen(MapConfiguration config)
 	{
+		if (s_bSuppressed)
+			return;
+
+		m_bHandlingMap = true;
 		SetQRFObserverMapOpen(true);
 		SCR_MapEntity mapEntity = SCR_MapEntity.GetMapInstance();
 		if (!mapEntity || !mapEntity.GetMapWidget())
@@ -102,6 +116,10 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	//------------------------------------------------------------------------------------------------
 	protected void OnMapClose(MapConfiguration config)
 	{
+		if (!m_bHandlingMap)
+			return;
+
+		m_bHandlingMap = false;
 		SetQRFObserverMapOpen(false);
 		GetGame().GetCallqueue().Remove(UpdateIconPositions);
 

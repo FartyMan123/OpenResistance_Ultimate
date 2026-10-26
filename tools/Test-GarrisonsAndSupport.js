@@ -108,9 +108,9 @@ function runGarrisonsAndSupportTests(sources) {
   check([0,1,2].map(r=>env.AROR_GarrisonPolicy.DefenceLevel(types.RESOURCES,r)).join(',')==='1,2,3','resources roll three stored defence levels');
   const faction={m_eRole:1,m_sFactionKey:'AROR_OCCUPIERS',m_sAssetFactionKey:'US',m_sInfantry:'rifle',m_sStaticMG:'mg',m_sCrew:'crew',m_sParkedArmour:'lav',m_aMannedVehicles:['lav','humvee']};
   const add=compile(sources.garrison,'AddSlot'),reserve=compile(sources.garrison,'ReservedPersonnel'),generate=compile(sources.garrison,'Generate_S');
-  function roster(type,override=0){
-    const state={m_aSlots:[],m_bGenerated:false,m_iDefenceLevel:override,IsEligible:()=>true,
-      m_Location:{GetControllingRole:()=>1,GetLocationType:()=>type,GetId:()=>'site'},AddSlot:add,ReservedPersonnel:reserve,InfantryPrefab:compile(sources.garrison,'InfantryPrefab')};
+  function roster(type,override=0,staticOverride=0,omitParked=false){
+    const state={m_aSlots:[],m_bGenerated:false,m_iDefenceLevel:override,m_iStaticWeaponCountOverride:staticOverride,m_bOmitParkedArmour:omitParked,IsEligible:()=>true,
+      m_Location:{GetControllingRole:()=>1,GetLocationType:()=>type,GetId:()=>'site'},AddSlot:add,ReservedPersonnel:reserve,InfantryPrefab:compile(sources.garrison,'InfantryPrefab'),StaticPrefab:compile(sources.garrison,'StaticPrefab'),GetStaticWeaponCount:compile(sources.garrison,'GetStaticWeaponCount')};
     generate.call(state,faction);return state;
   }
   const outpost=roster(types.OUTPOST,4);
@@ -118,11 +118,32 @@ function runGarrisonsAndSupportTests(sources) {
   const military=roster(types.MILITARY_BASE);
   check(military.m_aSlots.filter(s=>s.m_iKind===2).length===1,'military outpost includes parked unmanned armour');
   check(military.m_aSlots.filter(s=>s.m_iKind===3).length===1,'military outpost includes one random manned hull');
+    const compact=roster(types.MILITARY_BASE,3,4,true);
+    check(compact.m_aSlots.filter(s=>s.m_iKind===2).length===0&&compact.m_aSlots.filter(s=>s.m_iKind===3).length===1,'compact military compound omits only the spare uncrewed hull');
+    check(compact.m_aSlots.filter(s=>s.m_iKind===0).length===24&&compact.m_aSlots.filter(s=>s.m_iKind===1).length===4,'compact layout retains its infantry and four statics');
+    check(reserve.call(compact)===32,'compact military reserves infantry and all static and vehicle crews');
   const airport=roster(types.AIRPORT,1);
   check(airport.m_iLevel===4&&airport.m_aSlots.filter(s=>s.m_iKind===3).length===3,'airbase stays large under low override');
   check(reserve.call(airport)===48,'airbase reserves all infantry, static and possible hull crew before spawning');
   const before=airport.m_aSlots.length;check(!generate.call(airport,faction)&&airport.m_aSlots.length===before,'active recipe cannot reroll');
   server=false;check(!generate.call({...military,m_bGenerated:false},faction),'client cannot generate roster');server=true;
+
+  faction.m_aStaticVariants=['medium-mg','heavy-specialist'];
+  const equippedOutpost=roster(types.OUTPOST,2);
+  check(equippedOutpost.m_aSlots.filter(s=>s.m_iKind===1).map(s=>s.m_sPrefab).join(',')==='mg,medium-mg','ordinary equipped outpost uses heavy and medium statics');
+  const equippedMilitary=roster(types.MILITARY_BASE,3,4),guns=equippedMilitary.m_aSlots.filter(s=>s.m_iKind===1);
+  check(guns.map(s=>s.m_sPrefab).join(',')==='mg,medium-mg,heavy-specialist,mg','military uses four crewed positions with bounded variant rotation');
+  check(guns.map(s=>s.m_iVariant).join(',')==='0,1,2,0','logical static choices are recorded for serialization');
+  check(equippedMilitary.m_aSlots.filter(s=>s.m_iKind===0).length===24,'extra static does not increase the infantry recipe');
+  check(equippedMilitary.ReservedPersonnel()===32,'extra gun reserves its crew before physical spawning');
+  const staticPrefab=compile(sources.garrison,'StaticPrefab');
+  check(staticPrefab(faction,99)==='mg','removed static variants safely use the current default gun');
+  check(staticPrefab({...faction,m_aStaticVariants:['']},1)==='mg','empty static variant retains a usable default');
+  const bindStatic=compile(sources.garrison,'BindAssets_S');
+  const staticRestore={m_aSlots:guns.map(s=>({...s,m_bLost:s.m_iVariant===1})),m_eRosterRole:1,m_bAssetsBound:false,StaticPrefab:staticPrefab};
+  check(bindStatic.call(staticRestore,{...faction,m_aStaticVariants:['new-medium','new-heavy']})&&staticRestore.m_aSlots[2].m_sPrefab==='new-heavy','restored static slots bind their recorded variant to current role assets');
+  check(staticRestore.m_aSlots[1].m_bLost,'static asset rebinding never replenishes a destroyed gun');
+  delete faction.m_aStaticVariants;
 
   const advance=compile(sources.support,'ApplyRegionalSupport_S');
   function support(r,o,i){return {m_fResistance:r,m_fOccupiers:o,m_fInvaders:i,m_Location:{IsControlFixed:()=>false},
@@ -234,6 +255,16 @@ function runGarrisonsAndSupportTests(sources) {
 	let quarantine='';const loaded={QuarantineRoster_S:reason=>quarantine=reason,RestoreRoster_S:(...args)=>restored=args},context={ReadValue:(key,set)=>{if(!(key in saved))return false;set(saved[key]);return true;}};
 	check(read(null,loaded,context)&&restored[4].length===snapshot.length,'saved recipe restores all slots');
 	check(restored[4][0].m_bLost&&restored[4][0].m_fHealth===0&&!restored[4][0].m_bPlaced,'casualty and damage survive while positions are replanned');
+	const equippedSave={};let equippedRestore;
+	const equippedSlots=equippedMilitary.m_aSlots.map(slot=>({...slot}));
+	const destroyedStatic=equippedSlots.find(slot=>slot.m_iKind===1&&slot.m_iVariant===1);
+	destroyedStatic.m_bLost=true;destroyedStatic.m_fHealth=0;
+	write(null,{...original,GetSlots:out=>out.push(...equippedSlots)},{WriteValue:(key,value)=>equippedSave[key]=value});
+	const equippedLoaded={QuarantineRoster_S:()=>{throw Error('Unexpected equipped roster quarantine');},RestoreRoster_S:(...args)=>equippedRestore=args};
+	check(read(null,equippedLoaded,{ReadValue:(key,set)=>{if(!(key in equippedSave))return false;set(equippedSave[key]);return true;}}),'equipped roster round-trips through the actual serializer');
+	check(equippedRestore[4].filter(slot=>slot.m_iKind===1).map(slot=>slot.m_iVariant).join(',')==='0,1,2,0','all four static variants survive save/load');
+	check(equippedRestore[4].some(slot=>slot.m_iKind===1&&slot.m_iVariant===1&&slot.m_bLost&&slot.m_fHealth===0),'destroyed medium gun stays lost on restore');
+	check(equippedRestore[4].filter(slot=>slot.m_iKind===0).length===24,'equipped save preserves the original infantry count');
 	saved.version=99;restored=null;check(read(null,loaded,context)&&!restored&&quarantine,'unsupported headers quarantine without generating replacements');saved.version=1;
 	check(read(null,loaded,context)&&!restored[4][0].m_bPlaced&&restored[4][0].m_bLost&&restored[4][0].m_fHealth===0,'v1 migration keeps losses/damage while invalidating scattered placement');
 	saved.slot0_kind=4;saved.slot0_vehicle=999;check(read(null,loaded,context)&&restored[4][0].m_iVehicle===-1,'orphaned crew restore on foot instead of rejecting the whole roster');
@@ -243,7 +274,7 @@ function runGarrisonsAndSupportTests(sources) {
   const playerIds=new Map();
   env.GetGame=()=>({GetWorld:()=>({GetWorldTime:()=>worldTime}),GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:e=>playerIds.get(e)||0})});
   env.AROR_QRFDefenseComponent={Cast:x=>x};env.SCR_EntityHelper={};
-  const lifecycleNames=['BeginDeployment_S','UpdateDeployment_S','CloseDeployment_S','HasUnresolvedQueue','CancelQueuedGroup_S','DetachOrphanedCrew_S','QuarantineRoster_S','BindAssets_S','InfantryPrefab'];
+  const lifecycleNames=['BeginDeployment_S','UpdateDeployment_S','CloseDeployment_S','HasUnresolvedQueue','CancelQueuedGroup_S','DetachOrphanedCrew_S','QuarantineRoster_S','BindAssets_S','InfantryPrefab','StaticPrefab','GetStaticWeaponCount'];
   const lifecycle=Object.fromEntries(lifecycleNames.map(n=>[n,compile(sources.garrison,n)]));
   function newDeployment(slots=[]){
     return {...lifecycle,m_aSlots:slots,m_aGroups:[],m_iDeploymentStartedAt:-1,m_iDeploymentGraceSeconds:60,m_iSpawnQueueTimeoutSeconds:30,
