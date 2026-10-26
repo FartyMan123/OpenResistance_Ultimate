@@ -222,7 +222,7 @@ Purpose: our own markers on any open map (player map, deploy screen, setup scree
 ### Economy — In progress
 Purpose: money and manpower for the campaign: balances, and periodic income from held locations. General purchasing rules come later.
 
-- `AROR_EconomyComponent` (game mode): **faction funds** per role, Resistance **manpower**, and **personal money** per player. Server-owned; funds and manpower replicate to everyone, a player's money only to that player. Player money is keyed by identity ID so it survives reconnects.
+- `AROR_EconomyComponent` (game mode): **faction funds** per role, Resistance **manpower**, and **personal money** per player. Server-owned; funds and manpower replicate to everyone, a player's money only to that player. Player money is keyed by identity ID so it survives reconnects. Players can transfer personal money to another online player or donate it to Resistance funds (Bank Transfer RPCs on the player controller).
 - `AROR_IncomeComponent` (game mode, server): every **15 minutes** (not during setup) each role is paid for what it holds:
   - Money = held Resources × $500 × (1 + 0.3 per held Factory + 0.5 per held Port), plus $5 per inhabitant of held towns and cities.
   - The Occupiers and Invaders also receive fixed **external support** ($500 each).
@@ -238,7 +238,7 @@ Purpose: an in-game phone that hosts player-facing apps. Client only.
 
 - `AROR_PhoneMenu` (a menu registered in `chimeraMenus.conf`) and `AROR_PhoneComponent` (game mode), which opens it with a rebindable keybind (**Ctrl+Y**) for living players when no other menu is open. Esc closes it.
 - A phone frame over a wallpaper with a status bar. Apps open in portrait, or turn the whole phone to landscape and enlarge it. The frame's home button returns to the home screen.
-- Apps: **Bank** (account holder, personal money, Resistance funds, live from the Economy; transfers planned), **RebIntel** (read-only enemy war level and aggression from Operations), **HICOMM** (landscape High Command app for Resistance Leaders: leadership, a zoomable map for orders, squad purchases) and a landscape test app.
+- Apps: **Bank** (account holder, personal money, Resistance funds, live from the Economy; Transfer screen sends personal money to an online player or Resistance funds), **RebIntel** (read-only enemy war level and aggression from Operations), **HICOMM** (landscape High Command app for Resistance Leaders: leadership, a zoomable map for orders, squad purchases) and a landscape test app.
 - Depends on: Economy, Notifications (hints), Operations (RebIntel), High Command (HICOMM).
 - Planned: app registration so extender mods can add apps.
 
