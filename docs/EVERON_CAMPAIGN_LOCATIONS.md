@@ -56,7 +56,7 @@ The [CSV catalogue](EVERON_CAMPAIGN_LOCATIONS.csv) is the editable scenario data
 | Gorey Outpost | OUTPOST | everon_outpost_gorey | 100 m | 0 |
 | Pinewood Lake Outpost | OUTPOST | everon_outpost_pinewood_lake | 100 m | 0 |
 | Levie Hillside Outpost | OUTPOST | everon_outpost_levie_hillside | 100 m | 0 |
-| Durras Hill Outpost | OUTPOST | everon_outpost_durras_hill | 100 m | 0 |
+| USSR Forward Base - Durras Hill | OUTPOST | everon_outpost_durras_hill | 100 m | 0 |
 | Sawmill Outpost | OUTPOST | everon_outpost_sawmill | 100 m | 0 |
 | Regina South Outpost | OUTPOST | everon_outpost_regina_south | 100 m | 0 |
 | Chotain Industrial Outpost | OUTPOST | everon_outpost_chotain_industrial | 100 m | 0 |

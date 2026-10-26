@@ -1,10 +1,10 @@
 # Four-type attack and QRF force pools
 
-See [QRF tactical commander and staged waves](QRF_TACTICAL_COMMANDER.md) for the new shared BLUFOR/USSR execution policy, finite reserves, live limits, report-driven sectors and withdrawal/retention. It is enabled for Chicken's ground fixture; Invader dispatch remains disabled. New tactical behavior is not yet verified in Workbench.
+See [QRF tactical commander and staged waves](QRF_TACTICAL_COMMANDER.md) for the new shared BLUFOR/USSR execution policy, finite reserves, live limits, report-driven sectors and withdrawal/retention. It is enabled for Chicken's ground fixture; Chicken now enables capture-driven Invader ground responses; native acceptance is pending. New tactical behavior is not yet verified in Workbench.
 
-The [USSR/Invader framework](INVADER_QRF_FRAMEWORK.md) is staged with levels 1-5 and operation admission disabled; the current US/Occupier test remains selected.
+The [USSR/Invader framework](INVADER_QRF_FRAMEWORK.md) has levels 1-5 and ground capture-response admission enabled in Chicken; other scenarios default off.
 
-**Current Chicken fixture:** strategic selection and payments are ON, initially war level 2, with five authored ground tiers per AI role. A normal response varies between the truck/IFV tier and one truck plus two IFVs; affordability can downgrade it. REAPER dispatch and Invader admission remain OFF. See [strategy and prices](QRF_STRATEGY_ECONOMY.md) and [FIA spotting](QRF_SPOTTING.md). To restore the exact truck/IFV regression fixture, disable `m_bQRFStrategicEconomy` and follow [these instructions](TRUCK_IFV_QRF_TEST.md). This supersedes older forced-profile/level-5 instructions below.
+**Current Chicken fixture:** [strategic selection](QRF_STRATEGY_ECONOMY.md) starts at war level 1 and aggression 20%. War gates light/mechanized/combined equipment pools; aggression requests response intensity 1–5. Ground capture responses are enabled for both AI roles, with tactical waves and spotting; combat/flight dispatch remain off. The exact [truck/APC regression fixture](TRUCK_IFV_QRF_TEST.md) requires strategic economy off. Compile and reload before native acceptance.
 
 The proposed [QRF response roster](QRF_RESPONSE_ROSTER.md) adds 40 authored responses across eight families and levels 1-5, including combined ground/air compositions. It defines future commander/resource selection; it does not change the current repeated-profile executor or Chicken test. A [CSV catalogue](QRF_RESPONSE_ROSTER.csv) provides stable recipe IDs and nominal accounting.
 

@@ -1,0 +1,320 @@
+[ComponentEditorProps(category: "OpenResistance/Commanders", description: "Optional resource-funded, distant US/USSR territorial simulation. No physical battles or second bank.")]
+class AROR_InvaderCampaignComponentClass : SCR_BaseGameModeComponentClass {}
+
+class AROR_InvaderCampaignComponent : SCR_BaseGameModeComponent
+{
+	[Attribute("0", desc: "Enable the Invader territorial simulation for this scenario; shared scenarios default off.")]
+	protected bool m_bInvaderCampaign;
+	[Attribute("everon_ussr_support_corridor", desc: "Stable ID of the fixed Invader support corridor marker.")]
+	protected string m_sCorridorId;
+	[Attribute("everon_outpost_durras_hill", desc: "Stable ID of the initial land base. If lost, re-establish this foothold before expanding.")]
+	protected string m_sForwardBaseId;
+	[Attribute("20000", desc: "One-time opening grant into the existing Invader faction bank; saved to prevent repeat grants.", params: "0 1000000 100")]
+	protected int m_iOpeningGrant;
+	[Attribute("300", desc: "Seconds between simulated engagements; checked on enemy commander evaluations.", params: "30 3600 1")]
+	protected int m_iBattleInterval;
+	[Attribute("120", desc: "Initial preparation seconds after the first grant, before the first engagement.", params: "30 3600 1")]
+	protected int m_iInitialDelay;
+	[Attribute("40", desc: "Baseline desired percentage of military installations, excluding the corridor. Soft balance target, not a hard limit.", params: "10 80 1")]
+	protected int m_iBaselineShare;
+	[Attribute("1000", desc: "Engagement resource cost before site-type scaling; both armies pay from their existing available faction funds.", params: "100 100000 100")]
+	protected int m_iBattleCost;
+	[Attribute("3500", desc: "Maximum distance between a target and a friendly military origin; keeps expansion on the connected front.", params: "500 10000 100")]
+	protected float m_fFrontierReach;
+	[Attribute("3000", desc: "Minimum all-player distance beyond the location radius for simulated engagements. Active garrisons/operations also block simulation.", params: "1000 10000 100")]
+	protected float m_fPlayerClearance;
+	[Attribute("1500", desc: "Additional Invader external support per existing Income payment while this campaign is enabled.", params: "0 100000 100")]
+	protected int m_iExternalSupport;
+	[Attribute("750", desc: "Additional support per war level above two, paid only by the existing Income system.", params: "0 100000 50")]
+	protected int m_iFundingPerWar;
+	[Attribute("30", desc: "Additional support per aggression percentage point, paid only by the existing Income system.", params: "0 10000 1")]
+	protected int m_iFundingPerAggression;
+
+	protected static AROR_InvaderCampaignComponent s_Instance;
+	protected AROR_CommanderManagerComponent m_Commanders;
+	protected AROR_LocationManagerComponent m_Locations;
+	protected AROR_OperationManagerComponent m_Operations;
+	protected AROR_EconomyComponent m_Economy;
+	[RplProp()]
+	protected bool m_bSeeded;
+	[RplProp()]
+	protected bool m_bQuarantined;
+	protected int m_iNextBattleAt;
+	protected int m_iRestoredDelay = -1;
+	protected ref array<AROR_LocationComponent> m_aSites = {};
+	protected ref array<vector> m_aPlayers = {};
+	protected ref array<AROR_Operation> m_aOperations = {};
+
+	static AROR_InvaderCampaignComponent GetInstance() { return s_Instance; }
+	bool IsAdvanceActive() { return m_bInvaderCampaign && m_bSeeded && !m_bQuarantined; }
+	bool HasOpeningGrant() { return m_bSeeded; }
+	bool IsQuarantined() { return m_bQuarantined; }
+
+	//! While this scenario simulates the two armies, their ownership changes must not launch physical QRFs.
+	static bool SuppressAICaptureQRF_S(AROR_EFactionRole previous, AROR_EFactionRole current)
+	{
+		return Replication.IsServer() && s_Instance && s_Instance.IsAdvanceActive()
+			&& AROR_GarrisonPolicy.IsEnemyRole(previous) && AROR_GarrisonPolicy.IsEnemyRole(current);
+	}
+
+	//! Called by Income's existing payout path; never pays money itself.
+	int GetExternalSupportBonus()
+	{
+		if (!IsAdvanceActive())
+			return 0;
+		AROR_OperationManagerComponent operations = AROR_OperationManagerComponent.GetInstance();
+		if (!operations)
+			return 0;
+		return AROR_InvaderCampaignPolicy.Funding(m_iExternalSupport, m_iFundingPerWar, m_iFundingPerAggression,
+			operations.GetWarLevel(AROR_EFactionRole.INVADERS), operations.GetAggressionPercent(AROR_EFactionRole.INVADERS));
+	}
+
+	int RemainingDelay()
+	{
+		if (m_iRestoredDelay >= 0)
+			return m_iRestoredDelay;
+		return Math.Clamp(Math.Ceil((m_iNextBattleAt - GetGame().GetWorld().GetWorldTime()) / 1000.0), 0, 3600);
+	}
+	void RestoreCampaign_S(bool granted, bool quarantined, int delay)
+	{
+		if (!Replication.IsServer())
+			return;
+		m_bSeeded = granted;
+		m_bQuarantined = quarantined;
+		m_iRestoredDelay = delay;
+		Replication.BumpMe();
+	}
+	void Quarantine_S()
+	{
+		if (!Replication.IsServer())
+			return;
+		m_bQuarantined = true;
+		Replication.BumpMe();
+		Print("[AROR INVADER] Unreadable campaign state quarantined; no grant, income bonus or simulation", LogLevel.ERROR);
+	}
+
+	protected void Attach_S()
+	{
+		m_Commanders = AROR_CommanderManagerComponent.GetInstance();
+		if (!m_Commanders)
+			return;
+		m_Commanders.GetOnCommanderEvaluation().Insert(OnEvaluation);
+		GetGame().GetCallqueue().Remove(Attach_S);
+	}
+	protected void OnEvaluation(AROR_Commander commander)
+	{
+		if (!Replication.IsServer() || !m_bInvaderCampaign || m_bQuarantined || !commander || commander.GetRole() != AROR_EFactionRole.INVADERS)
+			return;
+		AROR_GameFlowComponent flow = AROR_GameFlowComponent.GetInstance();
+		if (!m_Commanders || !m_Commanders.IsCampaignActive() || !flow || !flow.IsPlaythroughReady())
+			return;
+		m_Locations = AROR_LocationManagerComponent.GetInstance();
+		m_Operations = AROR_OperationManagerComponent.GetInstance();
+		m_Economy = AROR_EconomyComponent.GetInstance();
+		if (!m_Locations || !m_Operations || !m_Economy)
+			return;
+		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.GetInstance();
+		if (!roles)
+			return;
+		Faction occupiers = roles.GetFaction(AROR_EFactionRole.OCCUPIERS);
+		Faction invadersFaction = roles.GetFaction(AROR_EFactionRole.INVADERS);
+		if (!occupiers || !invadersFaction || !occupiers.IsFactionEnemy(invadersFaction) || !invadersFaction.IsFactionEnemy(occupiers))
+			return;
+		AROR_LocationComponent corridor = m_Locations.GetLocationById(m_sCorridorId);
+		AROR_LocationComponent foothold = m_Locations.GetLocationById(m_sForwardBaseId);
+		if (!corridor || !foothold || corridor.GetLocationType() != AROR_ELocationType.SUPPORT_CORRIDOR || !corridor.IsControlFixed() || corridor.GetControllingRole() != AROR_EFactionRole.INVADERS)
+			return;
+		int now = GetGame().GetWorld().GetWorldTime();
+		if (!m_bSeeded)
+		{
+			m_bSeeded = true;
+			m_Economy.AddFactionFunds_S(AROR_EFactionRole.INVADERS, m_iOpeningGrant);
+			m_iNextBattleAt = now + m_iInitialDelay * 1000;
+			m_iRestoredDelay = -1;
+			Replication.BumpMe();
+			Print(string.Format("[AROR INVADER] Corridor ready; opening grant=%1, forward base=%2", m_iOpeningGrant, m_sForwardBaseId), LogLevel.NORMAL);
+		}
+		if (m_iRestoredDelay >= 0)
+		{
+			m_iNextBattleAt = now + m_iRestoredDelay * 1000;
+			m_iRestoredDelay = -1;
+		}
+		if (now < m_iNextBattleAt)
+			return;
+		m_iNextBattleAt = now + m_iBattleInterval * 1000;
+		Survey_S();
+		int invaders;
+		foreach (AROR_LocationComponent site : m_aSites)
+		{
+			if (site.GetControllingRole() == AROR_EFactionRole.INVADERS)
+				invaders++;
+		}
+		int goal = AROR_InvaderCampaignPolicy.TargetShare(m_iBaselineShare, m_Operations.GetWarLevel(AROR_EFactionRole.INVADERS), m_Operations.GetAggressionPercent(AROR_EFactionRole.INVADERS));
+		int invaderIndustry = Industry(AROR_EFactionRole.INVADERS);
+		int occupierIndustry = Industry(AROR_EFactionRole.OCCUPIERS);
+		int invaderWin = AROR_InvaderCampaignPolicy.BattleChance(1, 1, invaderIndustry, occupierIndustry);
+		int occupierWin = AROR_InvaderCampaignPolicy.BattleChance(1, 1, occupierIndustry, invaderIndustry);
+		int chance = AROR_InvaderCampaignPolicy.InvaderAttackChance(invaders, m_aSites.Count(), goal, invaderWin, occupierWin);
+		AROR_EFactionRole attacker = AROR_EFactionRole.INVADERS;
+		if (Math.RandomInt(0, 100) >= chance)
+			attacker = AROR_EFactionRole.OCCUPIERS;
+		AROR_LocationComponent target = SelectTarget(attacker, corridor.GetCenter(), foothold);
+		if (target)
+			ResolveBattle_S(attacker, target);
+	}
+
+	protected void Survey_S()
+	{
+		m_aSites.Clear();
+		array<AROR_LocationComponent> locations = {};
+		m_Locations.GetLocations(locations);
+		foreach (AROR_LocationComponent location : locations)
+		{
+			if (location && !location.IsControlFixed() && AROR_InvaderCampaignPolicy.Cost(location.GetLocationType(), m_iBattleCost) > 0)
+				m_aSites.Insert(location);
+		}
+		m_aPlayers.Clear();
+		array<int> players = {};
+		GetGame().GetPlayerManager().GetPlayers(players);
+		foreach (int id : players)
+		{
+			IEntity entity = GetGame().GetPlayerManager().GetPlayerControlledEntity(id);
+			if (entity)
+				m_aPlayers.Insert(entity.GetOrigin());
+		}
+		m_Operations.GetOperations(m_aOperations);
+	}
+	protected bool IsDistant(AROR_LocationComponent site)
+	{
+		foreach (vector player : m_aPlayers)
+		{
+			if (vector.DistanceXZ(player, site.GetCenter()) <= m_fPlayerClearance + site.GetRadius())
+				return false;
+		}
+		AROR_GarrisonComponent garrison = AROR_GarrisonComponent.Cast(site.GetOwner().FindComponent(AROR_GarrisonComponent));
+		if (garrison && (garrison.IsGarrisonActive() || garrison.HasDeploymentStarted()))
+			return false;
+		foreach (AROR_Operation operation : m_aOperations)
+		{
+			if (!operation.IsTerminal() && (operation.GetTargetLocationId() == site.GetId() || (operation.m_TacticalCommander && operation.m_TacticalCommander.m_sOriginLocationId == site.GetId())))
+				return false;
+		}
+		return !m_Operations.HasPendingQRFThreat(AROR_EFactionRole.OCCUPIERS, site.GetId()) && !m_Operations.HasPendingQRFThreat(AROR_EFactionRole.INVADERS, site.GetId());
+	}
+	protected AROR_LocationComponent SelectTarget(AROR_EFactionRole attacker, vector corridor, AROR_LocationComponent foothold)
+	{
+		AROR_EFactionRole defender = AROR_EFactionRole.OCCUPIERS;
+		if (attacker == AROR_EFactionRole.OCCUPIERS)
+			defender = AROR_EFactionRole.INVADERS;
+		AROR_LocationComponent best;
+		float score = float.MAX;
+		foreach (AROR_LocationComponent candidate : m_aSites)
+		{
+			if (candidate.GetControllingRole() != defender || !candidate.CanBeTakenBy(attacker) || !IsDistant(candidate))
+				continue;
+			float nearest = float.MAX;
+			foreach (AROR_LocationComponent origin : m_aSites)
+			{
+				if (origin.GetControllingRole() == attacker)
+					nearest = Math.Min(nearest, vector.DistanceXZ(candidate.GetCenter(), origin.GetCenter()));
+			}
+			bool restoreFoothold = attacker == AROR_EFactionRole.INVADERS && candidate == foothold;
+			if (attacker == AROR_EFactionRole.INVADERS && foothold.GetControllingRole() != attacker && !restoreFoothold)
+				continue;
+			if (nearest > m_fFrontierReach && !restoreFoothold)
+				continue;
+			float rank = vector.DistanceXZ(corridor, candidate.GetCenter());
+			if (attacker == AROR_EFactionRole.OCCUPIERS)
+				rank = -rank; // Reclaim the exposed outer front first.
+			if (!best || rank < score || (rank == score && candidate.GetId().Compare(best.GetId()) < 0))
+			{
+				best = candidate;
+				score = rank;
+			}
+		}
+		return best;
+	}
+	protected int Industry(AROR_EFactionRole role)
+	{
+		int value;
+		foreach (AROR_LocationComponent site : m_aSites)
+		{
+			if (site.GetControllingRole() != role)
+				continue;
+			if (site.GetLocationType() == AROR_ELocationType.RESOURCES)
+				value += 3;
+			if (site.GetLocationType() == AROR_ELocationType.FACTORY)
+				value += 5;
+		}
+		return value;
+	}
+	protected void ResolveBattle_S(AROR_EFactionRole attacker, AROR_LocationComponent target)
+	{
+		if (!Replication.IsServer() || !AROR_GarrisonPolicy.IsEnemyRole(attacker) || !IsDistant(target) || !target.CanBeTakenBy(attacker))
+			return;
+		AROR_EFactionRole defender = target.GetControllingRole();
+		if (!AROR_GarrisonPolicy.IsEnemyRole(defender) || defender == attacker)
+			return;
+		int cost = AROR_InvaderCampaignPolicy.Cost(target.GetLocationType(), m_iBattleCost);
+		AROR_QRFFinance finance = m_Operations.GetQRFFinance();
+		if (!finance || finance.Available(attacker) < cost || !m_Economy.SpendFactionFunds_S(attacker, cost))
+			return;
+		int defence = Math.Min(cost, finance.Available(defender));
+		if (defence > 0 && !m_Economy.SpendFactionFunds_S(defender, defence))
+			defence = 0;
+		int chance = AROR_InvaderCampaignPolicy.BattleChance(cost, defence, Industry(attacker), Industry(defender));
+		bool captured;
+		if (Math.RandomInt(0, 100) < chance)
+			captured = target.SetControllingRole_S(attacker);
+		Print(string.Format("[AROR INVADER] simulated target=%1 attacker=%2 attackCost=%3 defenceCost=%4 chance=%5 captured=%6", target.GetId(), attacker, cost, defence, chance, captured), LogLevel.NORMAL);
+	}
+
+	//! Keep range checks separate to stay within Enforce's expression complexity limit.
+	protected bool HasValidConfiguration()
+	{
+		if (m_iOpeningGrant < 0 || m_iOpeningGrant > 1000000)
+			return false;
+		if (m_iBattleInterval < 30 || m_iBattleInterval > 3600)
+			return false;
+		if (m_iInitialDelay < 30 || m_iInitialDelay > 3600)
+			return false;
+		if (m_iBaselineShare < 10 || m_iBaselineShare > 80)
+			return false;
+		if (m_iBattleCost < 100 || m_iBattleCost > 100000)
+			return false;
+		if (m_fFrontierReach < 500 || m_fFrontierReach > 10000)
+			return false;
+		if (m_fPlayerClearance < 1000 || m_fPlayerClearance > 10000)
+			return false;
+		if (m_iExternalSupport < 0 || m_iExternalSupport > 100000)
+			return false;
+		if (m_iFundingPerWar < 0 || m_iFundingPerWar > 100000)
+			return false;
+		if (m_iFundingPerAggression < 0 || m_iFundingPerAggression > 10000)
+			return false;
+		return true;
+	}
+
+	override void OnPostInit(IEntity owner)
+	{
+		super.OnPostInit(owner);
+		if (!GetGame().InPlayMode() || !Replication.IsServer() || !m_bInvaderCampaign)
+			return;
+		if (s_Instance || !HasValidConfiguration())
+		{
+			Print("[AROR INVADER] Duplicate or invalid campaign configuration; disabled", LogLevel.ERROR);
+			return;
+		}
+		s_Instance = this;
+		GetGame().GetCallqueue().CallLater(Attach_S, 1000, true);
+	}
+	override void OnDelete(IEntity owner)
+	{
+		GetGame().GetCallqueue().Remove(Attach_S);
+		if (m_Commanders)
+			m_Commanders.GetOnCommanderEvaluation().Remove(OnEvaluation);
+		if (s_Instance == this)
+			s_Instance = null;
+		super.OnDelete(owner);
+	}
+}

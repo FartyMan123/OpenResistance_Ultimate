@@ -16,9 +16,14 @@ class AROR_Operation
 	ref AROR_QRFTacticalCommander m_TacticalCommander;
 	ref AROR_QRFFunding m_Funding;
 	int m_iRequestedTier;
+	//! Equipment availability is frozen alongside requested intensity before recipe selection.
+	int m_iPoolWarLevel;
 	int m_iThreatPriority;
 	int m_iRecoveredPackages;
 	bool m_bCaptureThreatRecorded;
+	int m_iCaptureReportedAt;
+	int m_iPlanningRetries;
+	string m_sRejectedOrigins;
 
 	string GetRecipeId() { return m_sRecipeId; }
 	int GetPackageCount()

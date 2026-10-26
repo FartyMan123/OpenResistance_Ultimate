@@ -11,10 +11,10 @@ class AROR_QRFStrategySmokeTests
 		{
 			int pressure = AROR_QRFStrategicPolicy.PressureForLevel(level);
 			passed = Check(AROR_QRFStrategicPolicy.WarLevel(pressure) == level, "War threshold") && passed;
-			passed = Check(AROR_QRFStrategicPolicy.DesiredTier(level, 0, false, 50) == level, "Normal response ceiling") && passed;
-			passed = Check(AROR_QRFStrategicPolicy.DesiredTier(level, 0, false, 0) == Math.Max(1, level - 1), "Lighter response variation") && passed;
+			passed = Check(AROR_QRFStrategicPolicy.ResponseLevel((level - 1) * 200) == level, "Independent aggression response level") && passed;
+			passed = Check(AROR_QRFStrategicPolicy.DesiredTier(level, 6, true, 0, 180) == level, "Threat importance does not bypass aggression") && passed;
 		}
-		passed = Check(AROR_QRFStrategicPolicy.DesiredTier(2, 3, false, 50) == 3, "Sustained threat escalation") && passed;
+		passed = Check(AROR_QRFStrategicPolicy.ResponseLevel(1000) == 5, "Maximum aggression remains level five") && passed;
 		passed = Check(AROR_QRFStrategicPolicy.Priority(100, 1000, false, 10000) == 250, "Queue evidence and aging bounded") && passed;
 		AROR_QRFFunding account = new AROR_QRFFunding();
 		account.m_iQuote = 1450;

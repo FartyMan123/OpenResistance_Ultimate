@@ -44,15 +44,22 @@ class AROR_QRFStrategicPolicy
 		result += Math.Min(60, Math.Max(0, age) / 10);
 		return result;
 	}
-	static int DesiredTier(int warLevel, int reports, bool captured, int roll, int importance = 100)
+	//! Aggression controls response size only. War level gates equipment separately.
+	static int ResponseLevel(int aggression)
 	{
-		int maximum = Math.Clamp(warLevel, 1, 5);
-		if (captured || reports >= 3 || importance >= 160)
-			maximum = Math.Min(5, maximum + 1);
-		// 70% at the current ceiling; 30% one tier lighter. Roll is supplied once.
-		if (roll < 30)
-			return Math.Max(1, maximum - 1);
-		return maximum;
+		int bounded = Math.Clamp(aggression, 0, 1000);
+		return Math.Min(5, 1 + Math.Floor(bounded / 200.0));
+	}
+	//! Compatibility seam for trusted callers. Threat context affects priority, not strength.
+	static int DesiredTier(int aggressionLevel, int reports, bool captured, int roll, int importance = 100)
+	{
+		return Math.Clamp(aggressionLevel, 1, 5);
+	}
+	static int LossAggression(int value)
+	{
+		if (value <= 0)
+			return 0;
+		return Math.Clamp(Math.Floor(value / 100.0), 1, 30);
 	}
 	static int VehicleValue(AROR_EForceType type)
 	{

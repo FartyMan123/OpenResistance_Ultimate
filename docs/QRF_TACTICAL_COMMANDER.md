@@ -1,6 +1,6 @@
 # QRF tactical commander and staged waves
 
-Status: native Play verified truck/LAV spawning, boarding, factions, ACTIVE state, truck infantry delivery and continued movement after an empty truck cleared its faction. The last infantry reading remained short of the investigation point. Subsequent paid strategic selection, physical return/completion and [FIA spotting](QRF_SPOTTING.md) changes still need fresh Workbench compilation/Play. Chicken now starts at war level 2 with [money-backed strategic selection](QRF_STRATEGY_ECONOMY.md). Invader operation admission remains OFF; no USSR operation, territory/factory placement or resource production has been added.
+Status: earlier native Play verified partial truck/LAV spawning, seating and delivery. Current Chicken uses [war-gated equipment pools and independent aggression](QRF_STRATEGY_ECONOMY.md), starting at war 1/aggression 20%. Ground capture responses are enabled for both roles; combat/flight dispatch remain off. The new progression, full hold/return and multiplayer behavior require fresh Workbench compilation/Play.
 
 ## Responsibility and faction ownership
 
@@ -8,8 +8,8 @@ One server-owned `AROR_QRFTacticalCommander` belongs to each dispatched QRF oper
 
 | Role | Campaign faction | Current assets | Dispatch state in Chicken |
 |---|---|---|---|
-| Occupiers / BLUFOR | `AROR_OCCUPIERS` | US truck, LAV and UH-1 profiles | Existing Provins defender test |
-| Invaders / REDFOR | `AROR_INVADERS` | USSR Ural, BTR, BRDM and Mi-8 profiles | Admission disabled; five ground tiers staged |
+| Occupiers / BLUFOR | `AROR_OCCUPIERS` | Truck/M2 Humvee, LAV and disabled UH-1 profiles | Capture-driven ground responses enabled |
+| Invaders / REDFOR | `AROR_INVADERS` | Ural/PKM UAZ, BTR, BRDM and disabled Mi-8 profiles | Capture-driven ground responses enabled |
 
 The same tactical code handles both roles. Asset selection stays in the existing role/faction profiles and recipes. Unit, group and vehicle faction audits still apply. The Resistance remains player-directed.
 

@@ -24,6 +24,8 @@ class AROR_GroundOperationForce : AROR_OperationForce
 	vector m_vTacticalProgressPosition;
 	ref AROR_VehicleTownSearch m_TownSearch;
 	vector m_vApproachPosition;
+	//! A planned road dismount may be outside the security area; infantry must still walk in.
+	float m_fTacticalDeliveryRadius;
 	protected ref array<IEntity> m_aPassengers = {};
 
 	int CountInfantry()

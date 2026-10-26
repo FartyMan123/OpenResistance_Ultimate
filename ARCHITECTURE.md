@@ -138,7 +138,7 @@ Purpose: persistent campaign saves, built on the **base-game save system** (`Sav
   - Each component with saved state has a matching `ScriptedComponentSerializer`. Serializers write a version first and keep loading older versions.
   - Locations are referenced by **stable ID**, never by position in a list.
 - Save generated results, not random seeds, so saves survive map and code changes.
-- Saved so far: location control, settlement support, the Resistance HQ, faction presets per role, faction funds, manpower, player money, QRF war pressure and debt.
+- Saved so far: location control, settlement support, the Resistance HQ, faction presets per role, faction funds, manpower, player money, garrison rosters, QRF war level, aggression and debt, and the Invader campaign state.
 - Boot rule: if a save is active when the world loads it is restored; otherwise setup starts. A new playthrough writes an initial save point, so new and loaded games share one restore path.
 - Limits: about 101 playthroughs and save points per mission; old autosaves need pruning.
 - Planned: periodic autosave and saves on key events and shutdown; verification on a dedicated server.
@@ -175,24 +175,37 @@ Core factions live in `AROR_FactionManager.et`. The three military factions are 
 Purpose: one server-owned command context per role. The Resistance is player-directed; the Occupiers and Invaders are AI-directed through the same evaluation interface.
 
 - `AROR_Commander` (role, faction, control mode) and `AROR_CommanderManagerComponent` (game mode), which periodically offers each AI commander for evaluation once the playthrough is ready.
-- Server only; not replicated; nothing saved yet.
+- `AROR_InvaderCampaignComponent` (optional, game mode): simulates resource-funded Occupier/Invader engagements over distant military sites, expanding the Invaders from an offshore support corridor. It spends Economy funds and changes control through the normal location authority; it never fights near players. Chicken opts in.
+- Server only; not replicated. Saved: the Invader campaign state (its own serializer).
 - Depends on: Game Mode, Factions, Game Flow.
 - Extension points: server systems subscribe to the evaluation event (Operations does).
-- Planned: player orders for the Resistance, enemy target selection and distinct Occupier/Invader strategies.
+- Planned: enemy target selection and distinct Occupier/Invader strategies.
+
+### High Command — In progress
+Purpose: Resistance Leaders raise AI squads and command them through the **HICOMM** phone app.
+
+- `AROR_HighCommandComponent` (game mode): the Resistance Leaders (the host automatically; the host delegates others), the resistance name, a squad catalogue and the raised squads. Squads cost Resistance funds **and** manpower, form up at the HQ and take **attack**, **defend**, **move** (standing by on arrival) and **hold** orders. Each leader commands only their own squads; everyone sees all of them.
+- Client: the HICOMM app (see Phone) sends requests through RPCs on the player controller.
+- Server/client: everything is decided and validated on the server; a compact snapshot (leaders, name, squad summaries) replicates to clients.
+- Saved: nothing. Squads are refunded at full cost when the campaign ends, and saved funds and manpower already include the refund for living squads.
+- Depends on: Factions, Locations, Economy, Game Flow (the HQ), Phone, Notifications.
+- Extension points: squad catalogue, per-leader cap, group/waypoint prefabs and map bounds on the component.
+- Feature detail: `docs/HIGH_COMMAND.md`.
+- Planned: more order types, platoons, enemy intel on the map, balance.
 
 ### Operations (Attacks & QRF) — In progress
 Purpose: enemy **attacks** and defensive **quick reaction forces (QRF)** for the Occupiers and Invaders: deciding when to respond, choosing and paying for a force, spawning and directing it, and cleaning up afterwards.
 
 Main parts:
 - **Scheduling** (`AROR_OperationManagerComponent`): accepts attack requests and threat reports, ranks threats, applies per-role cooldowns, capacity and deduplication, and tracks each operation from planned to a final outcome. Invader operations are **disabled by default** until territory and resource integration is ready.
-- **Force selection**: designer-authored force profiles and ground recipes per role and faction (motorized, mechanized, armour, airborne), response levels 1–5, and an optional strategy layer where saved **war pressure** chooses the response tier.
+- **Force selection**: designer-authored force profiles and ground recipes per role and faction (motorized, mechanized, armour, airborne), response levels 1–5, and an optional strategy layer: saved **war level** decides which equipment a response may use, and a separate saved **aggression** sets its strength (1-5).
 - **Funding** (`AROR_QRFFinance`): responses reserve and spend the role's funds through the **Economy** API; losses are charged and shortfalls become saved QRF debt. Economy remains the only bank.
 - **Execution** (`AROR_OperationExecutorComponent` and helpers): spawns and reserves forces, delivers them by road or by air, runs searches and town security, and staged reinforcement waves under a shared tactical commander (`AROR_QRFTacticalCommander`). Forces launch from friendly outposts, bases or airports.
 - **Airborne execution** (experimental, `AROR_ReaperQRFExecutor`): helicopter insertion and gunship support using the REAPER mod; can be switched off.
 - **Defence and spotting**: assigned defenders report hostile damage; capture events can trigger a response for the previous owner. Resistance players who see QRF vehicles get last-seen map markers.
 
-- Server/client: all decisions and execution run on the server. Clients only receive QRF spotting reports (their own, through the player controller) and send whether their map is open.
-- Saved: war pressure and QRF debt only. Live operations, deployed forces, queues and cooldowns are session-only.
+- Server/client: all decisions and execution run on the server. Clients only receive QRF spotting reports (their own, through the player controller), send whether their map is open, and read a public war level/aggression summary (RebIntel).
+- Saved: war level, aggression and QRF debt only. Live operations, deployed forces, queues and cooldowns are session-only.
 - Depends on: Commanders, Locations, Location Capture, Factions, Economy, Game Flow; the REAPER mod for airborne execution.
 - Extension points: scenario and prefab configuration of schedules, limits, force profiles, recipes and prices; trusted server callers can request attacks and report threats.
 - Feature detail: `docs/OPERATIONS.md`, `docs/QRF_STRATEGY_ECONOMY.md`, `docs/QRF_TACTICAL_COMMANDER.md`, `docs/AIRBORNE_QRF_PROTOTYPE.md`, `docs/QRF_SPOTTING.md` and the other QRF files in `docs/`. Testing in the Chicken world: `docs/OPERATION_EXECUTOR.md`, `docs/FORCE_POOL_QUICKSTART.md`, `docs/TRUCK_IFV_QRF_TEST.md`.
@@ -216,8 +229,8 @@ Purpose: money and manpower for the campaign: balances, and periodic income from
   - The Resistance gains manpower per held town and city, and every online Resistance player is paid 10% of the Resistance's money income as personal money (extra, not taken from the funds).
   - Resistance players get an income notification. Rates and the interval are attributes.
 - Rules: balances never go below zero; spending succeeds only if the balance covers it. All changes happen on the server.
-- Saved: funds, manpower and player money (`AROR_EconomyComponentSerializer`). Income timing is not saved.
-- Used by: Operations (QRF costs), the phone's Bank app, admin tools.
+- Saved: funds, manpower and player money (`AROR_EconomyComponentSerializer`); Resistance funds and manpower include the refund for living High Command squads. Income timing is not saved.
+- Used by: Operations (QRF costs), High Command (squad purchases), the phone's Bank app, admin tools.
 - Extension points: server API to add, spend and read balances, and to trigger a payment.
 
 ### Phone — In progress
@@ -225,8 +238,8 @@ Purpose: an in-game phone that hosts player-facing apps. Client only.
 
 - `AROR_PhoneMenu` (a menu registered in `chimeraMenus.conf`) and `AROR_PhoneComponent` (game mode), which opens it with a rebindable keybind (**Ctrl+Y**) for living players when no other menu is open. Esc closes it.
 - A phone frame over a wallpaper with a status bar. Apps open in portrait, or turn the whole phone to landscape and enlarge it. The frame's home button returns to the home screen.
-- Apps: **Bank** (account holder, personal money, Resistance funds, live from the Economy; transfers planned) and a landscape test app.
-- Depends on: Economy, Notifications (hints).
+- Apps: **Bank** (account holder, personal money, Resistance funds, live from the Economy; transfers planned), **RebIntel** (read-only enemy war level and aggression from Operations), **HICOMM** (landscape High Command app for Resistance Leaders: leadership, a zoomable map for orders, squad purchases) and a landscape test app.
+- Depends on: Economy, Notifications (hints), Operations (RebIntel), High Command (HICOMM).
 - Planned: app registration so extender mods can add apps.
 
 ### Notifications — In progress

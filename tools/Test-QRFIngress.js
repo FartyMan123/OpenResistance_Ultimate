@@ -4,23 +4,26 @@
 function runQRFIngressTests(sources) {
   let assertions=0;
   const check=(ok,msg)=>{assertions++;if(!ok)throw Error(msg);};
-  const methods=['GetOwner','IsSeatedInOwnVehicle','TacticalLaunchPoint','TacticalRoadPoint'];
+  const methods=['GetOwner','IsSeatedInOwnVehicle','TacticalLaunchPoint','TacticalRoadPoint','CanDismountOnFoot','IsLaunchPositionSafe','FailOperation','FailGroundPlanning','ResolveQRFOrigin','FindGroundRoadLaunch','ConfigureForceFunding','FindTacticalApproach','ConvertReservation','SpawnGroundVehicle','SpawnEmptyGroup','SpawnWaypoint','ConfigureGroup'];
   const env={};
   function compile(source,name) {
     const match=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
     if(!match)throw Error('Missing '+name);
-    let args=match[1].replace(/\bout\s+/g,'').replace(/\b(?:vector|float|int|IEntity|AROR_\w+)\s+/g,'');
+    let args=match[1].replace(/\bout\s+/g,'').replace(/\b(?:bool|vector|float|int|IEntity|AROR_\w+)\s+/g,'');
     let body=match[2].replace(/array<AIAgent> (\w+) = \{\};/g,'let $1=[];')
       .replace(/new TraceBox\(\)/g,'({})')
       .replace(/foreach \(\w+ (\w+) : ([^)]+)\)/g,'for(const $1 of $2)')
       .replace(/vector (\w+);/g,'let $1=[0,0,0];')
-      .replace(/\b(?:bool|float|int|vector|IEntity|BaseWorld|CompartmentAccessComponent|BaseCompartmentSlot|SCR_AIVehicleUsageComponent|AROR_\w+|TraceBox)\s+(\w+)/g,'let $1')
+      .replace(/\b(?:bool|float|int|vector|IEntity|ResourceName|Resource|NavmeshWorldComponent|ChimeraAIWorld|BaseWorld|CompartmentAccessComponent|BaseCompartmentSlot|SCR_AIVehicleUsageComponent|AROR_\w+|TraceBox)\s+(\w+)/g,'let $1')
+      .replace(/let (\w+);/g,'let $1=0;')
       .replace(/(?<![.\w])m_\w+/g,x=>'this.'+x);
     for(const method of methods)body=body.replace(new RegExp('(?<![.\\w])'+method+'\\(', 'g'),'this.'+method+'(');
     // V8 does not implement Enforce's vector arithmetic. Represent the bounded
     // candidate offset explicitly; all acceptance decisions remain actual source.
     body=body.replace('seed + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * radius','seed.map((v,i)=>v+[Math.sin(angle)*radius,0,Math.cos(angle)*radius][i])')
       .replace('trace.Start + Vector(0, 0.05, 0)','[trace.Start[0],trace.Start[1]+0.05,trace.Start[2]]')
+      .replace('commander.m_vTown + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * radius','commander.m_vTown.map((v,i)=>v+[Math.sin(angle)*radius,0,Math.cos(angle)*radius][i])')
+      .replace(/approach = (reachable|fallback);/g,'approach.splice(0,3,...$1);')
       .replace('point = road;','point.splice(0,3,...road);'); // Enforce out-vector argument
     return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
   }
@@ -50,7 +53,7 @@ function runQRFIngressTests(sources) {
   let queries=0,blocked=false,slope=false,water=false,roadOK=true,road=[100,10,100];
   const world={GetSurfaceY:(x,z)=>slope&&x>100?15:10,GetOceanHeight:()=>water?10:0,TraceMove:()=>blocked?0:1};
   Object.assign(env,{GetGame:()=>({GetWorld:()=>world}),Vector:(...v)=>v,TraceFlags:{ENTS:1},
-    Math:{Sin:Math.sin,Cos:Math.cos,AbsFloat:Math.abs,sin:Math.sin,cos:Math.cos},vector:{DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])},
+    Math:{Sin:Math.sin,Cos:Math.cos,AbsFloat:Math.abs,Min:Math.min,Max:Math.max,sin:Math.sin,cos:Math.cos},float:{MAX:Infinity},vector:{DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])},
     AROR_GroundOperationForce:{Cast:x=>x},Print:()=>{},string:{Format:()=>''},LogLevel:{NORMAL:0}});
   const launch=compile(sources.executor,'FindGroundRoadLaunch');
   const context={m_aForces:[],TacticalLaunchPoint:()=>[100,10,100],TacticalRoadPoint:(origin,desired,out)=>{queries++;out.splice(0,3,...road);return roadOK;}};
@@ -64,6 +67,49 @@ function runQRFIngressTests(sources) {
   slope=true;check(!run(),'steep pad rejected');slope=false;
   context.m_aForces=[{m_Vehicle:{GetOrigin:()=>[110,10,100]}}];check(!run(),'second vehicle cannot overlap an existing package');
   context.m_aForces=[{m_Vehicle:{GetOrigin:()=>[140,10,100]}}];check(run(),'separated vehicle pad accepted');
+  // Levie's off-road capture point: use an actual planned road stop, then walk in.
+  const approach=compile(sources.executor,'FindTacticalApproach'),arrival=compile(sources.executor,'IsQRFDeliveryReached');
+  let roadQueries=0,footPad=true,nativeRoad=true,roadPoint=[60,10,0];
+  const roadForce={m_sOperationId:'capture',m_iPackageIndex:0,m_fTacticalDeliveryRadius:0};
+  const roadCommander={m_vTown:[0,10,0],m_fTownRadius:150,m_fMargin:50,ApproachCandidate:()=>[60,10,0]};
+  const roadContext={m_iQRFApproachAttempts:12,m_fQRFObjectiveDeliveryRadius:100,m_fQRFMaximumRoadDismount:300,m_fQRFVehicleArrivalTolerance:20,m_fQRFSearchStopSpacing:30,m_aForces:[],
+    CanDismountOnFoot:()=>footPad,TacticalRoadPoint(origin,desired,out){roadQueries++;out.splice(0,3,...roadPoint);return nativeRoad;}};
+  const roadStop=[0,0,0],plan=()=>approach.call(roadContext,roadForce,roadCommander,[500,10,0],60,roadStop);
+  check(plan()&&roadQueries===1&&roadForce.m_fTacticalDeliveryRadius===0,'normal objective road delivery remains preferred');
+  roadQueries=0;roadPoint=[160,10,0];
+  check(plan()&&roadQueries<=24&&roadForce.m_fTacticalDeliveryRadius===180,'off-road objective permits a bounded planned road dismount with a foot approach');
+  check(!arrival.call(roadContext,10,160,200),'unplanned remote road proximity cannot authorise unloading');
+  check(arrival.call(roadContext,10,160,200,roadForce.m_fTacticalDeliveryRadius),'physical arrival at the planned fallback stop authorises dismount');
+  check(!arrival.call(roadContext,21,160,200,180),'fallback still requires proximity to the actual selected stop');
+  check(!arrival.call(roadContext,10,301,200,999),'a forged oversized planned radius cannot exceed the configured fallback limit');
+  roadQueries=0;footPad=false;check(!plan()&&roadQueries===24,'road without a usable infantry dismount is rejected within the total query bound');footPad=true;
+  roadQueries=0;nativeRoad=false;check(!plan()&&roadQueries===24,'missing road connectivity does not teleport vehicles or manufacture arrival');nativeRoad=true;
+  roadQueries=0;roadPoint=[400,10,0];check(!plan()&&roadQueries===24,'distant roads cannot expand the fallback beyond its bounded radius');
+  roadContext.m_fQRFMaximumRoadDismount=0;roadQueries=0;check(!plan()&&roadQueries===12,'scenario can disable foot approach fallback');roadContext.m_fQRFMaximumRoadDismount=300;
+  roadPoint=[60,10,0];roadContext.m_aForces=[{m_sOperationId:'capture',m_vApproachPosition:[78,10,0]}];roadQueries=0;
+  check(plan()&&roadQueries===12&&roadStop[0]===60,'compact safe spacing is accepted before considering distant road stops');
+  roadContext.m_aForces=[{m_sOperationId:'capture',m_vApproachPosition:[75,10,0]}];
+  check(!plan(),'neighbouring packages cannot overlap below minimum spacing');
+  // A failed delivery preflight must never construct an empty vehicle or consume
+  // an actor reservation. This reproduces the failed Levie launch from the log.
+  env.AROR_GroundOperationForce=function(){};env.AROR_GroundOperationForce.Cast=x=>x;
+  env.AROR_EFactionRole={OCCUPIERS:1,INVADERS:2};env.AROR_EForceType={MOTORIZED:0,ARMOUR:2};env.AROR_EOperationType={QRF:1};
+  env.AROR_LocationManagerComponent={GetInstance:()=>({GetLocationById:()=>({GetCenter:()=>[0,10,0]})})};
+  let createdVehicles=0,converted=0,planningFailures=0;
+  const preflight={m_vOccupiersSpawnPosition:[500,10,0],m_fQRFObjectiveDeliveryRadius:100,m_aForces:[],TacticalLaunchPoint:()=>[500,10,0],IsLaunchPositionSafe:()=>true,
+    FindGroundRoadLaunch(c,i,out){out.splice(0,3,500,10,0);return true;},ConfigureForceFunding(){},FindTacticalApproach:()=>false,
+    FailGroundPlanning(){planningFailures++;},ConvertReservation(){converted++;},SpawnGroundVehicle(){createdVehicles++;}};
+  const failedRequest={GetRole:()=>1,GetTargetLocationId:()=>'levie',GetId:()=>'failed-capture',m_TacticalCommander:{m_vTown:[0,10,0]},m_iPlanningRetries:0};
+  const failedProfile={m_eType:0,m_fDismountDistance:60,GetGroupBudget:()=>2,m_iPersonnelBudget:8,m_sAssetFactionKey:'US'};
+  compile(sources.executor,'StartGroundForce').call(preflight,failedRequest,{GetFactionKey:()=>'OWN'},failedProfile,0,{});
+  check(planningFailures===1&&createdVehicles===0&&converted===0&&preflight.m_aForces.length===0,'delivery failure leaves no empty hull, personnel queue or converted actor reservation');
+  env.AROR_GarrisonComponent={Cast:x=>x};
+  const strategicCentre=[0,0,0],flagPosition=[80,1,0];let flagInside=true,flagGarrison={IsEligible:()=>true,GetDefenceCenter:()=>flagPosition};
+  const flagTarget={GetOwner:()=>({FindComponent:()=>flagGarrison}),GetCenter:()=>strategicCentre,IsPositionInside:()=>flagInside};
+  const objectivePoint=compile(sources.executor,'QRFObjectivePoint');
+  check(objectivePoint(flagTarget)===flagPosition,'military tactical objective follows an authored flag offset instead of an unrelated strategic anchor');
+  flagInside=false;check(objectivePoint(flagTarget)===strategicCentre,'out-of-bounds flag cannot redirect the canonical response');flagInside=true;
+  flagGarrison=null;check(objectivePoint(flagTarget)===strategicCentre,'support-only or legacy locations keep their canonical objective centre');
   // Execute the actual entry guard without invoking downstream waypoint/native services.
   const guard=sources.executor.match(/protected void TacticalInfantryOrders[^]*?\n\t\tAROR_QRFTacticalCommander commander/)[0];
   const guardBody=guard.substring(guard.indexOf('{')+1,guard.lastIndexOf('\n\t\tAROR_QRFTacticalCommander commander'))

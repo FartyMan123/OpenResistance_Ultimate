@@ -6,6 +6,10 @@ class AROR_GroundQRFRecipe
 	string m_sId;
 	[Attribute("1", desc: "Authored response tier; does not multiply the element list", params: "1 5 1")]
 	int m_iLevel;
+	[Attribute("1", desc: "First war level using this equipment-pool recipe", params: "1 5 1")]
+	int m_iMinimumWarLevel = 1;
+	[Attribute("5", desc: "Last war level using this equipment-pool recipe", params: "1 5 1")]
+	int m_iMaximumWarLevel = 5;
 	[Attribute("1", UIWidgets.ComboBox, desc: "Responding campaign role", enums: AROR_FactionRoles.MilitaryRoleParams())]
 	AROR_EFactionRole m_eRole;
 	[Attribute("AROR_OCCUPIERS", desc: "Required faction from the shared role mapping")]
@@ -15,6 +19,8 @@ class AROR_GroundQRFRecipe
 
 	bool IsValid()
 	{
+		if (m_iMinimumWarLevel < 1 || m_iMaximumWarLevel > 5 || m_iMinimumWarLevel > m_iMaximumWarLevel)
+			return false;
 		if (m_sId.IsEmpty() || m_sFactionKey.IsEmpty() || m_iLevel < 1 || m_iLevel > 5)
 			return false;
 		if (m_eRole != AROR_EFactionRole.OCCUPIERS && m_eRole != AROR_EFactionRole.INVADERS)
@@ -28,12 +34,18 @@ class AROR_GroundQRFRecipe
 		}
 		return true;
 	}
+	bool AllowsWarLevel(int warLevel)
+	{
+		return warLevel >= m_iMinimumWarLevel && warLevel <= m_iMaximumWarLevel;
+	}
 
 	//! Validate every element before any spawning or reservation conversion.
-	bool Resolve(array<ref AROR_ForceProfile> profiles, AROR_EFactionRole role, string factionKey, array<AROR_ForceProfile> resolved)
+	bool Resolve(array<ref AROR_ForceProfile> profiles, AROR_EFactionRole role, string factionKey, array<AROR_ForceProfile> resolved, int warLevel = 5)
 	{
 		resolved.Clear();
 		if (!IsValid() || m_eRole != role || m_sFactionKey != factionKey)
+			return false;
+		if (warLevel < 1 || warLevel > 5 || !AllowsWarLevel(warLevel))
 			return false;
 		foreach (string id : m_aProfileIds)
 		{
@@ -44,6 +56,8 @@ class AROR_GroundQRFRecipe
 					selected = profile;
 			}
 			if (!selected || !selected.IsValid() || !selected.m_bEnabled)
+				return false;
+			if (selected.m_iMinimumWarLevel > warLevel)
 				return false;
 			if (selected.m_eRole != role || selected.m_sFactionKey != factionKey)
 				return false;

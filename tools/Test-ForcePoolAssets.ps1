@@ -32,7 +32,7 @@ foreach ($componentId in $navigation.Keys) {
 	if (!$binding.Success -or !$expected -or $binding.Groups[1].Value -cne $expected.Value) { throw "Missing/incorrect Chicken navigation binding: $componentId" }
 }
 $profiles = [regex]::Matches($layerText, '(?ms)^\s{4}AROR_ForceProfile\s*\{(.*?)^\s{4}\}')
-if ($profiles.Count -ne 8) { throw "Expected eight Chicken profiles, found $($profiles.Count)" }
+if ($profiles.Count -ne 10) { throw "Expected ten Chicken profiles including both light escorts, found $($profiles.Count)" }
 $profileIds = @()
 $airborneCount = 0
 $roleFactions = @{'1' = 'AROR_OCCUPIERS'; '2' = 'AROR_INVADERS'}
@@ -46,6 +46,11 @@ foreach ($profile in $profiles) {
 	$profileId = [regex]::Match($body, 'm_sId\s+"([^"]+)"').Groups[1].Value
 	if (!$profileId -or $profileIds -contains $profileId) { throw "Empty/duplicate profile ID: $profileId" }
 	$profileIds += $profileId
+	$minimumWar = [int][regex]::Match($body, 'm_iMinimumWarLevel\s+(\d+)').Groups[1].Value
+	$expectedWar = 1
+	if ($profileId -match '_mechanized$') { $expectedWar = 3 }
+	if ($profileId -match '_(armour|airborne)$') { $expectedWar = 5 }
+	if ($minimumWar -ne $expectedWar) { throw "Wrong equipment unlock for $profileId" }
 	if ($body -match 'm_eType\s+3\b') {
 		$airborneCount++
 		if ($body -notmatch 'm_bEnabled\s+0\b') { throw "Airborne profile must stay disabled until flight adapter exists: $profileId" }
@@ -96,11 +101,12 @@ foreach ($level in $levels) {
 	}
 }
 $recipes = [regex]::Matches($layerText, '(?ms)^\s{4}AROR_GroundQRFRecipe\s*\{(.*?)^\s{4}\}')
-if ($recipes.Count -ne 12) { throw 'Expected two fixed truck/IFV recipes plus five tiers for each opposing role' }
+if ($recipes.Count -ne 32) { throw 'Expected two fixed aliases and five responses in three equipment bands for each opposing role' }
 $invaderTiers = @()
 $occupierTiers = @()
+$coverage = @{}
 $priceSheet = Import-Csv -LiteralPath (Join-Path $PSScriptRoot '../docs/QRF_PRICES.csv')
-$vehiclePrices = @{ us_motorized=200; us_mechanized=800; us_armour=800; us_airborne=1600; ussr_motorized=200; ussr_mechanized=700; ussr_armour=450; ussr_airborne=1800 }
+$vehiclePrices = @{ us_motorized=200; us_mechanized=800; us_armour=800; us_airborne=1600; us_light_support=300; ussr_motorized=200; ussr_mechanized=700; ussr_armour=450; ussr_airborne=1800; ussr_light_support=200 }
 foreach ($price in $vehiclePrices.GetEnumerator()) {
 	$pricedProfile = $profiles | Where-Object { $_.Groups[1].Value -match ('m_sId\s+"' + $price.Key + '"') }
 	$body = $pricedProfile.Groups[1].Value
@@ -113,13 +119,21 @@ foreach ($recipe in $recipes) {
 	if (!$roleFactions.ContainsKey($roleId) -or $faction -cne $roleFactions[$roleId]) { throw 'Composite recipe faction/role mismatch' }
 	$recipeId = [regex]::Match($body, 'm_sId\s+"([^"]+)"').Groups[1].Value
 	$tier = [int][regex]::Match($body, 'm_iLevel\s+(\d+)').Groups[1].Value
+	$minimumWar = [int][regex]::Match($body, 'm_iMinimumWarLevel\s+(\d+)').Groups[1].Value
+	$maximumWar = [int][regex]::Match($body, 'm_iMaximumWarLevel\s+(\d+)').Groups[1].Value
+	if ($minimumWar -lt 1 -or $maximumWar -gt 5 -or $minimumWar -gt $maximumWar) { throw "Invalid recipe war range: $recipeId" }
 	if ($recipeId -eq 'combined_arms_l1') {
-		if ($tier -ne 1) { throw 'Expected authored combined-arms tier 1' }
+		if ($tier -ne 1 -or $minimumWar -ne 5 -or $maximumWar -ne 5) { throw 'Legacy combined-arms fixture must stay at war five' }
 	} else {
 		if ($tier -lt 1 -or $tier -gt 5) { throw 'Invalid strategic response tier' }
-		if ($roleId -eq '2' -and $recipeId -ceq "invader_ground_l$tier") { $invaderTiers += $tier }
-		elseif ($roleId -eq '1' -and $recipeId -ceq "occupier_ground_l$tier") { $occupierTiers += $tier }
+		if ($roleId -eq '2' -and $recipeId -cmatch "^invader_(ground|light|mechanized)_l$tier`$") { $invaderTiers += $tier }
+		elseif ($roleId -eq '1' -and $recipeId -cmatch "^occupier_(ground|light|mechanized)_l$tier`$") { $occupierTiers += $tier }
 		else { throw 'Invalid strategic recipe role or ID' }
+		$expectedRange = '5,5'
+		if ($recipeId -match '_light_') { $expectedRange = '1,2' }
+		if ($recipeId -match '_mechanized_') { $expectedRange = '3,4' }
+		if ("$minimumWar,$maximumWar" -ne $expectedRange) { throw "Wrong equipment band for $recipeId" }
+		foreach ($war in $minimumWar..$maximumWar) { $coverage["$roleId/$war/$tier"] = $true }
 	}
 	$idBlock = [regex]::Match($body, '(?s)m_aProfileIds\s*\{(.*?)\}').Groups[1].Value
 	$ids = [regex]::Matches($idBlock, '"([^"]+)"')
@@ -130,6 +144,8 @@ foreach ($recipe in $recipes) {
 		$profile = $profiles | Where-Object { $_.Groups[1].Value -match ('m_sId\s+"' + [regex]::Escape($id.Groups[1].Value) + '"') }
 		if (@($profile).Count -ne 1) { throw 'Missing or ambiguous composite element profile' }
 		$profileBody = $profile.Groups[1].Value
+		$profileWar = [int][regex]::Match($profileBody, 'm_iMinimumWarLevel\s+(\d+)').Groups[1].Value
+		if ($profileWar -gt $minimumWar) { throw "Recipe unlocks equipment too early: $recipeId / $($id.Groups[1].Value)" }
 		if ($profileBody -notmatch ('m_eRole\s+' + $roleId + '\b') -or $profileBody -match 'm_bEnabled\s+0\b') { throw 'Composite element unavailable or wrong role' }
 		$type = [int][regex]::Match($profileBody, 'm_eType\s+(\d+)').Groups[1].Value
 		$types += $type
@@ -142,26 +158,30 @@ foreach ($recipe in $recipes) {
 	if ($recipeId -eq 'combined_arms_l1') {
 		if (($types | Sort-Object) -join ',' -ne '0,1') { throw 'Composite tier 1 must contain motorized and mechanized elements' }
 		if ($groups -ne 4 -or $members -ne 18 -or $vehicles -ne 2) { throw 'Tier 1 reservation must be four groups, 18 slots and two vehicles' }
-	} else {
-		$expected = @('','4,18,2','6,28,3','9,40,5','12,52,7','14,62,8')
-		if ("$groups,$members,$vehicles" -cne $expected[$tier]) { throw "Unexpected Invader tier $tier reservation" }
 	}
 	if ($groups -gt $maxGroups -or $members -gt $maxMembers -or $vehicles -gt $maxVehicles) { throw 'Composite response exceeds executor capacity' }
-	if ($recipeId -ne 'combined_arms_l1') {
+	& {
 		$priceRow = @($priceSheet | Where-Object { $_.Recipe -ceq $recipeId -and $_.Role -ceq $faction })
 		if ($priceRow.Count -ne 1) { throw "Missing or ambiguous documented price: $recipeId" }
 		$fee = 50 + 10 * $tier
 		if ([int]$priceRow[0].AssetCollateral -ne $assetCollateral -or [int]$priceRow[0].Overhead -ne $fee -or [int]$priceRow[0].FundsRequired -ne ($assetCollateral + $fee)) { throw "Documented price differs from fixture: $recipeId" }
 		if ([int]$priceRow[0].PersonnelSlots -ne $members) { throw "Documented personnel reservation differs: $recipeId" }
+		if ([int]$priceRow[0].MinimumWarLevel -ne $minimumWar -or [int]$priceRow[0].MaximumWarLevel -ne $maximumWar) { throw "Documented equipment band differs: $recipeId" }
 	}
 }
+foreach ($roleId in @('1','2')) { foreach ($war in 1..5) { foreach ($tier in 1..5) {
+	if (!$coverage.ContainsKey("$roleId/$war/$tier")) { throw "Missing complete faction/war/aggression response: $roleId/$war/$tier" }
+}}}
 if ($layerText -notmatch 'm_sGroundQRFRecipeId\s+"combined_arms_l1"' -or $layerText -notmatch 'm_bReaperQRFTest\s+0\b') { throw 'Chicken must dispatch the ground recipe instead of the helicopter override' }
 if (($invaderTiers | Sort-Object -Unique) -join ',' -ne '1,2,3,4,5') { throw 'Staged Invader tiers must cover levels 1-5' }
 if (($occupierTiers | Sort-Object -Unique) -join ',' -ne '1,2,3,4,5') { throw 'Occupier tiers must cover levels 1-5' }
 foreach ($setting in @('m_bQRFStrategicEconomy','m_bQRFSpotting')) {
 	if ($layerText -notmatch ($setting + '\s+1\b')) { throw "Expected enabled Chicken fixture: $setting" }
 }
-if ($layerText -notmatch 'm_bInvaderOperationsEnabled\s+0\b' -or $layerText -notmatch 'm_sInvadersGroundQRFRecipeId\s+"invader_ground_l1"') { throw 'Invader framework must remain staged with dispatch disabled' }
+if ($layerText -notmatch 'm_bInvaderOperationsEnabled\s+1\b' -or $layerText -notmatch 'm_sInvadersGroundQRFRecipeId\s+"invader_ground_l1"') { throw 'Chicken must enable the configured Invader ground QRF recipes' }
+$managerSource = [IO.File]::ReadAllText((Join-Path $repoPath 'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_OperationManagerComponent.c'))
+if ($managerSource -notmatch '\[Attribute\("0",[^\r\n]*\)\]\s+protected bool m_bInvaderOperationsEnabled;') { throw 'Shared Invader admission must remain opt-in' }
+if ($layerText -notmatch 'm_bCombatQRFs\s+0\b' -or $layerText -notmatch 'm_bOutpostCaptureQRFs\s+1\b') { throw 'Chicken QRFs must be capture-driven, with combat responses disabled' }
 if ($layerText -notmatch 'm_sInvadersAttackTargetId\s+""' -or $layerText -notmatch 'm_sInvadersQRFTestTargetId\s+""') { throw 'Invader automatic/test targets must remain empty' }
 $tacticalFixture = @{
 	m_bQRFTacticalCommander = '1'; m_bQRFTwoWaves = '1'; m_iQRFSplitTier = '3'
@@ -170,11 +190,12 @@ $tacticalFixture = @{
 	m_fQRFVehicleArrivalTolerance = '20'; m_fQRFObjectiveDeliveryRadius = '100'; m_iQRFIngressTimeout = '600'; m_iQRFExitTimeout = '30'; m_bTownCaptureQRFs = '1'
 	m_iQRFInfantryLegTimeout = '180'; m_fQRFInfantryPlanningSpeed = '1.5'
 	m_fQRFRecoveryRadius = '100'; m_fQRFVehicleRecoveryRadius = '125'
-	m_iStartingWarLevel = '2'; m_iQRFBaseOverhead = '50'; m_iQRFTierOverhead = '10'; m_iQRFThreatLifetime = '180'
+	m_iStartingWarLevel = '1'; m_iStartingAggression = '20'; m_iCaptureWarPressure = '25'; m_iCaptureAggression = '150'; m_iAggressionQuietTime = '600'; m_iAggressionDecay = '20'
+	m_iQRFBaseOverhead = '50'; m_iQRFTierOverhead = '10'; m_iQRFThreatLifetime = '180'
 	m_fQRFSpotGroundRange = '800'; m_fQRFSpotAirRange = '1500'; m_fQRFSpotMinimumDot = '0.9'; m_iQRFSpotTraceLimit = '8'; m_iQRFSpotLifetime = '90'
 	m_fQRFWithdrawFraction = '0.4'; m_fQRFLocalWithdrawFraction = '0.5'; m_iQRFGroundRetention = '120'; m_fQRFGroundCleanupDistance = '1200'
 }
 foreach ($setting in $tacticalFixture.GetEnumerator()) {
 	if ($layerText -notmatch ('(?m)^\s+' + $setting.Key + '\s+' + [regex]::Escape($setting.Value) + '\s*$')) { throw "Unexpected tactical fixture setting: $($setting.Key)" }
 }
-Write-Output "Verified $verified installed GUIDs, navigation, eight profiles, homogeneous levels, two fixed recipes, five capacity-checked tiers per AI role, strategic/spotting opt-ins and tactical/wave settings; Invader dispatch remains disabled. Configuration checks only, not Enforce compilation or gameplay testing."
+Write-Output "Verified $verified installed GUIDs, navigation, ten profiles, equipment gates, 32 recipes and all 50 faction/war/aggression combinations against executor budgets and documented prices. Chicken capture responses enabled for both roles; combat/flight dispatch disabled. Configuration checks only, not Enforce compilation or gameplay testing."

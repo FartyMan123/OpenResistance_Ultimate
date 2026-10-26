@@ -37,6 +37,7 @@ function runGarrisonsAndSupportTests(sources) {
       .replace(/\.Insert\(/g,'.push(').replace(/\.Compare\(/g,'.localeCompare(');
     for(const method of methods)body=body.replace(new RegExp('(?<![.\\w])'+method+'\\(', 'g'),'this.'+method+'(');
     body=body.replace(/(?<![.\w])(OnRegistered|OnUnregistered|OnControlChanged|OnRegistryChanged)(?=\s*\))/g,'this.$1');
+    body=body.replace('seed + AROR_DefenceLayout.RepairOffset(attempt)','seed.map((v,i)=>v+AROR_DefenceLayout.RepairOffset(attempt)[i])');
     return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
   }
   // Use actual manager methods to exercise arrival inside the site, rather than
@@ -72,6 +73,7 @@ function runGarrisonsAndSupportTests(sources) {
   let starts=0,scans=0,retired=0;
   const defence={IsEligible:()=>true,IsGarrisonActive:()=>active,Observe_S:()=>{},CanRetire:()=>false,
     HasDeploymentStarted:()=>starts>0,BeginDeployment_S:()=>starts++,IsDeploymentClosed:()=>false,UpdateDeployment_S:()=>{},BindAssets_S:()=>true,
+    IsCapacityWaiting:()=>false,CommittedPersonnel:()=>reserved,NextPersonnelCost:()=>4,SetCapacityWait_S:()=>{},
     Retire_S:()=>retired++,OutsideLongEnough:(outside,now)=>{retirementTime=now;return false;},RefreshPending_S:()=>{},ClearAssignments_S:()=>{},
     HasRoster:()=>true,GetRosterRole:()=>1,GetLocation:()=>teleportSite,ReservedPersonnel:()=>reserved,
     HasSuitableDefenceTerrain_S:()=>terrainFits,
@@ -83,10 +85,10 @@ function runGarrisonsAndSupportTests(sources) {
   const managerState={m_bGarrisonsActive:true,m_iNextProximityAt:0,m_iCursor:0,m_fActivationRadius:1000,m_fProximityInterval:1,m_aGarrisons:[defence],m_aNearby:[],
     m_Flow:{IsPlaythroughReady:()=>ready},EnsureRegistry_S:()=>true,CanDefendRole:()=>true,
     m_fPlayerSpawnClearance:6,m_fRetirementRadius:2500,m_iRetirementDelay:120,m_iMaxPersonnel:96,
-    PlayerNear:playerNear,FactionFor:()=>({}),ScanProximity_S(...args){scans++;return scan.call(this,...args);}};
+    PlayerNear:playerNear,FactionFor:()=>({}),HasRecentCombat:()=>false,NearestPlayerDistance:compile(sources.manager,'NearestPlayerDistance'),ScanProximity_S(...args){scans++;return scan.call(this,...args);}};
   for(const name of ['DefenceLevel','InfantryTeams','StaticCount','MannedCount','IsEnemyRole'])env.AROR_GarrisonPolicy[name]=compile(sources.policy,name);
   playerPosition=[0,0,0];managerTick.call(managerState);
-  check(assets===1&&groups===1&&lastClearance===6,'teleport onto flag admits defenders within the proximity scan interval');
+  check(assets===0&&groups===1&&lastClearance===6,'teleport onto flag admits infantry before optional hulls within the proximity scan interval');
   for(let i=0;i<3;i++){clock+=250;managerTick.call(managerState);}
   check(scans===1&&groups===4,'four spawn ticks reuse one proximity scan');
   clock=17500;active=true;managerTick.call(managerState);
@@ -108,7 +110,7 @@ function runGarrisonsAndSupportTests(sources) {
   const add=compile(sources.garrison,'AddSlot'),reserve=compile(sources.garrison,'ReservedPersonnel'),generate=compile(sources.garrison,'Generate_S');
   function roster(type,override=0){
     const state={m_aSlots:[],m_bGenerated:false,m_iDefenceLevel:override,IsEligible:()=>true,
-      m_Location:{GetControllingRole:()=>1,GetLocationType:()=>type,GetId:()=>'site'},AddSlot:add,ReservedPersonnel:reserve};
+      m_Location:{GetControllingRole:()=>1,GetLocationType:()=>type,GetId:()=>'site'},AddSlot:add,ReservedPersonnel:reserve,InfantryPrefab:compile(sources.garrison,'InfantryPrefab')};
     generate.call(state,faction);return state;
   }
   const outpost=roster(types.OUTPOST,4);
@@ -241,10 +243,11 @@ function runGarrisonsAndSupportTests(sources) {
   const playerIds=new Map();
   env.GetGame=()=>({GetWorld:()=>({GetWorldTime:()=>worldTime}),GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:e=>playerIds.get(e)||0})});
   env.AROR_QRFDefenseComponent={Cast:x=>x};env.SCR_EntityHelper={};
-  const lifecycleNames=['BeginDeployment_S','UpdateDeployment_S','CloseDeployment_S','HasUnresolvedQueue','CancelQueuedGroup_S','DetachOrphanedCrew_S','QuarantineRoster_S','BindAssets_S'];
+  const lifecycleNames=['BeginDeployment_S','UpdateDeployment_S','CloseDeployment_S','HasUnresolvedQueue','CancelQueuedGroup_S','DetachOrphanedCrew_S','QuarantineRoster_S','BindAssets_S','InfantryPrefab'];
   const lifecycle=Object.fromEntries(lifecycleNames.map(n=>[n,compile(sources.garrison,n)]));
   function newDeployment(slots=[]){
     return {...lifecycle,m_aSlots:slots,m_aGroups:[],m_iDeploymentStartedAt:-1,m_iDeploymentGraceSeconds:60,m_iSpawnQueueTimeoutSeconds:30,
+      m_iCapacityWaitSeconds:180,m_iCapacityWaitSince:-1,m_iCapacityWaited:0,m_iNextCapacityLog:0,m_bCapacityLimited:false,m_bHadDeployedPersonnel:false,
       m_bDeploymentClosed:false,m_bRestoreQuarantined:false,m_eRosterRole:1,m_bGenerated:true,
       m_Location:{GetControllingRole:()=>1,GetId:()=>'failure-site'},IsEligible:()=>true,AssignMembers:()=>{},IsPlayerOrForeignAsset:e=>!!e.foreign};
   }
@@ -377,6 +380,131 @@ function runGarrisonsAndSupportTests(sources) {
   check(badAsset.m_bPlacementUnavailable&&!badAsset.m_bLost,'repeated resource failure resolves without a fabricated casualty');
 
 
+  // Shared capacity follows actual submitted work, not an entire virtual roster.
+  const committed=compile(sources.garrison,'CommittedPersonnel'),nextCost=compile(sources.garrison,'NextPersonnelCost');
+  const requestKnown=compile(sources.garrison,'IsGroupRequested');
+  const virtualTeam=Array.from({length:4},()=>Object.assign(new env.AROR_GarrisonSlot(),{m_iKind:0,m_iGroup:0}));
+  const allocation={m_aSlots:virtualTeam,m_aGroups:[],IsGroupRequested:requestKnown};
+  check(committed.call(allocation)===0&&nextCost.call(allocation)===4,'unspawned recipes consume no actor capacity but require complete fireteams');
+  allocation.m_aGroups=[{m_iId:0}];
+  check(committed.call(allocation)===4,'submitted native team reserves capacity before its members become physical');
+  virtualTeam[0].m_bSpawned=true;
+  check(committed.call(allocation)===4,'physical observation cannot double-count a queued member');
+  virtualTeam[0].m_bLost=true;check(committed.call(allocation)===3,'confirmed personnel losses release only their own actor allocation');
+  const budgetHull=Object.assign(new env.AROR_GarrisonSlot(),{m_iKind:3,m_iGroup:1,m_bSpawned:true});
+  const budgetCrew=Object.assign(new env.AROR_GarrisonSlot(),{m_iKind:4,m_iGroup:1,m_iVehicle:0,m_bSpawned:true});
+  const hullAllocation={m_aSlots:[budgetHull,budgetCrew],m_aGroups:[{m_iId:1}],IsGroupRequested:requestKnown};
+  check(committed.call(hullAllocation)===4,'crewed hull allowance already includes its native crew slots');
+  budgetHull.m_bLost=true;check(committed.call(hullAllocation)===1,'surviving lost-hull crew retain their own allocation');
+  budgetHull.m_bLost=false;budgetCrew.m_bSpawned=false;
+  const mixedOrphan=Object.assign(new env.AROR_GarrisonSlot(),{m_iKind:4,m_iGroup:1,m_iVehicle:-1});
+  hullAllocation.m_aSlots.push(mixedOrphan);hullAllocation.m_aGroups=[];
+  check(nextCost.call(hullAllocation)===1,'a migrated mixed crew group must reserve an orphaned survivor beyond the hull allowance');
+  const capacityWait=compile(sources.garrison,'SetCapacityWait_S');
+  const capacitySite=newDeployment([Object.assign(new env.AROR_GarrisonSlot(),{m_iKind:0,m_iGroup:0})]);
+  Object.assign(capacitySite,{NextPersonnelCost:()=>4,SetCapacityWait_S:capacityWait});
+  capacitySite.BeginDeployment_S(0);capacitySite.SetCapacityWait_S(1000,true,96,96);
+  capacitySite.UpdateDeployment_S(61000);
+  check(!capacitySite.m_bDeploymentClosed,'a new empty site does not exhaust its ordinary deployment window while capacity is occupied elsewhere');
+  capacitySite.SetCapacityWait_S(91000,false,88,96);capacitySite.UpdateDeployment_S(149999);
+  check(!capacitySite.m_bDeploymentClosed,'capacity wait is deducted from deployment elapsed time');
+  capacitySite.UpdateDeployment_S(150000);check(capacitySite.m_bDeploymentClosed,'capacity extensions retain a finite overall deadline');
+  const saturated=newDeployment([Object.assign(new env.AROR_GarrisonSlot(),{m_iKind:0,m_iGroup:0})]);
+  Object.assign(saturated,{NextPersonnelCost:()=>4,SetCapacityWait_S:capacityWait});saturated.BeginDeployment_S(0);saturated.SetCapacityWait_S(0,true,96,96);
+  saturated.UpdateDeployment_S(239999);check(!saturated.m_bDeploymentClosed,'maximum capacity grace remains available before its boundary');
+  saturated.UpdateDeployment_S(240000);check(saturated.m_bDeploymentClosed&&!saturated.m_aSlots[0].m_bLost,'persistent saturation resolves without fabricated casualties or an infinite capture lock');
+  const established=newDeployment([Object.assign(new env.AROR_GarrisonSlot(),{m_iKind:0,m_iGroup:0,m_bSpawned:true})]);
+  established.BeginDeployment_S(0);established.m_bCapacityLimited=true;established.m_bHadDeployedPersonnel=true;established.UpdateDeployment_S(1000);
+  check(established.m_bDeploymentClosed,'an established partial defence stops optional additions before clearance can create late pop-ins');
+  let partialCommitted=0,waited=false;
+  const partialSite={...defence,IsCapacityWaiting:()=>waited,CommittedPersonnel:()=>partialCommitted,ReservedPersonnel:()=>31,NextPersonnelCost:()=>4,
+    SetCapacityWait_S(now,value){waited=value;},SpawnNextGroup_S(now,clearance,free){if(free<4)return false;partialCommitted+=4;return true;}};
+  const occupied={CommittedPersonnel:()=>88};
+  const partialManager={...managerState,m_aGarrisons:[occupied,partialSite],m_aNearby:[partialSite],m_iNextProximityAt:Infinity,m_iCursor:0};
+  managerTick.call(partialManager);managerTick.call(partialManager);managerTick.call(partialManager);
+  check(partialCommitted===8&&waited,'a 31-person virtual recipe can establish eight defenders in the remaining eight slots instead of staying empty');
+  check(partialCommitted+occupied.CommittedPersonnel()===96,'incremental admission cannot exceed the hard global cap');
+  const enriched={...faction,m_aInfantryVariants:['automatic','grenadier','leader']};
+  const infantryPrefab=compile(sources.garrison,'InfantryPrefab');
+  check([0,1,2,3].map(v=>infantryPrefab(enriched,v)).join(',')==='rifle,automatic,grenadier,leader','configured teams combine rifleman, automatic rifleman, grenadier and leader');
+  check(infantryPrefab(faction,3)==='rifle','extenders without specialist configuration retain their existing rifleman');
+  // Moving from Chotain to Levie must release safely distant actors before the
+  // new site's extended deployment window expires, without deleting combatants nearby.
+  env.GetGame=()=>game;playerPosition=[0,0,0];playerDead=false;
+  let released=0,recentCombat=false,pressureActive=true;
+  const oldLocation={GetCenter:()=>[2000,0,0],GetControllingRole:()=>1,GetId:()=>'old-site'};
+  const oldGarrison={...defence,m_iOutsideSince:-1,m_Location:oldLocation,m_aSlots:[{m_Entity:{GetOrigin:()=>[2000,0,0]}}],
+    GetLocation:()=>oldLocation,IsGarrisonActive:()=>pressureActive,HasDeploymentStarted:()=>pressureActive,IsCapacityWaiting:()=>false,
+    CommittedPersonnel:()=>pressureActive?88:0,CanRetire:compile(sources.garrison,'CanRetire'),OutsideLongEnough:compile(sources.garrison,'OutsideLongEnough'),
+    Retire_S(){released++;pressureActive=false;}};
+  const awaiting={...defence,IsGarrisonActive:()=>false,IsCapacityWaiting:()=>true,CommittedPersonnel:()=>0};
+  const pressureManager={...managerState,m_aGarrisons:[oldGarrison,awaiting],m_aNearby:[],m_fPressureRetirementRadius:1200,m_iPressureRetirementDelay:15,
+    HasRecentCombat:()=>recentCombat};
+  scan.call(pressureManager,0);scan.call(pressureManager,14999);
+  check(released===0,'capacity pressure still requires continuous safe distance');
+  scan.call(pressureManager,15000);check(released===1&&oldGarrison.CommittedPersonnel()===0,'distant retained garrison releases its actor allocation before the new deployment deadline');
+  pressureActive=true;oldGarrison.m_iOutsideSince=-1;recentCombat=true;
+  scan.call(pressureManager,20000);scan.call(pressureManager,50000);
+  check(released===1,'recent validated combat prevents accelerated retirement');
+  recentCombat=false;oldGarrison.m_aSlots[0].m_Entity.GetOrigin=()=>[500,0,0];
+  scan.call(pressureManager,60000);scan.call(pressureManager,90000);
+  check(released===1,'a tracked actor near any player prevents retirement even when its parent site is distant');
+  const fallback=compile(sources.garrison,'PrepareInfantryFallback_S');
+  const localInfantry=Object.assign(new env.AROR_GarrisonSlot(),{m_iKind:0,m_iGroup:0});
+  const omittedHull=Object.assign(new env.AROR_GarrisonSlot(),{m_iKind:3,m_iGroup:1});
+  const omittedCrew=Object.assign(new env.AROR_GarrisonSlot(),{m_iKind:4,m_iGroup:1,m_iVehicle:1});
+  const orphaned=Object.assign(new env.AROR_GarrisonSlot(),{m_iKind:4,m_iGroup:2,m_iVehicle:-1});
+  const liveHull=Object.assign(new env.AROR_GarrisonSlot(),{m_iKind:1,m_iGroup:3,m_bSpawned:true});
+  const localFallback=newDeployment([localInfantry,omittedHull,omittedCrew,orphaned,liveHull]);
+  check(fallback.call(localFallback)&&localFallback.m_bInfantryTerrainFallback,'scenario may select an explicit infantry-only fallback after a failed full-footprint check');
+  check(omittedHull.m_bPlacementUnavailable&&omittedCrew.m_bPlacementUnavailable&&!localInfantry.m_bPlacementUnavailable&&!orphaned.m_bPlacementUnavailable,'fallback omits unspawned heavy assets and attached crew while retaining infantry and orphaned survivors');
+  check(!liveHull.m_bPlacementUnavailable&&localFallback.m_aSlots.every(s=>!s.m_bLost),'terrain fallback never deletes existing actors or invents casualties');
+  localFallback.m_bDefenceTerrainChecked=true;localFallback.m_bDefenceTerrainFits=false;localFallback.IsDefencePending=()=>true;
+  check(deploymentReason.call(localFallback)!=='Defence site unsuitable - relocation required','accepted infantry fallback does not falsely report a complete terrain block to players');
+  env.AROR_DefenceLayout={Facing:()=>0,RepairOffset:()=>[0,0,0]};
+  env.Vector=(...values)=>values;
+  env.GetGame=()=>({...game,GetWorld:()=>({...game.GetWorld(),GetSurfaceY:()=>0})});
+  const existingPlace=compile(sources.garrison,'PlaceSlot');let localChecks=0;
+  const unsafe={...localFallback,HasSuitableDefenceTerrain_S:()=>false,GetOwner:()=>({GetYawPitchRoll:()=>[0,0,0],VectorToParent:v=>v}),
+    PositionOrdinal:()=>0,FindDefencePosition:()=>({GetOrigin:()=>[0,0,0],GetYawPitchRoll:()=>[0,0,0]}),GetDefenceCenter:()=>[0,0,0],GetDefenceHalfExtent:()=>18,IsClear:()=>{localChecks++;return false;}};
+  // The same individual pad gate remains in production; non-infantry exits before native terrain access.
+  check(!existingPlace.call(unsafe,1,6),'full-footprint failure cannot admit a heavy hull through the infantry exception');
+  check(!existingPlace.call(unsafe,0,6)&&localChecks===25,'infantry fallback still rejects every obstructed or unwalkable local pad within its search bound');
+  unsafe.IsClear=()=>true;
+  check(existingPlace.call(unsafe,0,6)&&localInfantry.m_bPlaced,'infantry fallback can admit a locally validated pad despite an unsuitable compound corner');
+  // Exercise the actual manager and team-submission methods under a crowded
+  // arrival. Native member creation is delayed; every submitted member must
+  // already count against the same cap while the next site takes its turn.
+  const submitTeam=compile(sources.garrison,'SpawnNextGroup_S');let nativeRequests=0,maximumCommitted=0;
+  const crowdedSites=Array.from({length:13},(_,siteIndex)=>{
+    const position=[siteIndex*100,0,0],logical=roster(types.OUTPOST).m_aSlots.filter(s=>s.m_iKind===0);
+    logical.forEach(s=>s.m_vPosition=position);
+    const site=newDeployment(logical);
+    Object.assign(site,{m_bActive:false,m_iNextGroup:0,m_bAssetsBound:false,m_iOutsideSince:-1,
+      m_Location:{GetCenter:()=>position,GetControllingRole:()=>1,GetId:()=>'crowded-'+siteIndex},
+      IsGarrisonActive:()=>site.m_bActive,HasRoster:()=>site.m_bGenerated,GetRosterRole:()=>site.m_eRosterRole,
+      HasDeploymentStarted:()=>site.m_iDeploymentStartedAt>=0,IsDeploymentClosed:()=>site.m_bDeploymentClosed,
+      IsCapacityWaiting:()=>site.m_iCapacityWaitSince>=0&&!site.m_bDeploymentClosed,GetLocation:()=>site.m_Location,
+      CommittedPersonnel:committed,NextPersonnelCost:nextCost,IsGroupRequested:requestKnown,SetCapacityWait_S:capacityWait,
+      Observe_S(){},RefreshPending_S(){site.UpdateDeployment_S(clock);},ClearAssignments_S(){},HasSuitableDefenceTerrain_S:()=>true,
+      CanRetire:compile(sources.garrison,'CanRetire'),OutsideLongEnough:compile(sources.garrison,'OutsideLongEnough'),Retire_S(){throw Error('Nearby defence retired under pressure');},
+      SpawnNextGroup_S:submitTeam,SpawnNextAsset_S:()=>false,PlaceSlot:()=>true,
+      CreateGroup_S(){return {m_aUnitPrefabSlots:[],FindComponent:()=>null,m_iReadyAt:clock+500,RequestSpawn(){nativeRequests++;}};},
+      AssignMembers(pending){if(clock<pending.m_Group.m_iReadyAt)return;for(const i of pending.m_aSlots){const slot=site.m_aSlots[i];if(slot.m_bLost||slot.m_bPlacementUnavailable)continue;slot.m_bSpawned=true;slot.m_Entity={GetOrigin:()=>position};site.m_bHadDeployedPersonnel=true;}}});
+    return site;
+  });
+  playerPosition=[650,0,0];clock=0;env.GetGame=()=>game;
+  const crowdedManager={...managerState,FactionFor:()=>faction,m_aGarrisons:crowdedSites,m_aNearby:[],m_iNextProximityAt:0,m_iCursor:0,m_fPressureRetirementRadius:1200,m_iPressureRetirementDelay:15};
+  for(let tick=0;tick<120;tick++){
+    clock=tick*250;managerTick.call(crowdedManager);
+    maximumCommitted=Math.max(maximumCommitted,crowdedSites.reduce((sum,s)=>sum+s.CommittedPersonnel(),0));
+  }
+  check(maximumCommitted<=96&&maximumCommitted>0,'crowded incremental/native-queue admission never exceeds 96 committed personnel: observed='+maximumCommitted+', requests='+nativeRequests);
+  check(crowdedSites.every(s=>s.m_aSlots.some(slot=>slot.m_bSpawned)),'every nearby outpost receives physical defenders before optional second teams fill the cap');
+  const submissionsBeforeClear=nativeRequests;
+  crowdedSites.forEach(s=>s.m_aSlots.forEach(slot=>{if(slot.m_bSpawned){slot.m_bLost=true;slot.m_Entity=null;}}));
+  for(let tick=120;tick<180;tick++){clock=tick*250;managerTick.call(crowdedManager);}
+  check(nativeRequests===submissionsBeforeClear,'free capacity after clearance cannot manufacture reinforcements or refill casualties');
   const reset=compile(sources.garrison,'ResetRoster_S');
   const retaken={...newDeployment([new env.AROR_GarrisonSlot()]),m_bActive:false,m_bDeploymentClosed:true,m_iDeploymentStartedAt:1000,m_iOutsideSince:2000};
   reset.call(retaken);
