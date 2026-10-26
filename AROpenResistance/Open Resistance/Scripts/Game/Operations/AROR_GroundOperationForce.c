@@ -6,6 +6,7 @@ class AROR_GroundOperationForce : AROR_OperationForce
 	AIWaypoint m_CrewWaypoint;
 	bool m_bMounted;
 	bool m_bMountRequested;
+	int m_iMountWaitTicks;
 	bool m_bDismountRequested;
 	bool m_bDismounted;
 	bool m_bTacticalDropStarted;
@@ -217,6 +218,81 @@ class AROR_GroundOperationForce : AROR_OperationForce
 				return false;
 		}
 		return true;
+	}
+
+	//! A native seat teleport can be dropped without failing the request. Re-request a free seat for every
+	//! living member not yet seated in this vehicle; returns what was still missing, for the log.
+	string ReseatMissing_S()
+	{
+		if (!Replication.IsServer() || !m_Vehicle || !m_CrewGroup)
+			return "no vehicle or crew group";
+		BaseCompartmentManagerComponent compartments = BaseCompartmentManagerComponent.Cast(m_Vehicle.FindComponent(BaseCompartmentManagerComponent));
+		SCR_AIVehicleUsageComponent usage = SCR_AIVehicleUsageComponent.Cast(m_Vehicle.FindComponent(SCR_AIVehicleUsageComponent));
+		if (!compartments || !usage || !usage.GetPilotCompartmentSlot())
+			return "no seat manager";
+		array<BaseCompartmentSlot> slots = {};
+		compartments.GetCompartments(slots);
+		array<BaseCompartmentSlot> crewSeats = {usage.GetPilotCompartmentSlot()};
+		array<BaseCompartmentSlot> cargoSeats = {};
+		foreach (BaseCompartmentSlot slot : slots)
+		{
+			if (!slot || !slot.IsCompartmentAccessible() || crewSeats.Contains(slot))
+				continue;
+			if (TurretCompartmentSlot.Cast(slot))
+				crewSeats.Insert(slot);
+			else if (CargoCompartmentSlot.Cast(slot))
+				cargoSeats.Insert(slot);
+		}
+		int missingCrew, missingPassengers, boarding;
+		array<AIAgent> crew = {};
+		m_CrewGroup.GetAgents(crew);
+		foreach (AIAgent agent : crew)
+		{
+			if (!agent)
+				continue;
+			IEntity member = agent.GetControlledEntity();
+			if (IsSeatedInOwnVehicle(member))
+				continue;
+			missingCrew++;
+			if (ReseatMember(member, crewSeats, cargoSeats))
+				boarding++;
+		}
+		foreach (IEntity passenger : m_aPassengers)
+		{
+			if (IsSeatedInOwnVehicle(passenger))
+				continue;
+			missingPassengers++;
+			if (ReseatMember(passenger, cargoSeats, null))
+				boarding++;
+		}
+		string pilot = "seated";
+		if (!usage.GetPilotCompartmentSlot().GetOccupant())
+			pilot = "empty";
+		return string.Format("driver %1, unseated crew=%2 passengers=%3, reseat requests=%4", pilot, missingCrew, missingPassengers, boarding);
+	}
+
+	//! Seats a living, idle member in the first free seat of the preferred list, then of the fallback list
+	protected bool ReseatMember(IEntity member, array<BaseCompartmentSlot> preferred, array<BaseCompartmentSlot> fallback)
+	{
+		ChimeraCharacter character = ChimeraCharacter.Cast(member);
+		if (!character || !character.GetCharacterController() || character.GetCharacterController().IsDead())
+			return false;
+		CompartmentAccessComponent access = CompartmentAccessComponent.Cast(member.FindComponent(CompartmentAccessComponent));
+		if (!access || access.IsGettingIn() || access.IsGettingOut() || access.IsInCompartment())
+			return false;
+		foreach (BaseCompartmentSlot seat : preferred)
+		{
+			if (!seat.IsOccupied() && !seat.GetOccupant())
+				return Seat(member, seat);
+		}
+		if (!fallback)
+			return false;
+		foreach (BaseCompartmentSlot seat : fallback)
+		{
+			if (!seat.IsOccupied() && !seat.GetOccupant())
+				return Seat(member, seat);
+		}
+		return false;
 	}
 
 	protected bool IsSeatedInOwnVehicle(IEntity entity)
