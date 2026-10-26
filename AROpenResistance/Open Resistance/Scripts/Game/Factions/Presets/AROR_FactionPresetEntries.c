@@ -85,7 +85,7 @@ class AROR_FactionPresetVehicle : AROR_FactionPresetEntry
 	//------------------------------------------------------------------------------------------------
 	override bool IsKnownType()
 	{
-		return m_eType >= 0 && m_eType <= AROR_EVehicleType.STATIC_WEAPON;
+		return m_eType >= 0 && m_eType <= AROR_EVehicleType.STATIC_ARTILLERY;
 	}
 
 	//------------------------------------------------------------------------------------------------
