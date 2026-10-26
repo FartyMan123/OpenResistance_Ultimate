@@ -1,0 +1,26 @@
+GenericEntity : "{EF070B8345288C8B}Prefabs/Props/Military/MilitaryCrates/CrateStack_01/Dst/CrateStack_01_Dst_2_base.et" {
+ ID "F0DBA538AC2A0552"
+ components {
+  AROR_ResistanceArsenalComponent "{6AB47ECFA824AB69}" {
+  }
+  SCR_ArsenalComponent "{6AB47ECDE013C37F}" {
+   m_eSupportedArsenalItemTypes 8388606
+   m_bAllowGetFactionFromParent 1
+  }
+  SCR_DestructionMultiPhaseComponent "{5624A88D86EFE8BA}" {
+   EnableDamage 0
+  }
+  SCR_ResourceComponent "{6AB47ECDCD26AD51}" {
+   m_aDisabledResourceTypes {
+    SUPPLIES ELECTRICITY
+   }
+  }
+  SCR_UniversalInventoryStorageComponent "{6AB47ECF6B59B4A9}" {
+  }
+  SCR_ArsenalInventoryStorageManagerComponent "{6AB47ECDED73CD7C}" {
+  }
+  ActionsManagerComponent "{6AB47ECD500FD80A}" {
+  }
+ }
+ coords 5438.903 188.161 7136.816
+}

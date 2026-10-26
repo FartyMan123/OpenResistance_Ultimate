@@ -241,7 +241,7 @@ Purpose: the Resistance's shared item stock for the campaign (what gear is on ha
 - Server-owned; stock replicates to all clients as parallel prefab/quantity arrays. Change invoker for future UI.
 - Saved: the stock ledger (`AROR_ResistanceStorageComponentSerializer`).
 - Admin: Economy sub-menu can fill stock with one of every Resistance preset item (excl. units/vehicles).
-- Planned: player deposit/withdraw, arsenal UI stock gating.
+- **HQ arsenal**: `AROR_ResistanceArsenalComponent` on an arsenal box (same entity as `SCR_ArsenalComponent`) lists stocked prefabs (qty > 0). Takes call `Take_S`; refunds call `AddEntity_S`. Vanilla supplies are not the stock budget (disable supplies on the box's `SCR_ResourceComponent`). Modded `SCR_ArsenalComponent` and `SCR_ResourcePlayerControllerInventoryComponent` implement the bridge. Access: open the box inventory like a normal arsenal.
 
 ### Phone — In progress
 Purpose: an in-game phone that hosts player-facing apps. Client only.
