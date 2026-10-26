@@ -124,7 +124,7 @@ Phases (mapped onto the base-game states PREGAME → GAME → POSTGAME):
 - `AROR_GameFlowComponent` (server, game mode) holds PREGAME until a playthrough exists and keeps player controls disabled until then; other systems can ask whether the playthrough is ready.
 - **Setup UI** (`AROR_SetupUIComponent`, client) is built from base-game configurable dialogs with our own presets (`Configs/UI/AROR_SetupDialogs.conf`).
 - **Staging spawn** (`AROR_StagingSpawn.et`): before a playthrough exists, players spawn there as the Resistance and move freely. Afterwards it is disabled and players are moved to the HQ.
-- **Resistance HQ**: placed on land and outside every location's radius (checked on the client, enforced by the server). A dynamic location of type HQ that carries the Resistance spawn point; players always spawn there.
+- **Resistance HQ**: placed on land, outside every location's radius, and on a clear 10×10 m pad free of buildings and props (checked on the client, enforced by the server; invalid picks are rejected). A dynamic location of type HQ that carries the Resistance spawn point; players always spawn there. A new playthrough also spawns an arsenal beside the HQ via `SpawnArsenal` before the initial save.
 - Planned: playthrough settings chosen at setup and editable mid-game, with lifecycle events (scenario ready, playthrough created/loaded, settings changed) for other systems.
 - Server/client: the server owns phase transitions and all generated state; admin actions are client → server requests checked against admin roles.
 - Depends on: Game Mode, Locations, Persistence.
@@ -138,7 +138,7 @@ Purpose: persistent campaign saves, built on the **base-game save system** (`Sav
   - Each component with saved state has a matching `ScriptedComponentSerializer`. Serializers write a version first and keep loading older versions.
   - Locations are referenced by **stable ID**, never by position in a list.
 - Save generated results, not random seeds, so saves survive map and code changes.
-- Saved so far: location control, settlement support, the Resistance HQ, faction presets per role, faction funds, manpower, player money, Resistance item stock, garrison rosters, QRF war level, aggression and debt, and the Invader campaign state.
+- Saved so far: location control, settlement support, the Resistance HQ, arsenals, faction presets per role, faction funds, manpower, player money, Resistance item stock, garrison rosters, QRF war level, aggression and debt, and the Invader campaign state.
 - Boot rule: if a save is active when the world loads it is restored; otherwise setup starts. A new playthrough writes an initial save point, so new and loaded games share one restore path.
 - Limits: about 101 playthroughs and save points per mission; old autosaves need pruning.
 - Planned: periodic autosave and saves on key events and shutdown; verification on a dedicated server.
@@ -240,8 +240,8 @@ Purpose: the Resistance's shared item stock for the campaign (what gear is on ha
 - Server API: `Add_S` / `Take_S` (atomic) by prefab; `GetQuantity` / `GetEntries` on every machine; `AddEntity_S` deposits a world/inventory item by unpacking nested contents (vest cargo, weapon attachments, magazines, and so on) into **separate stock lines**, then deleting the entity. Magazine fill and item health are not preserved.
 - Server-owned; stock replicates to all clients as parallel prefab/quantity arrays. Change invoker for future UI.
 - Saved: the stock ledger (`AROR_ResistanceStorageComponentSerializer`).
-- Admin: Economy sub-menu can fill stock with one of every Resistance preset item (excl. units/vehicles).
-- **HQ arsenal**: `AROR_ResistanceArsenalComponent` on an arsenal box (same entity as `SCR_ArsenalComponent`) lists stocked prefabs (qty > 0). Takes call `Take_S`; refunds call `AddEntity_S`. Vanilla supplies are not the stock budget (disable supplies on the box's `SCR_ResourceComponent`). Modded `SCR_ArsenalComponent` and `SCR_ResourcePlayerControllerInventoryComponent` implement the bridge. Access: open the box inventory like a normal arsenal.
+- Admin: Economy → More can fill stock with one of every Resistance preset item (excl. units/vehicles).
+- **Arsenal**: `AROR_ResistanceArsenalComponent` on an arsenal box (same entity as `SCR_ArsenalComponent`) lists stocked prefabs (qty > 0). Takes call `Take_S`; refunds call `AddEntity_S`. Vanilla supplies are not the stock budget (disable supplies on the box's `SCR_ResourceComponent`). Modded `SCR_ArsenalComponent` and `SCR_ResourcePlayerControllerInventoryComponent` implement the bridge. Access: open the box inventory like a normal arsenal. Placement is not HQ-exclusive; Game Flow spawns the first one beside the HQ via `SpawnArsenal`.
 
 ### Phone — In progress
 Purpose: an in-game phone that hosts player-facing apps. Client only.

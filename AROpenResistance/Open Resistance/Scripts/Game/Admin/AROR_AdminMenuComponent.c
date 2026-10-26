@@ -19,6 +19,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	protected static const string PRESET_MORE = "aror_admin_more";
 	protected static const string PRESET_SUPPORT = "aror_admin_support";
 	protected static const string PRESET_ECONOMY = "aror_admin_economy";
+	protected static const string PRESET_ECONOMY_MORE = "aror_admin_economy_more";
 	protected static const string PRESET_FUNDS = "aror_admin_funds";
 
 	//! Money added per admin button press
@@ -88,6 +89,12 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	protected void OpenEconomyDialog()
 	{
 		OpenDialog(PRESET_ECONOMY, GetEconomyText());
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void OpenEconomyMoreDialog()
+	{
+		OpenDialog(PRESET_ECONOMY_MORE, GetEconomyText());
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -403,6 +410,12 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 			return;
 		}
 
+		if (tag == "open_economy_more")
+		{
+			OpenEconomyMoreDialog();
+			return;
+		}
+
 		if (tag == "open_funds")
 		{
 			OpenFundsDialog();
@@ -431,7 +444,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 			if (storageController)
 				storageController.AROR_RequestAdminFillResistanceStock();
 
-			GetGame().GetCallqueue().CallLater(OpenEconomyDialog, REFRESH_DELAY_MS);
+			GetGame().GetCallqueue().CallLater(OpenEconomyMoreDialog, REFRESH_DELAY_MS);
 			return;
 		}
 
@@ -575,6 +588,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 		GetGame().GetCallqueue().Remove(HandleAction);
 		GetGame().GetCallqueue().Remove(OpenGameMaster);
 		GetGame().GetCallqueue().Remove(OpenEconomyDialog);
+		GetGame().GetCallqueue().Remove(OpenEconomyMoreDialog);
 		GetGame().GetCallqueue().Remove(OpenFundsDialog);
 		GetGame().GetCallqueue().Remove(OpenSupportDialog);
 		StopTeleportPicking();

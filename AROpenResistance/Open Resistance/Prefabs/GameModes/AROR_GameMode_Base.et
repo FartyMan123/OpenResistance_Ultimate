@@ -91,6 +91,7 @@ SCR_BaseGameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" 
   }
   AROR_GameFlowComponent "{6AAA8D6D8EB1E454}" {
    m_sHQPrefab "{3EC420BD9621F356}Prefabs/Locations/AROR_Location_HQ.et"
+   m_sArsenalPrefab "{C38B03DA66A87173}Prefabs/Props/Locations/AROR_Prop_Arsenal.et"
    m_bWorkbenchAutoNewPlaythrough 1
   }
   AROR_LocationManagerComponent "{6AA2823B57AE5CD7}" {

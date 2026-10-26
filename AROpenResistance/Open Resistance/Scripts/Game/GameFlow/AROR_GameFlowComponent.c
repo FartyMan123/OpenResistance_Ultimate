@@ -12,16 +12,27 @@ class AROR_GameFlowComponentClass : SCR_BaseGameModeStateComponentClass
 }
 
 //! Pre-game state of the game flow (see ARCHITECTURE.md -> Game Flow).
-//! Server: validates admin requests, spawns the Resistance HQ, starts or loads playthroughs.
+//! Server: validates admin requests, spawns the Resistance HQ and arsenal, starts or loads playthroughs.
 //! Clients: receive setup messages through the AROR_ methods on SCR_PlayerController and raise the events below for the UI.
 class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 {
 	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Resistance HQ prefab spawned at the chosen position", params: "et")]
 	protected ResourceName m_sHQPrefab;
 
+	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Arsenal prefab spawned at world positions (first use: beside the HQ)", params: "et")]
+	protected ResourceName m_sArsenalPrefab;
+
+	[Attribute("1 0 0", UIWidgets.Coords, desc: "World offset from the HQ origin (flag) used when placing the first arsenal")]
+	protected vector m_vArsenalOffsetFromHQ;
+
 	[Attribute("100", UIWidgets.Slider, desc: "Minimum distance in metres between the HQ and the edge (radius) of any location", params: "0 5000 10")]
 	protected float m_fHQMinDistanceFromLocation;
 
+	[Attribute("5", UIWidgets.Slider, desc: "Half-extent in metres of the clear pad required for the HQ (5 = 10x10 m)", params: "1 50 0.5")]
+	protected float m_fHQClearanceHalfExtent;
+
+	[Attribute("3", UIWidgets.Slider, desc: "Height in metres of the clear pad TraceBox for the HQ", params: "1 10 0.5")]
+	protected float m_fHQClearanceHeight;
 
 	[Attribute("1", desc: "Players can move at the staging spawn while the admin sets up the campaign")]
 	protected bool m_bAllowControlsInSetup;
@@ -203,7 +214,14 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	{
 		// Sea level is 0; anything at or below it is water (or off the map)
 		BaseWorld world = GetGame().GetWorld();
-		if (world && world.GetSurfaceY(position[0], position[2]) <= 0)
+		if (!world)
+		{
+			reason = "World missing";
+			return false;
+		}
+
+		float surfaceY = world.GetSurfaceY(position[0], position[2]);
+		if (surfaceY <= 0)
 		{
 			reason = "The HQ must be placed on land";
 			return false;
@@ -232,7 +250,27 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			}
 		}
 
+		if (!IsHQPadClear(world, Vector(position[0], surfaceY, position[2])))
+		{
+			float padSize = m_fHQClearanceHalfExtent * 2;
+			reason = string.Format("Need a clear %1x%2 m area free of buildings and props", padSize, padSize);
+			return false;
+		}
+
 		return true;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! True when a TraceBox at position (surface-grounded) finds no entity obstruction
+	protected bool IsHQPadClear(notnull BaseWorld world, vector position)
+	{
+		TraceBox trace = new TraceBox();
+		trace.Start = position + Vector(0, 0.25, 0);
+		trace.End = trace.Start + Vector(0, 0.05, 0);
+		trace.Mins = Vector(-m_fHQClearanceHalfExtent, 0, -m_fHQClearanceHalfExtent);
+		trace.Maxs = Vector(m_fHQClearanceHalfExtent, m_fHQClearanceHeight, m_fHQClearanceHalfExtent);
+		trace.Flags = TraceFlags.ENTS | TraceFlags.VISIBILITY;
+		return world.TraceMove(trace, null) == 1;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -255,6 +293,14 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		if (!hq)
 		{
 			SendSetupResult(playerId, false, "Failed to spawn the Resistance HQ");
+			return;
+		}
+
+		IEntity arsenal = SpawnArsenal(hq.GetOrigin() + m_vArsenalOffsetFromHQ);
+		if (!arsenal)
+		{
+			SCR_EntityHelper.DeleteEntityAndChildren(hq);
+			SendSetupResult(playerId, false, "Failed to spawn the arsenal");
 			return;
 		}
 
@@ -424,6 +470,27 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			Print("[AROR] HQ prefab is not an SCR_SpawnPoint; players will have nowhere to spawn", LogLevel.ERROR);
 
 		return hq;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Spawns an arsenal at a world position (surface-snapped). Reusable for HQ and future sites.
+	IEntity SpawnArsenal(vector position)
+	{
+		Resource resource = Resource.Load(m_sArsenalPrefab);
+		if (!resource || !resource.IsValid())
+		{
+			Print("[AROR] Arsenal prefab is not set or invalid on AROR_GameFlowComponent", LogLevel.ERROR);
+			return null;
+		}
+
+		BaseWorld world = GetGame().GetWorld();
+		position[1] = world.GetSurfaceY(position[0], position[2]);
+
+		EntitySpawnParams params = new EntitySpawnParams();
+		params.TransformMode = ETransformMode.WORLD;
+		params.Transform[3] = position;
+
+		return GetGame().SpawnEntityPrefab(resource, world, params);
 	}
 
 	//------------------------------------------------------------------------------------------------
