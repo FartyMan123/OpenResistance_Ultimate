@@ -28,6 +28,8 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 	protected int m_iQRFOrderInterval;
 	[Attribute("12", desc: "Maximum reachable-road queries per tactical vehicle approach; tries alternate wedges/radii before failing", params: "4 16 1")]
 	protected int m_iQRFApproachAttempts;
+	[Attribute("150", desc: "Maximum road-launch distance from the friendly QRF origin, metres. A bounded 36-query search expands to this radius while preserving collision, slope, water, player and package separation checks.", params: "75 300 25")]
+	protected float m_fQRFRoadLaunchRadius;
 	[Attribute("20", desc: "Stopped vehicle arrival tolerance around the selected QRF delivery road point, metres", params: "10 40 1")]
 	protected float m_fQRFVehicleArrivalTolerance;
 	[Attribute("100", desc: "Maximum distance from town objective for ground QRF delivery planning and physical unloading, metres", params: "50 150 5")]
@@ -1185,6 +1187,10 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			if (!force.IsMountComplete())
 			{
 				ReportPackageProgress(force, "Waiting for actual driver, crew and passenger seat occupancy after direct placement");
+				// Seat teleports can be dropped silently; re-request the missing seats like garrison crews do
+				force.m_iMountWaitTicks++;
+				if (Math.Mod(force.m_iMountWaitTicks, m_iWakeRetryInterval) == 0)
+					Print(string.Format("[AROR] %1 package=%2 seating retry after %3 s: %4", operation.GetId(), force.m_iPackageIndex + 1, force.m_iMountWaitTicks, force.ReseatMissing_S()), LogLevel.WARNING);
 				return;
 			}
 			force.m_bMounted = true;
@@ -1695,6 +1701,8 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			return false;
 		if (m_iQRFApproachAttempts < 4 || m_iQRFApproachAttempts > 16)
 			return false;
+		if (m_fQRFRoadLaunchRadius < 75 || m_fQRFRoadLaunchRadius > 300)
+			return false;
 		if (m_fQRFVehicleArrivalTolerance < 10 || m_fQRFVehicleArrivalTolerance > 40)
 			return false;
 		if (m_fQRFObjectiveDeliveryRadius < 50 || m_fQRFObjectiveDeliveryRadius > 150)
@@ -2091,7 +2099,17 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 	{
 		BaseWorld world = GetGame().GetWorld();
 		vector seed = TacticalLaunchPoint(commander, index);
-		for (int attempt = 0; attempt < 12; attempt++)
+		int noRoad;
+		int outside;
+		int crowded;
+		int unsafe;
+		int wet;
+		int steep;
+		int obstructed;
+		// Preserve the original nearby probes, then cover the outer origin area.
+		// The former 30/60m seed-only search could repeatedly snap onto pads occupied
+		// by the first two packages and could cancel an otherwise funded response.
+		for (int attempt = 0; attempt < 36; attempt++)
 		{
 			float angle = attempt * 0.78539816;
 			float radius = 30;
@@ -2100,11 +2118,29 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			vector desired = seed;
 			if (attempt > 0)
 				desired = seed + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * radius;
+			if (attempt >= 12)
+			{
+				int ring = (attempt - 12) / 8 + 3;
+				angle = Math.Mod(attempt - 12, 8) * 0.78539816;
+				radius = m_fQRFRoadLaunchRadius * ring / 5;
+				desired = commander.m_vOrigin + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * radius;
+			}
 			vector road;
 			if (!TacticalRoadPoint(commander.m_vOrigin, desired, road))
+			{
+				noRoad++;
 				continue;
-			if (vector.DistanceXZ(road, commander.m_vOrigin) > 150)
+			}
+			if (vector.DistanceXZ(road, commander.m_vOrigin) > m_fQRFRoadLaunchRadius)
+			{
+				outside++;
 				continue;
+			}
+			if (!IsLaunchPositionSafe(road, commander.m_vTown))
+			{
+				unsafe++;
+				continue;
+			}
 			bool separated = true;
 			foreach (AROR_OperationForce other : m_aForces)
 			{
@@ -2113,10 +2149,16 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 					separated = false;
 			}
 			if (!separated)
+			{
+				crowded++;
 				continue;
+			}
 			float height = world.GetSurfaceY(road[0], road[2]);
 			if (height <= world.GetOceanHeight(road[0], road[2]) + 0.5)
+			{
+				wet++;
 				continue;
+			}
 			bool level = true;
 			for (int side = 0; side < 4; side++)
 			{
@@ -2126,7 +2168,10 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 					level = false;
 			}
 			if (!level)
+			{
+				steep++;
 				continue;
+			}
 			TraceBox trace = new TraceBox();
 			trace.Start = Vector(road[0], height + 0.35, road[2]);
 			trace.End = trace.Start + Vector(0, 0.05, 0);
@@ -2134,12 +2179,17 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			trace.Maxs = Vector(6, 4.5, 6);
 			trace.Flags = TraceFlags.ENTS;
 			if (world.TraceMove(trace, null) < 1)
+			{
+				obstructed++;
 				continue;
+			}
 			road[1] = height;
 			point = road;
 			Print(string.Format("[AROR TACTICAL] road launch package=%1 origin=%2 position=%3 queries=%4", index + 1, commander.m_sOriginLocationId, point, attempt + 1), LogLevel.NORMAL);
 			return true;
 		}
+		Print(string.Format("[AROR TACTICAL] road launch rejected package=%1 origin=%2 radius=%3 queries=36", index + 1, commander.m_sOriginLocationId, m_fQRFRoadLaunchRadius), LogLevel.WARNING);
+		Print(string.Format("[AROR TACTICAL] launch rejections noRoad=%1 outside=%2 unsafe=%3 spacing=%4 water=%5 slope=%6 obstruction=%7", noRoad, outside, unsafe, crowded, wet, steep, obstructed), LogLevel.WARNING);
 		return false;
 	}
 
