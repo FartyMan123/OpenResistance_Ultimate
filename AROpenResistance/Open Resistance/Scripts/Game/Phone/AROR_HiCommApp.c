@@ -55,6 +55,28 @@ class AROR_HiCommClickHandler : ScriptedWidgetEventHandler
 	}
 }
 
+//! Last values pushed to one pooled widget, so unchanged properties are not set again every frame
+class AROR_HiCommWidgetCache
+{
+	float m_fX = -100000;
+	float m_fY;
+	float m_fWidth;
+	float m_fHeight;
+	int m_iFontSize = -1;
+	int m_iColor;
+	bool m_bColorSet;
+	int m_iBold = -1;
+	int m_iVisible = -1;
+
+	// Text layout inputs (wrapping and measuring are redone only when these change)
+	string m_sRaw;
+	float m_fWrapWidth = -1;
+	float m_fWrapSize = -1;
+	int m_iCentred = -1;
+	int m_iLongest;
+	int m_iLines = 1;
+}
+
 //! HICOMM: the Resistance Leaders' landscape phone app, in a phosphor-terminal style. Client only; every action is a
 //! request to AROR_HighCommandComponent on the server, and everything shown comes from replicated state.
 //! The layout (AROR_PhoneMenu.layout) declares fixed pools of panels, texts, buttons and map labels; each frame the
@@ -81,15 +103,24 @@ class AROR_HiCommApp
 	protected static const int STYLE_MUTED = 5;	//!< Someone else's (view only)
 	protected static const int STYLE_PANEL = 6;	//!< Read-out box (tooltips, order preview); not clickable
 
-	// Strategic Command columns (app units)
-	protected static const float BODY_TOP = 104;
-	protected static const float BODY_HEIGHT = 782;
-	protected static const float LEFT_LEFT = 20;
-	protected static const float LEFT_WIDTH = 270;
-	protected static const float MAP_LEFT = 302;
-	protected static const float MAP_WIDTH = 1083;
-	protected static const float RIGHT_LEFT = 1395;
-	protected static const float RIGHT_WIDTH = 285;
+	//! Content is drawn at this fraction of the phone screen, centred, so nothing touches the screen edges
+	protected static const float CONTENT_SCALE = 0.95;
+
+	// Strategic Command (app units): the map fills the body; panels float over it
+	protected static const float MAP_LEFT = 16;
+	protected static const float MAP_TOP = 96;
+	protected static const float MAP_WIDTH = 1668;
+	protected static const float MAP_HEIGHT = 790;
+	protected static const float PANEL_MARGIN = 10;
+	protected static const float OOB_WIDTH = 260;
+	protected static const float SELECTION_WIDTH = 300;
+	protected static const float SELECTION_HEIGHT = 432;
+	protected static const float HELP_WIDTH = 270;
+	protected static const float SLIDER_HEIGHT = 240;
+
+	//! Location icons over the map (the in-game map's icons, tinted by controlling faction)
+	protected static const int ICON_POOL = 64;
+	protected static const float ICON_SIZE = 22;
 
 	// Map palette (packed RGB, see AROR_HiCommMap.Rgb)
 	protected static const int PAL_GREEN = 0x86F0AC;
@@ -102,6 +133,9 @@ class AROR_HiCommApp
 
 	//! Spacing (m) between squads given one Move point together
 	protected static const float MOVE_SPACING = 35;
+
+	//! Squads closer than this on screen (pixels) are drawn as one stack
+	protected static const float SQUAD_CLUSTER_PIXELS = 22;
 
 	//! Map: pick radius and drag threshold (pixels), order ping length (ms), keyboard pan (px/s), wheel zoom step
 	protected static const float PICK_RADIUS = 18;
@@ -118,6 +152,7 @@ class AROR_HiCommApp
 	protected ImageWidget m_wBackground;
 	protected CanvasWidget m_wMapCanvas;
 	protected CanvasWidget m_wMapOverlay;
+	protected Widget m_wMapClip;	//!< Clipping frame the base canvas slides in
 	protected Widget m_wMapButton;
 	protected EditBoxWidget m_wNameEdit;
 
@@ -131,11 +166,39 @@ class AROR_HiCommApp
 	protected ref array<string> m_aButtonActions = {};
 	protected ref array<RichTextWidget> m_aMapLabels = {};
 	protected ref array<string> m_aMapLabelCache = {};
+	protected ref array<ImageWidget> m_aMapIcons = {};
+	protected ref array<ResourceName> m_aMapIconCache = {};
+
+	// Property caches, one per pooled widget (see AROR_HiCommWidgetCache)
+	protected ref array<ref AROR_HiCommWidgetCache> m_aPanelCaches = {};
+	protected ref array<ref AROR_HiCommWidgetCache> m_aTextCaches = {};
+	protected ref array<ref AROR_HiCommWidgetCache> m_aButtonBgCaches = {};
+	protected ref array<ref AROR_HiCommWidgetCache> m_aButtonLabelCaches = {};
+	protected ref array<ref AROR_HiCommWidgetCache> m_aButtonCaches = {};
+	protected ref array<ref AROR_HiCommWidgetCache> m_aMapLabelCaches = {};
+	protected ref array<ref AROR_HiCommWidgetCache> m_aMapIconCaches = {};
+
+	// This frame's location icons (canvas pixels)
+	protected ref array<ResourceName> m_aIconTextures = {};
+	protected ref array<vector> m_aIconPositions = {};
+	protected ref array<ref Color> m_aIconColors = {};
+
+	// Floating panels this frame (app units: x, y, width, height per panel)
+	protected ref array<float> m_aPanelRects = {};
+	protected bool m_bShowOrderOfBattle = true;
+	protected bool m_bShowHelp;
+	protected float m_fOobBottom;
+	protected float m_fRightEdge;	//!< Right edge of free map space (left of the orders panel)
+	protected float m_fLegendLeft;
+	protected float m_fSliderX;	//!< Zoom slider track (app units)
+	protected float m_fSliderTop;
+	protected bool m_bSliderDrag;
 
 	protected int m_iPanelCount;
 	protected int m_iTextCount;
 	protected int m_iButtonCount;
 	protected int m_iMapLabelCount;
+	protected int m_iMapIconCount;
 
 	protected ref AROR_HiCommMap m_Map;
 	protected ref AROR_HiCommClickHandler m_ClickHandler;
@@ -152,9 +215,17 @@ class AROR_HiCommApp
 	protected ref Color m_Dark = AROR_HiCommMap.Srgb(6, 12, 8, 1);
 	protected ref Color m_Occupiers = AROR_HiCommMap.Srgb(96, 150, 240, 1);
 	protected ref Color m_Invaders = AROR_HiCommMap.Srgb(246, 150, 60, 1);
+	protected ref Color m_ButtonFill = AROR_HiCommMap.Srgb(20, 44, 30, 1);
+	protected ref Color m_ButtonDisabled = AROR_HiCommMap.Srgb(14, 24, 18, 1);
+	protected ref Color m_ButtonDanger = AROR_HiCommMap.Srgb(70, 22, 20, 1);
+	protected ref Color m_ButtonMuted = AROR_HiCommMap.Srgb(12, 24, 17, 1);
+	protected ref Color m_ButtonPanel = AROR_HiCommMap.Srgb(4, 12, 8, 0.93);
 
 	// State (reset each time the phone opens)
 	protected AROR_EHiCommScreen m_eScreen = AROR_EHiCommScreen.LOGIN;
+	protected AROR_EHiCommScreen m_eLastScreen = -1;
+	protected int m_iLoginStart;
+	protected ref AROR_HiCommGlobe m_Globe = new AROR_HiCommGlobe();
 	protected ref array<int> m_aSelected = {};	//!< Selected squad IDs
 	protected AROR_EHighCommandOrder m_eSelectedOrder = AROR_EHighCommandOrder.ATTACK;
 	protected string m_sSelectedTarget;
@@ -182,6 +253,8 @@ class AROR_HiCommApp
 
 	// Map: geometry this frame (app units) and what this frame's overlay put where (canvas pixels)
 	protected float m_fScale = 1;
+	protected float m_fInsetX;	//!< Content offset from the screen corner (scaled pixels)
+	protected float m_fInsetY;
 	protected float m_fMapX;
 	protected float m_fMapY;
 	protected float m_fMapWidth;
@@ -201,10 +274,11 @@ class AROR_HiCommApp
 		m_wRoot = phoneRoot.FindAnyWidget("HiCommApp");
 		m_wBackground = ImageWidget.Cast(phoneRoot.FindAnyWidget("HiCommBackground"));
 		m_wMapCanvas = CanvasWidget.Cast(phoneRoot.FindAnyWidget("HiCommMapCanvas"));
+		m_wMapClip = phoneRoot.FindAnyWidget("HiCommMapClip");
 		m_wMapOverlay = CanvasWidget.Cast(phoneRoot.FindAnyWidget("HiCommMapOverlay"));
 		m_wMapButton = phoneRoot.FindAnyWidget("HiCommMapButton");
 		m_wNameEdit = EditBoxWidget.Cast(phoneRoot.FindAnyWidget("HiCommNameEdit"));
-		if (!m_wRoot || !m_wBackground || !m_wMapCanvas || !m_wMapOverlay || !m_wMapButton || !m_wNameEdit)
+		if (!m_wRoot || !m_wBackground || !m_wMapCanvas || !m_wMapClip || !m_wMapOverlay || !m_wMapButton || !m_wNameEdit)
 			return false;
 
 		m_ClickHandler = new AROR_HiCommClickHandler(this);
@@ -220,6 +294,7 @@ class AROR_HiCommApp
 				return false;
 
 			m_aPanels.Insert(panel);
+			m_aPanelCaches.Insert(new AROR_HiCommWidgetCache());
 		}
 
 		for (int i = 0; i < TEXT_POOL; i++)
@@ -230,6 +305,7 @@ class AROR_HiCommApp
 
 			m_aTexts.Insert(text);
 			m_aTextCache.Insert(string.Empty);
+			m_aTextCaches.Insert(new AROR_HiCommWidgetCache());
 		}
 
 		for (int i = 0; i < BUTTON_POOL; i++)
@@ -245,6 +321,9 @@ class AROR_HiCommApp
 			m_aButtonBackgrounds.Insert(background);
 			m_aButtonLabels.Insert(label);
 			m_aButtonLabelCache.Insert(string.Empty);
+			m_aButtonBgCaches.Insert(new AROR_HiCommWidgetCache());
+			m_aButtonLabelCaches.Insert(new AROR_HiCommWidgetCache());
+			m_aButtonCaches.Insert(new AROR_HiCommWidgetCache());
 			m_aButtons.Insert(button);
 			m_aButtonActions.Insert(string.Empty);
 		}
@@ -257,6 +336,18 @@ class AROR_HiCommApp
 
 			m_aMapLabels.Insert(mapLabel);
 			m_aMapLabelCache.Insert(string.Empty);
+			m_aMapLabelCaches.Insert(new AROR_HiCommWidgetCache());
+		}
+
+		for (int i = 0; i < ICON_POOL; i++)
+		{
+			ImageWidget mapIcon = ImageWidget.Cast(phoneRoot.FindAnyWidget("HiCommMapIcon" + i));
+			if (!mapIcon)
+				return false;
+
+			m_aMapIcons.Insert(mapIcon);
+			m_aMapIconCache.Insert(string.Empty);
+			m_aMapIconCaches.Insert(new AROR_HiCommWidgetCache());
 		}
 
 		SetVisible(false, 1);
@@ -274,14 +365,18 @@ class AROR_HiCommApp
 	//! Every frame while shown: left/top is the landscape screen's corner, scale the phone's current scale
 	void Layout(float left, float top, float scale)
 	{
-		m_fScale = scale;
-		Place(m_wRoot, left, top, WIDTH * scale, HEIGHT * scale);
-		Place(m_wBackground, 0, 0, WIDTH * scale, HEIGHT * scale);
+		// The app and its background fill the whole screen; the content is inset from the edges
+		m_fScale = scale * CONTENT_SCALE;
+		m_fInsetX = WIDTH * (scale - m_fScale) * 0.5;
+		m_fInsetY = HEIGHT * (scale - m_fScale) * 0.5;
+		PlaceRaw(m_wRoot, left, top, WIDTH * scale, HEIGHT * scale);
+		PlaceRaw(m_wBackground, 0, 0, WIDTH * scale, HEIGHT * scale);
 
 		m_iPanelCount = 0;
 		m_iTextCount = 0;
 		m_iButtonCount = 0;
 		m_iMapLabelCount = 0;
+		m_iMapIconCount = 0;
 
 		// Losing clearance (revoked, host changed) drops back to the login screen
 		AROR_HighCommandComponent highCommand = AROR_HighCommandComponent.GetInstance();
@@ -290,6 +385,12 @@ class AROR_HiCommApp
 
 		bool showMap = m_eScreen == AROR_EHiCommScreen.STRATEGIC;
 		bool showNameEdit = false;
+
+		// The login sequence replays each time the login screen is shown
+		if (m_eScreen == AROR_EHiCommScreen.LOGIN && m_eLastScreen != AROR_EHiCommScreen.LOGIN)
+			m_iLoginStart = System.GetTickCount();
+
+		m_eLastScreen = m_eScreen;
 
 		if (m_eScreen == AROR_EHiCommScreen.LOGIN)
 		{
@@ -306,8 +407,9 @@ class AROR_HiCommApp
 				DrawUnits(highCommand);
 		}
 
+		m_wMapClip.SetVisible(showMap);
 		m_wMapCanvas.SetVisible(showMap);
-		m_wMapOverlay.SetVisible(showMap);
+		m_wMapOverlay.SetVisible(showMap || m_eScreen == AROR_EHiCommScreen.LOGIN);
 		m_wMapButton.SetVisible(showMap);
 		if (!showMap)
 		{
@@ -327,47 +429,121 @@ class AROR_HiCommApp
 	//------------------------------------------------------------------------------------------------
 	protected void DrawLogin(AROR_HighCommandComponent highCommand)
 	{
-		Box(430, 120, 840, 660);
-		Text(490, 170, 720, 110, 96, "HICOMM", m_Green, true);
-		Text(495, 285, 720, 40, 24, "RESISTANCE COMMAND NETWORK // SECURE TERMINAL", m_GreenDim);
-		Panel(490, 340, 720, 2, m_Border);
-
+		int now = System.GetTickCount();
+		float elapsed = (now - m_iLoginStart) / 1000.0;
 		int localId = GetLocalPlayerId();
-		Text(495, 370, 720, 44, 30, "OPERATOR    " + Upper(GetPlayerName(localId)), m_Green);
+		string operatorName = Upper(GetPlayerName(localId));
 
+		// Header strip: identity on the left, uplink status on the right
+		Text(40, 22, 400, 52, 40, "HICOMM", m_Green, true);
+		Text(42, 72, 600, 24, 16, "GLOBAL RESISTANCE NETWORK  //  SECURE TERMINAL", m_GreenDim);
+		TextRight(1660, 30, 16, "NODE EVR-01   //   UPLINK AES-256   //   " + GetClockText(), m_GreenDim);
+		TextRight(1660, 56, 16, string.Format("LATENCY %1 MS   //   RELAYS 9 ONLINE", 38 + Math.Mod(now / 700, 9)), m_GreenFaint);
+		Panel(40, 104, 1620, 1, m_Border);
+
+		// Left: the rotating relay network
+		float globeLeft = 40;
+		float globeTop = 120;
+		float globeSize = 740;
+		Place(m_wMapOverlay, globeLeft * m_fScale, globeTop * m_fScale, globeSize * m_fScale, globeSize * m_fScale);
+		WorkspaceWidget workspace = GetGame().GetWorkspace();
+		float pixels = workspace.DPIScale(globeSize * m_fScale);
+		m_Globe.Draw(m_wMapOverlay, pixels, pixels, elapsed, workspace.DPIScale(m_fScale));
+
+		// Right: connection log typed out line by line, then the login
+		Box(860, 140, 800, 700);
+		Text(890, 160, 740, 30, 20, "// SECURE UPLINK", m_GreenDim, true);
+
+		array<string> lines = {};
+		array<ref Color> colors = {};
+		AddLogLine(lines, colors, "> HICOMM 2.6 // resistance command network", m_GreenDim);
+		AddLogLine(lines, colors, "> locating relay node ......... EVR-01 [EVERON]", m_GreenDim);
+		AddLogLine(lines, colors, "> negotiating uplink .......... AES-256 OK", m_GreenDim);
+		AddLogLine(lines, colors, "> routing via 9 relays ........ OK", m_GreenDim);
+		AddLogLine(lines, colors, "> verifying operator .......... " + operatorName, m_Green);
+
+		bool leader = highCommand && highCommand.IsLeader(localId);
 		if (!highCommand)
+			AddLogLine(lines, colors, "> network ...................... OFFLINE", m_Red);
+		else if (highCommand.IsHost(localId))
+			AddLogLine(lines, colors, "> clearance .................... RESISTANCE LEADER (HOST)", m_Amber);
+		else if (leader)
+			AddLogLine(lines, colors, "> clearance .................... RESISTANCE LEADER", m_Amber);
+		else
+			AddLogLine(lines, colors, "> clearance .................... DENIED", m_Red);
+
+		if (leader)
+			AddLogLine(lines, colors, "> secure channel established. welcome, " + operatorName + ".", m_Green);
+		else if (highCommand)
+			AddLogLine(lines, colors, "> only a Resistance Leader may log in. ask the host to delegate you.", m_Red);
+
+		// Type the log: each line starts once the previous one has finished
+		float charactersPerSecond = 70;
+		float lineStart = 0.3;
+		bool typing = false;
+		foreach (int i, string line : lines)
 		{
-			Text(495, 430, 720, 44, 30, "STATUS      OFFLINE", m_Red);
-			Text(495, 500, 700, 120, 24, "HICOMM is not available in this scenario.", m_GreenDim);
+			float shown = (elapsed - lineStart) * charactersPerSecond;
+			if (shown <= 0)
+			{
+				typing = true;
+				break;
+			}
+
+			string visible = line;
+			if (shown < line.Length())
+			{
+				int count = Math.Floor(shown);
+				visible = line.Substring(0, count);
+				typing = true;
+			}
+
+			// Blinking cursor on the line being typed
+			if (visible.Length() < line.Length() && Math.Mod(now / 400, 2) == 0)
+				visible += "_";
+
+			Text(890, 210 + i * 40, 740, 34, 18, visible, colors[i]);
+			if (visible.Length() < line.Length())
+				break;
+
+			lineStart += line.Length() / charactersPerSecond + 0.18;
+		}
+
+		if (typing)
+		{
+			Text(890, 740, 740, 30, 16, "ESTABLISHING CONNECTION...", m_GreenFaint);
 			return;
 		}
 
-		string clearance = "NONE";
-		Color clearanceColor = m_Red;
-		if (highCommand.IsHost(localId))
-		{
-			clearance = "RESISTANCE LEADER (HOST)";
-			clearanceColor = m_Amber;
-		}
-		else if (highCommand.IsLeader(localId))
-		{
-			clearance = "RESISTANCE LEADER";
-			clearanceColor = m_Amber;
-		}
+		if (!highCommand)
+			return;
 
-		Text(495, 430, 720, 44, 30, "CLEARANCE   " + clearance, clearanceColor);
-		Text(495, 490, 720, 44, 26, "RESISTANCE  " + Upper(highCommand.GetResistanceName()), m_GreenDim);
-
-		if (highCommand.IsLeader(localId))
-		{
-			Text(495, 560, 720, 40, 24, "Identity confirmed. Log in to take command.", m_GreenDim);
-			Button(495, 650, 710, 90, "LOG IN", "login", STYLE_PRIMARY, 38);
-		}
+		if (leader)
+			Button(890, 740, 740, 74, "LOG IN", "login", STYLE_PRIMARY, 30);
 		else
-		{
-			Text(495, 560, 720, 80, 24, "ACCESS DENIED: only a Resistance Leader can use HICOMM. Ask the host to delegate you.", m_Red);
-			Button(495, 650, 710, 90, "ACCESS DENIED", string.Empty, STYLE_DISABLED, 38);
-		}
+			Button(890, 740, 740, 74, "ACCESS DENIED", string.Empty, STYLE_DISABLED, 30);
+
+		Text(40, 872, 900, 22, 14, "RESISTANCE  //  " + Upper(highCommand.GetResistanceName()), m_GreenFaint);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static void AddLogLine(array<string> lines, array<ref Color> colors, string line, Color color)
+	{
+		lines.Insert(line);
+		colors.Insert(color);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! In-game time of day, HH:MM
+	protected static string GetClockText()
+	{
+		ChimeraWorld world = ChimeraWorld.CastFrom(GetGame().GetWorld());
+		if (!world || !world.GetTimeAndWeatherManager())
+			return "--:--";
+
+		int hours, minutes, seconds;
+		world.GetTimeAndWeatherManager().GetHoursMinutesSeconds(hours, minutes, seconds);
+		return hours.ToString(2) + ":" + minutes.ToString(2);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -606,7 +782,8 @@ class AROR_HiCommApp
 	//------------------------------------------------------------------------------------------------
 	// Strategic Command
 	//------------------------------------------------------------------------------------------------
-	//! Orders only: order of battle, zoomable radar map, selection and orders
+	//! Orders only: the map fills the screen; the order of battle and the orders panel float over it.
+	//! The orders panel only appears while squads are selected.
 	protected void DrawStrategic(AROR_HighCommandComponent highCommand)
 	{
 		int localId = GetLocalPlayerId();
@@ -614,15 +791,12 @@ class AROR_HiCommApp
 		highCommand.GetSquads(squads);
 		PruneSelection(highCommand);
 
-		DrawOrderOfBattle(highCommand, squads, localId);
-
-		// Centre: the map, framed
 		m_fMapX = MAP_LEFT;
-		m_fMapY = BODY_TOP;
+		m_fMapY = MAP_TOP;
 		m_fMapWidth = MAP_WIDTH;
-		m_fMapHeight = BODY_HEIGHT;
-		Panel(m_fMapX - 3, m_fMapY - 3, m_fMapWidth + 6, m_fMapHeight + 6, m_Border);
-		Place(m_wMapCanvas, m_fMapX * m_fScale, m_fMapY * m_fScale, m_fMapWidth * m_fScale, m_fMapHeight * m_fScale);
+		m_fMapHeight = MAP_HEIGHT;
+		Panel(m_fMapX - 2, m_fMapY - 2, m_fMapWidth + 4, m_fMapHeight + 4, m_Border);
+		Place(m_wMapClip, m_fMapX * m_fScale, m_fMapY * m_fScale, m_fMapWidth * m_fScale, m_fMapHeight * m_fScale);
 		Place(m_wMapOverlay, m_fMapX * m_fScale, m_fMapY * m_fScale, m_fMapWidth * m_fScale, m_fMapHeight * m_fScale);
 		Place(m_wMapButton, m_fMapX * m_fScale, m_fMapY * m_fScale, m_fMapWidth * m_fScale, m_fMapHeight * m_fScale);
 
@@ -631,31 +805,122 @@ class AROR_HiCommApp
 		highCommand.GetMapBounds(min, max);
 		m_Map.SetView(min, max, workspace.DPIScale(m_fMapWidth * m_fScale), workspace.DPIScale(m_fMapHeight * m_fScale));
 
+		LayoutPanels(highCommand, squads, localId);
 		HandleMapInput();
 		m_Map.UpdateBase();
+
+		// The base layer is drawn with a margin and slides inside the clipping frame as the view pans
+		float baseX, baseY, baseWidth, baseHeight;
+		m_Map.GetBaseRect(baseX, baseY, baseWidth, baseHeight);
+		PlaceRaw(m_wMapCanvas, workspace.DPIUnscale(baseX), workspace.DPIUnscale(baseY), workspace.DPIUnscale(baseWidth), workspace.DPIUnscale(baseHeight));
 		DrawMapOverlay(highCommand, squads, localId);
 		DrawMapLabels();
 		DrawMapHud(highCommand);
 
-		// Right: selection and orders
-		Box(RIGHT_LEFT, BODY_TOP, RIGHT_WIDTH, BODY_HEIGHT);
-		DrawSelection(highCommand, squads, localId);
+		if (m_bShowOrderOfBattle)
+			DrawOrderOfBattle(highCommand, squads, localId);
+		else
+			Button(m_fMapX + PANEL_MARGIN, m_fMapY + PANEL_MARGIN, 210, 40, "ORDER OF BATTLE  +", "oob", STYLE_NORMAL, 15);
+
+		if (!m_aSelected.IsEmpty())
+			DrawSelection(highCommand, localId);
+		else if (m_bShowHelp)
+			DrawHelp();
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Left column: every squad, own first (selectable; shift adds), plus selection shortcuts
+	//! Where the floating panels go this frame (app units); the map hides labels and ignores clicks under them
+	protected void LayoutPanels(AROR_HighCommandComponent highCommand, array<AROR_HighCommandSquadInfo> squads, int localId)
+	{
+		m_aPanelRects.Clear();
+		float mapRight = m_fMapX + m_fMapWidth;
+		float mapBottom = m_fMapY + m_fMapHeight;
+
+		m_fOobBottom = m_fMapY + PANEL_MARGIN + 40;
+		if (m_bShowOrderOfBattle)
+		{
+			int rows = Math.Max(squads.Count(), 1);
+			m_fOobBottom = Math.Min(m_fMapY + PANEL_MARGIN + 52 + rows * 50 + 96, mapBottom - 120);
+			AddPanelRect(m_fMapX + PANEL_MARGIN, m_fMapY + PANEL_MARGIN, OOB_WIDTH, m_fOobBottom - m_fMapY - PANEL_MARGIN);
+		}
+
+		m_fRightEdge = mapRight - PANEL_MARGIN;
+		if (!m_aSelected.IsEmpty())
+		{
+			float height = SELECTION_HEIGHT;
+			if (CountCommandable(highCommand, localId) == 0)
+				height = 230;
+
+			AddPanelRect(mapRight - PANEL_MARGIN - SELECTION_WIDTH, m_fMapY + PANEL_MARGIN, SELECTION_WIDTH, height);
+			m_fRightEdge = mapRight - PANEL_MARGIN * 2 - SELECTION_WIDTH;
+		}
+		else if (m_bShowHelp)
+		{
+			AddPanelRect(mapRight - PANEL_MARGIN - HELP_WIDTH - 56, m_fMapY + PANEL_MARGIN + 52, HELP_WIDTH, 300);
+		}
+
+		// Zoom slider, on its own small panel below the map buttons
+		m_fSliderX = m_fRightEdge - 34;
+		m_fSliderTop = m_fMapY + PANEL_MARGIN + 64;
+		AddPanelRect(m_fSliderX - 10, m_fSliderTop - 14, 48, SLIDER_HEIGHT + 28);
+
+		// The legend sits right of the order of battle when it reaches down that far
+		m_fLegendLeft = m_fMapX + PANEL_MARGIN;
+		if (m_bShowOrderOfBattle && m_fOobBottom > mapBottom - 120)
+			m_fLegendLeft = m_fMapX + PANEL_MARGIN * 2 + OOB_WIDTH;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void AddPanelRect(float x, float y, float width, float height)
+	{
+		m_aPanelRects.Insert(x);
+		m_aPanelRects.Insert(y);
+		m_aPanelRects.Insert(width);
+		m_aPanelRects.Insert(height);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! True if a map canvas point lies under a floating panel
+	protected bool IsUnderPanel(vector canvasPoint)
+	{
+		WorkspaceWidget workspace = GetGame().GetWorkspace();
+		float x = m_fMapX + workspace.DPIUnscale(canvasPoint[0]) / m_fScale;
+		float y = m_fMapY + workspace.DPIUnscale(canvasPoint[1]) / m_fScale;
+		for (int i = 0; i < m_aPanelRects.Count(); i += 4)
+		{
+			if (x >= m_aPanelRects[i] && x <= m_aPanelRects[i] + m_aPanelRects[i + 2] && y >= m_aPanelRects[i + 1] && y <= m_aPanelRects[i + 1] + m_aPanelRects[i + 3])
+				return true;
+		}
+
+		return false;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! App units -> map canvas pixels
+	protected vector AppToCanvas(float x, float y)
+	{
+		WorkspaceWidget workspace = GetGame().GetWorkspace();
+		return Vector(workspace.DPIScale((x - m_fMapX) * m_fScale), workspace.DPIScale((y - m_fMapY) * m_fScale), 0);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Floating order of battle: every squad, own first (click selects, shift adds)
 	protected void DrawOrderOfBattle(AROR_HighCommandComponent highCommand, array<AROR_HighCommandSquadInfo> squads, int localId)
 	{
-		Box(LEFT_LEFT, BODY_TOP, LEFT_WIDTH, BODY_HEIGHT);
-		Header(LEFT_LEFT + 16, BODY_TOP + 12, "// ORDER OF BATTLE");
+		float left = m_fMapX + PANEL_MARGIN;
+		float top = m_fMapY + PANEL_MARGIN;
+		float inner = OOB_WIDTH - 24;
+		Text(left + 12, top + 12, OOB_WIDTH - 70, 26, 17, "// ORDER OF BATTLE", m_GreenDim, true);
+		Button(left + OOB_WIDTH - 48, top + 8, 38, 32, "-", "oob", STYLE_NORMAL, 20);
 
-		float y = BODY_TOP + 56;
+		float y = top + 52;
+		float last = m_fOobBottom - 96;
 		for (int pass = 0; pass < 2; pass++)
 		{
 			foreach (AROR_HighCommandSquadInfo squad : squads)
 			{
 				bool own = highCommand.CanCommand(localId, squad.m_iOwnerId);
-				if ((pass == 0) != own || y > BODY_TOP + BODY_HEIGHT - 190)
+				if ((pass == 0) != own || y + 44 > last)
 					continue;
 
 				int style = STYLE_MUTED;
@@ -668,47 +933,38 @@ class AROR_HiCommApp
 				if (!own)
 					detail = OwnerTag(squad.m_iOwnerId);
 
-				// One line per row: shorten long target names
-				int maxDetail = 22;
+				int maxDetail = 24;
 				if (detail.Length() > maxDetail)
 					detail = detail.Substring(0, maxDetail - 2) + "..";
 
 				string label = string.Format("%1   %2/%3", squad.m_sCallsign, squad.m_iAlive, squad.m_iSize) + "\n" + detail;
-				Button(LEFT_LEFT + 12, y, LEFT_WIDTH - 24, 56, label, "squad:" + squad.m_iId, style, 17, false);
-				y += 62;
+				Button(left + 12, y, inner, 46, label, "squad:" + squad.m_iId, style, 16, false);
+				y += 52;
 			}
 		}
 
 		if (squads.IsEmpty())
-			Text(LEFT_LEFT + 16, BODY_TOP + 60, LEFT_WIDTH - 32, 90, 18, "No squads yet. Raise one in Unit Management.", m_GreenDim);
+			Text(left + 12, top + 54, inner, 48, 15, "No squads yet. Raise one in Unit Management.", m_GreenDim);
 
-		float bottom = BODY_TOP + BODY_HEIGHT;
-		Button(LEFT_LEFT + 12, bottom - 172, (LEFT_WIDTH - 32) * 0.5, 44, "ALL MINE", "selall", STYLE_NORMAL, 16);
-		Button(LEFT_LEFT + 20 + (LEFT_WIDTH - 32) * 0.5, bottom - 172, (LEFT_WIDTH - 32) * 0.5, 44, "NONE", "selnone", STYLE_NORMAL, 16);
+		float half = (inner - 8) * 0.5;
+		Button(left + 12, m_fOobBottom - 88, half, 36, "ALL MINE", "selall", STYLE_NORMAL, 14);
+		Button(left + 20 + half, m_fOobBottom - 88, half, 36, "NONE", "selnone", STYLE_NORMAL, 14);
 
 		int held, total;
 		CountSites(held, total);
-		Panel(LEFT_LEFT + 14, bottom - 116, LEFT_WIDTH - 28, 1, m_Border);
-		Text(LEFT_LEFT + 16, bottom - 106, LEFT_WIDTH - 32, 28, 18, string.Format("SITES HELD  %1 / %2", held, total), m_GreenDim);
-		Text(LEFT_LEFT + 16, bottom - 76, LEFT_WIDTH - 32, 60, 15, "SHIFT+CLICK ADDS TO THE SELECTION", m_GreenFaint);
+		Text(left + 12, m_fOobBottom - 42, inner, 26, 14, string.Format("SITES HELD  %1 / %2", held, total), m_GreenDim);
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Right column: what is selected, the order and its target
-	protected void DrawSelection(AROR_HighCommandComponent highCommand, array<AROR_HighCommandSquadInfo> squads, int localId)
+	//! Floating orders panel for the selection: who, order buttons, target, execute
+	protected void DrawSelection(AROR_HighCommandComponent highCommand, int localId)
 	{
-		float x = RIGHT_LEFT + 16;
-		float width = RIGHT_WIDTH - 32;
-		Header(x, BODY_TOP + 12, "// SELECTED");
+		float left = m_fMapX + m_fMapWidth - PANEL_MARGIN - SELECTION_WIDTH;
+		float top = m_fMapY + PANEL_MARGIN;
+		float x = left + 16;
+		float width = SELECTION_WIDTH - 32;
 
-		if (m_aSelected.IsEmpty())
-		{
-			Text(x, BODY_TOP + 56, width, 60, 18, "Select squads in the order of battle or on the map.", m_GreenDim);
-			Header(x, BODY_TOP + 150, "// CONTROLS");
-			Text(x, BODY_TOP + 190, width, 360, 16, "LMB  select squad / set target\nDRAG  box-select squads\nSHIFT  add to selection\nRMB location  attack / defend\nRMB ground  move there\nHOLD  stand by in place\nRMB DRAG / WASD  pan\nWHEEL / Q E  zoom\nHOVER  intel", m_GreenFaint);
-			DrawIntel(x, BODY_TOP + BODY_HEIGHT - 110);
-			return;
-		}
+		Button(left + SELECTION_WIDTH - 48, top + 10, 36, 34, "X", "selnone", STYLE_NORMAL, 16);
 
 		int commandable = CountCommandable(highCommand, localId);
 		if (m_aSelected.Count() == 1)
@@ -719,10 +975,10 @@ class AROR_HiCommApp
 			if (type)
 				typeName = Upper(type.m_sName);
 
-			Text(x, BODY_TOP + 50, width, 56, 44, squad.m_sCallsign, m_Amber, true);
-			Text(x, BODY_TOP + 108, width, 26, 17, string.Format("%1  //  %2 / %3 MEN", typeName, squad.m_iAlive, squad.m_iSize), m_GreenDim);
-			Text(x, BODY_TOP + 134, width, 26, 17, LongOrder(squad), m_Green);
-			Text(x, BODY_TOP + 160, width, 26, 17, "CMDR  " + OwnerTag(squad.m_iOwnerId), m_GreenDim);
+			Text(x, top + 10, width - 44, 46, 36, squad.m_sCallsign, m_Amber, true);
+			Text(x, top + 60, width, 24, 17, string.Format("%1  %2/%3", typeName, squad.m_iAlive, squad.m_iSize), m_Green);
+			Text(x, top + 86, width, 24, 16, LongOrder(squad), m_GreenDim);
+			Text(x, top + 110, width, 24, 16, "CMDR " + OwnerTag(squad.m_iOwnerId), m_GreenDim);
 		}
 		else
 		{
@@ -739,38 +995,38 @@ class AROR_HiCommApp
 				callsigns += selected.m_sCallsign;
 			}
 
-			Text(x, BODY_TOP + 50, width, 56, 40, string.Format("%1 SQUADS", m_aSelected.Count()), m_Amber, true);
-			Text(x, BODY_TOP + 108, width, 76, 17, callsigns, m_GreenDim);
+			Text(x, top + 10, width - 44, 46, 34, string.Format("%1 SQUADS", m_aSelected.Count()), m_Amber, true);
+			Text(x, top + 60, width, 72, 16, callsigns, m_Green);
 		}
+
+		Panel(x, top + 142, width, 1, m_Border);
 
 		if (commandable == 0)
 		{
-			Text(x, BODY_TOP + 200, width, 90, 18, "VIEW ONLY: none of the selected squads are under your command.", m_Red);
-			DrawIntel(x, BODY_TOP + BODY_HEIGHT - 110);
+			Text(x, top + 156, width, 90, 17, "VIEW ONLY: none of the selected squads are under your command.", m_Red);
 			return;
 		}
 
-		// Orders: Move / Attack / Defend need a target; Hold stands the squads by where they are, at once
-		Header(x, BODY_TOP + 196, "// ORDER");
+		// Move / Attack / Defend need a target; Hold stands the squads by where they are, at once
 		float half = (width - 10) * 0.5;
-		OrderButton(x, BODY_TOP + 232, half, "MOVE", AROR_EHighCommandOrder.MOVE);
-		OrderButton(x + half + 10, BODY_TOP + 232, half, "ATTACK", AROR_EHighCommandOrder.ATTACK);
-		OrderButton(x, BODY_TOP + 284, half, "DEFEND", AROR_EHighCommandOrder.DEFEND);
-		Button(x + half + 10, BODY_TOP + 284, half, 46, "HOLD", "hold", STYLE_NORMAL, 20);
+		OrderButton(x, top + 156, half, "MOVE", AROR_EHighCommandOrder.MOVE);
+		OrderButton(x + half + 10, top + 156, half, "ATTACK", AROR_EHighCommandOrder.ATTACK);
+		OrderButton(x, top + 204, half, "DEFEND", AROR_EHighCommandOrder.DEFEND);
+		Button(x + half + 10, top + 204, half, 42, "HOLD", "hold", STYLE_NORMAL, 18);
 
-		Header(x, BODY_TOP + 346, "// TARGET");
+		// Target: what the chosen order will act on
 		string targetText;
 		if (m_eSelectedOrder == AROR_EHighCommandOrder.MOVE)
 		{
 			if (m_bHasMoveTarget)
 			{
 				targetText = "GRID " + AROR_HighCommandComponent.GridReference(m_vMoveTarget);
-				Text(x, BODY_TOP + 382, width, 36, 26, targetText, m_Amber, true);
-				Text(x, BODY_TOP + 418, width, 26, 15, "Left-click the map to change it.", m_GreenDim);
+				Text(x, top + 262, width, 32, 24, targetText, m_Amber, true);
+				Text(x, top + 294, width, 24, 15, "Move point. Left-click to change.", m_GreenDim);
 			}
 			else
 			{
-				Text(x, BODY_TOP + 382, width, 60, 17, "Left-click open ground to pick a point, or right-click it to move at once.", m_GreenDim);
+				Text(x, top + 262, width, 56, 16, "Left-click open ground, or right-click it to move now.", m_GreenDim);
 			}
 		}
 		else
@@ -779,12 +1035,12 @@ class AROR_HiCommApp
 			if (target)
 			{
 				targetText = Upper(target.GetName());
-				Text(x, BODY_TOP + 382, width, 36, 24, targetText, RoleColor(target.GetControllingRole()), true);
-				Text(x, BODY_TOP + 418, width, 26, 15, string.Format("%1  //  %2", TypeName(target.GetLocationType()), RoleName(target.GetControllingRole())), m_GreenDim);
+				Text(x, top + 262, width, 32, 22, targetText, LabelColor(target.GetControllingRole()), true);
+				Text(x, top + 294, width, 24, 15, string.Format("%1  //  %2", TypeName(target.GetLocationType()), RoleName(target.GetControllingRole())), m_GreenDim);
 			}
 			else
 			{
-				Text(x, BODY_TOP + 382, width, 60, 17, "Click a location on the map, or right-click it to order at once.", m_GreenDim);
+				Text(x, top + 262, width, 56, 16, "Click a location, or right-click it to order now.", m_GreenDim);
 			}
 		}
 
@@ -794,17 +1050,23 @@ class AROR_HiCommApp
 			who = highCommand.GetSquadInfo(m_aSelected[0]).m_sCallsign;
 
 		if (problem.IsEmpty())
-			Button(x, BODY_TOP + 456, width, 58, string.Format("> %1 %2 %3", who, ShortVerb(m_eSelectedOrder), targetText), string.Empty, STYLE_PANEL, 17, false);
-		else
-			Button(x, BODY_TOP + 456, width, 58, problem, string.Empty, STYLE_PANEL, 15, false);
+			Text(x, top + 330, width, 26, 16, string.Format("> %1 %2 %3", who, ShortVerb(m_eSelectedOrder), targetText), m_Green);
 
-		Button(x, BODY_TOP + 524, 100, 64, "CLEAR", "clear", STYLE_NORMAL, 20);
+		Button(x, top + 366, 92, 52, "CLEAR", "clear", STYLE_NORMAL, 18);
 		if (problem.IsEmpty())
-			Button(x + 110, BODY_TOP + 524, width - 110, 64, "EXECUTE", "execute", STYLE_PRIMARY, 26);
+			Button(x + 102, top + 366, width - 102, 52, "EXECUTE", "execute", STYLE_PRIMARY, 24);
 		else
-			Button(x + 110, BODY_TOP + 524, width - 110, 64, "EXECUTE", string.Empty, STYLE_DISABLED, 26);
+			Button(x + 102, top + 366, width - 102, 52, "EXECUTE", string.Empty, STYLE_DISABLED, 24);
+	}
 
-		DrawIntel(x, BODY_TOP + BODY_HEIGHT - 110);
+	//------------------------------------------------------------------------------------------------
+	//! Controls cheat sheet, toggled with the ? button
+	protected void DrawHelp()
+	{
+		float left = m_fMapX + m_fMapWidth - PANEL_MARGIN - HELP_WIDTH - 56;	// left of the zoom slider
+		float top = m_fMapY + PANEL_MARGIN + 52;
+		Header(left + 12, top + 10, "// CONTROLS");
+		Text(left + 12, top + 44, HELP_WIDTH - 24, 250, 14, "LMB  select squad / set target\nDRAG  box-select squads\nSHIFT  add to selection\nRMB location  attack / defend\nRMB ground  move there\nHOLD  stand by in place\nRMB DRAG / WASD  pan\nWHEEL / Q E  zoom\nHOVER  intel", m_GreenDim);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -829,15 +1091,7 @@ class AROR_HiCommApp
 		if (m_eSelectedOrder == order)
 			style = STYLE_SELECTED;
 
-		Button(x, y, width, 46, label, "order:" + order, style, 20);
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! Short enemy status read from the public operations summary (as RebIntel shows it)
-	protected void DrawIntel(float x, float y)
-	{
-		Header(x, y, "// REBINTEL");
-		Text(x, y + 38, RIGHT_WIDTH - 32, 60, 15, GetWarSummary(), m_GreenDim);
+		Button(x, y, width, 42, label, "order:" + order, style, 18);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -853,8 +1107,19 @@ class AROR_HiCommApp
 		int mouseX, mouseY;
 		WidgetManager.GetMousePos(mouseX, mouseY);
 		vector cursor = ToCanvas(mouseX, mouseY);
+
+		// Zoom slider: dragging sets the zoom target continuously (log scale, top = closest)
+		if (m_bSliderDrag)
+		{
+			float appY = m_fMapY + GetGame().GetWorkspace().DPIUnscale(cursor[1]) / m_fScale;
+			float position = 1 - Math.Clamp((appY - m_fSliderTop) / SLIDER_HEIGHT, 0, 1);
+			float zoom = AROR_HiCommMap.MIN_ZOOM * Math.Pow(AROR_HiCommMap.MAX_ZOOM / AROR_HiCommMap.MIN_ZOOM, position);
+			m_Map.SetTargetZoom(zoom, m_Map.GetWidth() * 0.5, m_Map.GetHeight() * 0.5);
+		}
+
+		m_Map.Animate(deltaTime);
 		m_vCursor = cursor;
-		m_bCursorInside = cursor[0] >= 0 && cursor[1] >= 0 && cursor[0] <= m_Map.GetWidth() && cursor[1] <= m_Map.GetHeight();
+		m_bCursorInside = cursor[0] >= 0 && cursor[1] >= 0 && cursor[0] <= m_Map.GetWidth() && cursor[1] <= m_Map.GetHeight() && !IsUnderPanel(cursor);
 
 		float moved = Math.Sqrt((mouseX - m_iPressX) * (mouseX - m_iPressX) + (mouseY - m_iPressY) * (mouseY - m_iPressY));
 		if ((m_bLeftDown || m_bRightDown) && !m_bDragging && moved > GetGame().GetWorkspace().DPIScale(DRAG_THRESHOLD))
@@ -907,6 +1172,16 @@ class AROR_HiCommApp
 		if (w != m_wMapButton || !m_wRoot.IsVisible())
 			return false;
 
+		if (button == 0 && IsOnSlider(ToCanvas(x, y)))
+		{
+			m_bSliderDrag = true;
+			return true;
+		}
+
+		// Clicks on a floating panel's background are not map clicks
+		if (IsUnderPanel(ToCanvas(x, y)))
+			return false;
+
 		m_iPressX = x;
 		m_iPressY = y;
 		m_iLastMouseX = x;
@@ -924,6 +1199,12 @@ class AROR_HiCommApp
 	//! Up can arrive on any HICOMM widget (the cursor may have left the map while dragging)
 	bool OnMouseUp(Widget w, int x, int y, int button)
 	{
+		if (m_bSliderDrag && button == 0)
+		{
+			m_bSliderDrag = false;
+			return true;
+		}
+
 		bool wasDragging = m_bDragging;
 		bool handled;
 		if (button == 0 && m_bLeftDown)
@@ -953,7 +1234,7 @@ class AROR_HiCommApp
 	//------------------------------------------------------------------------------------------------
 	bool OnMouseWheel(Widget w, int x, int y, int wheel)
 	{
-		if (w != m_wMapButton || wheel == 0)
+		if (w != m_wMapButton || wheel == 0 || IsUnderPanel(ToCanvas(x, y)))
 			return false;
 
 		vector anchor = ToCanvas(x, y);
@@ -1254,6 +1535,9 @@ class AROR_HiCommApp
 		m_aLabelPositions.Clear();
 		m_aLabelColors.Clear();
 		m_aLabelSizes.Clear();
+		m_aIconTextures.Clear();
+		m_aIconPositions.Clear();
+		m_aIconColors.Clear();
 
 		int now = System.GetTickCount();
 		float unit = GetGame().GetWorkspace().DPIScale(1);
@@ -1295,10 +1579,68 @@ class AROR_HiCommApp
 			m_Map.DrawPolyline(box, AROR_HiCommMap.Rgb(PAL_AMBER, 0.9), 1.5, true);
 		}
 
-		DrawScaleBar(width, height, unit);
-		DrawLegend(height, unit);
+		DrawScaleBar(unit);
+		DrawLegend();
 		m_Map.DrawFrameCorners(AROR_HiCommMap.Rgb(AROR_HiCommMap.COAST, 0.6));
+
+		// Floating panel backgrounds, last so they cover the map (their text and buttons are widgets above)
+		Color panelFill = AROR_HiCommMap.Srgb(5, 12, 8, 0.94);
+		Color panelBorder = AROR_HiCommMap.Rgb(AROR_HiCommMap.GRID, 1);
+		for (int i = 0; i < m_aPanelRects.Count(); i += 4)
+		{
+			vector topLeft = AppToCanvas(m_aPanelRects[i], m_aPanelRects[i + 1]);
+			vector bottomRight = AppToCanvas(m_aPanelRects[i] + m_aPanelRects[i + 2], m_aPanelRects[i + 1] + m_aPanelRects[i + 3]);
+			array<float> panel = {topLeft[0], topLeft[1], bottomRight[0], topLeft[1], bottomRight[0], bottomRight[1], topLeft[0], bottomRight[1]};
+			m_Map.DrawPolygon(panel, panelFill);
+			m_Map.DrawPolyline(panel, panelBorder, 1.5, true);
+		}
+
+		DrawZoomSlider();
 		m_Map.CommitOverlay();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Continuous zoom slider (log scale): ticks at 1x, 2x, 4x, 8x, a faint marker at the target and the handle
+	//! at the current zoom. Drawn over its own small panel.
+	protected void DrawZoomSlider()
+	{
+		float pixel = GetGame().GetWorkspace().DPIScale(m_fScale);
+		float trackX = m_fSliderX + 14;
+		vector top = AppToCanvas(trackX, m_fSliderTop);
+		vector bottom = AppToCanvas(trackX, m_fSliderTop + SLIDER_HEIGHT);
+		m_Map.DrawLine(top, bottom, AROR_HiCommMap.Rgb(AROR_HiCommMap.GRID, 1), 3 * pixel);
+
+		array<float> ticks = {1, 2, 4, 8};
+		foreach (float tick : ticks)
+		{
+			vector point = AppToCanvas(trackX, SliderY(tick));
+			m_Map.DrawLine(point + Vector(-7 * pixel, 0, 0), point + Vector(7 * pixel, 0, 0), AROR_HiCommMap.Rgb(PAL_GREEN_DIM, 1), 1.5 * pixel);
+		}
+
+		vector target = AppToCanvas(trackX, SliderY(m_Map.GetTargetZoom()));
+		m_Map.DrawSquare(target, 6 * pixel, AROR_HiCommMap.Rgb(PAL_AMBER, 0.35), false, 1.5 * pixel);
+
+		vector handle = AppToCanvas(trackX, SliderY(m_Map.GetZoom()));
+		array<float> knob = {handle[0] - 11 * pixel, handle[1] - 5 * pixel, handle[0] + 11 * pixel, handle[1] - 5 * pixel, handle[0] + 11 * pixel, handle[1] + 5 * pixel, handle[0] - 11 * pixel, handle[1] + 5 * pixel};
+		m_Map.DrawPolygon(knob, AROR_HiCommMap.Rgb(PAL_AMBER, 1));
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Slider position (app units) of a zoom level
+	protected float SliderY(float zoom)
+	{
+		float position = Math.Log2(Math.Max(zoom, AROR_HiCommMap.MIN_ZOOM) / AROR_HiCommMap.MIN_ZOOM) / Math.Log2(AROR_HiCommMap.MAX_ZOOM / AROR_HiCommMap.MIN_ZOOM);
+		return m_fSliderTop + (1 - Math.Clamp(position, 0, 1)) * SLIDER_HEIGHT;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! True if a map canvas point is on the zoom slider (with a little slack around the track)
+	protected bool IsOnSlider(vector canvasPoint)
+	{
+		WorkspaceWidget workspace = GetGame().GetWorkspace();
+		float x = m_fMapX + workspace.DPIUnscale(canvasPoint[0]) / m_fScale;
+		float y = m_fMapY + workspace.DPIUnscale(canvasPoint[1]) / m_fScale;
+		return x >= m_fSliderX - 10 && x <= m_fSliderX + 38 && y >= m_fSliderTop - 14 && y <= m_fSliderTop + SLIDER_HEIGHT + 14;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -1326,7 +1668,8 @@ class AROR_HiCommApp
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Every location, coloured by who holds it: Resistance filled, Occupier hollow squares, Invader diamonds
+	//! Every location with the in-game map's icon for its type (town, city, outpost, base, airport...), tinted by the
+	//! controlling faction's colour as on the in-game map. Icons are widgets placed over the canvas.
 	protected void DrawLocations(AROR_HighCommandComponent highCommand, float markerScale, float zoom, float width, float height)
 	{
 		AROR_LocationManagerComponent locationManager = AROR_LocationManagerComponent.GetInstance();
@@ -1347,45 +1690,26 @@ class AROR_HiCommApp
 				continue;
 
 			AROR_EFactionRole role = location.GetControllingRole();
-			int packed = RolePacked(role);
-			Color color = AROR_HiCommMap.Rgb(packed, 1);
+			Color color = FactionColor(role);
 			AROR_ELocationType type = location.GetLocationType();
-			bool settlement = type == AROR_ELocationType.TOWN || type == AROR_ELocationType.CITY;
 
 			// Zoomed in: the location's area
 			if (zoom >= 2.5 && type != AROR_ELocationType.HQ)
-				m_Map.DrawCircle(point, location.GetRadius() * metres, AROR_HiCommMap.Rgb(packed, 0.22), false, 1, 36);
+				m_Map.DrawCircle(point, location.GetRadius() * metres, new Color(color.R(), color.G(), color.B(), 0.35), false, 1.2, 36);
 
-			if (type == AROR_ELocationType.HQ)
+			ResourceName icon = location.GetMapIcon();
+			if (icon.IsEmpty())
 			{
-				m_Map.DrawSquare(point, 6 * markerScale, color, true);
-				m_Map.DrawSquare(point, 10 * markerScale, color, false, 1.5);
-				m_Map.DrawLine(point + Vector(0, -10 * markerScale, 0), point + Vector(0, -22 * markerScale, 0), color, 1.5);
-				m_Map.DrawPolygon({point[0], point[1] - 22 * markerScale, point[0] + 9 * markerScale, point[1] - 19 * markerScale, point[0], point[1] - 16 * markerScale}, color);
-			}
-			else if (settlement)
-			{
-				float radius = 3.5 * markerScale;
-				if (type == AROR_ELocationType.CITY)
-					radius = 5 * markerScale;
-
-				m_Map.DrawCircle(point, radius, color, true, 1, 12);
-			}
-			else if (type == AROR_ELocationType.SUPPORT_CORRIDOR)
-			{
-				m_Map.DrawDiamond(point, 7 * markerScale, color, false);
-			}
-			else if (role == AROR_EFactionRole.INVADERS)
-			{
-				m_Map.DrawDiamond(point, 6.5 * markerScale, color, true);
-			}
-			else if (role == AROR_EFactionRole.RESISTANCE)
-			{
-				m_Map.DrawSquare(point, 5 * markerScale, color, true);
+				// No icon authored (e.g. the offshore support corridor): a hollow diamond
+				m_Map.DrawDiamond(point, 7 * markerScale, LabelColor(role), false);
 			}
 			else
 			{
-				m_Map.DrawSquare(point, 5.5 * markerScale, color, false, 1.8);
+				// Dark backing disc so the faction colour reads on any terrain shade
+				m_Map.DrawCircle(point, 9 * markerScale, AROR_HiCommMap.Srgb(4, 10, 7, 0.7), true, 1, 16);
+				m_aIconTextures.Insert(icon);
+				m_aIconPositions.Insert(point);
+				m_aIconColors.Insert(color);
 			}
 
 			string id = location.GetId();
@@ -1403,7 +1727,7 @@ class AROR_HiCommApp
 				if (id == m_sSelectedTarget)
 					name = "OBJ " + name;
 
-				AddMapLabel(name, point + Vector(9 * markerScale, -9 * markerScale, 0), AROR_HiCommMap.Rgb(packed, 0.85), 13);
+				AddMapLabel(name, point + Vector(13 * markerScale, -8 * markerScale, 0), LabelColor(role, 0.9), 13);
 			}
 		}
 
@@ -1474,38 +1798,85 @@ class AROR_HiCommApp
 		if (m_bHasMoveTarget)
 			DrawCross(plannedPoint, 9 * unit, AROR_HiCommMap.Rgb(PAL_AMBER, 1));
 
-		Color fill = AROR_HiCommMap.Srgb(6, 16, 10, 0.92);
+		// Squads close together on screen form a stack: each keeps a dot at its real position, and their symbols
+		// sit in a column above the group on a leader line, so overlapping squads stay readable and clickable
+		array<vector> points = {};
 		foreach (AROR_HighCommandSquadInfo squad : squads)
 		{
-			vector point = m_Map.WorldToScreen(squad.m_vPosition);
-			bool selected = m_aSelected.Contains(squad.m_iId);
-			bool own = highCommand.CanCommand(localId, squad.m_iOwnerId);
+			points.Insert(m_Map.WorldToScreen(squad.m_vPosition));
+		}
 
-			int packed = PAL_GREEN_DIM;
-			if (selected)
-				packed = PAL_AMBER;
-			else if (own)
-				packed = PAL_GREEN;
+		float clusterRadius = SQUAD_CLUSTER_PIXELS * unit;
+		array<bool> placed = {};
+		placed.Resize(squads.Count());
+		Color fill = AROR_HiCommMap.Srgb(6, 16, 10, 0.92);
+		foreach (int first, AROR_HighCommandSquadInfo firstSquad : squads)
+		{
+			if (placed[first])
+				continue;
 
-			Color color = AROR_HiCommMap.Rgb(packed, 1);
-			if (squad.m_iId == m_iHoverSquad)
-				m_Map.DrawCircle(point, 18 * markerScale, AROR_HiCommMap.Rgb(packed, 0.35), true, 1, 20);
+			array<int> stack = {};
+			vector anchor;
+			foreach (int other, AROR_HighCommandSquadInfo otherSquad : squads)
+			{
+				if (!placed[other] && vector.Distance(points[first], points[other]) <= clusterRadius)
+				{
+					placed[other] = true;
+					stack.Insert(other);
+					anchor = anchor + points[other];
+				}
+			}
 
-			m_Map.DrawUnit(point, 9 * markerScale, color, fill, 1, selected);
-			m_aHitSquadIds.Insert(squad.m_iId);
-			m_aHitSquadPositions.Insert(point);
+			anchor = anchor * (1.0 / stack.Count());
 
-			string label = squad.m_sCallsign;
-			if (zoom >= 2)
-				label += string.Format("  %1/%2", squad.m_iAlive, squad.m_iSize);
+			// Leader line from the group's position up to the bottom of the column
+			float stem = 24 * markerScale;
+			float row = 24 * markerScale;
+			vector column = anchor - Vector(0, stem, 0);
+			vector columnTop = column - Vector(0, row * (stack.Count() - 1), 0);
+			m_Map.DrawLine(anchor, column + Vector(0, 7 * markerScale, 0), AROR_HiCommMap.Rgb(PAL_GREEN, 0.7), 1.5 * unit);
 
-			AddMapLabel(label, point + Vector(14 * markerScale, -2 * markerScale, 0), AROR_HiCommMap.Rgb(packed, 1), 14);
+			// A stack gets a spine joining its symbols (drawn first, under them)
+			if (stack.Count() > 1)
+				m_Map.DrawLine(column, columnTop, AROR_HiCommMap.Rgb(PAL_GREEN, 0.35), 1 * unit);
+
+			foreach (int position, int index : stack)
+			{
+				AROR_HighCommandSquadInfo squad = squads[index];
+				bool selected = m_aSelected.Contains(squad.m_iId);
+				bool own = highCommand.CanCommand(localId, squad.m_iOwnerId);
+
+				int packed = PAL_GREEN_DIM;
+				if (selected)
+					packed = PAL_AMBER;
+				else if (own)
+					packed = PAL_GREEN;
+
+				Color color = AROR_HiCommMap.Rgb(packed, 1);
+
+				// Real position
+				m_Map.DrawCircle(points[index], 3 * markerScale, color, true, 1, 10);
+
+				vector symbol = column - Vector(0, row * position, 0);
+				if (squad.m_iId == m_iHoverSquad)
+					m_Map.DrawCircle(symbol, 16 * markerScale, AROR_HiCommMap.Rgb(packed, 0.3), true, 1, 20);
+
+				m_Map.DrawUnit(symbol, 9 * markerScale, color, fill, 1, selected);
+				m_aHitSquadIds.Insert(squad.m_iId);
+				m_aHitSquadPositions.Insert(symbol);
+
+				string label = squad.m_sCallsign;
+				if (zoom >= 2 || stack.Count() > 1)
+					label += string.Format("  %1/%2", squad.m_iAlive, squad.m_iSize);
+
+				AddMapLabel(label, symbol + Vector(14 * markerScale, -8 * markerScale, 0), AROR_HiCommMap.Rgb(packed, 1), 14);
+			}
 		}
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Bottom-right scale bar with a round length of about 80-160 pixels
-	protected void DrawScaleBar(float width, float height, float unit)
+	//! Bottom-right scale bar (left of the orders panel) with a round length of about 80-160 pixels
+	protected void DrawScaleBar(float unit)
 	{
 		array<float> lengths = {25, 50, 100, 200, 500, 1000, 2000, 5000};
 		float metres = m_Map.PixelsPerMetre();
@@ -1517,8 +1888,9 @@ class AROR_HiCommApp
 		}
 
 		float pixels = length * metres;
-		float right = width - 24 * unit;
-		float y = height - 26 * unit;
+		vector corner = AppToCanvas(m_fRightEdge - 14, m_fMapY + m_fMapHeight - 30);
+		float right = corner[0];
+		float y = corner[1];
 		Color color = AROR_HiCommMap.Rgb(AROR_HiCommMap.COAST, 0.85);
 		m_Map.DrawLine(Vector(right - pixels, y, 0), Vector(right, y, 0), color, 2);
 		m_Map.DrawLine(Vector(right - pixels, y - 6 * unit, 0), Vector(right - pixels, y + 2 * unit, 0), color, 2);
@@ -1532,34 +1904,48 @@ class AROR_HiCommApp
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Bottom-left legend, drawn on the overlay with pooled labels
-	protected void DrawLegend(float height, float unit)
+	//! Bottom-left legend: who holds a site (faction colours, as on the in-game map) and what order lines mean.
+	//! Laid out in app units so it scales with the phone.
+	protected void DrawLegend()
 	{
-		float left = 12 * unit;
-		float top = height - 92 * unit;
-		float boxWidth = 330 * unit;
-		float boxHeight = 52 * unit;
-		array<float> box = {left, top, left + boxWidth, top, left + boxWidth, top + boxHeight, left, top + boxHeight};
-		m_Map.DrawPolygon(box, AROR_HiCommMap.Srgb(4, 10, 7, 0.84));
+		float left = m_fLegendLeft;
+		float top = m_fMapY + m_fMapHeight - PANEL_MARGIN - 58;
+		vector topLeft = AppToCanvas(left, top);
+		vector bottomRight = AppToCanvas(left + 400, top + 58);
+		array<float> box = {topLeft[0], topLeft[1], bottomRight[0], topLeft[1], bottomRight[0], bottomRight[1], topLeft[0], bottomRight[1]};
+		m_Map.DrawPolygon(box, AROR_HiCommMap.Srgb(4, 10, 7, 0.9));
 		m_Map.DrawPolyline(box, AROR_HiCommMap.Rgb(AROR_HiCommMap.GRID, 0.9), 1, true);
 
-		float row1 = top + 15 * unit;
-		float row2 = top + 37 * unit;
+		float pixel = GetGame().GetWorkspace().DPIScale(m_fScale);	// canvas pixels per app unit
 		Color label = AROR_HiCommMap.Rgb(PAL_GREEN_DIM, 1);
 
-		m_Map.DrawUnit(Vector(left + 16 * unit, row1, 0), 7 * unit, AROR_HiCommMap.Rgb(PAL_GREEN, 1), AROR_HiCommMap.Srgb(6, 16, 10, 0.92), 0, false);
-		AddMapLabel("SQUAD", Vector(left + 30 * unit, row1 - 9 * unit, 0), label, 12);
-		m_Map.DrawSquare(Vector(left + 120 * unit, row1, 0), 5 * unit, AROR_HiCommMap.Rgb(PAL_GREEN, 1), true);
-		AddMapLabel("OUR SITE", Vector(left + 132 * unit, row1 - 9 * unit, 0), label, 12);
-		m_Map.DrawCircle(Vector(left + 230 * unit, row1, 0), 4 * unit, AROR_HiCommMap.Rgb(PAL_GREEN, 1), true, 1, 12);
-		AddMapLabel("TOWN", Vector(left + 242 * unit, row1 - 9 * unit, 0), label, 12);
+		// Row 1: site colours
+		array<AROR_EFactionRole> roles = {AROR_EFactionRole.RESISTANCE, AROR_EFactionRole.OCCUPIERS, AROR_EFactionRole.INVADERS};
+		array<string> names = {"RESISTANCE", "OCCUPIERS", "INVADERS"};
+		foreach (int i, AROR_EFactionRole role : roles)
+		{
+			vector swatch = AppToCanvas(left + 16 + i * 108, top + 17);
+			m_Map.DrawSquare(swatch, 5 * pixel, FactionColor(role), true);
+			AddMapLabel(names[i], swatch + Vector(10 * pixel, -9 * pixel, 0), LabelColor(role), 12);
+		}
 
-		m_Map.DrawSquare(Vector(left + 16 * unit, row2, 0), 5 * unit, AROR_HiCommMap.Rgb(PAL_OCCUPIERS, 1), false, 1.8);
-		AddMapLabel("OCC SITE", Vector(left + 30 * unit, row2 - 9 * unit, 0), label, 12);
-		m_Map.DrawDiamond(Vector(left + 120 * unit, row2, 0), 6 * unit, AROR_HiCommMap.Rgb(PAL_INVADERS, 1), true);
-		AddMapLabel("INV SITE", Vector(left + 132 * unit, row2 - 9 * unit, 0), label, 12);
-		m_Map.DrawLine(Vector(left + 222 * unit, row2, 0), Vector(left + 240 * unit, row2, 0), AROR_HiCommMap.Rgb(PAL_RED, 1), 2);
-		AddMapLabel("ATTACK", Vector(left + 246 * unit, row2 - 9 * unit, 0), label, 12);
+		// Row 2: squads and orders
+		vector unitPoint = AppToCanvas(left + 18, top + 41);
+		m_Map.DrawUnit(unitPoint, 7 * pixel, AROR_HiCommMap.Rgb(PAL_GREEN, 1), AROR_HiCommMap.Srgb(6, 16, 10, 0.92), 0, false);
+		AddMapLabel("SQUAD", unitPoint + Vector(12 * pixel, -9 * pixel, 0), label, 12);
+
+		array<int> orderColors = {PAL_RED, PAL_GREEN, PAL_MOVE};
+		array<string> orderNames = {"ATTACK", "DEFEND", "MOVE"};
+		foreach (int i, int orderColor : orderColors)
+		{
+			vector from = AppToCanvas(left + 96 + i * 78, top + 41);
+			m_Map.DrawLine(from, from + Vector(16 * pixel, 0, 0), AROR_HiCommMap.Rgb(orderColor, 1), 2);
+			AddMapLabel(orderNames[i], from + Vector(20 * pixel, -9 * pixel, 0), label, 12);
+		}
+
+		vector roadFrom = AppToCanvas(left + 330, top + 41);
+		m_Map.DrawLine(roadFrom, roadFrom + Vector(16 * pixel, 0, 0), AROR_HiCommMap.Rgb(AROR_HiCommMap.ROAD, 0.85), 2);
+		AddMapLabel("ROAD", roadFrom + Vector(20 * pixel, -9 * pixel, 0), label, 12);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -1581,29 +1967,59 @@ class AROR_HiCommApp
 			if (m_iMapLabelCount >= MAP_LABEL_POOL)
 				break;
 
-			RichTextWidget label = m_aMapLabels[m_iMapLabelCount];
-			if (m_aMapLabelCache[m_iMapLabelCount] != text)
-			{
-				label.SetText(text);
-				m_aMapLabelCache[m_iMapLabelCount] = text;
-			}
-
-			label.SetColor(m_aLabelColors[i]);
-			label.SetExactFontSize(Math.Max(1, Math.Round(m_aLabelSizes[i] * m_fScale)));
-			// Keep labels inside the map: skip ones whose anchor is outside, flip long ones to the left near the edge
+			// Keep labels inside the map and off the floating panels; flip long ones to the left near the edge
 			vector point = m_aLabelPositions[i];
 			float labelWidth = workspace.DPIScale(text.Length() * m_aLabelSizes[i] * CHAR_WIDTH_FACTOR * m_fScale);
 			float labelHeight = workspace.DPIScale(m_aLabelSizes[i] * 1.3 * m_fScale);
 			if (point[0] < 0 || point[1] < 0 || point[0] > m_Map.GetWidth() || point[1] + labelHeight > m_Map.GetHeight())
 				continue;
 
+			if (IsUnderPanel(point) || IsUnderPanel(point + Vector(labelWidth, 0, 0)))
+				continue;
+
 			float labelX = point[0];
 			if (labelX + labelWidth > m_Map.GetWidth() - 4)
 				labelX = Math.Max(m_Map.GetWidth() - 4 - labelWidth, 0);
 
-			Place(label, m_fMapX * m_fScale + workspace.DPIUnscale(labelX), m_fMapY * m_fScale + workspace.DPIUnscale(point[1]), workspace.DPIUnscale(labelWidth) + 8, 24 * m_fScale);
-			label.SetVisible(true);
+			RichTextWidget label = m_aMapLabels[m_iMapLabelCount];
+			AROR_HiCommWidgetCache cache = m_aMapLabelCaches[m_iMapLabelCount];
+			if (m_aMapLabelCache[m_iMapLabelCount] != text)
+			{
+				label.SetText(text);
+				m_aMapLabelCache[m_iMapLabelCount] = text;
+			}
+
+			CachedColor(label, cache, m_aLabelColors[i]);
+			CachedFontSize(label, cache, m_aLabelSizes[i] * m_fScale);
+			CachedPlace(label, cache, m_fMapX * m_fScale + workspace.DPIUnscale(labelX), m_fMapY * m_fScale + workspace.DPIUnscale(point[1]), workspace.DPIUnscale(labelWidth) + 8, 24 * m_fScale);
+			CachedVisible(label, cache, true);
 			m_iMapLabelCount++;
+		}
+
+		// Location icons, centred on their point (white textures tinted with the faction colour)
+		m_iMapIconCount = 0;
+		float iconSize = ICON_SIZE * m_fScale * Math.Min(1 + (m_Map.GetZoom() - 1) * 0.05, 1.4);
+		foreach (int i, ResourceName texture : m_aIconTextures)
+		{
+			if (m_iMapIconCount >= ICON_POOL)
+				break;
+
+			vector point = m_aIconPositions[i];
+			if (point[0] < 0 || point[1] < 0 || point[0] > m_Map.GetWidth() || point[1] > m_Map.GetHeight() || IsUnderPanel(point))
+				continue;
+
+			ImageWidget icon = m_aMapIcons[m_iMapIconCount];
+			AROR_HiCommWidgetCache cache = m_aMapIconCaches[m_iMapIconCount];
+			if (m_aMapIconCache[m_iMapIconCount] != texture)
+			{
+				icon.LoadImageTexture(0, texture);
+				m_aMapIconCache[m_iMapIconCount] = texture;
+			}
+
+			CachedColor(icon, cache, m_aIconColors[i]);
+			CachedPlace(icon, cache, m_fMapX * m_fScale + workspace.DPIUnscale(point[0]) - iconSize * 0.5, m_fMapY * m_fScale + workspace.DPIUnscale(point[1]) - iconSize * 0.5, iconSize, iconSize);
+			CachedVisible(icon, cache, true);
+			m_iMapIconCount++;
 		}
 	}
 
@@ -1611,15 +2027,26 @@ class AROR_HiCommApp
 	//! Map controls, zoom/grid readout, cursor grid reference and the hover tooltip (pooled widgets over the canvas)
 	protected void DrawMapHud(AROR_HighCommandComponent highCommand)
 	{
-		float right = m_fMapX + m_fMapWidth - 14;
-		float top = m_fMapY + 12;
-		Button(right - 60, top, 60, 40, "HQ", "hq", STYLE_NORMAL, 16);
-		Button(right - 126, top, 60, 40, "SEL", "centresel", STYLE_NORMAL, 16);
-		Button(right - 192, top, 60, 40, "FIT", "fit", STYLE_NORMAL, 16);
-		Button(right - 240, top, 42, 40, "-", "zoomout", STYLE_NORMAL, 22);
-		Button(right - 288, top, 42, 40, "+", "zoomin", STYLE_NORMAL, 22);
+		// Map controls along the top, left of the orders panel when it is open
+		float right = m_fRightEdge;
+		float top = m_fMapY + PANEL_MARGIN;
+		int helpStyle = STYLE_NORMAL;
+		if (m_bShowHelp)
+			helpStyle = STYLE_SELECTED;
 
-		// Read-out along the bottom strip, between the legend and the scale bar
+		if (m_aSelected.IsEmpty())
+		{
+			Button(right - 40, top, 40, 40, "?", "help", helpStyle, 18);
+			right -= 46;
+		}
+
+		Button(right - 56, top, 56, 40, "HQ", "hq", STYLE_NORMAL, 15);
+		Button(right - 118, top, 56, 40, "SEL", "centresel", STYLE_NORMAL, 15);
+		Button(right - 180, top, 56, 40, "FIT", "fit", STYLE_NORMAL, 15);
+		Button(right - 226, top, 40, 40, "-", "zoomout", STYLE_NORMAL, 20);
+		Button(right - 272, top, 40, 40, "+", "zoomin", STYLE_NORMAL, 20);
+
+		// Read-out along the bottom strip, right of the legend
 		string readout = string.Format("ZOOM %1X", Math.Round(m_Map.GetZoom() * 10) / 10) + "  //  GRID " + SpacingText(m_Map.GetGridSpacing());
 		if (m_bCursorInside)
 		{
@@ -1627,7 +2054,7 @@ class AROR_HiCommApp
 			readout += "  //  CURSOR " + GridReference(world[0], 100) + " " + GridReference(world[2], 100);
 		}
 
-		Text(m_fMapX + 360, m_fMapY + m_fMapHeight - 40, 560, 28, 15, readout, m_GreenDim);
+		Text(m_fLegendLeft + 414, m_fMapY + m_fMapHeight - 38, 560, 26, 14, readout, m_GreenDim);
 
 		WorkspaceWidget workspace = GetGame().GetWorkspace();
 		m_sHoverLocation = string.Empty;
@@ -1664,7 +2091,7 @@ class AROR_HiCommApp
 
 		float tipX = m_fMapX + workspace.DPIUnscale(m_vCursor[0]) / m_fScale + 18;
 		float tipY = m_fMapY + workspace.DPIUnscale(m_vCursor[1]) / m_fScale + 18;
-		tipX = Math.Min(tipX, m_fMapX + m_fMapWidth - 330);
+		tipX = Math.Min(tipX, m_fRightEdge - 330);
 		tipY = Math.Min(tipY, m_fMapY + m_fMapHeight - 96);
 		Button(tipX, tipY, 320, 86, tooltip, string.Empty, STYLE_PANEL, 15, false);
 	}
@@ -1776,6 +2203,14 @@ class AROR_HiCommApp
 		{
 			m_aSelected.Clear();
 		}
+		else if (verb == "oob")
+		{
+			m_bShowOrderOfBattle = !m_bShowOrderOfBattle;
+		}
+		else if (verb == "help")
+		{
+			m_bShowHelp = !m_bShowHelp;
+		}
 		else if (verb == "order" && parts.Count() > 1)
 		{
 			// Move targets a point, the others a location: switching drops the other kind of target
@@ -1819,8 +2254,8 @@ class AROR_HiCommApp
 			if (hq)
 			{
 				m_Map.CentreOn(hq.GetCenter());
-				if (m_Map.GetZoom() < 3)
-					m_Map.ZoomAt(3 / m_Map.GetZoom(), m_Map.GetWidth() * 0.5, m_Map.GetHeight() * 0.5);
+				if (m_Map.GetTargetZoom() < 3)
+					m_Map.SetTargetZoom(3, m_Map.GetWidth() * 0.5, m_Map.GetHeight() * 0.5);
 			}
 		}
 		else if (verb == "centresel")
@@ -1869,9 +2304,10 @@ class AROR_HiCommApp
 			return;
 
 		ImageWidget panel = m_aPanels[m_iPanelCount];
-		panel.SetColor(color);
-		Place(panel, x * m_fScale, y * m_fScale, width * m_fScale, height * m_fScale);
-		panel.SetVisible(true);
+		AROR_HiCommWidgetCache cache = m_aPanelCaches[m_iPanelCount];
+		CachedColor(panel, cache, color);
+		CachedPlace(panel, cache, x * m_fScale, y * m_fScale, width * m_fScale, height * m_fScale);
+		CachedVisible(panel, cache, true);
 		m_iPanelCount++;
 	}
 
@@ -1889,19 +2325,29 @@ class AROR_HiCommApp
 		if (m_iTextCount >= TEXT_POOL)
 			return;
 
-		content = Wrap(content, width, size);
-		RichTextWidget text = m_aTexts[m_iTextCount];
-		if (m_aTextCache[m_iTextCount] != content)
+		int index = m_iTextCount;
+		RichTextWidget text = m_aTexts[index];
+		AROR_HiCommWidgetCache cache = m_aTextCaches[index];
+
+		// Wrapping is only redone when the text or its box changes
+		if (cache.m_sRaw != content || cache.m_fWrapWidth != width || cache.m_fWrapSize != size)
 		{
-			text.SetText(content);
-			m_aTextCache[m_iTextCount] = content;
+			cache.m_sRaw = content;
+			cache.m_fWrapWidth = width;
+			cache.m_fWrapSize = size;
+			string wrapped = Wrap(content, width, size);
+			if (m_aTextCache[index] != wrapped)
+			{
+				text.SetText(wrapped);
+				m_aTextCache[index] = wrapped;
+			}
 		}
 
-		text.SetColor(color);
-		text.SetBold(bold);
-		text.SetExactFontSize(Math.Max(1, Math.Round(size * m_fScale)));
-		Place(text, x * m_fScale, y * m_fScale, width * m_fScale, height * m_fScale);
-		text.SetVisible(true);
+		CachedColor(text, cache, color);
+		CachedBold(text, cache, bold);
+		CachedFontSize(text, cache, size * m_fScale);
+		CachedPlace(text, cache, x * m_fScale, y * m_fScale, width * m_fScale, height * m_fScale);
+		CachedVisible(text, cache, true);
 		m_iTextCount++;
 	}
 
@@ -1933,7 +2379,7 @@ class AROR_HiCommApp
 		if (m_iButtonCount >= BUTTON_POOL)
 			return;
 
-		Color fill = AROR_HiCommMap.Srgb(20, 44, 30, 1);
+		Color fill = m_ButtonFill;
 		Color labelColor = m_Green;
 		if (style == STYLE_SELECTED)
 		{
@@ -1947,67 +2393,85 @@ class AROR_HiCommApp
 		}
 		else if (style == STYLE_DISABLED)
 		{
-			fill = AROR_HiCommMap.Srgb(14, 24, 18, 1);
+			fill = m_ButtonDisabled;
 			labelColor = m_GreenFaint;
 			action = string.Empty;
 		}
 		else if (style == STYLE_DANGER)
 		{
-			fill = AROR_HiCommMap.Srgb(70, 22, 20, 1);
+			fill = m_ButtonDanger;
 			labelColor = m_Red;
 		}
 		else if (style == STYLE_MUTED)
 		{
-			fill = AROR_HiCommMap.Srgb(12, 24, 17, 1);
+			fill = m_ButtonMuted;
 			labelColor = m_GreenDim;
 		}
 		else if (style == STYLE_PANEL)
 		{
-			fill = AROR_HiCommMap.Srgb(4, 12, 8, 0.93);
+			fill = m_ButtonPanel;
 			labelColor = m_Green;
 			action = string.Empty;
 		}
 
-		// Read-outs wrap to the box; multi-line labels ("\n") are measured by their longest line
-		if (!centred)
-			label = Wrap(label, width - 28, size);
+		int index = m_iButtonCount;
+		AROR_HiCommWidgetCache labelCache = m_aButtonLabelCaches[index];
 
-		array<string> lines = {};
-		label.Split("\n", lines, false);
-		int longest;
-		foreach (string line : lines)
+		// Read-outs wrap to the box; multi-line labels ("\n") are measured by their longest line.
+		// Both are only recomputed when the label or box changes.
+		int centredValue = 0;
+		if (centred)
+			centredValue = 1;
+
+		if (labelCache.m_sRaw != label || labelCache.m_fWrapWidth != width || labelCache.m_fWrapSize != size || labelCache.m_iCentred != centredValue)
 		{
-			longest = Math.Max(longest, line.Length());
+			labelCache.m_sRaw = label;
+			labelCache.m_fWrapWidth = width;
+			labelCache.m_fWrapSize = size;
+			labelCache.m_iCentred = centredValue;
+			string shown = label;
+			if (!centred)
+				shown = Wrap(label, width - 28, size);
+
+			array<string> lines = {};
+			shown.Split("\n", lines, false);
+			int longest;
+			foreach (string line : lines)
+			{
+				longest = Math.Max(longest, line.Length());
+			}
+
+			labelCache.m_iLongest = longest;
+			labelCache.m_iLines = Math.Max(lines.Count(), 1);
+			if (m_aButtonLabelCache[index] != shown)
+			{
+				m_aButtonLabels[index].SetText(shown);
+				m_aButtonLabelCache[index] = shown;
+			}
 		}
 
-		int lineCount = Math.Max(lines.Count(), 1);
-		int index = m_iButtonCount;
 		ImageWidget background = m_aButtonBackgrounds[index];
-		background.SetColor(fill);
-		Place(background, x * m_fScale, y * m_fScale, width * m_fScale, height * m_fScale);
-		background.SetVisible(true);
+		AROR_HiCommWidgetCache backgroundCache = m_aButtonBgCaches[index];
+		CachedColor(background, backgroundCache, fill);
+		CachedPlace(background, backgroundCache, x * m_fScale, y * m_fScale, width * m_fScale, height * m_fScale);
+		CachedVisible(background, backgroundCache, true);
 
 		RichTextWidget text = m_aButtonLabels[index];
-		if (m_aButtonLabelCache[index] != label)
-		{
-			text.SetText(label);
-			m_aButtonLabelCache[index] = label;
-		}
-
-		text.SetColor(labelColor);
-		text.SetBold(style != STYLE_PANEL);
-		text.SetExactFontSize(Math.Max(1, Math.Round(size * m_fScale)));
+		CachedColor(text, labelCache, labelColor);
+		CachedBold(text, labelCache, style != STYLE_PANEL);
+		CachedFontSize(text, labelCache, size * m_fScale);
 		float labelX = x + 14;
 		if (centred)
-			labelX = x + Math.Max((width - longest * size * CHAR_WIDTH_FACTOR) * 0.5, 8);
+			labelX = x + Math.Max((width - labelCache.m_iLongest * size * CHAR_WIDTH_FACTOR) * 0.5, 8);
 
-		float labelHeight = size * 1.3 * lineCount;
-		Place(text, labelX * m_fScale, (y + (height - labelHeight) * 0.5) * m_fScale, (width - (labelX - x)) * m_fScale, (labelHeight + size * 0.2) * m_fScale);
-		text.SetVisible(true);
+		float labelHeight = size * 1.3 * labelCache.m_iLines;
+		CachedPlace(text, labelCache, labelX * m_fScale, (y + (height - labelHeight) * 0.5) * m_fScale, (width - (labelX - x)) * m_fScale, (labelHeight + size * 0.2) * m_fScale);
+		CachedVisible(text, labelCache, true);
 
 		Widget button = m_aButtons[index];
-		Place(button, x * m_fScale, y * m_fScale, width * m_fScale, height * m_fScale);
-		button.SetVisible(!action.IsEmpty());
+		AROR_HiCommWidgetCache buttonCache = m_aButtonCaches[index];
+		CachedPlace(button, buttonCache, x * m_fScale, y * m_fScale, width * m_fScale, height * m_fScale);
+		CachedVisible(button, buttonCache, !action.IsEmpty());
 		m_aButtonActions[index] = action;
 		m_iButtonCount++;
 	}
@@ -2017,26 +2481,100 @@ class AROR_HiCommApp
 	{
 		for (int i = m_iPanelCount; i < PANEL_POOL; i++)
 		{
-			m_aPanels[i].SetVisible(false);
+			CachedVisible(m_aPanels[i], m_aPanelCaches[i], false);
 		}
 
 		for (int i = m_iTextCount; i < TEXT_POOL; i++)
 		{
-			m_aTexts[i].SetVisible(false);
+			CachedVisible(m_aTexts[i], m_aTextCaches[i], false);
 		}
 
 		for (int i = m_iButtonCount; i < BUTTON_POOL; i++)
 		{
-			m_aButtonBackgrounds[i].SetVisible(false);
-			m_aButtonLabels[i].SetVisible(false);
-			m_aButtons[i].SetVisible(false);
+			CachedVisible(m_aButtonBackgrounds[i], m_aButtonBgCaches[i], false);
+			CachedVisible(m_aButtonLabels[i], m_aButtonLabelCaches[i], false);
+			CachedVisible(m_aButtons[i], m_aButtonCaches[i], false);
 			m_aButtonActions[i] = string.Empty;
 		}
 
 		for (int i = m_iMapLabelCount; i < MAP_LABEL_POOL; i++)
 		{
-			m_aMapLabels[i].SetVisible(false);
+			CachedVisible(m_aMapLabels[i], m_aMapLabelCaches[i], false);
 		}
+
+		for (int i = m_iMapIconCount; i < ICON_POOL; i++)
+		{
+			CachedVisible(m_aMapIcons[i], m_aMapIconCaches[i], false);
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------
+	// Cached widget setters: pooled widgets are re-laid out every frame, but engine calls (especially font
+	// size, which relayouts text) are only made when a value actually changed
+	//------------------------------------------------------------------------------------------------
+	protected void CachedPlace(Widget widget, AROR_HiCommWidgetCache cache, float x, float y, float width, float height)
+	{
+		x += m_fInsetX;
+		y += m_fInsetY;
+		if (Math.AbsFloat(x - cache.m_fX) < 0.05 && Math.AbsFloat(y - cache.m_fY) < 0.05 && Math.AbsFloat(width - cache.m_fWidth) < 0.05 && Math.AbsFloat(height - cache.m_fHeight) < 0.05)
+			return;
+
+		cache.m_fX = x;
+		cache.m_fY = y;
+		cache.m_fWidth = width;
+		cache.m_fHeight = height;
+		PlaceRaw(widget, x, y, width, height);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static void CachedColor(Widget widget, AROR_HiCommWidgetCache cache, Color color)
+	{
+		int packed = color.PackToInt();
+		if (cache.m_bColorSet && cache.m_iColor == packed)
+			return;
+
+		cache.m_bColorSet = true;
+		cache.m_iColor = packed;
+		widget.SetColor(color);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static void CachedFontSize(TextWidget text, AROR_HiCommWidgetCache cache, float size)
+	{
+		int fontSize = Math.Max(1, Math.Round(size));
+		if (cache.m_iFontSize == fontSize)
+			return;
+
+		cache.m_iFontSize = fontSize;
+		text.SetExactFontSize(fontSize);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static void CachedBold(TextWidget text, AROR_HiCommWidgetCache cache, bool bold)
+	{
+		int value = 0;
+		if (bold)
+			value = 1;
+
+		if (cache.m_iBold == value)
+			return;
+
+		cache.m_iBold = value;
+		text.SetBold(bold);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static void CachedVisible(Widget widget, AROR_HiCommWidgetCache cache, bool visible)
+	{
+		int value = 0;
+		if (visible)
+			value = 1;
+
+		if (cache.m_iVisible == value)
+			return;
+
+		cache.m_iVisible = value;
+		widget.SetVisible(visible);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -2174,8 +2712,13 @@ class AROR_HiCommApp
 	}
 
 	//------------------------------------------------------------------------------------------------
-	protected Color RoleColor(AROR_EFactionRole role)
+	//! The role's faction colour, as the in-game map tints its location icons
+	protected Color FactionColor(AROR_EFactionRole role)
 	{
+		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.GetInstance();
+		if (roles && roles.GetFaction(role))
+			return roles.GetFaction(role).GetFactionColor();
+
 		if (role == AROR_EFactionRole.OCCUPIERS)
 			return m_Occupiers;
 
@@ -2183,6 +2726,15 @@ class AROR_HiCommApp
 			return m_Invaders;
 
 		return m_Green;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Faction colour lifted towards white so text stays readable on the dark map
+	protected Color LabelColor(AROR_EFactionRole role, float alpha = 1)
+	{
+		Color color = FactionColor(role);
+		float lift = 0.5;
+		return new Color(color.R() + (1 - color.R()) * lift, color.G() + (1 - color.G()) * lift, color.B() + (1 - color.B()) * lift, alpha);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -2288,7 +2840,14 @@ class AROR_HiCommApp
 	}
 
 	//------------------------------------------------------------------------------------------------
-	protected static void Place(Widget widget, float x, float y, float width, float height)
+	//! Places a content widget (screen-relative, already scaled), offset by the content inset
+	protected void Place(Widget widget, float x, float y, float width, float height)
+	{
+		PlaceRaw(widget, x + m_fInsetX, y + m_fInsetY, width, height);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static void PlaceRaw(Widget widget, float x, float y, float width, float height)
 	{
 		FrameSlot.SetPos(widget, x, y);
 		FrameSlot.SetSize(widget, width, height);

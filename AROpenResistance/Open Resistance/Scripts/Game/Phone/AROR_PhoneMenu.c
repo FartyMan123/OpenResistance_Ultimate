@@ -131,6 +131,8 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	protected ref AROR_RebIntelApp m_RebIntel;
 	protected ImageWidget m_wHiCommTile;
 	protected RichTextWidget m_wHiCommTileGlyph;
+	protected CanvasWidget m_wHiCommTileCanvas;	//!< The tile's icon: a small spinning green globe
+	protected ref AROR_HiCommGlobe m_HiCommTileGlobe = new AROR_HiCommGlobe();
 	protected RichTextWidget m_wHiCommTileLabel;
 	protected Widget m_wHiCommTileButton;
 	protected ref AROR_HiCommApp m_HiComm;
@@ -270,6 +272,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		bool rebIntelReady = m_RebIntel.Init(root);
 		m_wHiCommTile = ImageWidget.Cast(root.FindAnyWidget("HiCommTile"));
 		m_wHiCommTileGlyph = RichTextWidget.Cast(root.FindAnyWidget("HiCommTileGlyph"));
+		m_wHiCommTileCanvas = CanvasWidget.Cast(root.FindAnyWidget("HiCommTileCanvas"));
 		m_wHiCommTileLabel = RichTextWidget.Cast(root.FindAnyWidget("HiCommTileLabel"));
 		m_wHiCommTileButton = root.FindAnyWidget("HiCommTileButton");
 		m_HiComm = new AROR_HiCommApp();
@@ -290,7 +293,11 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		m_wTestBackLabel = RichTextWidget.Cast(root.FindAnyWidget("AppBackLabel"));
 		m_wTestBackButton = root.FindAnyWidget("AppBackButton");
 
-		if (!m_wDim || !m_wPhonePortrait || !m_wPhoneLandscape || !m_wStatusBar || !m_wHome || !m_wBankApp || !m_wTestApp || !rebIntelReady || !m_wRebIntelTile || !m_wRebIntelTileGlyph || !m_wRebIntelTileLabel || !m_wRebIntelTileButton || !hiCommReady || !m_wHiCommTile || !m_wHiCommTileGlyph || !m_wHiCommTileLabel || !m_wHiCommTileButton)
+		// Checked in groups: one long condition exceeds the script compiler's expression limit
+		bool ready = m_wDim && m_wPhonePortrait && m_wPhoneLandscape && m_wStatusBar && m_wHome && m_wBankApp && m_wTestApp;
+		ready = ready && rebIntelReady && m_wRebIntelTile && m_wRebIntelTileGlyph && m_wRebIntelTileLabel && m_wRebIntelTileButton;
+		ready = ready && hiCommReady && m_wHiCommTile && m_wHiCommTileGlyph && m_wHiCommTileCanvas && m_wHiCommTileLabel && m_wHiCommTileButton;
+		if (!ready)
 		{
 			Print("[AROR] Phone layout is missing widgets", LogLevel.ERROR);
 			Close();
@@ -502,8 +509,12 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		tileLeft = TILE_LEFT;
 		float tileTop = TILE_TOP + TILE_SIZE + TILE_ROW_SPACING;
 		Place(m_wHiCommTile, tileLeft * scale, tileTop * scale, TILE_SIZE * scale, TILE_SIZE * scale);
-		SetFontSize(m_wHiCommTileGlyph, 64 * scale);
-		CentreText(m_wHiCommTileGlyph, (tileLeft + TILE_SIZE * 0.5) * scale, (tileTop + TILE_SIZE * 0.5) * scale);
+		float globeInset = 14;
+		float globeSize = TILE_SIZE - globeInset * 2;
+		Place(m_wHiCommTileCanvas, (tileLeft + globeInset) * scale, (tileTop + globeInset) * scale, globeSize * scale, globeSize * scale);
+		WorkspaceWidget workspace = GetGame().GetWorkspace();
+		float globePixels = workspace.DPIScale(globeSize * scale);
+		m_HiCommTileGlobe.Draw(m_wHiCommTileCanvas, globePixels, globePixels, System.GetTickCount() / 1000.0, workspace.DPIScale(scale) * 0.5);
 		SetFontSize(m_wHiCommTileLabel, 32 * scale);
 		CentreText(m_wHiCommTileLabel, (tileLeft + TILE_SIZE * 0.5) * scale, (tileTop + TILE_SIZE + 34) * scale);
 		Place(m_wHiCommTileButton, tileLeft * scale, tileTop * scale, TILE_SIZE * scale, (TILE_SIZE + 60) * scale);
@@ -607,7 +618,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		StyleText(m_wTestTileLabel, "Test", false);
 		StyleText(m_wRebIntelTileGlyph, "RI", true);
 		StyleText(m_wRebIntelTileLabel, "RebIntel", false);
-		StyleText(m_wHiCommTileGlyph, "HC", true);
+		StyleText(m_wHiCommTileGlyph, string.Empty, true);
 		StyleText(m_wHiCommTileLabel, "HICOMM", false);
 		if (m_wHiCommTileGlyph)
 			m_wHiCommTileGlyph.SetColor(Color.FromRGBA(134, 240, 172, 255));
