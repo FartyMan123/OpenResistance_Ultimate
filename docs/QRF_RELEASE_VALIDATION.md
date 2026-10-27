@@ -1,6 +1,6 @@
 # Chicken QRF and attack release validation
 
-**Decision: native release approval is blocked.** The source audit, mocked policy tests and installed-resource checks support the changes below. Script Editor compilation, driving, flight, actual landings and packaged dedicated-server replication have not been executed by this audit. No route is labelled as driven or flown.
+**Decision: native release approval is blocked pending gameplay acceptance.** The user reports successful compilation on 28 October 2026. The source audit, mocked policy tests and installed-resource checks support the changes below. Driving, flight, actual landings and packaged dedicated-server replication remain unverified. No route is labelled as driven or flown.
 
 Scope: Chicken only, both enemy roles, ordinary capture QRFs, trusted attacks, automatic Occupier attacks and MARS. Base revision: `6c03716ff3cdc573f56b8f428f436c249afc1d52`, branch `chicken-dev`, plus the accompanying working-tree changes. The requested work budget was two hours; simulated campaign ticks and assertion counts are not elapsed native gameplay time.
 
@@ -104,7 +104,8 @@ A planning PASS is a snapshot for one ground package and the configured air laun
 
 | Gate | Required evidence | Current result |
 |---|---|---|
-| Compile/resources | Script Editor compile for packaged and Workbench branches; discover layouts and metadata; reload Chicken. | NOT_RUN |
+| Compilation | Compile current scripts; verify packaged and Workbench variants. | PASS, user-reported; build variants not separately specified |
+| Resource loading | Discover layouts and metadata; reload Chicken and check widget loading. | NOT_RUN |
 | Memory-only native smoke tests | Existing operation/pool/strategy/tactical helpers plus `AROR_JointResponseSmokeTests.Run_S()`. | NOT_RUN |
 | Route planning | Sweep all 860 pairs and 44 landing targets; triage failures, especially ports. | NOT_RUN |
 | Ground travel | Both armies, every authored recipe tier, driver/passenger seating, full lead wave, convoy spacing, dismount, infantry arrival and return. | NOT_RUN |

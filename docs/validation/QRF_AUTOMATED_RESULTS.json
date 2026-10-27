@@ -9,6 +9,12 @@
     "generatedAt":  "2026-10-27 20:24:13 UTC",
     "auditStartedAt":  "2026-10-27 11:35:21 UTC",
     "requestedWallTimeMinutes":  120,
+    "nativeCompilation":  {
+        "status":  "PASS_USER_REPORTED",
+        "reportedDate":  "2026-10-28",
+        "timezone":  "Australia/Sydney",
+        "evidence":  "User reports: compiled fine. Build variants were not separately specified."
+    },
     "nativeVerified":  false,
     "releaseApproved":  false,
     "limitations":  [

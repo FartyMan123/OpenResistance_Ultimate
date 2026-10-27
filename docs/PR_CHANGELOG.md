@@ -28,7 +28,7 @@ Add a role-separated MARS response debugger and delayed Occupier counterattacks,
 - Exported all **860** eligible Chicken origin/target pairs and a Workbench-only production-planner sweep with a separate log importer. All native evidence remains `NOT_RUN`; the inventory does not reconstruct the road graph or prove actual travel. Six synthetic importer checks passed.
 - The site audit includes all 26 military roots and reports four catalogue/world transform differences; world geometry was preserved. Estimated overlapping garrisons reach 102 personnel and require native performance checks.
 - `git diff --check` passed. Detailed evidence, source hashes, reproduction commands and prioritized native gates: [QRF release validation](QRF_RELEASE_VALIDATION.md).
-- **Latest combined changes have not been compiled or played in Workbench and are not release-approved.** Compile in Script Editor, reload Chicken, then test both armies and all executable response families, full convoys, Lamentin/North Ridge routes, joint attacks, dedicated-server authorization/JIP, old-save migration, actual capture, and terminal cleanup. Mocked checks cannot establish native driving, flight or replication correctness.
+- **Compilation passed, as reported by the user on 28 October 2026; gameplay acceptance and release approval remain pending.** Build variants were not separately specified. Reload Chicken, then test both armies and all executable response families, full convoys, Lamentin/North Ridge routes, joint attacks, dedicated-server authorization/JIP, old-save migration, actual capture, and terminal cleanup. Mocked checks cannot establish native driving, flight or replication correctness.
 
 ## Notes
 
