@@ -64,6 +64,9 @@ SCR_BaseGameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" 
   AROR_ResistanceGarageComponent "{6AB5C0D1E2F30402}" {
    m_iHqSlots 10
    m_iObjectiveSlots 2
+   m_fPlaceRadius 50
+   m_fStoreLookDistance 5
+   m_fStoreSiteRadius 50
   }
   AROR_PlayerLoadoutsComponent "{6AB4F1B2C3D4E501}" {
   }
@@ -111,6 +114,7 @@ SCR_BaseGameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" 
   AROR_GameFlowComponent "{6AAA8D6D8EB1E454}" {
    m_sHQPrefab "{3EC420BD9621F356}Prefabs/Locations/AROR_Location_HQ.et"
    m_sArsenalPrefab "{274839CB791B6A7B}Prefabs/Props/Locations/AROR_Prop_Arsenal.et"
+   m_sGaragePrefab "{BC5B93CA37752CF6}Prefabs/Props/Locations/AROR_Prop_Garage.et"
    m_bWorkbenchAutoNewPlaythrough 1
   }
   AROR_LocationManagerComponent "{6AA2823B57AE5CD7}" {

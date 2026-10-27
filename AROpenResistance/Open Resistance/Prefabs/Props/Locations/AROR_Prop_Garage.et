@@ -1,0 +1,43 @@
+GenericEntity : "{DB4F61D5F37432F7}Prefabs/Props/Military/Camps/PalletFuel_01.et" {
+ ID "F0DBA538AC2A0552"
+ components {
+  Persistence "{6AB5C0D1E2F30430}" {
+  }
+  RplComponent "{6AB5C0D1E2F30431}" {
+  }
+  ActionsManagerComponent "{6AB5C0D1E2F30432}" {
+   ActionContexts {
+    UserActionContext "{6AB5C0D1E2F30433}" {
+     UIInfo SCR_ActionContextUIInfo "{6AB5C0D1E2F30434}" {
+      Name "Garage"
+     }
+     ContextName "default"
+     Position PointInfo "{6AB5C0D1E2F30435}" {
+      Offset 0 1 0
+     }
+     Radius 2
+    }
+   }
+   additionalActions {
+    AROR_GarageRetrieveAction "{6AB5C0D1E2F30436}" {
+     ParentContextList {
+      "default"
+     }
+     UIInfo SCR_ActionUIInfo "{6AB5C0D1E2F30437}" {
+      Name "Retrieve vehicle"
+     }
+     "Sort Priority" 1
+    }
+    AROR_GarageStoreAction "{6AB5C0D1E2F30438}" {
+     ParentContextList {
+      "default"
+     }
+     UIInfo SCR_ActionUIInfo "{6AB5C0D1E2F30439}" {
+      Name "Store vehicle"
+     }
+     "Sort Priority" 2
+    }
+   }
+  }
+ }
+}

@@ -12,7 +12,7 @@ class AROR_GameFlowComponentClass : SCR_BaseGameModeStateComponentClass
 }
 
 //! Pre-game state of the game flow (see ARCHITECTURE.md -> Game Flow).
-//! Server: validates admin requests, spawns the Resistance HQ and arsenal, starts or loads playthroughs.
+//! Server: validates admin requests, spawns the Resistance HQ, arsenal and garage, starts or loads playthroughs.
 //! Clients: receive setup messages through the AROR_ methods on SCR_PlayerController and raise the events below for the UI.
 class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 {
@@ -21,6 +21,9 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 
 	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Arsenal prefab spawned at world positions (first use: beside the HQ)", params: "et")]
 	protected ResourceName m_sArsenalPrefab;
+
+	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Garage prefab spawned beside the HQ (opposite side from the arsenal)", params: "et")]
+	protected ResourceName m_sGaragePrefab;
 
 	[Attribute("1 0 0", UIWidgets.Coords, desc: "World offset from the HQ origin (flag) used when placing the first arsenal")]
 	protected vector m_vArsenalOffsetFromHQ;
@@ -304,6 +307,16 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			return;
 		}
 
+		// Same distance as the arsenal, opposite side of the HQ flag
+		IEntity garage = SpawnGarage(hq.GetOrigin() - m_vArsenalOffsetFromHQ);
+		if (!garage)
+		{
+			SCR_EntityHelper.DeleteEntityAndChildren(arsenal);
+			SCR_EntityHelper.DeleteEntityAndChildren(hq);
+			SendSetupResult(playerId, false, "Failed to spawn the garage");
+			return;
+		}
+
 		// Before the initial save point, so the first save already holds the admin's choice
 		AROR_FactionPresetsComponent factionPresets = AROR_FactionPresetsComponent.GetInstance();
 		if (factionPresets)
@@ -476,10 +489,23 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	//! Spawns an arsenal at a world position (surface-snapped). Reusable for HQ and future sites.
 	IEntity SpawnArsenal(vector position)
 	{
-		Resource resource = Resource.Load(m_sArsenalPrefab);
+		return SpawnSurfacePrefab(m_sArsenalPrefab, position, "Arsenal");
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Spawns a garage at a world position (surface-snapped). Reusable for HQ and future sites.
+	IEntity SpawnGarage(vector position)
+	{
+		return SpawnSurfacePrefab(m_sGaragePrefab, position, "Garage");
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected IEntity SpawnSurfacePrefab(ResourceName prefab, vector position, string label)
+	{
+		Resource resource = Resource.Load(prefab);
 		if (!resource || !resource.IsValid())
 		{
-			Print("[AROR] Arsenal prefab is not set or invalid on AROR_GameFlowComponent", LogLevel.ERROR);
+			Print(string.Format("[AROR] %1 prefab is not set or invalid on AROR_GameFlowComponent", label), LogLevel.ERROR);
 			return null;
 		}
 

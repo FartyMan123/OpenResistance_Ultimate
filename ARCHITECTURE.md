@@ -129,7 +129,7 @@ Phases (mapped onto the base-game states PREGAME → GAME → POSTGAME):
 - `AROR_GameFlowComponent` (server, game mode) holds PREGAME until a playthrough exists and keeps player controls disabled until then; other systems can ask whether the playthrough is ready.
 - **Setup UI** (`AROR_SetupUIComponent`, client): a full-screen setup menu (`AROR_SetupMenu`, registered in `chimeraMenus.conf`) with the start options (new, load, quick start) and the save list; the faction and HQ steps use base-game configurable dialogs with our own presets (`Configs/UI/AROR_SetupDialogs.conf`).
 - **Staging spawn** (`AROR_StagingSpawn.et`): before a playthrough exists, players spawn there as the Resistance and move freely. Afterwards it is disabled and players are moved to the HQ.
-- **Resistance HQ**: placed on land, outside every location's radius, and on a clear 10×10 m pad free of buildings and props (checked on the client, enforced by the server; invalid picks are rejected). A dynamic location of type HQ that carries the Resistance spawn point; players always spawn there. A new playthrough also spawns an arsenal beside the HQ via `SpawnArsenal` before the initial save.
+- **Resistance HQ**: placed on land, outside every location's radius, and on a clear 10×10 m pad free of buildings and props (checked on the client, enforced by the server; invalid picks are rejected). A dynamic location of type HQ that carries the Resistance spawn point; players always spawn there. A new playthrough also spawns an arsenal beside the HQ via `SpawnArsenal` and a garage on the opposite side of the flag (same offset negated) via `SpawnGarage` before the initial save.
 - Planned: playthrough settings chosen at setup and editable mid-game, with lifecycle events (scenario ready, playthrough created/loaded, settings changed) for other systems.
 - Server/client: the server owns phase transitions and all generated state; admin actions are client → server requests checked against admin roles.
 - Depends on: Game Mode, Locations, Persistence.
@@ -282,10 +282,13 @@ Purpose: the Resistance's shared vehicle garage for the campaign — unique stor
 
 - `AROR_ResistanceGarageComponent` (game mode): a ledger of **unique vehicle entries** (monotonic id + prefab + hull health + fuel + cargo tree + mounted weapon ammo). Any world vehicle may be stored (not limited to Resistance presets); Occupiers/Invaders have no garage.
 - **Capacity**: 10 slots from the Resistance HQ (`m_iHqSlots`) plus 2 slots per Resistance-controlled military objective (`m_iObjectiveSlots`, `IsCapturableType` only — towns and cities excluded). Recomputed from the location registry. If territory is lost and count exceeds capacity, existing entries are kept and new stores are blocked until under capacity.
-- Server API: `StoreVehicle_S` (snapshot + despawn; rejects destroyed/occupied/full), `DiscardVehicle_S` (remove without spawning), `GetCapacity` / `GetCount` / `GetEntries` (summaries on every machine). Retrieve/spawn and garage pads/UI are deferred; when retrieve is built, spawned hulls will always affiliate to the Resistance.
-- Server-owned full snapshots; compact id/prefab/health/fuel summaries replicate. Change invoker for future UI.
-- Saved: full entries (`AROR_ResistanceGarageComponentSerializer`).
-- Depends on: Game Mode, Locations, Location Capture (capturable type filter), Persistence.
+- Server API: `StoreVehicle_S` (snapshot + despawn; rejects destroyed/occupied/full), `RequestStoreVehicle_S` (player store with site/range checks), `DiscardVehicle_S`, `RetrieveVehicle_S` (spawn within place radius of a garage anchor, restore snapshot, affiliate **Resistance**, remove entry), soft `ReserveEntry_S` / `ReleaseReservation_S` while placing. `GetCapacity` / `GetCount` / `GetEntries` on every machine.
+- **Store (looked-at)**: `AROR_GarageStoreAPI.TryStoreLookedAtVehicle()` raycasts from the local character camera (max **5 m**, `m_fStoreLookDistance`), only when the player is within **50 m** (`m_fStoreSiteRadius`) of a Resistance **HQ** or capturable military site (towns/cities excluded). `AROR_GarageStoreAction` on `AROR_Prop_Garage`. RPC `AROR_RequestGarageStore`.
+- **Retrieve UI**: `AROR_GarageRetrieveUI.Open(anchor)` opens a simple configurable dialog (browse Prev/Next, stats, Inventory sub-dialog, Spawn). Spawn starts a client ghost placement mode (`AROR_GaragePlacementController`) — place within **50 m** (`m_fPlaceRadius`) of the garage anchor on clear ground (LMB place, RMB/Esc cancel, Q/E rotate). `AROR_GarageRetrieveAction` on `AROR_Prop_Garage`. Player-controller RPCs carry detail/reserve/retrieve.
+- **HQ garage prop**: `AROR_Prop_Garage` (Persistence + Rpl + store/retrieve actions). Game Flow spawns it opposite the arsenal at HQ creation.
+- Server-owned full snapshots; compact id/prefab/health/fuel summaries replicate. Change invoker for UI.
+- Saved: full entries (`AROR_ResistanceGarageComponentSerializer`). Reservations are session-only.
+- Depends on: Game Mode, Locations, Location Capture (capturable type filter), Persistence, Notifications (hints).
 
 ### Phone — In progress
 Purpose: an in-game phone that hosts player-facing apps. Client only.
