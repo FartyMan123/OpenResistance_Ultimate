@@ -38,7 +38,10 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
   }
   AROR_OperationExecutorComponent {
    m_bQRFRequireFriendlyOrigin 1
+   m_iQRFSeatRecoveryDelay 10
+   m_fQRFRoadLaunchRadius 300
    m_bReaperQRFTest 0
+   m_bAllowAirborneResponses 1
    m_bQRFTacticalCommander 1
    m_bQRFTwoWaves 1
    m_iQRFSplitTier 3
@@ -69,8 +72,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "combined_arms_l1"
      m_iLevel 1
-     m_iMinimumWarLevel 5
-     m_iMaximumWarLevel 5
+     m_iMinimumReadinessLevel 5
+     m_iMaximumReadinessLevel 5
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
@@ -81,8 +84,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "combined_arms_l1"
      m_iLevel 1
-     m_iMinimumWarLevel 5
-     m_iMaximumWarLevel 5
+     m_iMinimumReadinessLevel 5
+     m_iMaximumReadinessLevel 5
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
@@ -93,8 +96,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "invader_ground_l1"
      m_iLevel 1
-     m_iMinimumWarLevel 5
-     m_iMaximumWarLevel 5
+     m_iMinimumReadinessLevel 5
+     m_iMaximumReadinessLevel 5
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
@@ -105,8 +108,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "invader_ground_l2"
      m_iLevel 2
-     m_iMinimumWarLevel 5
-     m_iMaximumWarLevel 5
+     m_iMinimumReadinessLevel 5
+     m_iMaximumReadinessLevel 5
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
@@ -118,8 +121,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "invader_ground_l3"
      m_iLevel 3
-     m_iMinimumWarLevel 5
-     m_iMaximumWarLevel 5
+     m_iMinimumReadinessLevel 5
+     m_iMaximumReadinessLevel 5
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
@@ -133,8 +136,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "invader_ground_l4"
      m_iLevel 4
-     m_iMinimumWarLevel 5
-     m_iMaximumWarLevel 5
+     m_iMinimumReadinessLevel 5
+     m_iMaximumReadinessLevel 5
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
@@ -150,8 +153,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "invader_ground_l5"
      m_iLevel 5
-     m_iMinimumWarLevel 5
-     m_iMaximumWarLevel 5
+     m_iMinimumReadinessLevel 5
+     m_iMaximumReadinessLevel 5
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
@@ -168,8 +171,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "occupier_ground_l1"
      m_iLevel 1
-     m_iMinimumWarLevel 5
-     m_iMaximumWarLevel 5
+     m_iMinimumReadinessLevel 5
+     m_iMaximumReadinessLevel 5
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
@@ -180,8 +183,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "occupier_ground_l2"
      m_iLevel 2
-     m_iMinimumWarLevel 5
-     m_iMaximumWarLevel 5
+     m_iMinimumReadinessLevel 5
+     m_iMaximumReadinessLevel 5
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
@@ -193,8 +196,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "occupier_ground_l3"
      m_iLevel 3
-     m_iMinimumWarLevel 5
-     m_iMaximumWarLevel 5
+     m_iMinimumReadinessLevel 5
+     m_iMaximumReadinessLevel 5
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
@@ -208,8 +211,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "occupier_ground_l4"
      m_iLevel 4
-     m_iMinimumWarLevel 5
-     m_iMaximumWarLevel 5
+     m_iMinimumReadinessLevel 5
+     m_iMaximumReadinessLevel 5
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
@@ -225,8 +228,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "occupier_ground_l5"
      m_iLevel 5
-     m_iMinimumWarLevel 5
-     m_iMaximumWarLevel 5
+     m_iMinimumReadinessLevel 5
+     m_iMaximumReadinessLevel 5
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
@@ -243,8 +246,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "occupier_light_l1"
      m_iLevel 1
-     m_iMinimumWarLevel 1
-     m_iMaximumWarLevel 2
+     m_iMinimumReadinessLevel 1
+     m_iMaximumReadinessLevel 2
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
@@ -254,8 +257,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "occupier_light_l2"
      m_iLevel 2
-     m_iMinimumWarLevel 1
-     m_iMaximumWarLevel 2
+     m_iMinimumReadinessLevel 1
+     m_iMaximumReadinessLevel 2
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
@@ -266,8 +269,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "occupier_light_l3"
      m_iLevel 3
-     m_iMinimumWarLevel 1
-     m_iMaximumWarLevel 2
+     m_iMinimumReadinessLevel 1
+     m_iMaximumReadinessLevel 2
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
@@ -279,8 +282,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "occupier_light_l4"
      m_iLevel 4
-     m_iMinimumWarLevel 1
-     m_iMaximumWarLevel 2
+     m_iMinimumReadinessLevel 1
+     m_iMaximumReadinessLevel 2
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
@@ -294,8 +297,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "occupier_light_l5"
      m_iLevel 5
-     m_iMinimumWarLevel 1
-     m_iMaximumWarLevel 2
+     m_iMinimumReadinessLevel 1
+     m_iMaximumReadinessLevel 2
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
@@ -310,8 +313,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "occupier_mechanized_l1"
      m_iLevel 1
-     m_iMinimumWarLevel 3
-     m_iMaximumWarLevel 4
+     m_iMinimumReadinessLevel 3
+     m_iMaximumReadinessLevel 4
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
@@ -321,8 +324,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "occupier_mechanized_l2"
      m_iLevel 2
-     m_iMinimumWarLevel 3
-     m_iMaximumWarLevel 4
+     m_iMinimumReadinessLevel 3
+     m_iMaximumReadinessLevel 4
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
@@ -333,8 +336,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "occupier_mechanized_l3"
      m_iLevel 3
-     m_iMinimumWarLevel 3
-     m_iMaximumWarLevel 4
+     m_iMinimumReadinessLevel 3
+     m_iMaximumReadinessLevel 4
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
@@ -347,8 +350,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "occupier_mechanized_l4"
      m_iLevel 4
-     m_iMinimumWarLevel 3
-     m_iMaximumWarLevel 4
+     m_iMinimumReadinessLevel 3
+     m_iMaximumReadinessLevel 4
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
@@ -362,8 +365,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "occupier_mechanized_l5"
      m_iLevel 5
-     m_iMinimumWarLevel 3
-     m_iMaximumWarLevel 4
+     m_iMinimumReadinessLevel 3
+     m_iMaximumReadinessLevel 4
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
@@ -379,8 +382,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "invader_light_l1"
      m_iLevel 1
-     m_iMinimumWarLevel 1
-     m_iMaximumWarLevel 2
+     m_iMinimumReadinessLevel 1
+     m_iMaximumReadinessLevel 2
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
@@ -390,8 +393,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "invader_light_l2"
      m_iLevel 2
-     m_iMinimumWarLevel 1
-     m_iMaximumWarLevel 2
+     m_iMinimumReadinessLevel 1
+     m_iMaximumReadinessLevel 2
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
@@ -402,8 +405,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "invader_light_l3"
      m_iLevel 3
-     m_iMinimumWarLevel 1
-     m_iMaximumWarLevel 2
+     m_iMinimumReadinessLevel 1
+     m_iMaximumReadinessLevel 2
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
@@ -415,8 +418,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "invader_light_l4"
      m_iLevel 4
-     m_iMinimumWarLevel 1
-     m_iMaximumWarLevel 2
+     m_iMinimumReadinessLevel 1
+     m_iMaximumReadinessLevel 2
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
@@ -430,8 +433,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "invader_light_l5"
      m_iLevel 5
-     m_iMinimumWarLevel 1
-     m_iMaximumWarLevel 2
+     m_iMinimumReadinessLevel 1
+     m_iMaximumReadinessLevel 2
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
@@ -446,8 +449,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "invader_mechanized_l1"
      m_iLevel 1
-     m_iMinimumWarLevel 3
-     m_iMaximumWarLevel 4
+     m_iMinimumReadinessLevel 3
+     m_iMaximumReadinessLevel 4
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
@@ -457,8 +460,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "invader_mechanized_l2"
      m_iLevel 2
-     m_iMinimumWarLevel 3
-     m_iMaximumWarLevel 4
+     m_iMinimumReadinessLevel 3
+     m_iMaximumReadinessLevel 4
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
@@ -469,8 +472,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "invader_mechanized_l3"
      m_iLevel 3
-     m_iMinimumWarLevel 3
-     m_iMaximumWarLevel 4
+     m_iMinimumReadinessLevel 3
+     m_iMaximumReadinessLevel 4
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
@@ -483,8 +486,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "invader_mechanized_l4"
      m_iLevel 4
-     m_iMinimumWarLevel 3
-     m_iMaximumWarLevel 4
+     m_iMinimumReadinessLevel 3
+     m_iMaximumReadinessLevel 4
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
@@ -498,8 +501,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     AROR_GroundQRFRecipe {
      m_sId "invader_mechanized_l5"
      m_iLevel 5
-     m_iMinimumWarLevel 3
-     m_iMaximumWarLevel 4
+     m_iMinimumReadinessLevel 3
+     m_iMaximumReadinessLevel 4
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
@@ -520,6 +523,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
    m_fReaperDepartureSpeed 180
    m_vReaperLZOffset 0 0 0
    m_fReaperLZSearchRadius 400
+   m_fReaperLZFallbackRadius 1200
+   m_fReaperLZAdjustmentRadius 60
    m_fReaperLandingSeparation 90
    m_fReaperFormationSpacing 75
    m_fReaperCleanupDistance 1500
@@ -576,7 +581,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
    m_aForceProfiles {
     AROR_ForceProfile {
      m_sId "us_motorized"
-     m_iMinimumWarLevel 1
+     m_iMinimumReadinessLevel 1
      m_iPersonnelLossValue 25
      m_iVehicleLossValue 200
      m_iEscortLossValue 2000
@@ -596,7 +601,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     }
     AROR_ForceProfile {
      m_sId "us_mechanized"
-     m_iMinimumWarLevel 3
+     m_iMinimumReadinessLevel 3
      m_iPersonnelLossValue 25
      m_iVehicleLossValue 800
      m_iEscortLossValue 2000
@@ -616,7 +621,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     }
     AROR_ForceProfile {
      m_sId "us_armour"
-     m_iMinimumWarLevel 5
+     m_iMinimumReadinessLevel 5
      m_iPersonnelLossValue 25
      m_iVehicleLossValue 800
      m_iEscortLossValue 2000
@@ -635,11 +640,11 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     }
     AROR_ForceProfile {
      m_sId "us_airborne"
-     m_iMinimumWarLevel 5
+     m_iMinimumReadinessLevel 5
      m_iPersonnelLossValue 25
      m_iVehicleLossValue 1600
      m_iEscortLossValue 2000
-     m_bEnabled 0
+     m_bEnabled 1
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_sAssetFactionKey "US"
@@ -657,7 +662,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     }
     AROR_ForceProfile {
      m_sId "ussr_motorized"
-     m_iMinimumWarLevel 1
+     m_iMinimumReadinessLevel 1
      m_iPersonnelLossValue 25
      m_iVehicleLossValue 200
      m_iEscortLossValue 2000
@@ -677,7 +682,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     }
     AROR_ForceProfile {
      m_sId "ussr_mechanized"
-     m_iMinimumWarLevel 3
+     m_iMinimumReadinessLevel 3
      m_iPersonnelLossValue 25
      m_iVehicleLossValue 700
      m_iEscortLossValue 2000
@@ -697,7 +702,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     }
     AROR_ForceProfile {
      m_sId "ussr_armour"
-     m_iMinimumWarLevel 5
+     m_iMinimumReadinessLevel 5
      m_iPersonnelLossValue 25
      m_iVehicleLossValue 450
      m_iEscortLossValue 2000
@@ -716,11 +721,11 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     }
     AROR_ForceProfile {
      m_sId "ussr_airborne"
-     m_iMinimumWarLevel 5
+     m_iMinimumReadinessLevel 5
      m_iPersonnelLossValue 25
      m_iVehicleLossValue 1800
      m_iEscortLossValue 2000
-     m_bEnabled 0
+     m_bEnabled 1
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_sAssetFactionKey "USSR"
@@ -738,7 +743,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     }
     AROR_ForceProfile {
      m_sId "us_light_support"
-     m_iMinimumWarLevel 1
+     m_iMinimumReadinessLevel 1
      m_bLightVehicle 1
      m_iPersonnelLossValue 25
      m_iVehicleLossValue 300
@@ -758,7 +763,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     }
     AROR_ForceProfile {
      m_sId "ussr_light_support"
-     m_iMinimumWarLevel 1
+     m_iMinimumReadinessLevel 1
      m_bLightVehicle 1
      m_iPersonnelLossValue 25
      m_iVehicleLossValue 200
@@ -791,14 +796,19 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
    m_vWorkbenchHQPosition 6500 0 6075
   }
   AROR_OperationManagerComponent "{6AAE5D29CAEAABAA}" {
+   m_bMarsEnabled 1
+   m_bTerritoryAttacksEnabled 1
+   m_iTerritoryAttackGrace 900
+   m_iTerritoryAttackAfterQRF 300
+   m_iTerritoryAttackRest 900
    m_bMinimumCaptureQRF 1
    m_bQRFStrategicEconomy 1
-   m_iStartingWarLevel 1
-   m_iStartingAggression 20
-   m_iCaptureWarPressure 25
-   m_iCaptureAggression 150
-   m_iAggressionQuietTime 600
-   m_iAggressionDecay 20
+   m_iStartingReadinessLevel 1
+   m_iStartingCrackdown 20
+   m_iCaptureReadinessPressure 25
+   m_iCaptureCrackdown 150
+   m_iCrackdownQuietTime 600
+   m_iCrackdownDecay 20
    m_iQRFBaseOverhead 50
    m_iQRFTierOverhead 10
    m_iQRFThreatLifetime 180
@@ -815,7 +825,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
    m_bCombatQRFs 0
    m_sOccupiersAttackTargetId ""
    m_sInvadersAttackTargetId ""
-   m_iAttackPreparation 5
+   m_iAttackPreparation 60
    m_iSpawnTimeout 90
   }
  }

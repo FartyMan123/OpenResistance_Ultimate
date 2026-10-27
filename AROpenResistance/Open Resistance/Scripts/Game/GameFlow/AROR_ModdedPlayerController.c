@@ -592,6 +592,72 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
+	// Black Market (see AROR_BlackMarket)
+	//------------------------------------------------------------------------------------------------
+	//! Client: order a catalogue item; the server checks access, tier and money, then replies with a hint and the
+	//! player's updated order list
+	void AROR_RequestBlackMarketOrder(int itemIndex)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_BlackMarketOrder(itemIndex);
+		else
+			Rpc(AROR_RpcAsk_BlackMarketOrder, itemIndex);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Client: ask for this player's order list (when the app opens)
+	void AROR_RequestBlackMarketOrders()
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_BlackMarketOrders();
+		else
+			Rpc(AROR_RpcAsk_BlackMarketOrders);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_BlackMarketOrder(int itemIndex)
+	{
+		bool success;
+		string message = AROR_BlackMarket.Order_S(GetPlayerId(), itemIndex, success);
+		if (!message.IsEmpty())
+		{
+			Color color;
+			if (success)
+				color = AROR_UIColors.Get(AROR_UIColors.REBEL);
+			AROR_NotificationManagerComponent.SendHint_S(GetPlayerId(), message, color);
+		}
+		AROR_SendBlackMarketOrders_S();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_BlackMarketOrders()
+	{
+		AROR_SendBlackMarketOrders_S();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void AROR_SendBlackMarketOrders_S()
+	{
+		array<int> items = {};
+		array<int> prices = {};
+		array<string> times = {};
+		AROR_BlackMarket.GetOrderRows_S(GetPlayerId(), items, prices, times);
+		if (AROR_IsLocal())
+			AROR_RpcDo_BlackMarketOrders(items, prices, times);
+		else
+			Rpc(AROR_RpcDo_BlackMarketOrders, items, prices, times);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Owner)]
+	protected void AROR_RpcDo_BlackMarketOrders(array<int> items, array<int> prices, array<string> times)
+	{
+		AROR_BlackMarket.SetLocalOrders(items, prices, times);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! True if this controller belongs to the local player (e.g. the host or Workbench player)
 	protected bool AROR_IsLocal()
 	{

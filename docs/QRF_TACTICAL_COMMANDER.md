@@ -1,6 +1,6 @@
 # QRF tactical commander and staged waves
 
-Status: earlier native Play verified partial truck/LAV spawning, seating and delivery. Current Chicken uses [war-gated equipment pools and independent aggression](QRF_STRATEGY_ECONOMY.md), starting at war 1/aggression 20%. Ground capture responses are enabled for both roles; combat/flight dispatch remain off. The new progression, full hold/return and multiplayer behavior require fresh Workbench compilation/Play.
+Status: earlier native Play verified partial truck/LAV spawning, seating and delivery. Current Chicken uses [readiness-gated equipment pools and independent crackdown](QRF_STRATEGY_ECONOMY.md), starting at readiness 1/crackdown 20%. Ground capture responses are enabled for both roles; combat/flight dispatch remain off. The new progression, full hold/return and multiplayer behavior require fresh Workbench compilation/Play.
 
 ## Responsibility and faction ownership
 

@@ -12,7 +12,7 @@ class AROR_QRFStrategicPolicy
 		}
 		return 0;
 	}
-	static int WarLevel(int pressure)
+	static int ReadinessLevel(int pressure)
 	{
 		for (int level = 5; level > 1; level--)
 		{
@@ -44,18 +44,18 @@ class AROR_QRFStrategicPolicy
 		result += Math.Min(60, Math.Max(0, age) / 10);
 		return result;
 	}
-	//! Aggression controls response size only. War level gates equipment separately.
-	static int ResponseLevel(int aggression)
+	//! Crackdown controls response size only. Readiness gates equipment separately.
+	static int ResponseLevel(int crackdown)
 	{
-		int bounded = Math.Clamp(aggression, 0, 1000);
+		int bounded = Math.Clamp(crackdown, 0, 1000);
 		return Math.Min(5, 1 + Math.Floor(bounded / 200.0));
 	}
 	//! Compatibility seam for trusted callers. Threat context affects priority, not strength.
-	static int DesiredTier(int aggressionLevel, int reports, bool captured, int roll, int importance = 100)
+	static int DesiredTier(int crackdownLevel, int reports, bool captured, int roll, int importance = 100)
 	{
-		return Math.Clamp(aggressionLevel, 1, 5);
+		return Math.Clamp(crackdownLevel, 1, 5);
 	}
-	static int LossAggression(int value)
+	static int LossCrackdown(int value)
 	{
 		if (value <= 0)
 			return 0;

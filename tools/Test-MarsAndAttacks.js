@@ -1,0 +1,291 @@
+// Actual-source policy checks. Native spawning, REAPER, widgets and replication remain mocked.
+// Run: node tools/Test-MarsAndAttacks.js
+const fs = require('fs'), path = require('path');
+const root = path.join(__dirname, '../AROpenResistance/Open Resistance');
+const read = name => fs.readFileSync(path.join(root, 'Scripts/Game/Operations', name + '.c'), 'utf8');
+const sources = Object.fromEntries(['AROR_MarsAccess','AROR_MarsTargets','AROR_MarsOperationManager',
+  'AROR_OperationManagerComponent','AROR_OperationExecutorComponent','AROR_TerritoryAttackState',
+  'AROR_TerritoryAttackManager','AROR_ForceProfile','AROR_GroundQRFRecipe','AROR_ForcePool',
+  'AROR_ReaperQRFExecutor','AROR_ResponsePolicy','AROR_ResponseSelection'].map(name => [name, read(name)]));
+let assertions = 0;
+function check(ok, label) { assertions++; if (!ok) throw Error(label); }
+function extension(proto, name, value) { Object.defineProperty(proto, name, {value, configurable:true}); }
+extension(Array.prototype,'Count',function(){return this.length;});
+extension(Array.prototype,'IsEmpty',function(){return !this.length;});
+extension(Array.prototype,'Clear',function(){this.length=0;});
+extension(Array.prototype,'Insert',function(x){this.push(x);});
+extension(Array.prototype,'Contains',function(x){return this.includes(x);});
+extension(Array.prototype,'Find',function(x){return this.indexOf(x);});
+extension(Array.prototype,'Remove',function(i){this.splice(i,1);});
+extension(Array.prototype,'RemoveItem',function(x){const i=this.indexOf(x);if(i>=0)this.splice(i,1);});
+extension(String.prototype,'IsEmpty',function(){return !this.length;});
+extension(String.prototype,'Length',function(){return this.length;});
+extension(String.prototype,'IndexOf',function(x){return this.indexOf(x);});
+extension(String.prototype,'Substring',function(start,len){return this.substring(start,start+len);});
+extension(String.prototype,'ToInt',function(){return parseInt(this,10)||0;});
+extension(String.prototype,'Contains',function(x){return this.includes(x);});
+extension(Number.prototype,'ToString',function(){return this.toString();});
+const roles={RESISTANCE:0,OCCUPIERS:1,INVADERS:2,CIVILIANS:3};
+const types={MOTORIZED:0,MECHANIZED:1,ARMOUR:2,AIRBORNE:3,INFANTRY:4};
+const opTypes={ATTACK:0,QRF:1};
+const states={PLANNED:0,SPAWNING:1,ACTIVE:2,SUCCEEDED:3,FAILED:4,CANCELLED:5};
+let server=true, currentLocations=[], player={GetOrigin:()=>[0,0,0]}, hints=[];
+const locations={GetLocations:out=>out.push(...currentLocations),GetLocationById:id=>currentLocations.find(x=>x.GetId()===id)};
+const env={
+	AROR_EResponseType:{...types,COMBINED_ARMS:5,LIGHT_SUPPORT:6},
+	AROR_ResponseSelection:class {constructor(){Object.assign(this,{m_aElements:[],m_sProfileId:'',m_sRecipeId:'',m_sComposition:'',m_iGroups:0,m_iPersonnel:0,m_iVehicles:0});}},
+	float:{MAX:Number.MAX_VALUE},
+  AROR_EFactionRole:roles,AROR_EForceType:types,AROR_EOperationType:opTypes,AROR_EOperationState:states,
+  AROR_ELocationType:{HQ:1,OUTPOST:8}, AROR_MarsEntry:class {},
+  Replication:{IsServer:()=>server},
+  Math:Object.assign(Object.create(Math),{Max:Math.max,Min:Math.min,Clamp:(v,a,b)=>Math.max(a,Math.min(b,v))}),
+  string:{Empty:'',Format:(s,...args)=>s.replace(/%(\d+)/g,(_,i)=>args[i-1])},
+  Print:()=>{},LogLevel:{NORMAL:0},
+  GetGame:()=>({GetPlayerManager:()=>({GetPlayerControlledEntity:()=>player})}),
+  AROR_NotificationManagerComponent:{SendHint_S:(...args)=>hints.push(args)},
+  AROR_LocationManagerComponent:{GetInstance:()=>locations},
+  AROR_FactionRolesComponent:{GetInstance:()=>({GetFactionKey:r=>r===1?'AROR_OCCUPIERS':'AROR_INVADERS'})},
+  AROR_QRFSpotting:{IsResistance:x=>!!x},
+  AROR_OperationExecutorComponent:{Cast:x=>x},
+  AROR_QRFOriginPolicy:{IsOriginType:t=>t===8},
+  AROR_RecaptureComponent:{IsContested:()=>false},
+  AROR_CaptureLocationAction:{IsCapturableType:t=>t===8},
+  vector:{DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])}
+};
+const allMethods=new Set(Object.values(sources).flatMap(s=>[...s.matchAll(/^\t[^\r\n]*?\b(\w+)\([^\r\n]*\)\r?\n\t\{/gm)].map(m=>m[1])).filter(x=>!x.startsWith('AROR_')));
+allMethods.add('GetOwner');
+function compile(sourceName,name) {
+  const source=sources[sourceName], match=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
+  if(!match)throw Error('Missing '+sourceName+'.'+name);
+  const removeTypes=s=>s.replace(/\b(?:notnull\s+)?array<(?:ref\s+)?\w+>\s+/g,'').replace(/\b(?:int|float|bool|string|vector|IEntity|Faction|AROR_\w+)\s+(\w+)/g,'$1');
+  const args=removeTypes(match[1]);
+  let body=match[2]
+    .replace(/foreach \(\w+ (\w+), \w+ (\w+) : ([^)]+)\)/g,'for (const [$1, $2] of $3.entries())')
+    .replace(/foreach \(\w+ (\w+) : ([^)]+)\)/g,'for (const $1 of $2)')
+    .replace(/array<(?:ref\s+)?\w+> (\w+) = \{\};/g,'let $1 = [];')
+    .replace(/\b(?:int|float|bool|string|vector|IEntity|Faction|AROR_\w+)\s+(\w+)/g,'let $1')
+    .replace(/let (\w+);/g,'let $1 = 0;')
+    .replace(/let (best|close) = 0;/g,'let $1 = null;')
+    .replace(/super\.(\w+)\(/g,'this.Base$1(')
+    .replace(/(?<![.\w])m_\w+/g,x=>'this.'+x)
+    .replace(/(?<![.\w])(\w+)\(/g,(s,x)=>allMethods.has(x)?'this.'+s:s)
+    .replace(/([\w.]+)\.Find\(([^,]+), (\w+)\);/g,'$3 = $1.Find($2);');
+  return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
+}
+env.AROR_MarsAccess={Accepts:compile('AROR_MarsAccess','Accepts')};
+env.AROR_ResponseSelection.prototype.IsAvailable=compile('AROR_ResponseSelection','IsAvailable');
+env.AROR_ResponsePolicy={};
+env.AROR_ResponseSelection.prototype.GetComposition=compile('AROR_ResponseSelection','GetComposition');
+for(const name of ['IsProfileUnlocked','IsRecipeEligible','MatchesProfileType','TypeName','Select'])env.AROR_ResponsePolicy[name]=compile('AROR_ResponsePolicy',name);
+env.AROR_MarsTargets={NearestRebelTerritory:compile('AROR_MarsTargets','NearestRebelTerritory')};
+const credential=sources.AROR_MarsAccess.match(/credential == "([^"]+)"/)[1];
+check(env.AROR_MarsAccess.Accepts(credential),'entry accepts configured credential');
+check(!env.AROR_MarsAccess.Accepts('')&&!env.AROR_MarsAccess.Accepts(credential.toLowerCase()),'entry rejects absent/incorrect credential');
+function site(id,role,x,type=8){return {GetId:()=>id,GetName:()=>id,GetControllingRole:()=>role,GetCenter:()=>[x,0,0],GetLocationType:()=>type,IsControlFixed:()=>false};}
+currentLocations=[site('hq',0,0,1),site('far-rebel',0,1000),site('enemy',1,10),site('near-rebel',0,100)];
+check(env.AROR_MarsTargets.NearestRebelTerritory(locations,[0,0,0]).GetId()==='near-rebel','nearest Rebel territory selected; HQ/enemy excluded');
+currentLocations=[site('hq',0,0,1),site('enemy',1,10)];
+check(!env.AROR_MarsTargets.NearestRebelTerritory(locations,[0,0,0]),'no real Rebel holding means no target');
+
+const layer=fs.readFileSync(path.join(root,'Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/Managers.layer'),'utf8');
+function fields(body){const obj={};for(const m of body.matchAll(/\b(m_\w+)\s+(?:"([^"]*)"|(-?\d+(?:\.\d+)?))/g))obj[m[1]]=m[2]??Number(m[3]);return obj;}
+const profiles=[...layer.matchAll(/^ {4}AROR_ForceProfile \{([\s\S]*?)^ {4}\}/gm)].map(m=>fields(m[1]));
+for(const p of profiles){
+  for(const name of ['IsValid','HasNativeExecutor','GetGroupBudget','GetWeight'])p[name]=compile('AROR_ForceProfile',name);
+  Object.assign(p,{m_bLightVehicle:!!p.m_bLightVehicle});
+}
+const recipes=[...layer.matchAll(/^ {4}AROR_GroundQRFRecipe \{([\s\S]*?)^ {4}\}/gm)].map(m=>{
+  const r=fields(m[1]);r.m_eResponseType=5;r.m_aProfileIds=[...m[1].match(/m_aProfileIds \{([\s\S]*?)\}/)[1].matchAll(/"([^"]+)"/g)].map(x=>x[1]);
+  for(const name of ['IsValid','AllowsReadinessLevel','Resolve'])r[name]=compile('AROR_GroundQRFRecipe',name);return r;
+});
+const executor={m_aForceProfiles:profiles,m_aGroundQRFRecipes:recipes,m_bAllowAirborneResponses:true,m_bExecuteOperations:true,m_bQRFRequireFriendlyOrigin:true,
+  BestOrigin:compile('AROR_OperationExecutorComponent','BestOrigin'),IsUsableOrigin:compile('AROR_OperationExecutorComponent','IsUsableOrigin'),
+  OriginCost:(a,b)=>env.vector.DistanceXZ(a,b),IsGarrisonDepleted:()=>false,m_mOriginLaunchedAt:{Contains:()=>false},m_fMinOriginDistance:1500,
+  GetResponsePreview:compile('AROR_OperationExecutorComponent','GetResponsePreview'),
+  IsLaunchPositionSafe:()=>true,GetMarsEntries:compile('AROR_OperationExecutorComponent','GetMarsEntries'),
+  HasFriendlyQRFOrigin:compile('AROR_OperationExecutorComponent','HasFriendlyQRFOrigin'),HasMarsOrigin_S:compile('AROR_OperationExecutorComponent','HasMarsOrigin_S')};
+for(const role of [1,2])for(let tier=1;tier<=5;tier++){
+  const entries=[];executor.GetMarsEntries(role,tier,entries);
+  check(entries.some(x=>x.m_bAirborne),'airborne present for army/tier '+role+'/'+tier);
+  check(entries.some(x=>x.m_sRecipeId==='combined_arms_l1'),'combined arms present for army/tier '+role+'/'+tier);
+  check(entries.every(x=>x.m_sRecipeId||profiles.find(p=>p.m_sId===x.m_sProfileId).m_eRole===role),'no cross-army profiles');
+  check(new Set(entries.map(x=>x.m_sKey)).size===entries.length,'unique grid selection keys');
+}
+// Every type/army/Readiness/Crackdown cell resolves through the same actual policy.
+for(const role of [1,2])for(let readiness=1;readiness<=5;readiness++)for(const kind of [0,1,2,3,5,6]){
+  let previous=0;
+  for(let crackdown=1;crackdown<=5;crackdown++){
+    const choice=executor.GetResponsePreview(role,kind,readiness,crackdown);
+    const minimum=kind===1?3:([2,3].includes(kind)?5:1);
+    check(choice.IsAvailable()===(readiness>=minimum),'equipment gate for army/type/Readiness/Crackdown '+[role,kind,readiness,crackdown]);
+    if(!choice.IsAvailable())continue;
+    check(choice.m_aElements.every(p=>p.m_eRole===role&&p.m_iMinimumReadinessLevel<=readiness),'no borrowed or locked profile in preview');
+    check(choice.m_aElements.length>=previous,'Crackdown never shrinks the authored element count');
+    previous=choice.m_aElements.length;
+    if(kind!==5)check(choice.m_aElements.length===crackdown,'homogeneous intensity follows Crackdown');
+    else check(choice.m_aElements.length===recipes.find(r=>r.m_sId===choice.m_sRecipeId&&r.m_eRole===role).m_aProfileIds.length,'recipe intensity is authored, never multiplied twice');
+  }
+}
+check(!executor.GetResponsePreview(1,3,0,5).IsAvailable()&&!executor.GetResponsePreview(1,3,5,6).IsAvailable(),'invalid metric ranges rejected');
+check(executor.GetResponsePreview(1,0,1,3).GetComposition()==='3 MOTORIZED','preview composition describes resolved elements rather than multiplying the recipe');
+executor.m_bAllowAirborneResponses=false;
+check(!executor.GetResponsePreview(1,3,5,5).IsAvailable(),'air preview respects adapter switch');executor.m_bAllowAirborneResponses=true;
+const custom={...recipes.find(r=>r.m_eRole===1&&r.m_iMinimumReadinessLevel===1),m_sId:'custom_response',m_eResponseType:100,m_iLevel:2};
+recipes.push(custom);check(executor.GetResponsePreview(1,100,1,2).m_sRecipeId==='custom_response','new response families can be supplied by authored recipe');recipes.pop();
+currentLocations=[site('target',0,100),site('origin',1,2000)];
+check(executor.HasMarsOrigin_S(1,'target')&&!executor.HasMarsOrigin_S(2,'target'),'launch requires selected army ownership');
+executor.m_bQRFRequireFriendlyOrigin=false;
+check(!executor.HasMarsOrigin_S(2,'target'),'debug origin check cannot fall back to coordinates');
+executor.m_bQRFRequireFriendlyOrigin=true;
+// The old ground-only fixture and legacy blanket air override cannot change an explicit selection.
+const route=compile('AROR_ReaperQRFExecutor','StartForce');
+let airDispatch=0,groundDispatch=0,rejectedDispatch=0;
+const router={m_aForceProfiles:profiles,m_bAllowAirborneResponses:true,m_bReaperQRFTest:true,
+  GetGroundQRFRecipeId:()=> 'combined_arms_l1',StartReaperQRF:()=>airDispatch++,
+  BaseStartForce:()=>groundDispatch++,FailOperation:()=>rejectedDispatch++};
+const selectedAir={GetState:()=>states.SPAWNING,m_sRequestedProfileId:'us_airborne',m_sRequestedRecipeId:''};
+route.call(router,selectedAir);check(airDispatch===1&&groundDispatch===0,'explicit US aircraft bypasses ground-only fixture');
+selectedAir.m_sRequestedProfileId='ussr_airborne';route.call(router,selectedAir);
+check(airDispatch===2,'explicit USSR aircraft reaches flight adapter');
+selectedAir.m_sRequestedProfileId='us_motorized';route.call(router,selectedAir);
+check(groundDispatch===1&&airDispatch===2,'explicit ground profile bypasses blanket air override');
+selectedAir.m_sRequestedProfileId='';selectedAir.m_sRequestedRecipeId='combined_arms_l1';route.call(router,selectedAir);
+check(groundDispatch===2&&airDispatch===2,'explicit combined arms reaches native recipe executor');
+selectedAir.m_sRequestedProfileId='us_airborne';router.m_bAllowAirborneResponses=false;route.call(router,selectedAir);
+check(rejectedDispatch===1&&airDispatch===2,'disabled adapter cannot silently dispatch selected aircraft as ground');
+env.AROR_Operation=class {
+  constructor(id,role,type,target){Object.assign(this,{id,role,type,target,state:states.PLANNED,m_sRequestedProfileId:'',m_sRequestedRecipeId:'',m_iSpawnPreparationTimeout:0});}
+  GetId(){return this.id;}GetRole(){return this.role;}GetType(){return this.type;}GetTargetLocationId(){return this.target;}GetState(){return this.state;}
+  GetDueTime(){return 0;}GetStateSince(){return 0;}
+  IsTerminal(){return this.state>=states.SUCCEEDED;}
+};
+function manager(){return {
+  m_bMarsEnabled:true,m_bTerritoryAttacksEnabled:true,m_iClock:1000,m_iMaxAttacks:1,m_iMaxQRFs:1,m_iNextId:0,m_iQRFCooldown:120,m_iAttackInterval:300,
+  m_bInvaderOperationsEnabled:true,m_aOperations:[],m_mMarsNextRequest:{items:new Map(),Find(id){return this.items.get(id)||0;},Set(id,v){this.items.set(id,v);}},
+  IsReady:()=>true,IsEnemyRole:r=>r===1||r===2,HasLocation:id=>!!locations.GetLocationById(id),GetNextRequestTime:()=>9999,
+  GetOwner:()=>({FindComponent:()=>executor}),GetOperation(id){return this.m_aOperations.find(x=>x.id===id);},
+  NotifyChanged:()=>{},MarsReply:(...x)=>hints.push(x),RequestOperation_S:compile('AROR_OperationManagerComponent','RequestOperation_S')
+};}
+let m=manager();const request=compile('AROR_MarsOperationManager','RequestMars_S');
+request.call(m,1,credential,1,'type:3',5,1);check(!m.m_aOperations.length,'server rechecks selected Readiness and rejects locked air');
+m.m_iClock+=5;request.call(m,1,credential,1,'type:3',5,5);
+check(m.m_aOperations.length===1&&m.m_aOperations[0].m_iPoolReadinessLevel===5&&m.m_aOperations[0].m_bUseResponseMetrics,'server freezes the preview metrics for explicit air dispatch');
+check(m.m_aOperations[0].m_iRequestedTier===5,'server retains Crackdown separately from Readiness');
+m=manager();
+request.call(m,1,'bad',1,'profile:us_airborne',5);check(m.m_aOperations.length===0,'server rejects bypassed entry check');
+m.m_iClock+=5;request.call(m,1,credential,1,'profile:ussr_airborne',5);check(m.m_aOperations.length===0,'server rejects cross-army selection');
+m.m_iClock+=5;request.call(m,1,credential,2,'profile:ussr_airborne',5);check(m.m_aOperations.length===0,'server rejects absent launch territory');
+currentLocations=[site('hq',0,0,1),site('origin',1,2000)];m.m_iClock+=5;
+request.call(m,1,credential,1,'profile:us_airborne',5);check(m.m_aOperations.length===0,'server rejects HQ-only Rebel ownership');
+currentLocations=[site('target',0,100),site('origin',1,2000)];m.m_iClock+=5;
+request.call(m,1,credential,1,'profile:us_airborne',5);
+check(m.m_aOperations.length===1&&m.m_aOperations[0].m_sRequestedProfileId==='us_airborne','explicit airborne request admitted despite ordinary cooldown');
+check(m.m_aOperations[0].m_bDebugRequest&&m.m_aOperations[0].m_iRequestedTier===5,'debug intent and selected package count retained');
+check(m.m_iOccupiersNextQRF===undefined,'debug request leaves normal QRF cooldown untouched');
+m.m_iClock+=5;request.call(m,1,credential,1,'recipe:combined_arms_l1',1);
+check(m.m_aOperations.length===1&&m.m_aOperations[0].m_sRequestedProfileId==='us_airborne','repeat request never mutates an existing force');
+server=false;m=manager();request.call(m,1,credential,1,'profile:us_airborne',5);check(!m.m_aOperations.length,'client cannot admit a force');server=true;
+m=manager();m.m_bMarsEnabled=false;request.call(m,1,credential,1,'profile:us_airborne',5);check(!m.m_aOperations.length,'scenario debug switch enforced');
+
+// One global attack slot, including the preparation and spawning stages and both roles.
+m=manager();m.GetNextRequestTime=()=>0;
+let id=m.RequestOperation_S(1,opTypes.ATTACK,'target',60);
+check(!!id,'first attack admitted');
+currentLocations.push(site('second-target',0,500));
+check(!m.RequestOperation_S(2,opTypes.ATTACK,'second-target',60),'second army cannot create another attack');
+check(m.RequestOperation_S(1,opTypes.ATTACK,'target',60)===id,'matching attack deduplicates');
+m.m_aOperations[0].state=states.SPAWNING;
+check(!m.RequestOperation_S(2,opTypes.ATTACK,'second-target',60),'spawning attack holds global slot');
+m.m_aOperations[0].state=states.ACTIVE;
+check(!m.RequestOperation_S(2,opTypes.ATTACK,'second-target',60),'active attack holds global slot');
+m.m_aOperations[0].state=states.FAILED;
+check(!!m.RequestOperation_S(2,opTypes.ATTACK,'second-target',60),'terminal attack releases global slot');
+
+const processOperations=compile('AROR_OperationManagerComponent','ProcessOperations');
+let outcome;
+const completion={m_iClock:10,m_iSpawnTimeout:90,ActiveTimeoutFor:()=>900,HasLocation:()=>true,
+  GetOperations:out=>out.push(attackForCompletion),
+  ChangeState_S:(op,state,reason)=>outcome={state,reason}};
+let attackForCompletion=new env.AROR_Operation('capture',1,opTypes.ATTACK,'target');
+attackForCompletion.state=states.ACTIVE;
+currentLocations=[site('target',0,100)];processOperations.call(completion,opTypes.ATTACK);
+check(!outcome,'arrival/activity without canonical capture cannot succeed');
+currentLocations=[site('target',1,100)];processOperations.call(completion,opTypes.ATTACK);
+check(outcome.state===states.SUCCEEDED,'canonical capture resolves an active attack');
+attackForCompletion.state=states.PLANNED;processOperations.call(completion,opTypes.ATTACK);
+check(outcome.state===states.CANCELLED,'target lost during preparation cancels without false success');
+const idle=compile('AROR_OperationExecutorComponent','FinishGroundQRFIfIdle');
+const idleContext={HasOperatingQRF:()=>false,HasPendingQRF:()=>false,
+  m_Operations:{ResolveOperation_S:(id,state)=>outcome={state}},FailOperation:()=>outcome={state:states.FAILED}};
+attackForCompletion.state=states.ACTIVE;currentLocations=[site('target',0,100)];idle.call(idleContext,attackForCompletion);
+check(outcome.state===states.FAILED,'withdrawal without capture fails the attack');
+currentLocations=[site('target',1,100)];idle.call(idleContext,attackForCompletion);
+check(outcome.state===states.SUCCEEDED,'return tick also honors an already confirmed capture');
+currentLocations=[site('target',0,100),site('origin',1,2000)];
+
+attackForCompletion=new env.AROR_Operation('air-plan',1,opTypes.QRF,'target');attackForCompletion.state=states.SPAWNING;
+attackForCompletion.m_iSpawnPreparationTimeout=121;completion.m_iClock=90;outcome=null;
+processOperations.call(completion,opTypes.QRF);check(!outcome,'bounded outer landing search is not cut off by normal 90-second timeout');
+completion.m_iClock=121;processOperations.call(completion,opTypes.QRF);check(outcome.state===states.FAILED,'air preparation allowance still expires');
+attackForCompletion.m_iSpawnPreparationTimeout=0;completion.m_iClock=90;outcome=null;
+processOperations.call(completion,opTypes.QRF);check(outcome.state===states.FAILED,'ordinary ground spawn timeout unchanged');
+
+env.AROR_TerritoryAttackState=class {constructor(){this.m_iQRFCompletedAt=-1;this.m_sActiveQRF='';} };
+env.AROR_TerritoryAttackState.prototype.IsDue=compile('AROR_TerritoryAttackState','IsDue');
+let state=new env.AROR_TerritoryAttackState();Object.assign(state,{m_sLocationId:'target',m_iCapturedAt:1000,m_iNextAttempt:1000});
+check(!state.IsDue(10000,900,300),'elapsed grace alone cannot replace a physical QRF');
+state.m_iQRFCompletedAt=1800;
+check(!state.IsDue(1900,900,300)&&state.IsDue(2100,900,300),'post-QRF recovery independently enforced');
+state.m_iQRFCompletedAt=1200;
+check(!state.IsDue(1899,900,300)&&state.IsDue(1900,900,300),'15-minute capture boundary');
+const changed=compile('AROR_TerritoryAttackManager','NotifyChanged');
+m=manager();Object.assign(m,{BaseNotifyChanged:()=>{},m_aAttackTerritories:[state],m_iTerritoryAttackRest:900});
+state.m_iQRFCompletedAt=-1;
+let qrf=new env.AROR_Operation('qrf',1,opTypes.QRF,'target');qrf.m_bCaptureThreatRecorded=true;
+qrf.state=states.FAILED;changed.call(m,qrf);check(state.m_iQRFCompletedAt===-1,'failed spawn never satisfies prior-QRF requirement');
+qrf.state=states.ACTIVE;qrf.m_bDebugRequest=true;changed.call(m,qrf);check(!state.m_sActiveQRF,'debug QRF cannot unlock automatic attacks');
+qrf.m_bDebugRequest=false;changed.call(m,qrf);check(state.m_sActiveQRF==='qrf','physically activated capture QRF tracked');
+qrf.state=states.FAILED;m.m_iClock=1200;changed.call(m,qrf);check(state.m_iQRFCompletedAt===1200,'combat defeat satisfies completed-QRF requirement');
+
+const tick=compile('AROR_TerritoryAttackManager','Tick');
+Object.assign(m,{BaseTick:()=>{},m_AttackLocations:locations,m_iNextTerritoryAttackTick:0,m_iAttackRestUntil:0,m_aQRFThreats:[],
+  m_iTerritoryAttackGrace:900,m_iTerritoryAttackAfterQRF:300,m_bQRFStrategicEconomy:true,
+  HasOutstandingAttackOrQRF:compile('AROR_TerritoryAttackManager','HasOutstandingAttackOrQRF'),
+  IsAttackTerritory:compile('AROR_TerritoryAttackManager','IsAttackTerritory'),GetCrackdownLevel:()=>3,GetReadinessLevel:()=>2,
+  ScheduleAttack_S(role,target){return this.RequestOperation_S(role,opTypes.ATTACK,target,60);},GetNextRequestTime:()=>0,AnnounceTerritoryAttack:()=>{}});
+executor.CanFundQRFThreat_S=()=>true;
+m.m_iClock=1899;tick.call(m);check(!m.m_aOperations.length,'campaign cannot attack before grace');
+m.m_iClock=1914;tick.call(m);check(m.m_aOperations.length===1,'eligible territory schedules one attack');
+check(m.m_aOperations[0].m_iRequestedTier===3&&m.m_aOperations[0].m_iPoolReadinessLevel===2,'attack freezes Crackdown and Readiness separately');
+m.m_iClock+=15;tick.call(m);check(m.m_aOperations.length===1,'campaign never duplicates outstanding attack');
+let attack=m.m_aOperations[0];attack.state=states.FAILED;changed.call(m,attack);
+check(m.m_iAttackRestUntil===m.m_iClock+900,'global rest starts at attack completion');
+m.m_iClock+=30;tick.call(m);check(m.m_aOperations.length===1,'post-attack rest blocks new work');
+m.m_iClock=m.m_iAttackRestUntil;m.m_aQRFThreats.push({});tick.call(m);check(m.m_aOperations.length===1,'queued QRF has priority');
+m.m_aQRFThreats=[];m.m_iClock+=15;executor.CanFundQRFThreat_S=()=>false;tick.call(m);
+check(m.m_aOperations.length===1,'unfunded attack does not consume slot');
+executor.CanFundQRFThreat_S=()=>true;m.m_iClock+=30;currentLocations=[site('target',0,100)];tick.call(m);
+check(m.m_aOperations.length===1,'lost launch territory blocks automatic attack');
+const reset=compile('AROR_TerritoryAttackManager','OnAttackTerritoryChanged');
+m.OnAttackTerritoryRemoved=compile('AROR_TerritoryAttackManager','OnAttackTerritoryRemoved');
+reset.call(m,site('target',0,100));check(m.m_aAttackTerritories.length===1&&m.m_aAttackTerritories[0].m_iQRFCompletedAt===-1,'recapture resets QRF eligibility and grace');
+reset.call(m,site('target',1,100));check(!m.m_aAttackTerritories.length,'enemy recapture removes target eligibility');
+
+// Debug funding is bypassed; paid automatic attacks still reserve through the one finance authority.
+const reserve=compile('AROR_OperationExecutorComponent','ReserveQRFFunding');
+let fundingCalls=0;
+const payer={m_Operations:{IsQRFStrategyEnabled:()=>true,GetQRFFinance:()=>({Reserve_S:()=>{fundingCalls++;return {};}}),QRFOverhead:()=>50},ReportSpawnWait:()=>{}};
+const paid={m_bDebugRequest:false,UsesTacticalResponse:()=>true,GetRole:()=>1};
+check(reserve.call(payer,{m_bDebugRequest:true},[],5)&&fundingCalls===0,'MARS cannot charge campaign finances');
+check(reserve.call(payer,paid,[{ReplacementQuote:()=>100,m_eType:types.MOTORIZED}],2)&&fundingCalls===1,'automatic attack uses shared paid reservation');
+
+// Validate the separate UI resource/pool contract without pretending native rendering is tested.
+const layout=fs.readFileSync(path.join(root,'UI/Layouts/Phone/AROR_Mars.layout'),'utf8');
+const names=[...layout.matchAll(/\bName "([^"]+)"/g)].map(x=>x[1]);
+check(new Set(names).size===names.length,'MARS widget names unique');
+for(const [prefix,count]of [['MarsPanel',12],['MarsText',40],['MarsBtnBg',40],['MarsBtnLabel',40],['MarsBtn',40]])
+  check(Array.from({length:count},(_,i)=>prefix+i).every(x=>names.includes(x)),'complete '+prefix+' pool');
+check(names.includes('MarsCredential')&&names.includes('MarsApp')&&names.includes('MarsBackground'),'MARS entry/root widgets present');
+check(names.includes('MarsReadinessSlider')&&names.includes('MarsCrackdownSlider'),'both native metric sliders declared');
+check(names.includes('MarsBackdrop'),'circular background canvas declared');
+console.log(JSON.stringify({assertions,note:'Native AI, REAPER flight, UI and replication require Workbench compile and Play.'}));

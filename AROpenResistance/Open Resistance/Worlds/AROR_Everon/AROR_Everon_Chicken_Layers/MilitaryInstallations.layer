@@ -3,7 +3,7 @@ $grp GenericEntity : "{FD619B71CFAFEAA9}Prefabs/Compositions/Locations/AROR_Defe
   components {
    AROR_LocationComponent "{6AA28237301A1CF9}" {
     m_sId "everon_outpost_farm"
-    m_sName "Farm Outpost"
+    m_sName "Barley Field Outpost"
     m_eType OUTPOST
     m_fRadius 100
     m_bGroundOnInit 0
@@ -36,7 +36,7 @@ $grp GenericEntity : "{FD619B71CFAFEAA9}Prefabs/Compositions/Locations/AROR_Defe
   components {
    AROR_LocationComponent "{6AA28237301A1CF9}" {
     m_sId "everon_outpost_meaux_harbour"
-    m_sName "Meaux Harbour Outpost"
+    m_sName "Gull Point Outpost"
     m_eType OUTPOST
     m_fRadius 100
     m_bGroundOnInit 0
@@ -70,7 +70,7 @@ $grp GenericEntity : "{FD619B71CFAFEAA9}Prefabs/Compositions/Locations/AROR_Defe
   components {
    AROR_LocationComponent "{6AA28237301A1CF9}" {
     m_sId "everon_outpost_gorey"
-    m_sName "Gorey Outpost"
+    m_sName "Raven Ridge Outpost"
     m_eType OUTPOST
     m_fRadius 100
     m_bGroundOnInit 0
@@ -138,7 +138,7 @@ $grp GenericEntity : "{FD619B71CFAFEAA9}Prefabs/Compositions/Locations/AROR_Defe
   components {
    AROR_LocationComponent "{6AA28237301A1CF9}" {
     m_sId "everon_outpost_levie_hillside"
-    m_sName "Levie Hillside Outpost"
+    m_sName "Stag Hill Outpost"
     m_eType OUTPOST
     m_fRadius 100
     m_bGroundOnInit 0
@@ -172,7 +172,7 @@ $grp GenericEntity : "{FD619B71CFAFEAA9}Prefabs/Compositions/Locations/AROR_Defe
   components {
    AROR_LocationComponent "{6AA28237301A1CF9}" {
     m_sId "everon_outpost_sawmill"
-    m_sName "Sawmill Outpost"
+    m_sName "Old Sawmill Outpost"
     m_eType OUTPOST
     m_fRadius 100
     m_bGroundOnInit 0
@@ -205,7 +205,7 @@ $grp GenericEntity : "{FD619B71CFAFEAA9}Prefabs/Compositions/Locations/AROR_Defe
   components {
    AROR_LocationComponent "{6AA28237301A1CF9}" {
     m_sId "everon_outpost_regina_south"
-    m_sName "Regina South Outpost"
+    m_sName "Regina Heights Outpost"
     m_eType OUTPOST
     m_fRadius 100
     m_bGroundOnInit 0
@@ -241,7 +241,7 @@ $grp GenericEntity : "{0404245051C211B2}Prefabs/Compositions/Locations/AROR_Defe
   components {
    AROR_LocationComponent "{6AA28237301A1CF9}" {
     m_sId "everon_outpost_chotain_industrial"
-    m_sName "Chotain Industrial Outpost"
+    m_sName "Ironworks Outpost"
     m_eType OUTPOST
     m_fRadius 100
     m_bGroundOnInit 0
@@ -275,7 +275,7 @@ $grp GenericEntity : "{0404245051C211B2}Prefabs/Compositions/Locations/AROR_Defe
   components {
    AROR_LocationComponent "{6AA28237301A1CF9}" {
     m_sId "everon_outpost_old_wood"
-    m_sName "Old Wood Outpost"
+    m_sName "Wolf Wood Outpost"
     m_eType OUTPOST
     m_fRadius 100
     m_bGroundOnInit 0
@@ -311,7 +311,7 @@ $grp GenericEntity : "{FD619B71CFAFEAA9}Prefabs/Compositions/Locations/AROR_Defe
   components {
    AROR_LocationComponent "{6AA28237301A1CF9}" {
     m_sId "everon_outpost_morton_valley"
-    m_sName "Morton Valley Outpost"
+    m_sName "Fox Valley Outpost"
     m_eType OUTPOST
     m_fRadius 100
     m_bGroundOnInit 0
@@ -344,7 +344,7 @@ $grp GenericEntity : "{FD619B71CFAFEAA9}Prefabs/Compositions/Locations/AROR_Defe
   components {
    AROR_LocationComponent "{6AA28237301A1CF9}" {
     m_sId "everon_outpost_laruns"
-    m_sName "Laruns Outpost"
+    m_sName "Hawk Ridge Outpost"
     m_eType OUTPOST
     m_fRadius 100
     m_bGroundOnInit 0
@@ -381,7 +381,7 @@ $grp GenericEntity : "{0404245051C211B2}Prefabs/Compositions/Locations/AROR_Defe
   components {
    AROR_LocationComponent "{6AA28237301A1CF9}" {
     m_sId "everon_outpost_andres_beacon"
-    m_sName "Andres Beacon Outpost"
+    m_sName "Beacon Point Outpost"
     m_eType OUTPOST
     m_fRadius 100
     m_bGroundOnInit 0
@@ -416,7 +416,7 @@ GenericEntity AROR_Location_everon_outpost_durras_hill : "{B2B81990B9C000BA}Pref
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_outpost_durras_hill"
-   m_sName "USSR Forward Base - Durras Hill"
+   m_sName "Crow Hill Outpost"
    m_eType OUTPOST
    m_fRadius 100
    m_bGroundOnInit 0
@@ -1106,7 +1106,7 @@ $grp GenericEntity : "{3000821C69DD48D8}Prefabs/Compositions/Locations/AROR_Defe
    }
    AROR_LocationComponent "{6AA28237301A1CF9}" {
     m_sId "everon_military_outpost_levie"
-    m_sName "Levie Military Outpost"
+    m_sName "Eagle Hill Base"
     m_eType MILITARY_BASE
     m_fRadius 150
     m_bGroundOnInit 0
@@ -1140,7 +1140,7 @@ $grp GenericEntity : "{3000821C69DD48D8}Prefabs/Compositions/Locations/AROR_Defe
   components {
    AROR_LocationComponent "{6AA28237301A1CF9}" {
     m_sId "everon_military_outpost_morton"
-    m_sName "Morton Military Outpost"
+    m_sName "Morton Bluff Base"
     m_eType MILITARY_BASE
     m_fRadius 150
     m_bGroundOnInit 0
@@ -1175,7 +1175,7 @@ $grp GenericEntity : "{6B5025C036D84B66}Prefabs/Compositions/Locations/AROR_Defe
   components {
    AROR_LocationComponent "{6AA28237301A1CF9}" {
     m_sId "everon_military_outpost_chotain"
-    m_sName "Chotain Military Outpost"
+    m_sName "Stone Ridge Base"
     m_eType MILITARY_BASE
     m_fRadius 150
     m_bGroundOnInit 0
@@ -1796,7 +1796,7 @@ GenericEntity AROR_Location_everon_military_outpost_hospital : "{69A0F6EA7E3D584
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_military_outpost_hospital"
-   m_sName "Military Hospital Outpost"
+   m_sName "Mercy Hill Field Hospital"
    m_eType MILITARY_BASE
    m_fRadius 150
    m_bGroundOnInit 0
@@ -1830,7 +1830,7 @@ GenericEntity AROR_Location_everon_outpost_quarry : "{0404245051C211B2}Prefabs/C
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_outpost_quarry"
-   m_sName "Quarry Outpost"
+   m_sName "Grey Quarry Outpost"
    m_eType OUTPOST
    m_fRadius 100
    m_bGroundOnInit 0
@@ -1863,7 +1863,7 @@ GenericEntity AROR_Location_everon_factory_north_ridge : "{7DB3028CC7602D89}Pref
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_factory_north_ridge"
-   m_sName "North Ridge Factory"
+   m_sName "North Ridge Works"
    m_eType FACTORY
    m_fRadius 250
    m_bGroundOnInit 0
@@ -2196,7 +2196,7 @@ GenericEntity AROR_Location_everon_resources_north_ridge_east : "{BC294CFD17A22D
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_resources_north_ridge_east"
-   m_sName "North Ridge Resources East"
+   m_sName "Entre-Deux Ridge Depot"
    m_eType RESOURCES
    m_fRadius 250
    m_bGroundOnInit 0
@@ -2526,7 +2526,7 @@ GenericEntity AROR_Location_everon_resources_north_ridge_west : "{C3CE3C983BD347
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_resources_north_ridge_west"
-   m_sName "North Ridge Resources West"
+   m_sName "Montignac Ridge Depot"
    m_eType RESOURCES
    m_fRadius 250
    m_bGroundOnInit 0
@@ -2876,7 +2876,7 @@ GenericEntity AROR_Location_everon_military_outpost_lamentin : "{0779343A5FF66A5
  components {
   AROR_LocationComponent "{6AA28237301A1CF9}" {
    m_sId "everon_military_outpost_lamentin"
-   m_sName "Lamentin Military Outpost"
+   m_sName "Seawatch Base"
    m_eType MILITARY_BASE
    m_fRadius 150
    m_bGroundOnInit 0
@@ -2905,4 +2905,43 @@ GenericEntity AROR_Location_everon_military_outpost_lamentin : "{0779343A5FF66A5
    coords 0 0.906 0
   }
  }
+}
+GenericEntity AROR_Location_everon_lamentin_port : "{BACC096222622272}Prefabs/Locations/AROR_Location_Port.et" {
+ components {
+  AROR_LocationComponent "{6AA28237301A1CF9}" {
+   m_sId "everon_lamentin_port"
+   m_sName "Lamentin Port"
+   m_eType PORT
+   m_fRadius 150
+   m_eInitialControllingRole OCCUPIERS
+   m_bGroundOnInit 1
+  }
+ }
+ coords 1100 4 6065
+}
+GenericEntity AROR_Location_everon_saint_philippe_port : "{BACC096222622272}Prefabs/Locations/AROR_Location_Port.et" {
+ components {
+  AROR_LocationComponent "{6AA28237301A1CF9}" {
+   m_sId "everon_saint_philippe_port"
+   m_sName "Saint-Philippe Port"
+   m_eType PORT
+   m_fRadius 150
+   m_eInitialControllingRole OCCUPIERS
+   m_bGroundOnInit 1
+  }
+ }
+ coords 4350 4 11030
+}
+GenericEntity AROR_Location_everon_saint_pierre_port : "{BACC096222622272}Prefabs/Locations/AROR_Location_Port.et" {
+ components {
+  AROR_LocationComponent "{6AA28237301A1CF9}" {
+   m_sId "everon_saint_pierre_port"
+   m_sName "Saint-Pierre Port"
+   m_eType PORT
+   m_fRadius 160
+   m_eInitialControllingRole OCCUPIERS
+   m_bGroundOnInit 1
+  }
+ }
+ coords 9990 4 1515
 }

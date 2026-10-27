@@ -15,10 +15,10 @@ function runRebIntelTests(sources) {
     Color:{FromRGBA:(...rgba)=>rgba},RichTextWidget:{Cast:x=>x},ImageWidget:{Cast:x=>x},
     AROR_OperationManagerComponent:{Cast:x=>x},AROR_InvaderCampaignComponent:{Cast:x=>x},AROR_FactionRolesComponent:{GetInstance:()=>null},
     GetGame:()=>({GetWorld:()=>({GetWorldTime:()=>now}),GetGameMode:()=>({FindComponent:type=>type===env.AROR_InvaderCampaignComponent?currentInvasion:currentManager})})};
-  const names=['PressureForLevel','WarLevel','GetWarPressure','GetWarLevel','HasWarState','GetAggressionPercent','IsEnemyRole','SetWarPressure_S','RestoreQRFStrategy_S',
-    'IsQRFStrategyEnabled','AreInvaderOperationsEnabled','Style','Place','Label','ForceName','WarText','AggressionText','ResponseText','Init','Refresh','SetVisible','Layout',
+  const names=['PressureForLevel','ReadinessLevel','GetReadinessPressure','GetReadinessLevel','HasThreatState','GetCrackdownPercent','IsEnemyRole','SetReadinessPressure_S','RestoreQRFStrategy_S',
+    'IsQRFStrategyEnabled','AreInvaderOperationsEnabled','Style','Place','Label','ForceName','WarText','CrackdownText','ResponseText','Init','Refresh','SetVisible','Layout',
     'OnPhoneButton','OpenApp','IsLandscapeApp','IsSettled','OnBack','RequestClose'];
-  names.push('ResponseLevel','GetAggression','GetAggressionLevel','SetAggression_S');
+  names.push('ResponseLevel','GetCrackdown','GetCrackdownLevel','SetCrackdown_S');
   function compile(src,name){
     const m=src.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
     if(!m)throw Error('Missing method '+name);
@@ -29,77 +29,68 @@ function runRebIntelTests(sources) {
     return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
   }
   const policy={};env.AROR_QRFStrategicPolicy=policy;
-  for(const n of ['PressureForLevel','WarLevel','ResponseLevel'])policy[n]=compile(sources.policy,n);
-  const manager={m_iClock:0,m_iOccupierPressure:0,m_iInvaderPressure:0,m_iOccupierAggression:0,m_iInvaderAggression:0,m_bWarStateReady:false,m_bStrategyRestored:false,m_bQRFStrategicEconomy:true,m_bInvaderOperationsEnabled:false,
+  for(const n of ['PressureForLevel','ReadinessLevel','ResponseLevel'])policy[n]=compile(sources.policy,n);
+  const manager={m_iClock:0,m_iOccupierPressure:0,m_iInvaderPressure:0,m_iOccupierCrackdown:0,m_iInvaderCrackdown:0,m_bThreatStateReady:false,m_bStrategyRestored:false,m_bQRFStrategicEconomy:true,m_bInvaderOperationsEnabled:false,
     m_QRFFinance:{SetDebt_S(){}}};
-  for(const n of [...names.slice(2,11),'GetAggression','GetAggressionLevel','SetAggression_S'])manager[n]=compile(sources.manager,n);
-  check(!manager.HasWarState(),'no invented readings before server initialization');
+  for(const n of [...names.slice(2,11),'GetCrackdown','GetCrackdownLevel','SetCrackdown_S'])manager[n]=compile(sources.manager,n);
+  check(!manager.HasThreatState(),'no invented readings before server initialization');
   manager.RestoreQRFStrategy_S(100,700,0,0);
-  check(manager.HasWarState()&&manager.GetWarLevel(1)===2&&manager.GetWarLevel(2)===5,'restore publishes separate role readings');
-  check(manager.GetAggressionPercent(1)===10&&manager.GetAggressionPercent(2)===70,'legacy restore seeds aggression once from old pressure');
-  let before=bumps;manager.SetWarPressure_S(1,100);
+  check(manager.HasThreatState()&&manager.GetReadinessLevel(1)===2&&manager.GetReadinessLevel(2)===5,'restore publishes separate role readings');
+  check(manager.GetCrackdownPercent(1)===10&&manager.GetCrackdownPercent(2)===70,'legacy restore seeds crackdown once from old pressure');
+  let before=bumps;manager.SetReadinessPressure_S(1,100);
   check(bumps===before,'unchanged pressure does not replicate again');
-  manager.SetWarPressure_S(1,185);
-  check(manager.GetWarLevel(1)===2&&manager.GetAggressionPercent(1)===10&&bumps===before+1,'equipment progress changes do not mutate aggression');
-  manager.SetAggression_S(1,185);check(manager.GetWarLevel(1)===2&&manager.GetAggressionPercent(1)===18&&manager.GetAggressionLevel(1)===1,'aggression changes independently of equipment progress');
-  check(manager.GetWarPressure(2)===700,'Occupier change leaves Invader state untouched');
-  manager.SetWarPressure_S(1,-40);manager.SetWarPressure_S(2,1500);
-  manager.SetAggression_S(1,-40);manager.SetAggression_S(2,1500);
-  check(manager.GetAggressionPercent(1)===0&&manager.GetAggressionPercent(2)===100,'aggression bounded at both ends');
-  before=bumps;manager.SetWarPressure_S(0,900);
-  check(bumps===before&&manager.GetWarPressure(0)===0,'unsupported role cannot change summary');
-  server=false;manager.SetWarPressure_S(1,700);manager.RestoreQRFStrategy_S(500,500,0,0);
-  check(manager.GetWarPressure(1)===0&&manager.GetWarPressure(2)===1000&&bumps===before,'client cannot change or restore war pressure');
+  manager.SetReadinessPressure_S(1,185);
+  check(manager.GetReadinessLevel(1)===2&&manager.GetCrackdownPercent(1)===10&&bumps===before+1,'equipment progress changes do not mutate crackdown');
+  manager.SetCrackdown_S(1,185);check(manager.GetReadinessLevel(1)===2&&manager.GetCrackdownPercent(1)===18&&manager.GetCrackdownLevel(1)===1,'crackdown changes independently of equipment progress');
+  check(manager.GetReadinessPressure(2)===700,'Occupier change leaves Invader state untouched');
+  manager.SetReadinessPressure_S(1,-40);manager.SetReadinessPressure_S(2,1500);
+  manager.SetCrackdown_S(1,-40);manager.SetCrackdown_S(2,1500);
+  check(manager.GetCrackdownPercent(1)===0&&manager.GetCrackdownPercent(2)===100,'crackdown bounded at both ends');
+  before=bumps;manager.SetReadinessPressure_S(0,900);
+  check(bumps===before&&manager.GetReadinessPressure(0)===0,'unsupported role cannot change summary');
+  server=false;manager.SetReadinessPressure_S(1,700);manager.RestoreQRFStrategy_S(500,500,0,0);
+  check(manager.GetReadinessPressure(1)===0&&manager.GetReadinessPressure(2)===1000&&bumps===before,'client cannot change or restore readiness pressure');
   server=true;
-  const app={m_aCards:[],m_aCardBackgrounds:[],m_aNames:[],m_aRoles:[],m_aWar:[],m_aAggression:[],m_aStatus:[],m_aTracks:[],m_aBars:[],m_aPercent:[0,0],m_iNextRefresh:0};
-  for(const n of names.slice(11,22))app[n]=compile(sources.app,n);
-  check(app.WarText(null,1).includes('--')&&app.AggressionText(null,2).includes('--'),'unavailable intelligence uses placeholders');
-  check(app.ResponseText(manager,2)==='Responses disabled','disabled Invader dispatch disclosed without changing readings');
-  manager.m_bInvaderOperationsEnabled=true;manager.m_bQRFStrategicEconomy=false;
-  check(app.ResponseText(manager,2)==='Strategic selection inactive','non-strategic fixture shown accurately');
-  manager.m_bQRFStrategicEconomy=true;
-  check(app.ResponseText(manager,1)==='Strategic selection active','active strategic selector shown');
-  const bindings={GetFactionKey:r=>r===1?'AROR_OCCUPIERS':'AROR_INVADERS',GetFaction:()=>({GetFactionName:()=>'Custom Army'})};
-  check(app.ForceName(bindings,1)==='US'&&app.ForceName(bindings,2)==='USSR','default forces labeled US and USSR');
-  bindings.GetFactionKey=()=>'EXT_ARMY';check(app.ForceName(bindings,1)==='Custom Army','extender force name follows role mapping');
-  // Parse the real layout to validate hierarchy, names and local IDs used by the app/menu.
-  const widgets={},ids=[],stack=[];let lastNode=null;
-  for(const line of sources.layout.split(/\r?\n/)){
-    const id=line.match(/"\{([A-F0-9]{16})\}"/);if(id)ids.push(id[1]);
-    if(/WidgetClass.*\{\s*$/.test(line)){lastNode={type:line.match(/(\w+WidgetClass)/)[1],parent:stack.findLast(x=>x.widget)?.widget??null};stack.push({widget:lastNode});continue;}
-    if(/\{\s*$/.test(line)){stack.push({});continue;}
-    const name=line.match(/^\s*Name "([^"]+)"/);if(name){const node=stack.findLast(x=>x.widget).widget;node.name=name[1];widgets[name[1]]=node;}
-    if(/^\s*}\s*$/.test(line))stack.pop();
+  // Labels: every built-in army names all five levels of both scales, with an English line for each.
+  const labelArrays=[...sources.labels.matchAll(/m_a(?:Readiness|Crackdown)(?:Lines)? = \{("[^}]*)\}/g)];
+  check(labelArrays.length===10&&labelArrays.every(m=>m[1].match(/"[^"]*"/g).length===5),'every label table names all five levels');
+  check(sources.labels.includes('"USSR_ARMY"')&&sources.labels.includes('"US_ARMY"'),'labels keyed by army preset, not by role');
+  // Parse the real layouts to validate hierarchy, names, fonts and local IDs used by the app/menu/HUD.
+  function parse(src){
+    const widgets={},ids=[],stack=[];
+    for(const line of src.split(/\r?\n/)){
+      const id=line.match(/"\{([A-F0-9]{16})\}"/);if(id)ids.push(id[1]);
+      if(/WidgetClass.*\{\s*$/.test(line)){const node={type:line.match(/(\w+WidgetClass)/)[1],parent:stack.findLast(x=>x.widget)?.widget??null};stack.push({widget:node});continue;}
+      if(/\{\s*$/.test(line)){stack.push({});continue;}
+      const name=line.match(/^\s*Name "([^"]+)"/);if(name){const node=stack.findLast(x=>x.widget).widget;node.name=name[1];widgets[name[1]]=node;}
+      const font=line.match(/^\s*Font "([^"]+)"/);if(font)stack.findLast(x=>x.widget).widget.font=font[1];
+      if(/^\s*}\s*$/.test(line))stack.pop();
+    }
+    check(stack.length===0&&new Set(ids).size===ids.length,'layout balanced with unique local IDs');
+    check(Object.values(widgets).every(w=>w.parent?.type!=='ImageWidgetClass'),'image widgets are leaves; frame containers own card content');
+    check(Object.values(widgets).filter(w=>/TextWidgetClass/.test(w.type)).every(w=>/Roboto/.test(w.font??'')),'every text widget uses a Roboto font');
+    return widgets;
   }
-  check(stack.length===0&&new Set(ids).size===ids.length,'layout balanced with unique local IDs');
-  check(Object.values(widgets).every(w=>w.parent?.type!=='ImageWidgetClass'),'image widgets are leaves; frame containers own card content');
+  const widgets=parse(sources.layout);
   const direct=[...sources.menu.matchAll(/FindAnyWidget\("([^"]+)"\)/g),...sources.app.matchAll(/FindAnyWidget\("([^"]+)"\)/g)].map(m=>m[1]);
   check(direct.every(n=>widgets[n]),'every direct menu/app binding resolves in the layout');
-  for(const role of ['Occupiers','Invaders'])for(const suffix of ['Background','Name','Role','War','Aggression','Status','Track','Bar'])
-    check(widgets['RebIntel'+role+suffix]?.parent.name==='RebIntel'+role,'role card child stays with its own faction: '+suffix);
-  check(widgets.RebIntelTileButton.parent.name==='Home'&&widgets.RebIntelApp.parent.name==='AROR_PhoneMenu','tile and app belong to correct screens');
-  const fakeWidgets={};
-  for(const name of Object.keys(widgets))fakeWidgets[name]={name,text:'',visible:true,FindAnyWidget:n=>fakeWidgets[n],SetColor(c){this.color=c;},SetText(t){this.text=t;},GetText(){return this.text;},SetBold(){},SetExactFontSize(s){this.font=s;},SetVisible(v){this.visible=v;},SetOpacity(a){this.opacity=a;}};
-  const root={FindAnyWidget:n=>fakeWidgets[n]};
-  check(app.Init(root),'complete app binds successfully');
-  check(!fakeWidgets.RebIntelApp.visible,'app hidden until selected');
-  app.SetVisible(true,1);currentManager=manager;manager.RestoreQRFStrategy_S(100,700,0,0);
-  for(const scale of [0.28,0.44,0.6]){
-    app.Layout(0,0,scale);
-    check(app.m_aWar[0].text.includes('2 / 5')&&app.m_aWar[1].text.includes('5 / 5'),'rendered cards retain role identity');
-    check(app.m_aAggression[0].text==='Aggression   1 / 5 (10%)'&&app.m_aAggression[1].text==='Aggression   4 / 5 (70%)','displayed aggression agrees with role readings');
-    check(Math.abs(app.m_aBars[0].width/(738*scale)-0.1)<1e-8&&Math.abs(app.m_aBars[1].width/(738*scale)-0.7)<1e-8,'bar lengths match percentages across scales');
-    check(app.m_aCards[1].y+app.m_aCards[1].height<=fakeWidgets.RebIntelApp.height,'both cards fit inside portrait screen');
+  const appControls=['RebIntelBackground','RebIntelTitle','RebIntelSubtitle','RebIntelDivider','RebIntelHudHeading'];
+  for(const p of ['TabOccupiers','TabInvaders','OptionCompact','OptionFull','OptionLeft','OptionRight'])for(const s of ['Border','Fill','Label','Button'])appControls.push('RebIntel'+p+s);
+  for(const t of ['Hud','Alerts'])for(const s of ['Border','Fill','Label','Track','TrackFill','Knob','Button'])appControls.push('RebIntelToggle'+t+s);
+  check(appControls.every(n=>widgets[n]?.parent.name==='RebIntelApp'),'app controls sit directly in the app frame');
+  for(const card of ['Readiness','Crackdown']){
+    const children=['Border','Fill','Heading','Count','Highlight','Value','Line','Effect','Meter1','Meter2','Meter3','Meter4','Meter5'];
+        check(children.every(c=>widgets['RebIntel'+card+c]?.parent.name==='RebIntel'+card),'card children stay inside their own card: '+card);
   }
-  now=100;manager.SetWarPressure_S(1,450);app.Layout(0,0,0.44);
-  check(app.m_aWar[0].text.includes('2 / 5'),'summary reads throttled while animating');
-  now=1000;app.Layout(0,0,0.44);check(app.m_aWar[0].text.includes('4 / 5'),'live data refreshes while open');
-  currentManager=null;now=2000;app.Layout(0,0,0.44);
-  check(app.m_aWar[0].text.includes('--')&&!app.m_aBars[0].visible,'lost data clears stale readings and bars');
-  currentManager=manager;currentInvasion={IsAdvanceActive:()=>true};now=3000;app.Layout(0,0,0.44);
-  check(app.m_aStatus[1].text==='Territorial advance active'&&app.m_aStatus[0].text==='Strategic selection active','territorial campaign shown independently of physical Invader QRF admission');
+  check(widgets.RebIntelTileButton.parent.name==='Home'&&widgets.RebIntelApp.parent.name==='AROR_PhoneMenu','tile and app belong to correct screens');
+  const overlay=parse(sources.notificationsLayout);
+  for(const army of ['Occupiers','Invaders'])for(const row of ['Stripe','Flag','Name',...['Readiness','Crackdown'].flatMap(s=>['Flash','Key','Value','Meter1','Meter2','Meter3','Meter4','Meter5'].map(p=>s+p))])
+    check(overlay['Status'+army+row]?.parent.name==='Status','HUD status part stays in the status widget: '+army+row);
+  for(const s of ['Header','Source','Detail','Time','Intercept','Effect','LineLeft','LineRight'])check(overlay['Headline'+s]?.parent.name==='Headline','banner part stays in the headline: '+s);
   check(!sources.app.includes('AROR_OperationManagerComponent.GetInstance()'),'client does not use server-only scheduler singleton');
-  check(!sources.app.includes('Rpc(')&&!sources.app.includes('SetWarPressure_S('),'app has no authority to mutate campaign state');
+  check(!sources.app.includes('Rpc(')&&!/Set(?:ReadinessPressure|ReadinessLevel|Crackdown|CrackdownLevel)_S\(/.test(sources.app),'app has no authority to mutate campaign state');
+  check(!sources.settings.includes('Rpc(')&&sources.settings.includes('$profile:'),'player settings stay local to the client profile');
+  check(/RplSession\.Mode\(\) != RplMode\.Dedicated\)\s*GetGame\(\)\.GetCallqueue\(\)\.CallLater\(UpdateRebIntelHud/.test(sources.notifications),'HUD widget never runs on a dedicated server');
   const phone={m_bClosing:false,m_fTurn:0,m_fTurnTarget:0,m_eApp:apps.HOME};
   for(const n of ['OnPhoneButton','OpenApp','IsLandscapeApp','IsSettled','OnBack','RequestClose'])phone[n]=compile(sources.menu,n);
   phone.OnPhoneButton('RebIntelTileButton');check(phone.m_eApp===apps.REBINTEL&&phone.m_fTurnTarget===0,'RebIntel tile opens portrait app');
@@ -110,8 +101,8 @@ function runRebIntelTests(sources) {
   phone.m_fTurn=1;phone.OnPhoneButton('HomeButton');phone.m_fTurn=0;phone.OnPhoneButton('RebIntelTileButton');
   check(phone.m_eApp===apps.REBINTEL&&phone.m_fTurnTarget===0,'return from landscape can reopen RebIntel');
   phone.OnBack();check(phone.m_bClosing,'Escape closes phone from RebIntel');
-  check(/\[RplProp\(\)\]\s*protected int m_iOccupierPressure/.test(sources.manager)&&/\[RplProp\(\)\]\s*protected int m_iInvaderPressure/.test(sources.manager)&&/\[RplProp\(\)\]\s*protected bool m_bWarStateReady/.test(sources.manager),'summary fields included in engine replication');
-  check(/\[RplProp\(\)\]\s*protected int m_iOccupierAggression/.test(sources.manager)&&/\[RplProp\(\)\]\s*protected int m_iInvaderAggression/.test(sources.manager),'independent aggression is included in engine replication');
+  check(/\[RplProp\(\)\]\s*protected int m_iOccupierPressure/.test(sources.manager)&&/\[RplProp\(\)\]\s*protected int m_iInvaderPressure/.test(sources.manager)&&/\[RplProp\(\)\]\s*protected bool m_bThreatStateReady/.test(sources.manager),'summary fields included in engine replication');
+  check(/\[RplProp\(\)\]\s*protected int m_iOccupierCrackdown/.test(sources.manager)&&/\[RplProp\(\)\]\s*protected int m_iInvaderCrackdown/.test(sources.manager),'independent crackdown is included in engine replication');
   return {assertions,note:'Native rendering, replication/JIP and Enforce compilation still require Workbench.'};
 }
 if(typeof module!=='undefined')module.exports={runRebIntelTests};
@@ -119,5 +110,7 @@ if(typeof require!=='undefined'&&require.main===module){
   const fs=require('fs'),path=require('path'),root=path.resolve(__dirname,'../AROpenResistance/Open Resistance');
   const read=p=>fs.readFileSync(path.join(root,p),'utf8');
   console.log(runRebIntelTests({policy:read('Scripts/Game/Operations/AROR_QRFStrategicPolicy.c'),manager:read('Scripts/Game/Operations/AROR_OperationManagerComponent.c'),
-    app:read('Scripts/Game/Phone/AROR_RebIntelApp.c'),menu:read('Scripts/Game/Phone/AROR_PhoneMenu.c'),layout:read('UI/Layouts/Phone/AROR_PhoneMenu.layout')}));
+    app:read('Scripts/Game/Phone/AROR_RebIntelApp.c'),menu:read('Scripts/Game/Phone/AROR_PhoneMenu.c'),layout:read('UI/Layouts/Phone/AROR_PhoneMenu.layout'),
+    labels:read('Scripts/Game/Operations/AROR_ThreatLabels.c'),admin:read('Scripts/Game/Admin/AROR_AdminMenuComponent.c'),settings:read('Scripts/Game/Phone/AROR_RebIntelSettings.c'),
+    notifications:read('Scripts/Game/Notifications/AROR_NotificationManagerComponent.c'),notificationsLayout:read('UI/Layouts/Notifications/AROR_Notifications.layout')}));
 }

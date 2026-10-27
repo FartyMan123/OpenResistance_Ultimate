@@ -25,10 +25,10 @@ class AROR_InvaderCampaignComponent : SCR_BaseGameModeComponent
 	protected float m_fPlayerClearance;
 	[Attribute("1500", desc: "Additional Invader external support per existing Income payment while this campaign is enabled.", params: "0 100000 100")]
 	protected int m_iExternalSupport;
-	[Attribute("750", desc: "Additional support per war level above two, paid only by the existing Income system.", params: "0 100000 50")]
-	protected int m_iFundingPerWar;
-	[Attribute("30", desc: "Additional support per aggression percentage point, paid only by the existing Income system.", params: "0 10000 1")]
-	protected int m_iFundingPerAggression;
+	[Attribute("750", desc: "Additional support per readiness above two, paid only by the existing Income system.", params: "0 100000 50")]
+	protected int m_iFundingPerReadiness;
+	[Attribute("30", desc: "Additional support per crackdown percentage point, paid only by the existing Income system.", params: "0 10000 1")]
+	protected int m_iFundingPerCrackdown;
 
 	protected static AROR_InvaderCampaignComponent s_Instance;
 	protected AROR_CommanderManagerComponent m_Commanders;
@@ -65,8 +65,8 @@ class AROR_InvaderCampaignComponent : SCR_BaseGameModeComponent
 		AROR_OperationManagerComponent operations = AROR_OperationManagerComponent.GetInstance();
 		if (!operations)
 			return 0;
-		return AROR_InvaderCampaignPolicy.Funding(m_iExternalSupport, m_iFundingPerWar, m_iFundingPerAggression,
-			operations.GetWarLevel(AROR_EFactionRole.INVADERS), operations.GetAggressionPercent(AROR_EFactionRole.INVADERS));
+		return AROR_InvaderCampaignPolicy.Funding(m_iExternalSupport, m_iFundingPerReadiness, m_iFundingPerCrackdown,
+			operations.GetReadinessLevel(AROR_EFactionRole.INVADERS), operations.GetCrackdownPercent(AROR_EFactionRole.INVADERS));
 	}
 
 	int RemainingDelay()
@@ -149,7 +149,7 @@ class AROR_InvaderCampaignComponent : SCR_BaseGameModeComponent
 			if (site.GetControllingRole() == AROR_EFactionRole.INVADERS)
 				invaders++;
 		}
-		int goal = AROR_InvaderCampaignPolicy.TargetShare(m_iBaselineShare, m_Operations.GetWarLevel(AROR_EFactionRole.INVADERS), m_Operations.GetAggressionPercent(AROR_EFactionRole.INVADERS));
+		int goal = AROR_InvaderCampaignPolicy.TargetShare(m_iBaselineShare, m_Operations.GetReadinessLevel(AROR_EFactionRole.INVADERS), m_Operations.GetCrackdownPercent(AROR_EFactionRole.INVADERS));
 		int invaderIndustry = Industry(AROR_EFactionRole.INVADERS);
 		int occupierIndustry = Industry(AROR_EFactionRole.OCCUPIERS);
 		int invaderWin = AROR_InvaderCampaignPolicy.BattleChance(1, 1, invaderIndustry, occupierIndustry);
@@ -288,9 +288,9 @@ class AROR_InvaderCampaignComponent : SCR_BaseGameModeComponent
 			return false;
 		if (m_iExternalSupport < 0 || m_iExternalSupport > 100000)
 			return false;
-		if (m_iFundingPerWar < 0 || m_iFundingPerWar > 100000)
+		if (m_iFundingPerReadiness < 0 || m_iFundingPerReadiness > 100000)
 			return false;
-		if (m_iFundingPerAggression < 0 || m_iFundingPerAggression > 10000)
+		if (m_iFundingPerCrackdown < 0 || m_iFundingPerCrackdown > 10000)
 			return false;
 		return true;
 	}

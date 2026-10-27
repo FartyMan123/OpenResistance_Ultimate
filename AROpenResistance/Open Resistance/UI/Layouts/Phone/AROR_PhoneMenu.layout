@@ -25,6 +25,12 @@ FrameWidgetClass {
     Anchor 0 0 0 0
    }
    {
+    CanvasWidgetClass "{6AB5C0DB00000000}" {
+     Name "HomeTileCanvas"
+     Slot FrameWidgetSlot "{6AB5C0DB00000001}" {
+      Anchor 0 0 0 0
+     }
+    }
     ImageWidgetClass "{6AB4E0F1A2B52009}" {
      Name "BankTile"
      Slot FrameWidgetSlot "{6AB4E0F1A2B52109}" {
@@ -35,6 +41,9 @@ FrameWidgetClass {
      Name "BankTileLabel"
      Slot FrameWidgetSlot "{6AB4E0F1A2B5210A}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E000000000}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ButtonWidgetClass "{6AB4E0F1A2B5200B}" {
@@ -54,11 +63,17 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB4E0F1A2B57001}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E000000001}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     RichTextWidgetClass "{6AB4E0F1A2B56002}" {
      Name "RebIntelTileLabel"
      Slot FrameWidgetSlot "{6AB4E0F1A2B57002}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E000000002}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ButtonWidgetClass "{6AB4E0F1A2B56003}" {
@@ -78,11 +93,17 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB4E0F1A2B52106}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E000000003}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     RichTextWidgetClass "{6AB4E0F1A2B52007}" {
      Name "TestTileLabel"
      Slot FrameWidgetSlot "{6AB4E0F1A2B52107}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E000000004}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ButtonWidgetClass "{6AB4E0F1A2B52008}" {
@@ -108,11 +129,17 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB4E0F1A2BA0001}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E000000005}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     RichTextWidgetClass "{6AB4E0F1A2B90002}" {
      Name "HiCommTileLabel"
      Slot FrameWidgetSlot "{6AB4E0F1A2BA0002}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E000000006}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ButtonWidgetClass "{6AB4E0F1A2B90003}" {
@@ -137,6 +164,9 @@ FrameWidgetClass {
      Name "OpsTileLabel"
      Slot FrameWidgetSlot "{6AC0A0F1A3000003}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E000000007}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ButtonWidgetClass "{6AC0A0F1A2000004}" {
@@ -164,11 +194,17 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB4E0F1A2B53103}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E000000008}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     RichTextWidgetClass "{6AB4E0F1A2B53004}" {
      Name "AppBody"
      Slot FrameWidgetSlot "{6AB4E0F1A2B53104}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E000000009}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ImageWidgetClass "{6AB4E0F1A2B53005}" {
@@ -181,6 +217,9 @@ FrameWidgetClass {
      Name "AppBackLabel"
      Slot FrameWidgetSlot "{6AB4E0F1A2B53106}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E00000000A}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ButtonWidgetClass "{6AB4E0F1A2B53007}" {
@@ -208,17 +247,26 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB4E0F1A2B54103}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E00000000B}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     RichTextWidgetClass "{6AB4E0F1A2B54004}" {
      Name "BankPersonal"
      Slot FrameWidgetSlot "{6AB4E0F1A2B54104}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E00000000C}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     RichTextWidgetClass "{6AB4E0F1A2B54005}" {
      Name "BankResistance"
      Slot FrameWidgetSlot "{6AB4E0F1A2B54105}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E00000000D}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ButtonWidgetClass "{6AB4E0F1A2B54006}" {
@@ -246,17 +294,26 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB4E0F1A2BC1003}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E00000000E}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     RichTextWidgetClass "{6AB4E0F1A2BC0004}" {
      Name "BankTransferBalance"
      Slot FrameWidgetSlot "{6AB4E0F1A2BC1004}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E00000000F}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     RichTextWidgetClass "{6AB4E0F1A2BC0005}" {
      Name "BankTransferToLabel"
      Slot FrameWidgetSlot "{6AB4E0F1A2BC1005}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E000000010}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ImageWidgetClass "{6AB4E0F1A2BC0006}" {
@@ -270,11 +327,17 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB4E0F1A2BC1007}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E000000011}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     RichTextWidgetClass "{6AB4E0F1A2BC0008}" {
      Name "BankTransferRecipientCaret"
      Slot FrameWidgetSlot "{6AB4E0F1A2BC1008}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E000000012}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC0009}" {
@@ -287,6 +350,9 @@ FrameWidgetClass {
      Name "BankTransferAmountLabel"
      Slot FrameWidgetSlot "{6AB4E0F1A2BC100A}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E000000013}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ImageWidgetClass "{6AB4E0F1A2BC000B}" {
@@ -324,6 +390,9 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB4E0F1A2BC1011}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E000000014}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC0012}" {
      Name "BankTransferOptionButton0"
@@ -341,6 +410,9 @@ FrameWidgetClass {
      Name "BankTransferOptionLabel1"
      Slot FrameWidgetSlot "{6AB4E0F1A2BC1014}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E000000015}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC0015}" {
@@ -360,6 +432,9 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB4E0F1A2BC1017}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E000000016}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC0018}" {
      Name "BankTransferOptionButton2"
@@ -377,6 +452,9 @@ FrameWidgetClass {
      Name "BankTransferOptionLabel3"
      Slot FrameWidgetSlot "{6AB4E0F1A2BC101A}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E000000017}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC001B}" {
@@ -396,6 +474,9 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB4E0F1A2BC101D}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E000000018}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC001E}" {
      Name "BankTransferOptionButton4"
@@ -413,6 +494,9 @@ FrameWidgetClass {
      Name "BankTransferOptionLabel5"
      Slot FrameWidgetSlot "{6AB4E0F1A2BC1020}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E000000019}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC0021}" {
@@ -432,6 +516,9 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB4E0F1A2BC1023}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E00000001A}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC0024}" {
      Name "BankTransferOptionButton6"
@@ -449,6 +536,9 @@ FrameWidgetClass {
      Name "BankTransferOptionLabel7"
      Slot FrameWidgetSlot "{6AB4E0F1A2BC1026}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E00000001B}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC0027}" {
@@ -468,6 +558,9 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB4E0F1A2BC1029}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E00000001C}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC002A}" {
      Name "BankTransferOptionButton8"
@@ -485,6 +578,9 @@ FrameWidgetClass {
      Name "BankTransferOptionLabel9"
      Slot FrameWidgetSlot "{6AB4E0F1A2BC102C}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E00000001D}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC002D}" {
@@ -504,6 +600,9 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB4E0F1A2BC102F}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E00000001E}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC0030}" {
      Name "BankTransferOptionButton10"
@@ -521,6 +620,9 @@ FrameWidgetClass {
      Name "BankTransferOptionLabel11"
      Slot FrameWidgetSlot "{6AB4E0F1A2BC1032}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E00000001F}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC0033}" {
@@ -540,6 +642,9 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB4E0F1A2BC1035}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E000000020}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC0036}" {
      Name "BankTransferOptionButton12"
@@ -557,6 +662,9 @@ FrameWidgetClass {
      Name "BankTransferOptionLabel13"
      Slot FrameWidgetSlot "{6AB4E0F1A2BC1038}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E000000021}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC0039}" {
@@ -576,6 +684,9 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB4E0F1A2BC103B}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E000000022}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC003C}" {
      Name "BankTransferOptionButton14"
@@ -594,6 +705,9 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB4E0F1A2BC103E}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0E000000023}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     ButtonWidgetClass "{6AB4E0F1A2BC003F}" {
      Name "BankTransferOptionButton15"
@@ -603,146 +717,503 @@ FrameWidgetClass {
     }
    }
   }
-  FrameWidgetClass "{6AB4E0F1A2B56018}" {
+  FrameWidgetClass "{6AB5C0DE000000C7}" {
    Name "RebIntelApp"
-   Slot FrameWidgetSlot "{6AB4E0F1A2B57018}" {
+   Slot FrameWidgetSlot "{6AB5C0DE000000C8}" {
     Anchor 0 0 0 0
    }
    {
-    ImageWidgetClass "{6AB4E0F1A2B56004}" {
+    ImageWidgetClass "{6AB5C0DE00000000}" {
      Name "RebIntelBackground"
-     Slot FrameWidgetSlot "{6AB4E0F1A2B57004}" {
+     Slot FrameWidgetSlot "{6AB5C0DE00000001}" {
       Anchor 0 0 0 0
      }
     }
-    RichTextWidgetClass "{6AB4E0F1A2B56005}" {
+    RichTextWidgetClass "{6AB5C0DE00000002}" {
      Name "RebIntelTitle"
-     Slot FrameWidgetSlot "{6AB4E0F1A2B57005}" {
+     Slot FrameWidgetSlot "{6AB5C0DE00000003}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB5C0DE00000004}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
-    RichTextWidgetClass "{6AB4E0F1A2B56006}" {
+    RichTextWidgetClass "{6AB5C0DE00000005}" {
      Name "RebIntelSubtitle"
-     Slot FrameWidgetSlot "{6AB4E0F1A2B57006}" {
+     Slot FrameWidgetSlot "{6AB5C0DE00000006}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0DE00000007}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE00000008}" {
+     Name "RebIntelTabOccupiersBorder"
+     Slot FrameWidgetSlot "{6AB5C0DE00000009}" {
       Anchor 0 0 0 0
      }
     }
-    RichTextWidgetClass "{6AB4E0F1A2B56007}" {
-     Name "RebIntelFooter"
-     Slot FrameWidgetSlot "{6AB4E0F1A2B57007}" {
+    ImageWidgetClass "{6AB5C0DE0000000A}" {
+     Name "RebIntelTabOccupiersFill"
+     Slot FrameWidgetSlot "{6AB5C0DE0000000B}" {
       Anchor 0 0 0 0
      }
     }
-    FrameWidgetClass "{6AB4E0F1A2B5600F}" {
-     Name "RebIntelOccupiers"
-     Slot FrameWidgetSlot "{6AB4E0F1A2B5700F}" {
+    RichTextWidgetClass "{6AB5C0DE0000000C}" {
+     Name "RebIntelTabOccupiersLabel"
+     Slot FrameWidgetSlot "{6AB5C0DE0000000D}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0DE0000000E}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    ButtonWidgetClass "{6AB5C0DE0000000F}" {
+     Name "RebIntelTabOccupiersButton"
+     Slot FrameWidgetSlot "{6AB5C0DE00000010}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE00000011}" {
+     Name "RebIntelTabInvadersBorder"
+     Slot FrameWidgetSlot "{6AB5C0DE00000012}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE00000013}" {
+     Name "RebIntelTabInvadersFill"
+     Slot FrameWidgetSlot "{6AB5C0DE00000014}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB5C0DE00000015}" {
+     Name "RebIntelTabInvadersLabel"
+     Slot FrameWidgetSlot "{6AB5C0DE00000016}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0DE00000017}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    ButtonWidgetClass "{6AB5C0DE00000018}" {
+     Name "RebIntelTabInvadersButton"
+     Slot FrameWidgetSlot "{6AB5C0DE00000019}" {
+      Anchor 0 0 0 0
+     }
+    }
+    FrameWidgetClass "{6AB5C0DE0000004B}" {
+     Name "RebIntelReadiness"
+     Slot FrameWidgetSlot "{6AB5C0DE0000004C}" {
       Anchor 0 0 0 0
      }
      {
-      ImageWidgetClass "{6AB4E0F1A2B56019}" {
-       Name "RebIntelOccupiersBackground"
-       Slot FrameWidgetSlot "{6AB4E0F1A2B57019}" {
+      ImageWidgetClass "{6AB5C0DE0000001A}" {
+       Name "RebIntelReadinessBorder"
+       Slot FrameWidgetSlot "{6AB5C0DE0000001B}" {
         Anchor 0 0 0 0
        }
       }
-      RichTextWidgetClass "{6AB4E0F1A2B56008}" {
-       Name "RebIntelOccupiersName"
-       Slot FrameWidgetSlot "{6AB4E0F1A2B57008}" {
+      ImageWidgetClass "{6AB5C0DE0000001C}" {
+       Name "RebIntelReadinessFill"
+       Slot FrameWidgetSlot "{6AB5C0DE0000001D}" {
         Anchor 0 0 0 0
        }
       }
-      RichTextWidgetClass "{6AB4E0F1A2B56009}" {
-       Name "RebIntelOccupiersRole"
-       Slot FrameWidgetSlot "{6AB4E0F1A2B57009}" {
+      RichTextWidgetClass "{6AB5C0DE0000001E}" {
+       Name "RebIntelReadinessHeading"
+       Slot FrameWidgetSlot "{6AB5C0DE0000001F}" {
+        Anchor 0 0 0 0
+       }
+       FontProperties FontProperties "{6AB5C0DE00000020}" {
+        Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+       }
+      }
+      RichTextWidgetClass "{6AB5C0DE00000021}" {
+       Name "RebIntelReadinessCount"
+       Slot FrameWidgetSlot "{6AB5C0DE00000022}" {
+        Anchor 0 0 0 0
+       }
+       FontProperties FontProperties "{6AB5C0DE00000023}" {
+        Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+       }
+      }
+      ImageWidgetClass "{6AB5C0DE00000024}" {
+       Name "RebIntelReadinessHighlight"
+       Slot FrameWidgetSlot "{6AB5C0DE00000025}" {
         Anchor 0 0 0 0
        }
       }
-      RichTextWidgetClass "{6AB4E0F1A2B5600A}" {
-       Name "RebIntelOccupiersWar"
-       Slot FrameWidgetSlot "{6AB4E0F1A2B5700A}" {
+      RichTextWidgetClass "{6AB5C0DE00000026}" {
+       Name "RebIntelReadinessValue"
+       Slot FrameWidgetSlot "{6AB5C0DE00000027}" {
+        Anchor 0 0 0 0
+       }
+       FontProperties FontProperties "{6AB5C0DE00000028}" {
+        Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+       }
+      }
+      RichTextWidgetClass "{6AB5C0DE00000029}" {
+       Name "RebIntelReadinessLine"
+       Slot FrameWidgetSlot "{6AB5C0DE0000002A}" {
+        Anchor 0 0 0 0
+       }
+       FontProperties FontProperties "{6AB5C0DE0000002B}" {
+        Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+       }
+      }
+      ImageWidgetClass "{6AB5C0DE0000002C}" {
+       Name "RebIntelReadinessMeter1"
+       Slot FrameWidgetSlot "{6AB5C0DE0000002D}" {
         Anchor 0 0 0 0
        }
       }
-      RichTextWidgetClass "{6AB4E0F1A2B5600B}" {
-       Name "RebIntelOccupiersAggression"
-       Slot FrameWidgetSlot "{6AB4E0F1A2B5700B}" {
+      ImageWidgetClass "{6AB5C0DE0000002E}" {
+       Name "RebIntelReadinessMeter2"
+       Slot FrameWidgetSlot "{6AB5C0DE0000002F}" {
         Anchor 0 0 0 0
        }
       }
-      RichTextWidgetClass "{6AB4E0F1A2B5600C}" {
-       Name "RebIntelOccupiersStatus"
-       Slot FrameWidgetSlot "{6AB4E0F1A2B5700C}" {
+      ImageWidgetClass "{6AB5C0DE00000030}" {
+       Name "RebIntelReadinessMeter3"
+       Slot FrameWidgetSlot "{6AB5C0DE00000031}" {
         Anchor 0 0 0 0
        }
       }
-      ImageWidgetClass "{6AB4E0F1A2B5600D}" {
-       Name "RebIntelOccupiersTrack"
-       Slot FrameWidgetSlot "{6AB4E0F1A2B5700D}" {
+      ImageWidgetClass "{6AB5C0DE00000032}" {
+       Name "RebIntelReadinessMeter4"
+       Slot FrameWidgetSlot "{6AB5C0DE00000033}" {
         Anchor 0 0 0 0
        }
       }
-      ImageWidgetClass "{6AB4E0F1A2B5600E}" {
-       Name "RebIntelOccupiersBar"
-       Slot FrameWidgetSlot "{6AB4E0F1A2B5700E}" {
+      ImageWidgetClass "{6AB5C0DE00000034}" {
+       Name "RebIntelReadinessMeter5"
+       Slot FrameWidgetSlot "{6AB5C0DE00000035}" {
         Anchor 0 0 0 0
+       }
+      }
+      RichTextWidgetClass "{6AB5C0DE00000036}" {
+       Name "RebIntelReadinessEffect"
+       Slot FrameWidgetSlot "{6AB5C0DE00000037}" {
+        Anchor 0 0 0 0
+       }
+       FontProperties FontProperties "{6AB5C0DE00000038}" {
+        Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
        }
       }
      }
     }
-    FrameWidgetClass "{6AB4E0F1A2B56017}" {
-     Name "RebIntelInvaders"
-     Slot FrameWidgetSlot "{6AB4E0F1A2B57017}" {
+    FrameWidgetClass "{6AB5C0DE0000007E}" {
+     Name "RebIntelCrackdown"
+     Slot FrameWidgetSlot "{6AB5C0DE0000007F}" {
       Anchor 0 0 0 0
      }
      {
-      ImageWidgetClass "{6AB4E0F1A2B5601A}" {
-       Name "RebIntelInvadersBackground"
-       Slot FrameWidgetSlot "{6AB4E0F1A2B5701A}" {
+      ImageWidgetClass "{6AB5C0DE0000004D}" {
+       Name "RebIntelCrackdownBorder"
+       Slot FrameWidgetSlot "{6AB5C0DE0000004E}" {
         Anchor 0 0 0 0
        }
       }
-      RichTextWidgetClass "{6AB4E0F1A2B56010}" {
-       Name "RebIntelInvadersName"
-       Slot FrameWidgetSlot "{6AB4E0F1A2B57010}" {
+      ImageWidgetClass "{6AB5C0DE0000004F}" {
+       Name "RebIntelCrackdownFill"
+       Slot FrameWidgetSlot "{6AB5C0DE00000050}" {
         Anchor 0 0 0 0
        }
       }
-      RichTextWidgetClass "{6AB4E0F1A2B56011}" {
-       Name "RebIntelInvadersRole"
-       Slot FrameWidgetSlot "{6AB4E0F1A2B57011}" {
+      RichTextWidgetClass "{6AB5C0DE00000051}" {
+       Name "RebIntelCrackdownHeading"
+       Slot FrameWidgetSlot "{6AB5C0DE00000052}" {
+        Anchor 0 0 0 0
+       }
+       FontProperties FontProperties "{6AB5C0DE00000053}" {
+        Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+       }
+      }
+      RichTextWidgetClass "{6AB5C0DE00000054}" {
+       Name "RebIntelCrackdownCount"
+       Slot FrameWidgetSlot "{6AB5C0DE00000055}" {
+        Anchor 0 0 0 0
+       }
+       FontProperties FontProperties "{6AB5C0DE00000056}" {
+        Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+       }
+      }
+      ImageWidgetClass "{6AB5C0DE00000057}" {
+       Name "RebIntelCrackdownHighlight"
+       Slot FrameWidgetSlot "{6AB5C0DE00000058}" {
         Anchor 0 0 0 0
        }
       }
-      RichTextWidgetClass "{6AB4E0F1A2B56012}" {
-       Name "RebIntelInvadersWar"
-       Slot FrameWidgetSlot "{6AB4E0F1A2B57012}" {
+      RichTextWidgetClass "{6AB5C0DE00000059}" {
+       Name "RebIntelCrackdownValue"
+       Slot FrameWidgetSlot "{6AB5C0DE0000005A}" {
+        Anchor 0 0 0 0
+       }
+       FontProperties FontProperties "{6AB5C0DE0000005B}" {
+        Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+       }
+      }
+      RichTextWidgetClass "{6AB5C0DE0000005C}" {
+       Name "RebIntelCrackdownLine"
+       Slot FrameWidgetSlot "{6AB5C0DE0000005D}" {
+        Anchor 0 0 0 0
+       }
+       FontProperties FontProperties "{6AB5C0DE0000005E}" {
+        Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+       }
+      }
+      ImageWidgetClass "{6AB5C0DE0000005F}" {
+       Name "RebIntelCrackdownMeter1"
+       Slot FrameWidgetSlot "{6AB5C0DE00000060}" {
         Anchor 0 0 0 0
        }
       }
-      RichTextWidgetClass "{6AB4E0F1A2B56013}" {
-       Name "RebIntelInvadersAggression"
-       Slot FrameWidgetSlot "{6AB4E0F1A2B57013}" {
+      ImageWidgetClass "{6AB5C0DE00000061}" {
+       Name "RebIntelCrackdownMeter2"
+       Slot FrameWidgetSlot "{6AB5C0DE00000062}" {
         Anchor 0 0 0 0
        }
       }
-      RichTextWidgetClass "{6AB4E0F1A2B56014}" {
-       Name "RebIntelInvadersStatus"
-       Slot FrameWidgetSlot "{6AB4E0F1A2B57014}" {
+      ImageWidgetClass "{6AB5C0DE00000063}" {
+       Name "RebIntelCrackdownMeter3"
+       Slot FrameWidgetSlot "{6AB5C0DE00000064}" {
         Anchor 0 0 0 0
        }
       }
-      ImageWidgetClass "{6AB4E0F1A2B56015}" {
-       Name "RebIntelInvadersTrack"
-       Slot FrameWidgetSlot "{6AB4E0F1A2B57015}" {
+      ImageWidgetClass "{6AB5C0DE00000065}" {
+       Name "RebIntelCrackdownMeter4"
+       Slot FrameWidgetSlot "{6AB5C0DE00000066}" {
         Anchor 0 0 0 0
        }
       }
-      ImageWidgetClass "{6AB4E0F1A2B56016}" {
-       Name "RebIntelInvadersBar"
-       Slot FrameWidgetSlot "{6AB4E0F1A2B57016}" {
+      ImageWidgetClass "{6AB5C0DE00000067}" {
+       Name "RebIntelCrackdownMeter5"
+       Slot FrameWidgetSlot "{6AB5C0DE00000068}" {
         Anchor 0 0 0 0
        }
       }
+      RichTextWidgetClass "{6AB5C0DE00000069}" {
+       Name "RebIntelCrackdownEffect"
+       Slot FrameWidgetSlot "{6AB5C0DE0000006A}" {
+        Anchor 0 0 0 0
+       }
+       FontProperties FontProperties "{6AB5C0DE0000006B}" {
+        Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+       }
+      }
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE00000080}" {
+     Name "RebIntelDivider"
+     Slot FrameWidgetSlot "{6AB5C0DE00000081}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB5C0DE00000082}" {
+     Name "RebIntelHudHeading"
+     Slot FrameWidgetSlot "{6AB5C0DE00000083}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0DE00000084}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE00000085}" {
+     Name "RebIntelToggleHudBorder"
+     Slot FrameWidgetSlot "{6AB5C0DE00000086}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE00000087}" {
+     Name "RebIntelToggleHudFill"
+     Slot FrameWidgetSlot "{6AB5C0DE00000088}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB5C0DE00000089}" {
+     Name "RebIntelToggleHudLabel"
+     Slot FrameWidgetSlot "{6AB5C0DE0000008A}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0DE0000008B}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE0000008C}" {
+     Name "RebIntelToggleHudTrack"
+     Slot FrameWidgetSlot "{6AB5C0DE0000008D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE0000008E}" {
+     Name "RebIntelToggleHudTrackFill"
+     Slot FrameWidgetSlot "{6AB5C0DE0000008F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE00000090}" {
+     Name "RebIntelToggleHudKnob"
+     Slot FrameWidgetSlot "{6AB5C0DE00000091}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB5C0DE00000092}" {
+     Name "RebIntelToggleHudButton"
+     Slot FrameWidgetSlot "{6AB5C0DE00000093}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE00000094}" {
+     Name "RebIntelToggleAlertsBorder"
+     Slot FrameWidgetSlot "{6AB5C0DE00000095}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE00000096}" {
+     Name "RebIntelToggleAlertsFill"
+     Slot FrameWidgetSlot "{6AB5C0DE00000097}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB5C0DE00000098}" {
+     Name "RebIntelToggleAlertsLabel"
+     Slot FrameWidgetSlot "{6AB5C0DE00000099}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0DE0000009A}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE0000009B}" {
+     Name "RebIntelToggleAlertsTrack"
+     Slot FrameWidgetSlot "{6AB5C0DE0000009C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE0000009D}" {
+     Name "RebIntelToggleAlertsTrackFill"
+     Slot FrameWidgetSlot "{6AB5C0DE0000009E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE0000009F}" {
+     Name "RebIntelToggleAlertsKnob"
+     Slot FrameWidgetSlot "{6AB5C0DE000000A0}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB5C0DE000000A1}" {
+     Name "RebIntelToggleAlertsButton"
+     Slot FrameWidgetSlot "{6AB5C0DE000000A2}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE000000A3}" {
+     Name "RebIntelOptionCompactBorder"
+     Slot FrameWidgetSlot "{6AB5C0DE000000A4}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE000000A5}" {
+     Name "RebIntelOptionCompactFill"
+     Slot FrameWidgetSlot "{6AB5C0DE000000A6}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB5C0DE000000A7}" {
+     Name "RebIntelOptionCompactLabel"
+     Slot FrameWidgetSlot "{6AB5C0DE000000A8}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0DE000000A9}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    ButtonWidgetClass "{6AB5C0DE000000AA}" {
+     Name "RebIntelOptionCompactButton"
+     Slot FrameWidgetSlot "{6AB5C0DE000000AB}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE000000AC}" {
+     Name "RebIntelOptionFullBorder"
+     Slot FrameWidgetSlot "{6AB5C0DE000000AD}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE000000AE}" {
+     Name "RebIntelOptionFullFill"
+     Slot FrameWidgetSlot "{6AB5C0DE000000AF}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB5C0DE000000B0}" {
+     Name "RebIntelOptionFullLabel"
+     Slot FrameWidgetSlot "{6AB5C0DE000000B1}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0DE000000B2}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    ButtonWidgetClass "{6AB5C0DE000000B3}" {
+     Name "RebIntelOptionFullButton"
+     Slot FrameWidgetSlot "{6AB5C0DE000000B4}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE000000B5}" {
+     Name "RebIntelOptionLeftBorder"
+     Slot FrameWidgetSlot "{6AB5C0DE000000B6}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE000000B7}" {
+     Name "RebIntelOptionLeftFill"
+     Slot FrameWidgetSlot "{6AB5C0DE000000B8}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB5C0DE000000B9}" {
+     Name "RebIntelOptionLeftLabel"
+     Slot FrameWidgetSlot "{6AB5C0DE000000BA}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0DE000000BB}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    ButtonWidgetClass "{6AB5C0DE000000BC}" {
+     Name "RebIntelOptionLeftButton"
+     Slot FrameWidgetSlot "{6AB5C0DE000000BD}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE000000BE}" {
+     Name "RebIntelOptionRightBorder"
+     Slot FrameWidgetSlot "{6AB5C0DE000000BF}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB5C0DE000000C0}" {
+     Name "RebIntelOptionRightFill"
+     Slot FrameWidgetSlot "{6AB5C0DE000000C1}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB5C0DE000000C2}" {
+     Name "RebIntelOptionRightLabel"
+     Slot FrameWidgetSlot "{6AB5C0DE000000C3}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0DE000000C4}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    ButtonWidgetClass "{6AB5C0DE000000C5}" {
+     Name "RebIntelOptionRightButton"
+     Slot FrameWidgetSlot "{6AB5C0DE000000C6}" {
+      Anchor 0 0 0 0
      }
     }
    }
@@ -6483,6 +6954,9 @@ FrameWidgetClass {
      Name "Clock"
      Slot FrameWidgetSlot "{6AB4E0F1A2B52102}" {
       Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB5C0E000000024}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
      }
     }
     ImageWidgetClass "{6AB4E0F1A2B52003}" {

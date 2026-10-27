@@ -22,6 +22,10 @@ modded class AROR_OperationExecutorComponent
 	protected float m_fReaperDepartureSpeed;
 	[Attribute("400", desc: "Minimum town LZ search radius; expands to town radius plus 150 m (capped at 800 m)", params: "60 800 1")]
 	protected float m_fReaperLZSearchRadius;
+	[Attribute("1200", desc: "Outer fallback LZ search radius after all near-target pads fail; 48 additional staggered candidates retain the same water, slope, rotor and obstacle checks", params: "800 2000 50")]
+	protected float m_fReaperLZFallbackRadius;
+	[Attribute("60", desc: "Bounded local search around a flat, dry LZ seed rejected for obstacles. Every result must pass the complete helicopter clearance checks; zero disables adjustment", params: "0 150 5")]
+	protected float m_fReaperLZAdjustmentRadius;
 	[Attribute("90", desc: "Minimum separation between simultaneous landing pads/corridors, metres", params: "70 180 1")]
 	protected float m_fReaperLandingSeparation;
 	[Attribute("18", desc: "Clear rotor-pad half width and vertical landing corridor, metres", params: "14 30 1")]
@@ -72,11 +76,11 @@ modded class AROR_OperationExecutorComponent
 		}
 		return false;
 	}
-	protected int AffordableReaperTier(AROR_ForceProfile profile, int desired, int warLevel = 0)
+	protected int AffordableReaperTier(AROR_ForceProfile profile, int desired, int readinessLevel = 0)
 	{
-		if (warLevel == 0)
-			warLevel = m_Operations.GetWarLevel(profile.m_eRole);
-		if (profile.m_iMinimumWarLevel > warLevel)
+		if (readinessLevel == 0)
+			readinessLevel = m_Operations.GetReadinessLevel(profile.m_eRole);
+		if (!AROR_ResponsePolicy.IsProfileUnlocked(profile, readinessLevel))
 			return 0;
 		if (!AROR_EconomyComponent.GetInstance() || m_Operations.GetQRFFinance().Debt(profile.m_eRole) > 0)
 			return 0;
@@ -144,7 +148,23 @@ modded class AROR_OperationExecutorComponent
 
 	override protected void StartForce(AROR_Operation operation)
 	{
-		if (!GetGroundQRFRecipeId(operation.GetRole()).IsEmpty() || !m_bReaperQRFTest || operation.GetType() != AROR_EOperationType.QRF)
+		if (!operation || operation.GetState() != AROR_EOperationState.SPAWNING)
+			return;
+		if (!operation.m_sRequestedProfileId.IsEmpty())
+		{
+			foreach (AROR_ForceProfile requested : m_aForceProfiles)
+			{
+				if (requested && requested.m_sId == operation.m_sRequestedProfileId && requested.m_eType == AROR_EForceType.AIRBORNE)
+				{
+					if (m_bAllowAirborneResponses)
+						StartReaperQRF(operation);
+					else
+						FailOperation(operation, "Airborne response adapter is disabled");
+					return;
+				}
+			}
+		}
+		if (!operation.m_sRequestedRecipeId.IsEmpty() || !operation.m_sRequestedProfileId.IsEmpty() || !GetGroundQRFRecipeId(operation.GetRole()).IsEmpty() || !m_bReaperQRFTest || !operation.UsesTacticalResponse())
 		{
 			super.StartForce(operation);
 			return;
@@ -156,6 +176,11 @@ modded class AROR_OperationExecutorComponent
 	{
 		if (!Replication.IsServer() || FindForce(operation.GetId()))
 			return;
+		if (!operation.m_TacticalCommander && (operation.m_bDebugRequest || operation.GetType() == AROR_EOperationType.ATTACK) && !HasMarsOrigin_S(operation.GetRole(), operation.GetTargetLocationId()))
+		{
+			FailOperation(operation, "No safe owned military origin remains for airborne dispatch");
+			return;
+		}
 		foreach (AROR_OperationForce existing : m_aForces)
 		{
 			if (AROR_ReaperAirForce.Cast(existing))
@@ -180,31 +205,40 @@ modded class AROR_OperationExecutorComponent
 		AROR_ForceProfile profile;
 		foreach (AROR_ForceProfile candidate : m_aForceProfiles)
 		{
+			if (!operation.m_sRequestedProfileId.IsEmpty() && candidate && candidate.m_sId != operation.m_sRequestedProfileId)
+				continue;
 			if (candidate && candidate.m_eType == AROR_EForceType.AIRBORNE && candidate.m_eRole == operation.GetRole() && candidate.m_sFactionKey == commander.GetFactionKey())
 			{
 				profile = candidate;
 				break;
 			}
 		}
-		if (!profile || !profile.IsValid() || profile.m_iEscortCount != 1)
+		if (!profile || !profile.m_bEnabled || !profile.IsValid() || profile.m_iEscortCount != 1)
 		{
 			FailOperation(operation, "REAPER test requires an airborne profile with exactly one escort");
 			return;
 		}
+		if (operation.m_bUseResponseMetrics && !AROR_ResponsePolicy.IsProfileUnlocked(profile, operation.m_iPoolReadinessLevel))
+		{
+			FailOperation(operation, "Selected Readiness does not unlock this airborne profile");
+			return;
+		}
 		int level = 1;
-		if (m_Operations.IsQRFStrategyEnabled())
+		if (operation.m_bDebugRequest)
+			level = operation.m_iRequestedTier;
+		else if (m_Operations.IsQRFStrategyEnabled())
 		{
 			if (operation.m_iRequestedTier < 1)
-				operation.m_iRequestedTier = m_Operations.GetAggressionLevel(operation.GetRole());
-			level = AffordableReaperTier(profile, operation.m_iRequestedTier, QRFPoolWarLevel(operation));
+				operation.m_iRequestedTier = m_Operations.GetCrackdownLevel(operation.GetRole());
+			level = AffordableReaperTier(profile, operation.m_iRequestedTier, QRFPoolReadinessLevel(operation));
 			if (level == 0)
 			{
-				ReportSpawnWait(operation, "No unlocked affordable airborne pair within the requested aggression level");
+				ReportSpawnWait(operation, "No unlocked affordable airborne pair within the requested crackdown level");
 				return;
 			}
 		}
 #ifdef WORKBENCH
-		if (!m_Operations.IsQRFStrategyEnabled() && m_iWorkbenchResponseLevel > 0)
+		if (!operation.m_bDebugRequest && !m_Operations.IsQRFStrategyEnabled() && m_iWorkbenchResponseLevel > 0)
 			level = m_iWorkbenchResponseLevel;
 #endif
 		if (level < 1 || level > 5)
@@ -338,19 +372,23 @@ modded class AROR_OperationExecutorComponent
 				return false;
 			}
 			m_ReaperLandingSearch = new AROR_ReaperLandingSearch();
-			m_ReaperLandingSearch.Initialize(target.GetCenter() + m_vReaperLZOffset, ReaperLandingRadius(target.GetRadius()), m_fReaperPadClearance, level, m_fReaperLandingSeparation);
+			m_ReaperLandingSearch.Initialize(target.GetCenter() + m_vReaperLZOffset, ReaperLandingRadius(target.GetRadius()), m_fReaperPadClearance, level, m_fReaperLandingSeparation, m_fReaperLZFallbackRadius, m_fReaperLZAdjustmentRadius);
+			// Two candidates per tick, then allow a minute for pair construction and
+			// boarding. Ground requests retain the normal configured spawn timeout.
+			operation.m_iSpawnPreparationTimeout = m_ReaperLandingSearch.GetCandidateLimit() / 2 + 61;
 			m_sReaperPlanningOperation = operation.GetId();
-			ReportSpawnWait(operation, "Selecting separate town LZs incrementally: two candidates per tick, 73 total; fewer clear sites queue locally without reducing fleet size");
+			ReportSpawnWait(operation, "Selecting landing pads, near target first then bounded outer fallback: " + m_ReaperLandingSearch.GetDiagnostics());
 		}
 		m_ReaperLandingSearch.Advance(m_iExecutorClock);
 		if (!m_ReaperLandingSearch.IsComplete())
 			return false;
 		if (!m_ReaperLandingSearch.HasResult())
 		{
-			FailOperation(operation, "All 73 town-LZ candidates rejected; bounded planning stopped");
+			FailOperation(operation, "No safe landing pad; " + m_ReaperLandingSearch.GetDiagnostics());
 			return false;
 		}
 		Print(string.Format("[AROR REAPER] QRF %1 landing plan ready after %2 checks: %3 separate pads for %4 transports; different pads land concurrently", operation.GetId(), m_ReaperLandingSearch.GetCheckedCount(), m_ReaperLandingSearch.GetResultCount(), level), LogLevel.NORMAL);
+		Print("[AROR REAPER] " + m_ReaperLandingSearch.GetDiagnostics(), LogLevel.NORMAL);
 		return true;
 	}
 
@@ -586,7 +624,7 @@ modded class AROR_OperationExecutorComponent
 			if (AROR_ReaperFlightGeometry.IsLandingClear(force.m_vLanding, m_fReaperPadClearance))
 				return true;
 			force.m_AlternateLandingSearch = new AROR_ReaperLandingSearch();
-			force.m_AlternateLandingSearch.Initialize(force.m_vTown + m_vReaperLZOffset, ReaperLandingRadius(force.m_fTownRadius), m_fReaperPadClearance, 1, m_fReaperLandingSeparation);
+			force.m_AlternateLandingSearch.Initialize(force.m_vTown + m_vReaperLZOffset, ReaperLandingRadius(force.m_fTownRadius), m_fReaperPadClearance, 1, m_fReaperLandingSeparation, m_fReaperLZFallbackRadius, m_fReaperLZAdjustmentRadius);
 		}
 		// Refresh reservations, because another transport may have selected a new pad.
 		array<vector> reserved = {};
@@ -607,7 +645,7 @@ modded class AROR_OperationExecutorComponent
 			return false;
 		if (!force.m_AlternateLandingSearch.HasResult())
 		{
-			FailReaperPackage(force, operation, "Package landing area blocked and bounded replacement search exhausted");
+			FailReaperPackage(force, operation, "Replacement landing search exhausted; " + force.m_AlternateLandingSearch.GetDiagnostics());
 			return false;
 		}
 		force.m_vLanding = force.m_AlternateLandingSearch.GetResult();
@@ -670,6 +708,10 @@ modded class AROR_OperationExecutorComponent
 		if (m_fReaperLZSearchRadius < 60 || m_fReaperLZSearchRadius > 800)
 			return false;
 		if (m_fReaperLandingSeparation < 70 || m_fReaperLandingSeparation > 180)
+			return false;
+		if (m_fReaperLZFallbackRadius < 800 || m_fReaperLZFallbackRadius > 2000)
+			return false;
+		if (m_fReaperLZAdjustmentRadius < 0 || m_fReaperLZAdjustmentRadius > 150)
 			return false;
 		if (m_fReaperPadClearance < 14 || m_fReaperPadClearance > 30)
 			return false;

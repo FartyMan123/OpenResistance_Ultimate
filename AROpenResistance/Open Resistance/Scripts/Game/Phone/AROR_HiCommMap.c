@@ -558,7 +558,7 @@ class AROR_HiCommMap
 	static const int COAST = 0x7CE6A8;
 	static const int CONTOUR = 0x3C7E58;
 	static const int GRID = 0x2A6446;
-	static const int ROAD = 0xC8A866;
+	static const int ROAD = 0xB8F2C8;	//!< Pale phosphor, brighter than contours and distinct from the coastline
 
 	//------------------------------------------------------------------------------------------------
 	//! Land shade per elevation band (0 = lowest)

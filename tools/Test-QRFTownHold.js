@@ -30,9 +30,10 @@ function runQRFTownHoldTests(sources) {
   check(withdraw.call(c,601,true),'legacy duration restored when disabled');
   c.m_bWithdraw=true;c.m_iTownHoldSeconds=900;check(withdraw.call(c,0,true),'explicit safety withdrawal respected');
   const timeout=compile(sources.manager,'ActiveTimeoutFor');
-  const op={GetType:()=>1,m_TacticalCommander:{m_iTownHoldSeconds:900}};
+  const op={GetType:()=>1,UsesTacticalResponse:()=>true,m_TacticalCommander:{m_iTownHoldSeconds:900}};
   check(timeout.call({m_iActiveTimeout:900},op)===2700,'manager allows ingress plus full hold plus withdrawal');
-  op.GetType=()=>0;check(timeout.call({m_iActiveTimeout:900},op)===900,'unrelated attacks retain timeout');
+  op.GetType=()=>0;check(timeout.call({m_iActiveTimeout:900},op)===2700,'attacks share the full tactical ingress/hold/withdrawal timeout');
+  op.m_TacticalCommander=null;check(timeout.call({m_iActiveTimeout:900},op)===900,'non-tactical operations retain their timeout');
   const route=compile(sources.executor,'RecoverStalledQRFRoute');
   let queries=0,orders=0;
   const ctx={m_iExecutorClock:0,m_fQRFObjectiveDeliveryRadius:100,m_sMoveWaypointPrefab:'move',

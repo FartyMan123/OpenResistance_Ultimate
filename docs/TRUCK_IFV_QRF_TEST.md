@@ -1,10 +1,10 @@
 # Truck and IFV combined QRF test
 
-The [USSR/Invader framework](INVADER_QRF_FRAMEWORK.md) is staged with levels 1-5 and operation admission disabled; the current US/Occupier test remains selected.
+The [MARS console](MARS_AND_TERRITORY_ATTACKS.md) can explicitly select the combined-arms fixture for either US/Occupiers or USSR/Invaders without changing campaign Readiness/Crackdown or turning off strategic economy. Chicken enables operation admission for both roles. The instructions below describe the older fixed-fixture route.
 
-This guide describes the fixed `combined_arms_l1` regression fixture. **Normal Chicken now starts at war level 1 with independent aggression**, so ordinary capture responses use trucks/light escorts until equipment unlocks permit APCs. Disable strategic economy explicitly to run this fixed truck/APC fixture; see [QRF strategy and prices](QRF_STRATEGY_ECONOMY.md).
+This guide describes the fixed `combined_arms_l1` regression fixture. **Normal Chicken now starts at readiness 1 with independent crackdown**, so ordinary capture responses use trucks/light escorts until equipment unlocks permit APCs. Disable strategic economy explicitly to run this fixed truck/APC fixture; see [QRF strategy and prices](QRF_STRATEGY_ECONOMY.md).
 
-For this exact two-vehicle test, set `m_bQRFStrategicEconomy = 0` on the operation manager and retain `m_sGroundQRFRecipeId = "combined_arms_l1"` on the executor. The helicopter override remains disabled. This authored tier 1 has **two elements**, not two copies of a profile and not a level-2 response. Re-enable strategic economy afterward to test payments and war-level selection.
+For this exact two-vehicle test, set `m_bQRFStrategicEconomy = 0` on the operation manager and retain `m_sGroundQRFRecipeId = "combined_arms_l1"` on the executor. The helicopter override remains disabled. This authored tier 1 has **two elements**, not two copies of a profile and not a level-2 response. Re-enable strategic economy afterward to test payments and readiness selection.
 
 | Element | Occupiers fixture | Personnel |
 |---|---|---|

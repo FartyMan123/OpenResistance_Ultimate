@@ -26,9 +26,11 @@ enum AROR_EPhoneApp
 	BANK,	//!< Portrait: account holder, personal money and Resistance funds
 	BANK_TRANSFER,	//!< Portrait: transfer personal money to a player or Resistance funds
 	TEST,	//!< Landscape test app
-	REBINTEL,	//!< Portrait: public enemy war level and aggression summary
+	REBINTEL,	//!< Portrait: public enemy readiness and crackdown summary
 	HICOMM,	//!< Landscape: Resistance high command (leaders only, see AROR_HiCommApp)
-	OPS		//!< Landscape: Resistance mission board (see AROR_OpsApp)
+	OPS,		//!< Landscape: Resistance mission board (see AROR_OpsApp)
+	MARS,		//!< Landscape: response debugger
+	BLACK_MARKET	//!< Landscape: port-gated smugglers' shop (see AROR_BlackMarketApp)
 }
 
 //! The phone (see ARCHITECTURE.md -> Phone). A menu (preset AROR_PhoneMenu, registered in chimeraMenus.conf), so it
@@ -71,6 +73,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	protected static const float TILE_LEFT = 70;
 	protected static const float TILE_SIZE = 180;
 	protected static const float TILE_SPACING = 60;
+	protected static const float TILE_CORNER_FRACTION = 0.22;	//!< Corner radius as a fraction of the tile, matching the Bank icon art
 	protected static const float TILE_ROW_SPACING = 110;	//!< From the bottom of one tile row to the top of the next (room for labels)
 
 	// Bank screen rectangles (screen pixels of AROR_Bank_AppHome)
@@ -119,6 +122,8 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	protected ImageWidget m_wBattery;
 
 	protected Widget m_wHome;
+	protected CanvasWidget m_wHomeTileCanvas;	//!< Rounded backgrounds of the drawn (non-Bank) app tiles
+	protected ref array<ref CanvasWidgetCommand> m_aTileCommands = {};
 	protected ImageWidget m_wBankTile;
 	protected RichTextWidget m_wBankTileLabel;
 	protected Widget m_wBankTileButton;
@@ -144,6 +149,11 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	protected RichTextWidget m_wOpsTileLabel;
 	protected Widget m_wOpsTileButton;
 	protected ref AROR_OpsApp m_Ops;
+	protected ref AROR_MarsApp m_Mars;
+	protected ref AROR_BlackMarketApp m_BlackMarket;
+	protected RichTextWidget m_wBlackMarketTileGlyph;	//!< Home tile widgets live in the Black Market's own layout
+	protected RichTextWidget m_wBlackMarketTileLabel;
+	protected Widget m_wBlackMarketTileButton;
 
 	protected Widget m_wBankApp;
 	protected ImageWidget m_wBankBackground;
@@ -199,13 +209,15 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		if (buttonName == "BankTileButton")
 			OpenApp(AROR_EPhoneApp.BANK);
 		else if (buttonName == "TestTileButton")
-			OpenApp(AROR_EPhoneApp.TEST);
+			OpenApp(AROR_EPhoneApp.MARS);
 		else if (buttonName == "RebIntelTileButton")
 			OpenApp(AROR_EPhoneApp.REBINTEL);
 		else if (buttonName == "HiCommTileButton")
 			OpenApp(AROR_EPhoneApp.HICOMM);
 		else if (buttonName == "OpsTileButton")
 			OpenApp(AROR_EPhoneApp.OPS);
+		else if (buttonName == "BlackMarketTileButton")
+			OpenApp(AROR_EPhoneApp.BLACK_MARKET);
 		else if (buttonName == "BankTransferButton")
 		{
 			OpenApp(AROR_EPhoneApp.BANK_TRANSFER);
@@ -217,6 +229,8 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			return;
 		}
 		else if (m_BankTransfer && m_BankTransfer.OnButton(buttonName))
+			return;
+		else if (m_RebIntel && m_RebIntel.OnButton(buttonName))
 			return;
 		else if (buttonName == "AppBackButton" || buttonName == "HomeButton")
 			OpenApp(AROR_EPhoneApp.HOME);
@@ -234,6 +248,10 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	//! Switch screens; turns the phone when the new screen needs the other orientation
 	protected void OpenApp(AROR_EPhoneApp app)
 	{
+		if (app == AROR_EPhoneApp.MARS && !m_Mars)
+			return;
+		if (app == AROR_EPhoneApp.BLACK_MARKET && !m_BlackMarket)
+			return;
 		if (app == m_eApp)
 			return;
 
@@ -249,7 +267,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	//------------------------------------------------------------------------------------------------
 	protected static bool IsLandscapeApp(AROR_EPhoneApp app)
 	{
-		return app == AROR_EPhoneApp.TEST || app == AROR_EPhoneApp.HICOMM || app == AROR_EPhoneApp.OPS;
+		return app == AROR_EPhoneApp.TEST || app == AROR_EPhoneApp.HICOMM || app == AROR_EPhoneApp.OPS || app == AROR_EPhoneApp.MARS || app == AROR_EPhoneApp.BLACK_MARKET;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -286,6 +304,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		m_wBattery = ImageWidget.Cast(root.FindAnyWidget("Battery"));
 
 		m_wHome = root.FindAnyWidget("Home");
+		m_wHomeTileCanvas = CanvasWidget.Cast(root.FindAnyWidget("HomeTileCanvas"));
 		m_wBankTile = ImageWidget.Cast(root.FindAnyWidget("BankTile"));
 		m_wBankTileLabel = RichTextWidget.Cast(root.FindAnyWidget("BankTileLabel"));
 		m_wBankTileButton = root.FindAnyWidget("BankTileButton");
@@ -312,6 +331,27 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		m_wOpsTileButton = root.FindAnyWidget("OpsTileButton");
 		m_Ops = new AROR_OpsApp();
 		bool opsReady = m_Ops.Init(root);
+		m_Mars = new AROR_MarsApp();
+		if (!m_Mars.Init(root))
+		{
+			m_Mars.Shutdown();
+			m_Mars = null;
+			Print("[AROR MARS] Separate app layout unavailable; other phone apps remain available", LogLevel.WARNING);
+		}
+		m_BlackMarket = new AROR_BlackMarketApp();
+		if (m_BlackMarket.Init(root))
+		{
+			Widget market = m_BlackMarket.GetResource();
+			m_wBlackMarketTileGlyph = RichTextWidget.Cast(market.FindAnyWidget("BlackMarketTileGlyph"));
+			m_wBlackMarketTileLabel = RichTextWidget.Cast(market.FindAnyWidget("BlackMarketTileLabel"));
+			m_wBlackMarketTileButton = market.FindAnyWidget("BlackMarketTileButton");
+		}
+		else
+		{
+			m_BlackMarket.Shutdown();
+			m_BlackMarket = null;
+			Print("[AROR] Black Market app layout unavailable; other phone apps remain available", LogLevel.WARNING);
+		}
 
 		m_wBankApp = root.FindAnyWidget("BankApp");
 		m_wBankBackground = ImageWidget.Cast(root.FindAnyWidget("BankBackground"));
@@ -352,6 +392,12 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		m_ButtonHandler = new AROR_PhoneButtonHandler(this);
 		array<Widget> buttons = {m_wBankTileButton, m_wTestTileButton, m_wRebIntelTileButton, m_wHiCommTileButton, m_wOpsTileButton, m_wBankTransferButton, m_wTestBackButton, m_wHomeButton};
 		m_BankTransfer.CollectButtons(buttons);
+		if (m_wBlackMarketTileButton)
+		{
+			m_wBlackMarketTileButton.SetColor(Color.FromRGBA(0, 0, 0, 0));
+			buttons.Insert(m_wBlackMarketTileButton);
+		}
+		m_RebIntel.CollectButtons(buttons);
 		foreach (Widget button : buttons)
 		{
 			if (button)
@@ -385,6 +431,12 @@ class AROR_PhoneMenu : ChimeraMenuBase
 
 		m_HiComm = null;
 		m_Ops = null;
+		if (m_Mars)
+			m_Mars.Shutdown();
+		m_Mars = null;
+		if (m_BlackMarket)
+			m_BlackMarket.Shutdown();
+		m_BlackMarket = null;
 		m_BankTransfer = null;
 
 		super.OnMenuClose();
@@ -482,6 +534,21 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		m_RebIntel.SetVisible(showRebIntel, contentOpacity);
 		m_HiComm.SetVisible(showHiComm, contentOpacity);
 		m_Ops.SetVisible(showOps, contentOpacity);
+		bool showMars = landscapeSettled && m_eApp == AROR_EPhoneApp.MARS;
+		if (m_Mars)
+			m_Mars.SetVisible(showMars, contentOpacity);
+		bool showBlackMarket = landscapeSettled && m_eApp == AROR_EPhoneApp.BLACK_MARKET;
+		if (m_BlackMarket)
+			m_BlackMarket.SetVisible(showBlackMarket, contentOpacity);
+		array<Widget> marketTile = {m_wBlackMarketTileGlyph, m_wBlackMarketTileLabel, m_wBlackMarketTileButton};
+		foreach (Widget marketTileWidget : marketTile)
+		{
+			if (marketTileWidget)
+			{
+				marketTileWidget.SetVisible(showHome);
+				marketTileWidget.SetOpacity(contentOpacity);
+			}
+		}
 
 		// Home button: an invisible click area over the frame's home button (bottom bezel in portrait, right in landscape)
 		if (m_wHomeButton)
@@ -518,6 +585,10 @@ class AROR_PhoneMenu : ChimeraMenuBase
 
 		if (showOps)
 			m_Ops.Layout(centerX - SCREEN_HEIGHT * scale * 0.5, centerY - SCREEN_WIDTH * scale * 0.5, scale);
+		if (showMars && m_Mars)
+			m_Mars.Layout(centerX - SCREEN_HEIGHT * scale * 0.5, centerY - SCREEN_WIDTH * scale * 0.5, scale);
+		if (showBlackMarket && m_BlackMarket)
+			m_BlackMarket.Layout(centerX - SCREEN_HEIGHT * scale * 0.5, centerY - SCREEN_WIDTH * scale * 0.5, scale);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -590,6 +661,73 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		SetFontSize(m_wOpsTileLabel, 32 * scale);
 		CentreText(m_wOpsTileLabel, (tileLeft + TILE_SIZE * 0.5) * scale, (tileTop + TILE_SIZE + 34) * scale);
 		Place(m_wOpsTileButton, tileLeft * scale, tileTop * scale, TILE_SIZE * scale, (TILE_SIZE + 60) * scale);
+
+		// Black Market: its tile widgets sit in the app's own layout over the whole phone, so add the screen corner
+		tileLeft = TILE_LEFT + (TILE_SIZE + TILE_SPACING) * 2;
+		if (m_wBlackMarketTileGlyph && m_wBlackMarketTileLabel && m_wBlackMarketTileButton)
+		{
+			SetFontSize(m_wBlackMarketTileGlyph, 86 * scale);
+			CentreText(m_wBlackMarketTileGlyph, left + (tileLeft + TILE_SIZE * 0.5) * scale, top + (tileTop + TILE_SIZE * 0.5) * scale);
+			SetFontSize(m_wBlackMarketTileLabel, 32 * scale);
+			CentreText(m_wBlackMarketTileLabel, left + (tileLeft + TILE_SIZE * 0.5) * scale, top + (tileTop + TILE_SIZE + 34) * scale);
+			Place(m_wBlackMarketTileButton, left + tileLeft * scale, top + tileTop * scale, TILE_SIZE * scale, (TILE_SIZE + 60) * scale);
+		}
+
+		DrawRoundedTiles(scale);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! App icons with rounded corners like the Bank icon (its art rounds ~22% of the width); the square tile
+	//! images are hidden and these shapes are drawn behind each tile's glyph and label
+	protected void DrawRoundedTiles(float scale)
+	{
+		if (!m_wHomeTileCanvas)
+			return;
+
+		Place(m_wHomeTileCanvas, 0, 0, SCREEN_WIDTH * scale, SCREEN_HEIGHT * scale);
+		float pixels = GetGame().GetWorkspace().DPIScale(scale);
+		float secondRow = TILE_TOP + TILE_SIZE + TILE_ROW_SPACING;
+		m_aTileCommands.Clear();
+		AddRoundedTile(TILE_LEFT + TILE_SIZE + TILE_SPACING, TILE_TOP, AROR_UIColors.SURFACE_RAISED, pixels);
+		AddRoundedTile(TILE_LEFT + (TILE_SIZE + TILE_SPACING) * 2, TILE_TOP, AROR_UIColors.SURFACE_RAISED, pixels);
+		AddRoundedTile(TILE_LEFT, secondRow, AROR_UIColors.SURFACE, pixels);
+		AddRoundedTile(TILE_LEFT + TILE_SIZE + TILE_SPACING, secondRow, AROR_UIColors.SURFACE, pixels);
+		if (m_BlackMarket)
+			AddRoundedTile(TILE_LEFT + (TILE_SIZE + TILE_SPACING) * 2, secondRow, AROR_UIColors.SURFACE, pixels);
+		m_wHomeTileCanvas.SetDrawCommands(m_aTileCommands);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! One rounded square at (x, y) screen units: fill plus a faint rebel outline so it reads on the wallpaper
+	protected void AddRoundedTile(float x, float y, int fill, float pixels)
+	{
+		array<float> outline = {};
+		int steps = 6;
+		float radius = TILE_SIZE * TILE_CORNER_FRACTION;
+		array<float> cornerX = {x + TILE_SIZE - radius, x + radius, x + radius, x + TILE_SIZE - radius};
+		array<float> cornerY = {y + radius, y + radius, y + TILE_SIZE - radius, y + TILE_SIZE - radius};
+		for (int corner = 0; corner < 4; corner++)
+		{
+			for (int i = 0; i <= steps; i++)
+			{
+				// Corners anticlockwise from the top right, each sweeping a quarter turn
+				float angle = (corner * 90 + i * 90 / steps) * Math.DEG2RAD;
+				outline.Insert((cornerX[corner] + Math.Cos(angle) * radius) * pixels);
+				outline.Insert((cornerY[corner] - Math.Sin(angle) * radius) * pixels);
+			}
+		}
+
+		PolygonDrawCommand shape = new PolygonDrawCommand();
+		shape.m_iColor = AROR_UIColors.Get(fill).PackToInt();
+		shape.m_Vertices = outline;
+		m_aTileCommands.Insert(shape);
+
+		LineDrawCommand edge = new LineDrawCommand();
+		edge.m_iColor = AROR_UIColors.Get(AROR_UIColors.REBEL_DIM).PackToInt();
+		edge.m_fWidth = 2 * pixels;
+		edge.m_Vertices = outline;
+		edge.m_bShouldEnclose = true;
+		m_aTileCommands.Insert(edge);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -677,10 +815,14 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		if (m_wTestPanel)
 			m_wTestPanel.SetVisible(false);
 
-		SetColor(m_wTestTile, Color.FromRGBA(79, 107, 46, 255));
-		SetColor(m_wRebIntelTile, Color.FromRGBA(25, 102, 84, 255));
-		SetColor(m_wHiCommTile, Color.FromRGBA(10, 22, 15, 255));
-		SetColor(m_wOpsTile, Color.FromRGBA(11, 15, 10, 255));
+		// App icons: dark rounded tiles drawn on HomeTileCanvas (see DrawRoundedTiles), glyph in rebel green.
+		// The square tile images stay as layout anchors only.
+		array<Widget> squareTiles = {m_wTestTile, m_wRebIntelTile, m_wHiCommTile, m_wOpsTile};
+		foreach (Widget squareTile : squareTiles)
+		{
+			if (squareTile)
+				squareTile.SetVisible(false);
+		}
 		SetColor(m_wTestBackBackground, Color.FromRGBA(255, 255, 255, 40));
 
 		// Buttons only catch clicks; the visuals are the widgets underneath
@@ -692,15 +834,27 @@ class AROR_PhoneMenu : ChimeraMenuBase
 
 		StyleText(m_wClock, "--:--", true);
 		StyleText(m_wBankTileLabel, "Bank", false);
-		StyleText(m_wTestTileGlyph, "T", true);
-		StyleText(m_wTestTileLabel, "Test", false);
+		StyleText(m_wTestTileGlyph, "M", true);
+		StyleText(m_wTestTileLabel, "MARS", false);
 		StyleText(m_wRebIntelTileGlyph, "RI", true);
-		StyleText(m_wRebIntelTileLabel, "RebIntel", false);
+		StyleText(m_wRebIntelTileLabel, "REBINTEL", false);
 		StyleText(m_wHiCommTileGlyph, string.Empty, true);
 		StyleText(m_wHiCommTileLabel, "HICOMM", false);
 		StyleText(m_wOpsTileLabel, "OPS", false);
-		if (m_wHiCommTileGlyph)
-			m_wHiCommTileGlyph.SetColor(Color.FromRGBA(134, 240, 172, 255));
+		StyleText(m_wBlackMarketTileGlyph, "$", true);
+		StyleText(m_wBlackMarketTileLabel, "MARKET", false);
+		if (m_wBlackMarketTileGlyph && m_wBlackMarketTileLabel)
+		{
+			m_wBlackMarketTileGlyph.SetColor(AROR_UIColors.Get(AROR_UIColors.REBEL));
+			FrameSlot.SetSizeToContent(m_wBlackMarketTileGlyph, true);
+			FrameSlot.SetSizeToContent(m_wBlackMarketTileLabel, true);
+		}
+		array<TextWidget> glyphs = {m_wTestTileGlyph, m_wRebIntelTileGlyph, m_wHiCommTileGlyph};
+		foreach (TextWidget glyph : glyphs)
+		{
+			if (glyph)
+				glyph.SetColor(AROR_UIColors.Get(AROR_UIColors.REBEL));
+		}
 		StyleText(m_wBankName, string.Empty, true);
 		StyleText(m_wBankPersonal, string.Empty, true);
 		StyleText(m_wBankResistance, string.Empty, true);
@@ -771,8 +925,9 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			return;
 
 		text.SetText(content);
-		text.SetColor(Color.FromRGBA(245, 245, 248, 255));
+		text.SetColor(AROR_UIColors.Get(AROR_UIColors.TEXT));
 		text.SetBold(bold);
+		// Home and Bank text sits on wallpaper art, so it keeps a shadow (flat-only rules are for the HUD)
 		text.SetShadow(1, 0xFF000000, 0.4, 1, 1);
 	}
 

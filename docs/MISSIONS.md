@@ -38,7 +38,7 @@ Prisoners count as civilians while detained, so the guards leave them alone. Onc
 
 | Screen | What it shows |
 |---|---|
-| Login | The OPS crest (sight ring and amber pointer), a typed boot log (uplink, cell roster, intel feed with the number of offers, enemy aggression from Operations), the player's callsign, clearance (LEADER or OPERATIVE) and the resistance name, and AUTHENTICATE. Non-leaders sign in view-only. |
+| Login | The OPS crest (sight ring and amber pointer), a typed boot log (uplink, cell roster, intel feed with the number of offers, enemy crackdown from Operations), the player's callsign, clearance (LEADER or OPERATIVE) and the resistance name, and AUTHENTICATE. Non-leaders sign in view-only. |
 | Board | Top bar with Resistance funds, manpower and active operations (x/3). Filter chips by category with counts. The list shows active missions first, each with a threat stripe, name, ID, category, grid, and an OPEN / ACTIVE / URGENT tag with its time limit or countdown. The network log is below the list. |
 | Dossier | Kicker, mission name and codename, then facts (threat, time limit or time remaining, squad size, grid). Active missions show a status banner. Then situation, objectives, failure conditions and the outcome on success (funds, manpower, opposition). On the right: the area map (the HICOMM terrain map, zoomed to the target, with its area circle, codename, any destination and nearby locations in their controller's colour; + / - zoom) and recommended kit. ACCEPT OPERATION or ABORT OPERATION at the bottom, with a note explaining when it is disabled. |
 

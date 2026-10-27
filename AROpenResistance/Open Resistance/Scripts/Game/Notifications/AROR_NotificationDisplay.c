@@ -1,6 +1,7 @@
 //! Client-side drawing of notifications and hints (driven by AROR_NotificationManagerComponent).
-//! Headlines (full-width strip) and notifications (dispatch card, top right) share one queue and show one at a time;
-//! headlines jump ahead of queued notifications. Hints (bottom pill) bypass the queue: a new hint replaces the current one.
+//! Headlines (alert banner, top-centre below the compass) and notifications (toast, right edge) share one queue and
+//! show one at a time; headlines jump ahead of queued notifications. Hints (bottom pill) bypass the queue: a new hint
+//! replaces the current one. Styling follows the Open Resistance UI design system (docs/UI_DESIGN.md).
 //! The layout (AROR_Notifications.layout) only declares the widgets; positions, sizes and styling are set here.
 class AROR_NotificationDisplay : Managed
 {
@@ -8,28 +9,34 @@ class AROR_NotificationDisplay : Managed
 	protected static const int ROOT_Z_ORDER = 1000;
 	protected static const float FADE_MS = 250;
 
-	// Headline strip, in reference pixels
-	protected static const float HEADLINE_SCREEN_Y = 0.22;	//!< Vertical centre as a fraction of screen height
-	protected static const float HEADLINE_HEIGHT = 56;
-	protected static const float HEADLINE_ICON_SIZE = 30;
-	protected static const float HEADLINE_GAP = 14;
-	protected static const float HEADLINE_TIMER_FRACTION = 0.64;
-	protected static const int HEADLINE_FONT_SIZE = 26;
+	// Alert banner (headlines), top-centre below the compass, in reference pixels
+	protected static const float HEADLINE_TOP = 96;
+	protected static const float HEADLINE_WIDTH = 520;
+	protected static const float HEADLINE_HEADER_HEIGHT = 26;
+	protected static const float HEADLINE_PADDING = 14;
+	protected static const float HEADLINE_ICON_SIZE = 24;
+	protected static const float HEADLINE_GAP = 10;
+	protected static const int HEADLINE_FONT_SIZE = 26;		//!< alert-title
+	protected static const int HEADLINE_SOURCE_FONT_SIZE = 13;	//!< label
+	protected static const int HEADLINE_DETAIL_FONT_SIZE = 15;	//!< body-strong
+	protected static const int HEADLINE_EFFECT_FONT_SIZE = 14;	//!< body
+	protected static const string DEFAULT_HEADLINE_SOURCE = "HQ";	//!< Header band source when the sender gives no kicker
 
-	// Dispatch card
-	protected static const float CARD_MARGIN = 20;
-	protected static const float CARD_TOP = 80;
-	protected static const float CARD_HEIGHT = 58;
-	protected static const float CARD_ICON_BLOCK = 56;
-	protected static const float CARD_ICON_SIZE = 28;
+	// Toast (dispatch card), right edge below the REBINTEL status widget
+	protected static const float CARD_MARGIN = 16;
+	protected static const float CARD_TOP = 200;
+	protected static const float CARD_HEIGHT = 52;
+	protected static const float CARD_ICON_BLOCK = 36;
+	protected static const float CARD_GLYPH_SIZE = 10;	//!< The square "ours / good news" glyph
+	protected static const float CARD_ICON_SIZE = 20;		//!< icon-hud
 	protected static const float CARD_PADDING = 12;
 	protected static const float CARD_MIN_WIDTH = 300;
-	protected static const float CARD_MAX_WIDTH = 480;	//!< Longer text wraps
+	protected static const float CARD_MAX_WIDTH = 420;	//!< Longer text wraps
 	protected static const float CARD_MAX_LINES = 3;
-	protected static const float CARD_KICKER_TOP = 9;
+	protected static const float CARD_KICKER_TOP = 8;
 	protected static const float CARD_TEXT_TOP = 25;
-	protected static const int CARD_KICKER_FONT_SIZE = 12;
-	protected static const int CARD_TEXT_FONT_SIZE = 18;
+	protected static const int CARD_KICKER_FONT_SIZE = 13;	//!< label
+	protected static const int CARD_TEXT_FONT_SIZE = 15;		//!< body-strong
 
 	// Hint pill
 	protected static const float HINT_BOTTOM = 140;
@@ -47,9 +54,20 @@ class AROR_NotificationDisplay : Managed
 	protected ImageWidget m_wHeadlineBand;
 	protected ImageWidget m_wHeadlineLineTop;
 	protected ImageWidget m_wHeadlineLineBottom;
+	protected ImageWidget m_wHeadlineLineLeft;
+	protected ImageWidget m_wHeadlineLineRight;
+	protected ImageWidget m_wHeadlineHeader;
+	protected RichTextWidget m_wHeadlineSource;
 	protected ImageWidget m_wHeadlineIcon;
 	protected RichTextWidget m_wHeadlineText;
+	protected RichTextWidget m_wHeadlineDetail;
+	protected RichTextWidget m_wHeadlineTime;
+	protected RichTextWidget m_wHeadlineIntercept;
+	protected RichTextWidget m_wHeadlineEffect;
 	protected ImageWidget m_wHeadlineTimer;
+	protected bool m_bHeadlineHasDetail;
+	protected bool m_bHeadlineHasIntercept;
+	protected bool m_bHeadlineHasEffect;
 
 	protected Widget m_wCard;
 	protected ImageWidget m_wCardBackground;
@@ -108,8 +126,16 @@ class AROR_NotificationDisplay : Managed
 		m_wHeadlineBand = ImageWidget.Cast(m_wRoot.FindAnyWidget("HeadlineBand"));
 		m_wHeadlineLineTop = ImageWidget.Cast(m_wRoot.FindAnyWidget("HeadlineLineTop"));
 		m_wHeadlineLineBottom = ImageWidget.Cast(m_wRoot.FindAnyWidget("HeadlineLineBottom"));
+		m_wHeadlineLineLeft = ImageWidget.Cast(m_wRoot.FindAnyWidget("HeadlineLineLeft"));
+		m_wHeadlineLineRight = ImageWidget.Cast(m_wRoot.FindAnyWidget("HeadlineLineRight"));
+		m_wHeadlineHeader = ImageWidget.Cast(m_wRoot.FindAnyWidget("HeadlineHeader"));
+		m_wHeadlineSource = RichTextWidget.Cast(m_wRoot.FindAnyWidget("HeadlineSource"));
 		m_wHeadlineIcon = ImageWidget.Cast(m_wRoot.FindAnyWidget("HeadlineIcon"));
 		m_wHeadlineText = RichTextWidget.Cast(m_wRoot.FindAnyWidget("HeadlineText"));
+		m_wHeadlineDetail = RichTextWidget.Cast(m_wRoot.FindAnyWidget("HeadlineDetail"));
+		m_wHeadlineTime = RichTextWidget.Cast(m_wRoot.FindAnyWidget("HeadlineTime"));
+		m_wHeadlineIntercept = RichTextWidget.Cast(m_wRoot.FindAnyWidget("HeadlineIntercept"));
+		m_wHeadlineEffect = RichTextWidget.Cast(m_wRoot.FindAnyWidget("HeadlineEffect"));
 		m_wHeadlineTimer = ImageWidget.Cast(m_wRoot.FindAnyWidget("HeadlineTimer"));
 
 		m_wCard = m_wRoot.FindAnyWidget("Card");
@@ -161,6 +187,13 @@ class AROR_NotificationDisplay : Managed
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! The overlay root, for other HUD elements drawn in the same layout (the REBINTEL status widget)
+	Widget GetRoot()
+	{
+		return m_wRoot;
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! Queue a notification; headlines go ahead of queued notifications but behind queued headlines
 	void Enqueue(notnull AROR_Notification notification)
 	{
@@ -202,9 +235,6 @@ class AROR_NotificationDisplay : Managed
 			border.SetColor(color);
 		}
 
-		// Dark background tinted towards the hint colour
-		SetColor(m_wHintBackground, new Color(0.04 + color.R() * 0.12, 0.04 + color.G() * 0.12, 0.03 + color.B() * 0.12, 0.88));
-
 		m_iHintStartMs = System.GetTickCount();
 		m_bHintActive = true;
 		m_wHint.SetOpacity(0);
@@ -235,10 +265,38 @@ class AROR_NotificationDisplay : Managed
 			text.ToUpper();
 			m_wHeadlineText.SetText(text);
 
+			// Header band in the priority colour with the source in ink; the detail line is optional
+			string source = m_Current.GetKicker();
+			if (source.IsEmpty())
+				source = DEFAULT_HEADLINE_SOURCE;
+			source.ToUpper();
+			if (m_wHeadlineSource)
+			{
+				m_wHeadlineSource.SetText(source);
+				m_wHeadlineSource.SetColor(InkFor(color));
+			}
+			m_bHeadlineHasDetail = SetOptionalText(m_wHeadlineDetail, m_Current.GetDetail());
+			m_bHeadlineHasIntercept = SetOptionalText(m_wHeadlineIntercept, m_Current.GetIntercept());
+			m_bHeadlineHasEffect = SetOptionalText(m_wHeadlineEffect, m_Current.GetEffect());
+			if (m_wHeadlineTime)
+			{
+				m_wHeadlineTime.SetText(GetGameTimeText());
+				m_wHeadlineTime.SetColor(InkFor(color));
+			}
+
+			// Rises read in white; good news (rebel-green banners) reads in green
+			if (color.G() > color.R() * 1.5 && color.G() > color.B())
+				m_wHeadlineText.SetColor(color);
+			else
+				m_wHeadlineText.SetColor(AROR_UIColors.Get(AROR_UIColors.TEXT));
+
 			m_bCurrentHasIcon = SetIcon(m_wHeadlineIcon, m_Current.GetIcon());
 			SetColor(m_wHeadlineIcon, color);
+			SetColor(m_wHeadlineHeader, color);
 			SetColor(m_wHeadlineLineTop, color);
 			SetColor(m_wHeadlineLineBottom, color);
+			SetColor(m_wHeadlineLineLeft, color);
+			SetColor(m_wHeadlineLineRight, color);
 			SetColor(m_wHeadlineTimer, color);
 
 			m_wHeadline.SetOpacity(0);
@@ -257,8 +315,10 @@ class AROR_NotificationDisplay : Managed
 			m_wCardText.SetText(m_Current.GetText());
 			m_bCardSized = false;
 
-			// Icon drawn white on a block filled with the accent colour
+			// The sender's icon tinted in the accent colour, or the plain square glyph when it has none
 			m_bCurrentHasIcon = SetIcon(m_wCardIcon, m_Current.GetIcon());
+			SetVisible(m_wCardIconBlock, !m_bCurrentHasIcon);
+			SetColor(m_wCardIcon, color);
 			SetColor(m_wCardIconBlock, color);
 			SetColor(m_wCardTimer, color);
 
@@ -308,6 +368,8 @@ class AROR_NotificationDisplay : Managed
 		float duration = m_fNotificationDurationMs;
 		if (isHeadline)
 			duration = m_fHeadlineDurationMs;
+		if (m_Current.GetDurationSeconds() > 0)
+			duration = m_Current.GetDurationSeconds() * 1000;
 
 		float elapsed = now - m_iCurrentStartMs;
 		if (elapsed >= duration)
@@ -365,31 +427,67 @@ class AROR_NotificationDisplay : Managed
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Full-width band; icon and text centred together
+	//! Banner: header band (source), headline, optional detail line, 1px border in the priority colour
 	protected void LayoutHeadline(float remaining)
 	{
-		WorkspaceWidget workspace = GetGame().GetWorkspace();
-		float width = workspace.DPIUnscale(workspace.GetWidth());
-
-		FrameSlot.SetSize(m_wHeadline, width, HEADLINE_HEIGHT);
-		Place(m_wHeadlineBand, 0, 0, width, HEADLINE_HEIGHT);
-		Place(m_wHeadlineLineTop, 0, 0, width, 1);
-		Place(m_wHeadlineLineBottom, 0, HEADLINE_HEIGHT - 1, width, 1);
-
-		float textWidth, textHeight;
+		float width = HEADLINE_WIDTH;
+		float textWidth, textHeight, detailWidth, detailHeight, sourceWidth, sourceHeight, timeWidth, timeHeight;
+		float interceptWidth, interceptHeight, effectWidth, effectHeight;
 		MeasureText(m_wHeadlineText, HEADLINE_FONT_SIZE, textWidth, textHeight);
+		if (m_bHeadlineHasDetail)
+			MeasureText(m_wHeadlineDetail, HEADLINE_DETAIL_FONT_SIZE, detailWidth, detailHeight);
+		if (m_bHeadlineHasIntercept)
+			MeasureText(m_wHeadlineIntercept, HEADLINE_SOURCE_FONT_SIZE, interceptWidth, interceptHeight);
+		if (m_bHeadlineHasEffect)
+			MeasureText(m_wHeadlineEffect, HEADLINE_EFFECT_FONT_SIZE, effectWidth, effectHeight);
+		if (m_wHeadlineSource)
+			MeasureText(m_wHeadlineSource, HEADLINE_SOURCE_FONT_SIZE, sourceWidth, sourceHeight);
+		if (m_wHeadlineTime)
+			MeasureText(m_wHeadlineTime, HEADLINE_SOURCE_FONT_SIZE, timeWidth, timeHeight);
+
+		// Long transition lines (Cyrillic labels plus the English) widen the banner rather than overflow it
+		width = Math.Max(width, Math.Max(detailWidth, effectWidth) + HEADLINE_PADDING * 2);
 
 		float iconSpace;
 		if (m_bCurrentHasIcon)
 			iconSpace = HEADLINE_ICON_SIZE + HEADLINE_GAP;
 
-		float left = (width - iconSpace - textWidth) * 0.5;
-		Place(m_wHeadlineIcon, left, (HEADLINE_HEIGHT - HEADLINE_ICON_SIZE) * 0.5, HEADLINE_ICON_SIZE, HEADLINE_ICON_SIZE);
-		FrameSlot.SetPos(m_wHeadlineText, left + iconSpace, (HEADLINE_HEIGHT - textHeight) * 0.5);
+		float textLeft = HEADLINE_PADDING + iconSpace;
+		float y = HEADLINE_HEADER_HEIGHT + HEADLINE_PADDING * 0.5;
+		if (m_bHeadlineHasIntercept)
+		{
+			FrameSlot.SetPos(m_wHeadlineIntercept, textLeft, y);
+			y += interceptHeight;
+		}
+		Place(m_wHeadlineIcon, HEADLINE_PADDING, y + (textHeight - HEADLINE_ICON_SIZE) * 0.5, HEADLINE_ICON_SIZE, HEADLINE_ICON_SIZE);
+		FrameSlot.SetPos(m_wHeadlineText, textLeft, y);
+		y += textHeight;
+		if (m_bHeadlineHasDetail)
+		{
+			FrameSlot.SetPos(m_wHeadlineDetail, textLeft, y + 2);
+			y += detailHeight + 2;
+		}
+		if (m_bHeadlineHasEffect)
+		{
+			FrameSlot.SetPos(m_wHeadlineEffect, textLeft, y + 2);
+			y += effectHeight + 2;
+		}
+		float height = y + HEADLINE_PADDING;
+		if (m_wHeadlineTime)
+			FrameSlot.SetPos(m_wHeadlineTime, width - HEADLINE_PADDING - timeWidth, (HEADLINE_HEADER_HEIGHT - timeHeight) * 0.5);
 
-		// Drains towards the centre from both ends
-		float timerWidth = width * HEADLINE_TIMER_FRACTION * remaining;
-		Place(m_wHeadlineTimer, (width - timerWidth) * 0.5, HEADLINE_HEIGHT - 3, timerWidth, 2);
+		FrameSlot.SetSize(m_wHeadline, width, height);
+		Place(m_wHeadlineBand, 0, 0, width, height);
+		Place(m_wHeadlineHeader, 0, 0, width, HEADLINE_HEADER_HEIGHT);
+		if (m_wHeadlineSource)
+			FrameSlot.SetPos(m_wHeadlineSource, HEADLINE_PADDING, (HEADLINE_HEADER_HEIGHT - sourceHeight) * 0.5);
+		Place(m_wHeadlineLineTop, 0, 0, width, 1);
+		Place(m_wHeadlineLineBottom, 0, height - 1, width, 1);
+		Place(m_wHeadlineLineLeft, 0, 0, 1, height);
+		Place(m_wHeadlineLineRight, width - 1, 0, 1, height);
+
+		// Drains from the right along the bottom edge
+		Place(m_wHeadlineTimer, 1, height - 3, (width - 2) * remaining, 2);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -423,7 +521,7 @@ class AROR_NotificationDisplay : Managed
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Coloured icon block on the left, kicker above the text
+	//! Square glyph (or the sender's icon) on the left, kicker above the text
 	protected void LayoutCard(float remaining)
 	{
 		float width = m_fCardWidth;
@@ -432,8 +530,8 @@ class AROR_NotificationDisplay : Managed
 
 		FrameSlot.SetSize(m_wCard, width, height);
 		Place(m_wCardBackground, 0, 0, width, height);
-		Place(m_wCardIconBlock, 0, 0, CARD_ICON_BLOCK, height);
-		Place(m_wCardIcon, (CARD_ICON_BLOCK - CARD_ICON_SIZE) * 0.5, (height - CARD_ICON_SIZE) * 0.5, CARD_ICON_SIZE, CARD_ICON_SIZE);
+		Place(m_wCardIconBlock, CARD_PADDING + (CARD_ICON_BLOCK - CARD_PADDING - CARD_GLYPH_SIZE) * 0.5, (height - CARD_GLYPH_SIZE) * 0.5, CARD_GLYPH_SIZE, CARD_GLYPH_SIZE);
+		Place(m_wCardIcon, CARD_PADDING + (CARD_ICON_BLOCK - CARD_PADDING - CARD_ICON_SIZE) * 0.5, (height - CARD_ICON_SIZE) * 0.5, CARD_ICON_SIZE, CARD_ICON_SIZE);
 
 		if (m_wCardKicker)
 			FrameSlot.SetPos(m_wCardKicker, textLeft, CARD_KICKER_TOP);
@@ -486,9 +584,9 @@ class AROR_NotificationDisplay : Managed
 		FrameSlot.SetOffsets(m_wRoot, 0, 0, 0, 0);
 		m_wRoot.SetZOrder(ROOT_Z_ORDER);
 
-		FrameSlot.SetAnchor(m_wHeadline, 0.5, HEADLINE_SCREEN_Y);
-		FrameSlot.SetAlignment(m_wHeadline, 0.5, 0.5);
-		FrameSlot.SetPos(m_wHeadline, 0, 0);
+		FrameSlot.SetAnchor(m_wHeadline, 0.5, 0);
+		FrameSlot.SetAlignment(m_wHeadline, 0.5, 0);
+		FrameSlot.SetPos(m_wHeadline, 0, HEADLINE_TOP);
 
 		FrameSlot.SetAnchor(m_wCard, 1, 0);
 		FrameSlot.SetAlignment(m_wCard, 1, 0);
@@ -498,7 +596,7 @@ class AROR_NotificationDisplay : Managed
 		FrameSlot.SetAlignment(m_wHint, 0.5, 1);
 		FrameSlot.SetPos(m_wHint, 0, -HINT_BOTTOM);
 
-		array<Widget> texts = {m_wHeadlineText, m_wCardKicker, m_wCardText, m_wHintText, m_wHintBadgeText};
+		array<Widget> texts = {m_wHeadlineText, m_wHeadlineSource, m_wHeadlineDetail, m_wHeadlineTime, m_wHeadlineIntercept, m_wHeadlineEffect, m_wCardKicker, m_wCardText, m_wHintText, m_wHintBadgeText};
 		foreach (Widget text : texts)
 		{
 			if (text)
@@ -507,25 +605,41 @@ class AROR_NotificationDisplay : Managed
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Colours, fonts and shadows that do not change per message
+	//! Colours and fonts that do not change per message: flat plates, no shadows (see the UI design system)
 	protected void ApplyStyle()
 	{
-		SetColor(m_wHeadlineBand, Color.FromRGBA(10, 12, 8, 200));
-		SetColor(m_wCardBackground, Color.FromRGBA(16, 18, 14, 230));
-		SetColor(m_wCardIcon, Color.FromRGBA(255, 255, 255, 255));
-		StyleText(m_wHeadlineText, HEADLINE_FONT_SIZE, Color.FromRGBA(233, 234, 228, 255), true);
-		StyleText(m_wCardKicker, CARD_KICKER_FONT_SIZE, Color.FromRGBA(178, 182, 170, 255), false);
-		StyleText(m_wCardText, CARD_TEXT_FONT_SIZE, Color.FromRGBA(233, 234, 228, 255), true);
-		StyleText(m_wHintText, HINT_FONT_SIZE, Color.FromRGBA(245, 245, 240, 255), true);
+		SetColor(m_wHeadlineBand, AROR_UIColors.Get(AROR_UIColors.PLATE_STRONG));
+		SetColor(m_wCardBackground, AROR_UIColors.Get(AROR_UIColors.PLATE));
+		SetColor(m_wHintBackground, AROR_UIColors.Get(AROR_UIColors.PLATE));
+		StyleText(m_wHeadlineText, HEADLINE_FONT_SIZE, AROR_UIColors.Get(AROR_UIColors.TEXT), true);
+		StyleText(m_wHeadlineSource, HEADLINE_SOURCE_FONT_SIZE, AROR_UIColors.Get(AROR_UIColors.REBEL_INK), true);
+		StyleText(m_wHeadlineDetail, HEADLINE_DETAIL_FONT_SIZE, AROR_UIColors.Get(AROR_UIColors.TEXT), true);
+		StyleText(m_wHeadlineTime, HEADLINE_SOURCE_FONT_SIZE, AROR_UIColors.Get(AROR_UIColors.REBEL_INK), true);
+		StyleText(m_wHeadlineIntercept, HEADLINE_SOURCE_FONT_SIZE, AROR_UIColors.Get(AROR_UIColors.TEXT_MUTED), false);
+		StyleText(m_wHeadlineEffect, HEADLINE_EFFECT_FONT_SIZE, AROR_UIColors.Get(AROR_UIColors.TEXT), false);
+		StyleText(m_wCardKicker, CARD_KICKER_FONT_SIZE, AROR_UIColors.Get(AROR_UIColors.TEXT_MUTED), true);
+		StyleText(m_wCardText, CARD_TEXT_FONT_SIZE, AROR_UIColors.Get(AROR_UIColors.TEXT), true);
+		StyleText(m_wHintText, HINT_FONT_SIZE, AROR_UIColors.Get(AROR_UIColors.TEXT), true);
 
 		// Dark "i" on the coloured badge
 		if (m_wHintBadgeText)
 		{
 			m_wHintBadgeText.SetText("i");
 			m_wHintBadgeText.SetExactFontSize(HINT_BADGE_FONT_SIZE);
-			m_wHintBadgeText.SetColor(Color.FromRGBA(20, 18, 10, 255));
+			m_wHintBadgeText.SetColor(AROR_UIColors.Get(AROR_UIColors.WARN_INK));
 			m_wHintBadgeText.SetBold(true);
 		}
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Dark ink on light priority colours (rebel, warn, danger), light text on dark sender colours
+	protected static Color InkFor(Color fill)
+	{
+		float luminance = 0.2126 * fill.R() + 0.7152 * fill.G() + 0.0722 * fill.B();
+		// Widget colours are linear, so mid-tones such as orange sit near 0.2
+		if (luminance > 0.18)
+			return AROR_UIColors.Get(AROR_UIColors.REBEL_INK);
+		return AROR_UIColors.Get(AROR_UIColors.TEXT);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -546,6 +660,32 @@ class AROR_NotificationDisplay : Managed
 		string content = text.GetText();
 		width = content.Length() * fontSize * 0.55;
 		height = fontSize * 1.3;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Sets the text and shows the widget only when there is any. Returns true if shown.
+	protected static bool SetOptionalText(TextWidget text, string content)
+	{
+		if (!text)
+			return false;
+
+		bool shown = !content.IsEmpty();
+		text.SetText(content);
+		text.SetVisible(shown);
+		return shown;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! In-game time of day, "21:40", for the banner header
+	protected static string GetGameTimeText()
+	{
+		ChimeraWorld world = ChimeraWorld.CastFrom(GetGame().GetWorld());
+		if (!world || !world.GetTimeAndWeatherManager())
+			return string.Empty;
+
+		int hours, minutes, seconds;
+		world.GetTimeAndWeatherManager().GetHoursMinutesSeconds(hours, minutes, seconds);
+		return hours.ToString(2) + ":" + minutes.ToString(2);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -587,7 +727,6 @@ class AROR_NotificationDisplay : Managed
 		text.SetExactFontSize(fontSize);
 		text.SetColor(color);
 		text.SetBold(bold);
-		text.SetShadow(1, 0xFF000000, 0.5, 1, 1);
 	}
 
 	//------------------------------------------------------------------------------------------------

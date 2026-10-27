@@ -7,6 +7,9 @@ class AROR_GroundOperationForce : AROR_OperationForce
 	bool m_bMounted;
 	bool m_bMountRequested;
 	int m_iMountWaitTicks;
+	protected int m_iSeatAttempts;
+	protected int m_iSeatQueueResets;
+	protected int m_iSeatBusy;
 	bool m_bDismountRequested;
 	bool m_bDismounted;
 	bool m_bTacticalDropStarted;
@@ -25,6 +28,10 @@ class AROR_GroundOperationForce : AROR_OperationForce
 	vector m_vTacticalProgressPosition;
 	ref AROR_VehicleTownSearch m_TownSearch;
 	vector m_vApproachPosition;
+	// Attack staging: the package waits at a road rally point until the assault is released
+	bool m_bTacticalStaging;
+	bool m_bTacticalStaged;
+	vector m_vStagingPosition;
 	//! A planned road dismount may be outside the security area; infantry must still walk in.
 	float m_fTacticalDeliveryRadius;
 	protected ref array<IEntity> m_aPassengers = {};
@@ -88,11 +95,18 @@ class AROR_GroundOperationForce : AROR_OperationForce
 
 	bool Seat(IEntity entity, BaseCompartmentSlot slot)
 	{
-		if (!entity || !slot || slot.IsOccupied())
+		if (!Replication.IsServer() || !entity || !slot || slot.IsOccupied() || slot.GetOccupant())
+			return false;
+		if (GetGame().GetPlayerManager().GetPlayerIdFromControlledEntity(entity) > 0)
 			return false;
 		CompartmentAccessComponent access = CompartmentAccessComponent.Cast(entity.FindComponent(CompartmentAccessComponent));
-		// forceTeleport=true: initial deployment never asks AI to walk to or animate into a seat.
-		return access && access.GetInVehicle(m_Vehicle, slot, true, -1, ECloseDoorAfterActions.CLOSE_DOOR, false);
+		if (!access)
+			return false;
+		m_iSeatAttempts++;
+		// Spawn origins can be outside the player simulation bubble. Execute the
+		// initial teleport even when the actor is paused, rather than queueing forever.
+		bool initialDeployment = !m_bMounted && !m_bDismounted;
+		return access.GetInVehicle(m_Vehicle, slot, true, -1, ECloseDoorAfterActions.CLOSE_DOOR, initialDeployment);
 	}
 
 	//! Blank native vehicle affiliation is not evidence of hostile capture. Require
@@ -222,8 +236,11 @@ class AROR_GroundOperationForce : AROR_OperationForce
 
 	//! A native seat teleport can be dropped without failing the request. Re-request a free seat for every
 	//! living member not yet seated in this vehicle; returns what was still missing, for the log.
-	string ReseatMissing_S()
+	string ReseatMissing_S(bool recoverStale = false)
 	{
+		m_iSeatAttempts = 0;
+		m_iSeatQueueResets = 0;
+		m_iSeatBusy = 0;
 		if (!Replication.IsServer() || !m_Vehicle || !m_CrewGroup)
 			return "no vehicle or crew group";
 		BaseCompartmentManagerComponent compartments = BaseCompartmentManagerComponent.Cast(m_Vehicle.FindComponent(BaseCompartmentManagerComponent));
@@ -254,7 +271,7 @@ class AROR_GroundOperationForce : AROR_OperationForce
 			if (IsSeatedInOwnVehicle(member))
 				continue;
 			missingCrew++;
-			if (ReseatMember(member, crewSeats, cargoSeats))
+			if (ReseatMember(member, crewSeats, cargoSeats, recoverStale))
 				boarding++;
 		}
 		foreach (IEntity passenger : m_aPassengers)
@@ -262,37 +279,83 @@ class AROR_GroundOperationForce : AROR_OperationForce
 			if (IsSeatedInOwnVehicle(passenger))
 				continue;
 			missingPassengers++;
-			if (ReseatMember(passenger, cargoSeats, null))
+			if (ReseatMember(passenger, cargoSeats, null, recoverStale))
 				boarding++;
 		}
 		string pilot = "seated";
 		if (!usage.GetPilotCompartmentSlot().GetOccupant())
 			pilot = "empty";
-		return string.Format("driver %1, unseated crew=%2 passengers=%3, reseat requests=%4", pilot, missingCrew, missingPassengers, boarding);
+		return string.Format("driver %1, unseated crew=%2 passengers=%3, accepted=%4 attempted=%5 queueResets=%6 busy=%7", pilot, missingCrew, missingPassengers, boarding, m_iSeatAttempts, m_iSeatQueueResets, m_iSeatBusy);
 	}
 
 	//! Seats a living, idle member in the first free seat of the preferred list, then of the fallback list
-	protected bool ReseatMember(IEntity member, array<BaseCompartmentSlot> preferred, array<BaseCompartmentSlot> fallback)
+	protected bool ReseatMember(IEntity member, array<BaseCompartmentSlot> preferred, array<BaseCompartmentSlot> fallback, bool recoverStale = false)
 	{
 		ChimeraCharacter character = ChimeraCharacter.Cast(member);
 		if (!character || !character.GetCharacterController() || character.GetCharacterController().IsDead())
 			return false;
 		CompartmentAccessComponent access = CompartmentAccessComponent.Cast(member.FindComponent(CompartmentAccessComponent));
+		if (recoverStale && access && access.IsGettingIn())
+			RecoverStaleBoarding_S(member, access);
 		if (!access || access.IsGettingIn() || access.IsGettingOut() || access.IsInCompartment())
+		{
+			m_iSeatBusy++;
 			return false;
+		}
 		foreach (BaseCompartmentSlot seat : preferred)
 		{
-			if (!seat.IsOccupied() && !seat.GetOccupant())
+			if (seat && seat.IsCompartmentAccessible() && !seat.IsOccupied() && !seat.GetOccupant() && (!seat.IsReserved() || seat.IsReservedBy(member)))
 				return Seat(member, seat);
 		}
 		if (!fallback)
 			return false;
 		foreach (BaseCompartmentSlot seat : fallback)
 		{
-			if (!seat.IsOccupied() && !seat.GetOccupant())
+			if (seat && seat.IsCompartmentAccessible() && !seat.IsOccupied() && !seat.GetOccupant() && (!seat.IsReserved() || seat.IsReservedBy(member)))
 				return Seat(member, seat);
 		}
 		return false;
+	}
+
+	//! Reset only a pre-deployment, stuck boarding action belonging to this package.
+	//! Native API: CompartmentAccessComponent.InterruptVehicleActionQueue(true, true, true).
+	//! https://community.bistudio.com/wikidata/external-data/arma-reforger/ArmaReforgerScriptAPIPublic/interfaceCompartmentAccessComponent.html
+	protected bool RecoverStaleBoarding_S(IEntity member, CompartmentAccessComponent access)
+	{
+		if (!Replication.IsServer() || !m_bMountRequested || m_bMounted || m_bDismountRequested || m_bDismounted)
+			return false;
+		if (!member || !access || !m_Vehicle || !m_Profile || !m_aMembers.Contains(member))
+			return false;
+		if (m_Profile.m_eType == AROR_EForceType.AIRBORNE || GetGame().GetPlayerManager().GetPlayerIdFromControlledEntity(member) > 0)
+			return false;
+		if (!m_CrewGroup || m_CrewGroup.GetPlayerCount() > 0 || (m_Group && m_Group.GetPlayerCount() > 0))
+			return false;
+		if (!access.IsGettingIn() || access.IsInCompartment() || access.IsGettingOut())
+			return false;
+		ChimeraCharacter character = ChimeraCharacter.Cast(member);
+		if (!character || !character.GetCharacterController() || character.GetCharacterController().IsDead())
+			return false;
+		Physics physics = m_Vehicle.GetPhysics();
+		if (!physics || physics.GetVelocity().Length() > 0.5)
+			return false;
+		BaseCompartmentSlot current = access.GetCompartment();
+		if (current && current.GetVehicle() != m_Vehicle)
+			return false;
+		BaseCompartmentManagerComponent compartments = BaseCompartmentManagerComponent.Cast(m_Vehicle.FindComponent(BaseCompartmentManagerComponent));
+		if (!compartments)
+			return false;
+		// Only this member's empty reservation may be released; never eject occupants
+		// or take another member's claim. The next request still verifies actual seats.
+		access.InterruptVehicleActionQueue(true, true, true);
+		array<BaseCompartmentSlot> slots = {};
+		compartments.GetCompartments(slots);
+		foreach (BaseCompartmentSlot slot : slots)
+		{
+			if (slot && !slot.GetOccupant() && slot.IsReservedBy(member))
+				slot.SetReserved(null);
+		}
+		m_iSeatQueueResets++;
+		return true;
 	}
 
 	protected bool IsSeatedInOwnVehicle(IEntity entity)
