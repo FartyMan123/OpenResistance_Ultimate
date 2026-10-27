@@ -27,6 +27,7 @@ class AROR_ReaperAirForce : AROR_GroundOperationForce
 	bool m_bConstructionPending;
 	ResourceName m_sPilotPrefab;
 	bool m_bWaitingForLanding;
+	bool m_bWaitingForAssault;
 	ref AROR_ReaperLandingSearch m_AlternateLandingSearch;
 	int m_iNextFormationUpdate;
 	int m_iSupportEndTime;
@@ -180,7 +181,7 @@ class AROR_ReaperAirForce : AROR_GroundOperationForce
 
 	static bool BoardPilot_S(SCR_AIGroup group, IEntity vehicle)
 	{
-		if (!Replication.IsServer() || !group || !vehicle)
+		if (!Replication.IsServer() || !group || !vehicle || group.GetPlayerCount() > 0)
 			return false;
 		array<AIAgent> agents = {};
 		group.GetAgents(agents);
@@ -188,48 +189,70 @@ class AROR_ReaperAirForce : AROR_GroundOperationForce
 			return false;
 		IEntity pilot = agents[0].GetControlledEntity();
 		BaseCompartmentManagerComponent compartments = BaseCompartmentManagerComponent.Cast(vehicle.FindComponent(BaseCompartmentManagerComponent));
-		if (!pilot || !compartments)
+		if (!pilot || !compartments || GetGame().GetPlayerManager().GetPlayerIdFromControlledEntity(pilot) > 0)
 			return false;
 		CompartmentAccessComponent access = CompartmentAccessComponent.Cast(pilot.FindComponent(CompartmentAccessComponent));
 		if (!access)
+			return false;
+		BaseCompartmentSlot occupied = access.GetCompartment();
+		if (access.IsInCompartment() && !access.IsGettingIn() && !access.IsGettingOut())
+			return occupied && PilotCompartmentSlot.Cast(occupied) && occupied.GetVehicle() == vehicle && occupied.GetOccupant() == pilot;
+		if (access.IsGettingIn() || access.IsGettingOut())
 			return false;
 		array<BaseCompartmentSlot> slots = {};
 		compartments.GetCompartments(slots);
 		foreach (BaseCompartmentSlot slot : slots)
 		{
-			if (PilotCompartmentSlot.Cast(slot) && slot.IsCompartmentAccessible() && !slot.IsOccupied())
-				return access.GetInVehicle(vehicle, slot, true, -1, ECloseDoorAfterActions.CLOSE_DOOR, false);
+			if (slot && PilotCompartmentSlot.Cast(slot) && slot.IsCompartmentAccessible() && !slot.IsOccupied() && !slot.GetOccupant() && (!slot.IsReserved() || slot.IsReservedBy(pilot)))
+			{
+				access.GetInVehicle(vehicle, slot, true, -1, ECloseDoorAfterActions.CLOSE_DOOR, true);
+				break;
+			}
 		}
+		// An accepted request is not proof of occupancy; confirm on a later executor tick.
 		return false;
 	}
 
 	bool BoardPackage_S()
 	{
-		if (!m_Escort || !BoardPilot_S(m_CrewGroup, m_Vehicle) || !BoardPilot_S(m_Escort.m_CrewGroup, m_Escort.m_Vehicle))
+		if (!Replication.IsServer() || !m_Escort || !m_Group || !m_Vehicle || m_Group.GetPlayerCount() > 0)
 			return false;
+		bool transportReady = BoardPilot_S(m_CrewGroup, m_Vehicle);
+		bool escortReady = BoardPilot_S(m_Escort.m_CrewGroup, m_Escort.m_Vehicle);
 		BaseCompartmentManagerComponent compartments = BaseCompartmentManagerComponent.Cast(m_Vehicle.FindComponent(BaseCompartmentManagerComponent));
 		if (!compartments)
 			return false;
 		array<BaseCompartmentSlot> slots = {};
-		array<BaseCompartmentSlot> cargo = {};
 		compartments.GetCompartments(slots);
-		foreach (BaseCompartmentSlot slot : slots)
-		{
-			if (CargoCompartmentSlot.Cast(slot) && slot.IsCompartmentAccessible() && !slot.IsOccupied())
-				cargo.Insert(slot);
-		}
 		array<AIAgent> agents = {};
 		m_Group.GetAgents(agents);
-		if (agents.Count() < 1 || cargo.Count() < agents.Count())
+		if (agents.Count() < 1)
 			return false;
-		for (int index = 0; index < agents.Count(); index++)
+		bool passengersReady = true;
+		foreach (AIAgent agent : agents)
 		{
-			if (!agents[index] || !Seat(agents[index].GetControlledEntity(), cargo[index]))
+			if (!agent || !agent.GetControlledEntity())
 				return false;
-			m_aPassengers.Insert(agents[index].GetControlledEntity());
+			IEntity passenger = agent.GetControlledEntity();
+			if (!m_aPassengers.Contains(passenger))
+				m_aPassengers.Insert(passenger);
+			if (IsSeatedInOwnVehicle(passenger))
+				continue;
+			passengersReady = false;
+			CompartmentAccessComponent access = CompartmentAccessComponent.Cast(passenger.FindComponent(CompartmentAccessComponent));
+			if (!access || access.IsGettingIn() || access.IsGettingOut() || access.IsInCompartment())
+				continue;
+			foreach (BaseCompartmentSlot slot : slots)
+			{
+				if (slot && CargoCompartmentSlot.Cast(slot) && slot.IsCompartmentAccessible() && !slot.IsOccupied() && !slot.GetOccupant() && (!slot.IsReserved() || slot.IsReservedBy(passenger)))
+				{
+					Seat(passenger, slot);
+					break;
+				}
+			}
 		}
-		m_bMounted = true;
-		return true;
+		m_bMounted = transportReady && escortReady && passengersReady;
+		return m_bMounted;
 	}
 
 	//! Recovery after pilot loss still requires surviving passengers physically on the ground.

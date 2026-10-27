@@ -8,6 +8,7 @@ const sources = Object.fromEntries(['AROR_MarsAccess','AROR_MarsTargets','AROR_M
   'AROR_TerritoryAttackManager','AROR_ForceProfile','AROR_GroundQRFRecipe','AROR_ForcePool',
   'AROR_ReaperQRFExecutor','AROR_ResponsePolicy','AROR_ResponseSelection'].map(name => [name, read(name)]));
 let assertions = 0;
+const responseCoverage=[];
 function check(ok, label) { assertions++; if (!ok) throw Error(label); }
 function extension(proto, name, value) { Object.defineProperty(proto, name, {value, configurable:true}); }
 extension(Array.prototype,'Count',function(){return this.length;});
@@ -32,7 +33,7 @@ const states={PLANNED:0,SPAWNING:1,ACTIVE:2,SUCCEEDED:3,FAILED:4,CANCELLED:5};
 let server=true, currentLocations=[], player={GetOrigin:()=>[0,0,0]}, hints=[];
 const locations={GetLocations:out=>out.push(...currentLocations),GetLocationById:id=>currentLocations.find(x=>x.GetId()===id)};
 const env={
-	AROR_EResponseType:{...types,COMBINED_ARMS:5,LIGHT_SUPPORT:6},
+	AROR_EResponseType:{...types,COMBINED_ARMS:5,LIGHT_SUPPORT:6,AIR_GROUND:7},
 	AROR_ResponseSelection:class {constructor(){Object.assign(this,{m_aElements:[],m_sProfileId:'',m_sRecipeId:'',m_sComposition:'',m_iGroups:0,m_iPersonnel:0,m_iVehicles:0});}},
 	float:{MAX:Number.MAX_VALUE},
   AROR_EFactionRole:roles,AROR_EForceType:types,AROR_EOperationType:opTypes,AROR_EOperationState:states,
@@ -72,7 +73,7 @@ function compile(sourceName,name) {
     .replace(/([\w.]+)\.Find\(([^,]+), (\w+)\);/g,'$3 = $1.Find($2);');
   return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
 }
-env.AROR_MarsAccess={Accepts:compile('AROR_MarsAccess','Accepts')};
+env.AROR_MarsAccess={Accepts:compile('AROR_MarsAccess','Accepts'),CanRequest_S:()=>true};
 env.AROR_ResponseSelection.prototype.IsAvailable=compile('AROR_ResponseSelection','IsAvailable');
 env.AROR_ResponsePolicy={};
 env.AROR_ResponseSelection.prototype.GetComposition=compile('AROR_ResponseSelection','GetComposition');
@@ -91,14 +92,14 @@ const layer=fs.readFileSync(path.join(root,'Worlds/AROR_Everon/AROR_Everon_Chick
 function fields(body){const obj={};for(const m of body.matchAll(/\b(m_\w+)\s+(?:"([^"]*)"|(-?\d+(?:\.\d+)?))/g))obj[m[1]]=m[2]??Number(m[3]);return obj;}
 const profiles=[...layer.matchAll(/^ {4}AROR_ForceProfile \{([\s\S]*?)^ {4}\}/gm)].map(m=>fields(m[1]));
 for(const p of profiles){
-  for(const name of ['IsValid','HasNativeExecutor','GetGroupBudget','GetWeight'])p[name]=compile('AROR_ForceProfile',name);
+  for(const name of ['IsValid','HasNativeExecutor','GetGroupBudget','GetVehicleBudget','GetWeight'])p[name]=compile('AROR_ForceProfile',name);
   Object.assign(p,{m_bLightVehicle:!!p.m_bLightVehicle});
 }
 const recipes=[...layer.matchAll(/^ {4}AROR_GroundQRFRecipe \{([\s\S]*?)^ {4}\}/gm)].map(m=>{
-  const r=fields(m[1]);r.m_eResponseType=5;r.m_aProfileIds=[...m[1].match(/m_aProfileIds \{([\s\S]*?)\}/)[1].matchAll(/"([^"]+)"/g)].map(x=>x[1]);
+  const r=fields(m[1]);r.m_eResponseType??=5;r.m_aProfileIds=[...m[1].match(/m_aProfileIds \{([\s\S]*?)\}/)[1].matchAll(/"([^"]+)"/g)].map(x=>x[1]);
   for(const name of ['IsValid','AllowsReadinessLevel','Resolve'])r[name]=compile('AROR_GroundQRFRecipe',name);return r;
 });
-const executor={m_aForceProfiles:profiles,m_aGroundQRFRecipes:recipes,m_bAllowAirborneResponses:true,m_bExecuteOperations:true,m_bQRFRequireFriendlyOrigin:true,
+const executor={m_aForceProfiles:profiles,m_aGroundQRFRecipes:recipes,m_bAllowAirborneResponses:true,m_bAllowJointResponses:true,m_bQRFTacticalCommander:true,m_bExecuteOperations:true,m_bQRFRequireFriendlyOrigin:true,
   BestOrigin:compile('AROR_OperationExecutorComponent','BestOrigin'),IsUsableOrigin:compile('AROR_OperationExecutorComponent','IsUsableOrigin'),
   OriginCost:(a,b)=>env.vector.DistanceXZ(a,b),IsGarrisonDepleted:()=>false,m_mOriginLaunchedAt:{Contains:()=>false},m_fMinOriginDistance:1500,
   GetResponsePreview:compile('AROR_OperationExecutorComponent','GetResponsePreview'),
@@ -112,17 +113,19 @@ for(const role of [1,2])for(let tier=1;tier<=5;tier++){
   check(new Set(entries.map(x=>x.m_sKey)).size===entries.length,'unique grid selection keys');
 }
 // Every type/army/Readiness/Crackdown cell resolves through the same actual policy.
-for(const role of [1,2])for(let readiness=1;readiness<=5;readiness++)for(const kind of [0,1,2,3,5,6]){
+for(const role of [1,2])for(let readiness=1;readiness<=5;readiness++)for(const kind of [0,1,2,3,5,6,7]){
   let previous=0;
   for(let crackdown=1;crackdown<=5;crackdown++){
     const choice=executor.GetResponsePreview(role,kind,readiness,crackdown);
-    const minimum=kind===1?3:([2,3].includes(kind)?5:1);
+    responseCoverage.push({Role:role===1?'OCCUPIERS':'INVADERS',Family:env.AROR_ResponsePolicy.TypeName(kind),Readiness:readiness,Crackdown:crackdown,Available:choice.IsAvailable(),Recipe:choice.m_sRecipeId||'',Profile:choice.m_sProfileId||'',Packages:choice.m_aElements.length,ReservedGroups:choice.m_iGroups,ReservedPersonnel:choice.m_iPersonnel,ReservedVehicles:choice.m_iVehicles,Reason:choice.m_sReason,NativeExecution:'NOT_RUN'});
+    const minimum=kind===1?3:([2,3,7].includes(kind)?5:1);
     check(choice.IsAvailable()===(readiness>=minimum),'equipment gate for army/type/Readiness/Crackdown '+[role,kind,readiness,crackdown]);
     if(!choice.IsAvailable())continue;
+    check(choice.m_iGroups===choice.m_aElements.reduce((n,p)=>n+p.GetGroupBudget(),0)&&choice.m_iVehicles===choice.m_aElements.reduce((n,p)=>n+p.GetVehicleBudget(),0)&&choice.m_iPersonnel===choice.m_aElements.reduce((n,p)=>n+p.m_iPersonnelBudget,0),'preview reserves every group, vehicle and personnel slot in the resolved roster');
     check(choice.m_aElements.every(p=>p.m_eRole===role&&p.m_iMinimumReadinessLevel<=readiness),'no borrowed or locked profile in preview');
     check(choice.m_aElements.length>=previous,'Crackdown never shrinks the authored element count');
     previous=choice.m_aElements.length;
-    if(kind!==5)check(choice.m_aElements.length===crackdown,'homogeneous intensity follows Crackdown');
+    if(kind!==5&&kind!==7)check(choice.m_aElements.length===crackdown,'homogeneous intensity follows Crackdown');
     else check(choice.m_aElements.length===recipes.find(r=>r.m_sId===choice.m_sRecipeId&&r.m_eRole===role).m_aProfileIds.length,'recipe intensity is authored, never multiplied twice');
   }
 }
@@ -167,6 +170,17 @@ function manager(){return {
   NotifyChanged:()=>{},MarsReply:(...x)=>hints.push(x),RequestOperation_S:compile('AROR_OperationManagerComponent','RequestOperation_S')
 };}
 let m=manager();const request=compile('AROR_MarsOperationManager','RequestMars_S');
+{
+ const denied=manager();const initialHints=hints.length;
+ env.AROR_MarsAccess.CanRequest_S=()=>false;
+ request.call(denied,7,credential,1,'type:3',5,5);
+ request.call(denied,7,credential,1,'type:3',5,5);
+ check(!denied.m_aOperations.length&&hints.length===initialHints+1,'unauthorized requests never dispatch and denial replies share the request throttle');
+ denied.m_iClock+=5;request.call(denied,7,credential,1,'type:3',5,5);
+ check(hints.length===initialHints+2,'denial may be retried at the configured throttle boundary');
+ env.AROR_MarsAccess.CanRequest_S=()=>true;
+}
+
 request.call(m,1,credential,1,'type:3',5,1);check(!m.m_aOperations.length,'server rechecks selected Readiness and rejects locked air');
 m.m_iClock+=5;request.call(m,1,credential,1,'type:3',5,5);
 check(m.m_aOperations.length===1&&m.m_aOperations[0].m_iPoolReadinessLevel===5&&m.m_aOperations[0].m_bUseResponseMetrics,'server freezes the preview metrics for explicit air dispatch');
@@ -187,6 +201,9 @@ check(m.m_aOperations.length===1&&m.m_aOperations[0].m_sRequestedProfileId==='us
 server=false;m=manager();request.call(m,1,credential,1,'profile:us_airborne',5);check(!m.m_aOperations.length,'client cannot admit a force');server=true;
 m=manager();m.m_bMarsEnabled=false;request.call(m,1,credential,1,'profile:us_airborne',5);check(!m.m_aOperations.length,'scenario debug switch enforced');
 
+m=manager();
+m.GetNextRequestTime=()=>0;
+for(const invalidType of [-1,2,99])check(!m.RequestOperation_S(1,invalidType,'target',0)&&m.m_aOperations.length===0,'unsupported operation types cannot create immortal scheduler records');
 // One global attack slot, including the preparation and spawning stages and both roles.
 m=manager();m.GetNextRequestTime=()=>0;
 let id=m.RequestOperation_S(1,opTypes.ATTACK,'target',60);
@@ -239,7 +256,7 @@ check(!state.IsDue(1900,900,300)&&state.IsDue(2100,900,300),'post-QRF recovery i
 state.m_iQRFCompletedAt=1200;
 check(!state.IsDue(1899,900,300)&&state.IsDue(1900,900,300),'15-minute capture boundary');
 const changed=compile('AROR_TerritoryAttackManager','NotifyChanged');
-m=manager();Object.assign(m,{BaseNotifyChanged:()=>{},m_aAttackTerritories:[state],m_iTerritoryAttackRest:900});
+m=manager();Object.assign(m,{BaseNotifyChanged:()=>{},RecordTerritoryOperationChange:compile('AROR_TerritoryAttackManager','RecordTerritoryOperationChange'),m_aAttackTerritories:[state],m_iTerritoryAttackRest:900});
 state.m_iQRFCompletedAt=-1;
 let qrf=new env.AROR_Operation('qrf',1,opTypes.QRF,'target');qrf.m_bCaptureThreatRecorded=true;
 qrf.state=states.FAILED;changed.call(m,qrf);check(state.m_iQRFCompletedAt===-1,'failed spawn never satisfies prior-QRF requirement');
@@ -288,4 +305,11 @@ for(const [prefix,count]of [['MarsPanel',12],['MarsText',40],['MarsBtnBg',40],['
 check(names.includes('MarsCredential')&&names.includes('MarsApp')&&names.includes('MarsBackground'),'MARS entry/root widgets present');
 check(names.includes('MarsReadinessSlider')&&names.includes('MarsCrackdownSlider'),'both native metric sliders declared');
 check(names.includes('MarsBackdrop'),'circular background canvas declared');
+if(typeof process!=='undefined'&&process.argv.includes('--export-coverage')){
+  const columns=Object.keys(responseCoverage[0]),quote=x=>'"'+String(x??'').replace(/"/g,'""')+'"';
+  const csv=[columns.map(quote).join(','),...responseCoverage.map(row=>columns.map(k=>quote(row[k])).join(','))].join('\n')+'\n';
+  const output=path.join(__dirname,'../docs/validation/CHICKEN_RESPONSE_COVERAGE.csv');
+  fs.mkdirSync(path.join(__dirname,'../docs/validation'),{recursive:true});fs.writeFileSync(output,csv);
+}
+if(typeof module!=='undefined')module.exports={responseCoverage};
 console.log(JSON.stringify({assertions,note:'Native AI, REAPER flight, UI and replication require Workbench compile and Play.'}));

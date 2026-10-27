@@ -3,12 +3,12 @@ class AROR_AdminMenuComponentClass : SCR_BaseGameModeComponentClass
 {
 }
 
-//! Admin/testing menu, opened with Ctrl+T. Currently available to every player (switch off with Menu Available).
+//! Admin/testing menu, opened with Ctrl+T by administrators; Workbench permits local testing.
 //! Teleport: opens the base-game map menu; the clicked position teleports the local player there.
 //! The hotkey is read directly from the keyboard to avoid overriding the base-game input config.
 class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 {
-	[Attribute("1", desc: "Menu Available: Ctrl+T opens the admin menu (currently for every player) and the server accepts its requests. Turn off for public servers.")]
+	[Attribute("1", desc: "Menu Available: administrators can open Ctrl+T and request debug actions. Workbench permits local testing.")]
 	protected bool m_bMenuAvailable;
 
 	[Attribute("{5BB4D0ED53225DDC}Configs/UI/AROR_SetupDialogs.conf", UIWidgets.ResourceNamePicker, desc: "Dialog presets (uses the 'aror_admin' preset)", params: "conf")]
@@ -39,7 +39,16 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	protected bool m_bPickingTeleport;
 
 	//------------------------------------------------------------------------------------------------
-	//! Polled every frame on the client while enabled
+	//! Local UI policy; server actions independently authorize their requester.
+	protected bool CanUseLocalTools()
+	{
+		if (!m_bMenuAvailable)
+			return false;
+		SCR_PlayerController player = SCR_PlayerController.Cast(GetGame().GetPlayerController());
+		return player && AROR_AdminAccess.IsAdministrator(player.GetPlayerId());
+	}
+
+	//! Polled every frame on the client while enabled.
 	protected void CheckHotkey()
 	{
 		if (!Debug.KeyState(KeyCode.KC_T))
@@ -61,6 +70,8 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//! Opens a preset; an empty message keeps the preset's own
 	protected void OpenDialog(string preset, string message = string.Empty)
 	{
+		if (!CanUseLocalTools())
+			return;
 		AROR_AdminDialog dialog = new AROR_AdminDialog(this);
 		SCR_ConfigurableDialogUi.CreateFromPreset(m_sDialogPresets, preset, dialog);
 		if (!message.IsEmpty())
@@ -134,7 +145,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//! Server: add money to a faction's funds, or (selfMoney) to the requesting player's own money
 	void GiveMoney_S(int playerId, AROR_EFactionRole role, bool selfMoney, int amount)
 	{
-		if (!Replication.IsServer() || !m_bMenuAvailable)
+		if (!Replication.IsServer() || !m_bMenuAvailable || !AROR_AdminAccess.IsAdministrator(playerId))
 			return;
 
 		AROR_EconomyComponent economy = AROR_EconomyComponent.GetInstance();
@@ -153,7 +164,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//! Server: run an income payment now instead of waiting for the timer
 	void PayIncomeNow_S(int playerId)
 	{
-		if (!Replication.IsServer() || !m_bMenuAvailable)
+		if (!Replication.IsServer() || !m_bMenuAvailable || !AROR_AdminAccess.IsAdministrator(playerId))
 			return;
 
 		AROR_IncomeComponent income = AROR_IncomeComponent.GetInstance();
@@ -172,7 +183,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//! ammunition, vehicle ammunition — not units or vehicles) to Resistance Storage
 	void FillResistanceStock_S(int playerId)
 	{
-		if (!Replication.IsServer() || !m_bMenuAvailable)
+		if (!Replication.IsServer() || !m_bMenuAvailable || !AROR_AdminAccess.IsAdministrator(playerId))
 			return;
 
 		AROR_FactionPresetsComponent presets = AROR_FactionPresetsComponent.GetInstance();
@@ -282,6 +293,8 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//! Client: open the local editor once the server has granted Game Master
 	protected void OpenGameMaster()
 	{
+		if (!CanUseLocalTools())
+			return;
 		if (SCR_EditorManagerEntity.CanOpenInstance())
 			SCR_EditorManagerEntity.OpenInstance();
 		else
@@ -292,7 +305,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//! Server: unlock the Game Master (Edit) editor mode for the requesting player
 	void GrantGameMaster_S(int playerId)
 	{
-		if (!Replication.IsServer() || !m_bMenuAvailable)
+		if (!Replication.IsServer() || !m_bMenuAvailable || !AROR_AdminAccess.IsAdministrator(playerId))
 			return;
 
 		SCR_EditorManagerCore editorCore = SCR_EditorManagerCore.Cast(SCR_EditorManagerCore.GetInstance(SCR_EditorManagerCore));
@@ -320,7 +333,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//! Server: a headline and a notification for everyone (they queue), and a hint for the requesting player
 	void SendTestNotifications_S(int playerId)
 	{
-		if (!Replication.IsServer() || !m_bMenuAvailable)
+		if (!Replication.IsServer() || !m_bMenuAvailable || !AROR_AdminAccess.IsAdministrator(playerId))
 			return;
 
 		Color resistanceColor;
@@ -337,7 +350,7 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//! Server: adjust support of the town or city nearest to the requesting player
 	void AdjustNearestSupport_S(int playerId, AROR_EFactionRole role, float delta)
 	{
-		if (!Replication.IsServer() || !m_bMenuAvailable)
+		if (!Replication.IsServer() || !m_bMenuAvailable || !AROR_AdminAccess.IsAdministrator(playerId))
 			return;
 
 		IEntity player = GetGame().GetPlayerManager().GetPlayerControlledEntity(playerId);
@@ -359,6 +372,8 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//------------------------------------------------------------------------------------------------
 	protected void HandleAction(string tag)
 	{
+		if (!CanUseLocalTools())
+			return;
 		if (tag == "teleport")
 		{
 			StartTeleportPicking();
@@ -497,6 +512,8 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//------------------------------------------------------------------------------------------------
 	protected void StartTeleportPicking()
 	{
+		if (!CanUseLocalTools())
+			return;
 		if (m_bPickingTeleport)
 			return;
 
@@ -522,6 +539,11 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	//! The selection event gives screen coordinates; read the world position under the map cursor
 	protected void OnMapSelection(vector screenPosition)
 	{
+		if (!CanUseLocalTools())
+		{
+			StopTeleportPicking();
+			return;
+		}
 		if (!m_bPickingTeleport)
 			return;
 

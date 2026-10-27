@@ -32,6 +32,11 @@ modded class AROR_OperationManagerComponent
 		if (m_iClock < next)
 			return;
 		m_mMarsNextRequest.Set(playerId, m_iClock + 5);
+		if (!AROR_MarsAccess.CanRequest_S(playerId))
+		{
+			MarsReply(playerId, "Server administrator access is required");
+			return;
+		}
 		if (!AROR_MarsAccess.Accepts(credential))
 		{
 			MarsReply(playerId, "Access denied");

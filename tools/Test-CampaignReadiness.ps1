@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([switch]$WriteReport)
+param([switch]$WriteReport,[string]$ReportPath='docs/CAMPAIGN_SITE_READINESS.csv')
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'CampaignGroundingData.ps1')
 $repoRoot=Split-Path -Parent $PSScriptRoot
@@ -11,7 +11,15 @@ if(@($catalogue.Id | Select-Object -Unique).Count -ne 41){throw 'Duplicate stabl
 $layer=[IO.File]::ReadAllText((Join-Path $addonRoot 'Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/MilitaryInstallations.layer'))
 # Audit root data without interpreting or rewriting the user's castle/prop children.
 $saved=Read-CampaignLayerLocations $layer -RootsOnly
-if($saved.Count -ne 23){throw 'Saved military layer does not contain all 23 locations'}
+if($saved.Count -ne 26){throw 'Expected 23 catalogued military roots and three placed seaports'}
+$placedPorts=@($saved.Keys | Where-Object {$_ -notin $sites.Id})
+if($placedPorts.Count -ne 3){throw 'Unexpected non-catalogue military roots'}
+foreach($portId in $placedPorts){
+ if($saved[$portId].Text -notmatch 'm_eType\s+PORT\b'){throw "Unexpected non-catalogue location: $portId"}
+ if(!$saved[$portId].Text.Contains('Prefabs/Locations/AROR_Location_Port.et')){throw "Placed port does not inherit the expected template: $portId"}
+}
+$portTemplate=[IO.File]::ReadAllText((Join-Path $addonRoot 'Prefabs/Locations/AROR_Location_Port.et'))
+if(!$portTemplate.Contains('AROR_GarrisonComponent') -or !$portTemplate.Contains('AROR_Prop_CaptureFlag.et')){throw 'Port template lacks garrison/capture flag'}
 $definitions=(Get-Content -Raw (Join-Path $repoRoot 'docs/MILITARY_DEFENCE_PRESETS.json') | ConvertFrom-Json).Presets
 function Distance($a,$b){[Math]::Sqrt([Math]::Pow(([double]$a.X-[double]$b.X),2)+[Math]::Pow(([double]$a.Z-[double]$b.Z),2))}
 function PersonnelRange($type){
@@ -29,6 +37,12 @@ $sceneSites=@($sites | ForEach-Object {
  if(!$savedRole.Success){throw "Saved role missing: $($_.Id)"}
  [pscustomobject]@{Id=$_.Id;Type=$_.Type;Role=$savedRole.Groups[1].Value;X=$root.Origin[0];Y=$root.Origin[1];Z=$root.Origin[2]}
 })
+foreach($portId in $placedPorts){
+ $root=$saved[$portId]
+ $role=[regex]::Match($root.Text,'m_eInitialControllingRole\s+(OCCUPIERS|INVADERS|RESISTANCE)\b')
+ if(!$role.Success){throw "Missing placed port role: $portId"}
+ $sceneSites += [pscustomobject]@{Id=$portId;Type='PORT';Role=$role.Groups[1].Value;X=$root.Origin[0];Y=$root.Origin[1];Z=$root.Origin[2]}
+}
 # Circle intersections capture worst activation overlaps between site centres,
 # including a player standing between four sites rather than directly at a pole.
 $samples=New-Object 'Collections.Generic.List[object]'
@@ -95,8 +109,8 @@ foreach($required in @('m_bOutpostCaptureQRFs 1','m_bInvaderOperationsEnabled 1'
  if(!$managers.Contains($required)){throw "Unexpected Chicken policy: $required"}
 }
 if($WriteReport){
- $results | Export-Csv -LiteralPath (Join-Path $repoRoot 'docs/CAMPAIGN_SITE_READINESS.csv') -NoTypeInformation -Encoding UTF8
+ $results | Export-Csv -LiteralPath (Join-Path $repoRoot $ReportPath) -NoTypeInformation -Encoding UTF8
 }
 $results | Format-Table Name,Role,PeakNearbySites,PeakNearbyMaximumPersonnel,PresetWallChildren -AutoSize
-Write-Output ('Audited all 23 saved military roots, types, roles, catalogue garrison/flag template bindings and Chicken capture-response policy. Catalogue transform differences: '+@($results | Where-Object RootVerified -eq $false).Count)
+Write-Output ('Audited 23 catalogued military roots plus three placed port roots; all 26 contribute to activation-overlap estimates. Catalogue garrison/flag bindings and Chicken capture-response policy checked. Catalogue transform differences: '+@($results | Where-Object RootVerified -eq $false).Count)
 Write-Output 'Read-only scene audit. Terrain, current custom geometry, road reachability, native spawning and multiplayer are not certified.'

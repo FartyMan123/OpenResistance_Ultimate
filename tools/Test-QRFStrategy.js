@@ -18,19 +18,23 @@ function runQRFTests(sources) {
   const bank = {balances:{1:10000,2:10000}, payments:[], GetFactionFunds(role){return this.balances[role]||0;}, SpendFactionFunds_S(role,amount){if(amount<0||this.GetFactionFunds(role)<amount)return false;this.balances[role]-=amount;this.payments.push([role,amount]);return true;}};
   const env = {Replication:{IsServer:()=>true}, AROR_EFactionRole:{RESISTANCE:0,OCCUPIERS:1,INVADERS:2}, AROR_EForceType:{MOTORIZED:0,MECHANIZED:1,ARMOUR:2,AIRBORNE:3,INFANTRY:4}, AROR_ELocationType:{TOWN:0,HQ:1,AIRPORT:2,CITY:3,FACTORY:4,MILITARY_BASE:5,PORT:6,RESOURCES:7,OUTPOST:8}, Math:{...Object.fromEntries(['min','max','floor'].map(n=>[n,Math[n]])), Min:Math.min,Max:Math.max,Floor:Math.floor,Clamp:(x,a,b)=>Math.max(a,Math.min(b,x))}, Print:()=>{},LogLevel:{NORMAL:0},string:{Format:(...xs)=>xs.join(' ')}, AROR_EconomyComponent:{GetInstance:()=>bank}, ChimeraCharacter:{Cast:x=>x?.character?x:null},DamageManagerComponent:{Cast:x=>x},FactionAffiliationComponent:{Cast:x=>x}};
   const methodNames = ['PressureForLevel','ReadinessLevel','Importance','Priority','DesiredTier','VehicleValue','Debt','SetDebt_S','Available','Reserve_S','Charge_S','Activate_S','Observe_S','Tick_S','Register_S','ObserveLosses_S','Retire_S','Reserved','IsLost','VehicleLossValue','ReplacementQuote','Find','RecordLook','InView','GetReservedGroups','GetReservedMembers','GetReservedVehicles','IsReady','IsEnemyRole','HasLocation','RecordStrategicEvidence','SetReadinessPressure_S','GetReadinessPressure','GetReadinessLevel','GetOperation','RequestOperation_S','GetOwner','Clear','HasOperatingQRF','HasPendingQRF','FailOperation'];
+  env.AROR_FactionRoles={GetAIMilitary:out=>out.push(roles.OCCUPIERS,roles.INVADERS)};
+  const roles=env.AROR_EFactionRole;
+  env.AROR_EResponseType={AIR_GROUND:7};
   methodNames.push('ResponseLevel','GetCrackdownLevel','GetCrackdown','SetCrackdown_S','RecordCaptureEscalation_S','QRFPoolReadinessLevel','ReportSpawnWait');
   function compile(source,name) {
     let {args,body} = extract(source,name);
     args = args.replace(/\b(?:notnull |const )?(?:[A-Za-z_]\w*)(?:<[^>]+>)?\s+(\w+)/g,'$1');
     body=body.replace(/\b(?:const )?array<[^>]+>\s+(\w+)\s*=\s*\{([^}]*)\};/g,'let $1=[$2];')
       .replace(/foreach\s*\(\w+\s+(\w+)\s*:\s*([^\)]+)\)/g,'for (let $1 of $2)')
+      .replace(/\b(?:IEntity|ChimeraCharacter|DamageManagerComponent|FactionAffiliationComponent|AROR_(?!E[A-Z])\w+)\s+(\w+);/g,'let $1=null;')
       .replace(/\b(?:const )?(?:bool|int|float|string|IEntity|ChimeraCharacter|DamageManagerComponent|FactionAffiliationComponent|AROR_\w+)\s+(\w+)/g,'let $1')
       .replace(/(?<![.\w])m_\w+/g,x=>'this.'+x)
       .replace(/(?<![.\w])s_\w+/g,x=>'this.'+x)
       .replace(/\b([\w.]+)\.IsEmpty\(\)/g,'($1.length === 0)');
     // Enforce zero-initializes local integers; JavaScript does not.
     body=body.replace(/let (\w+);/g,'let $1=0;');
-    body=body.replace(/context\.ReadValue\("([^"]+)", (\w+)\)/g,'(($2=context.values["$1"])!==undefined)');
+    body=body.replace(/context\.ReadValue\("([^"]+)", (\w+)\)/g,'(($2=context.values["$1"])!==undefined)').replace(/context\.ReadValue\((\w+), (\w+)\)/g,'(($2=context.values[$1])!==undefined)');
     for(const method of methodNames)body=body.replace(new RegExp('(?<![.\\w])'+method+'\\(', 'g'),'this.'+method+'(');
     return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
   }
@@ -83,7 +87,7 @@ function runQRFTests(sources) {
   const Asset=makeClass('AROR_QRFAssetAccount',['IsLost'],function(){this.m_bSettled=false;});
   const Funding=makeClass('AROR_QRFFunding',['Register_S','ObserveLosses_S','Retire_S','Reserved','HasUnsettledAssets'],function(){Object.assign(this,{m_aAssets:[],m_iLosses:0,m_iRecovered:0,m_bActivated:false,m_bClosed:false,m_bUnsecured:false,m_iQuote:0,m_iOverhead:0});});
   const Finance=makeClass('AROR_QRFFinance',['Debt','SetDebt_S','Available','Reserve_S','ReserveMinimumCapture_S','Charge_S','Activate_S','Observe_S','Tick_S','PendingLossValue'],function(){Object.assign(this,{m_aDeployments:[],m_iOccupierDebt:0,m_iInvaderDebt:0,m_iOccupierLossValue:0,m_iInvaderLossValue:0});});
-  const operation=(id,role)=>({GetId:()=>id,GetRole:()=>role});
+  const operation=(id,role)=>({GetId:()=>id,GetRole:()=>role,GetType:()=>1,UsesTacticalResponse:()=>true});
   const finance=new Finance();
   let account=finance.Reserve_S(operation('one',1),940,60);
   check(account&&finance.Available(1)===9000,'whole quote reserved');
@@ -125,7 +129,7 @@ function runQRFTests(sources) {
   const captured=entity(true,'AROR_RESISTANCE'),nativeSoldier=entity(true,'US');
   for(const e of [captured,nativeSoldier]){const asset=new Asset();Object.assign(asset,{m_Entity:e,m_sFaction:'AROR_OCCUPIERS',m_sNativeFaction:'US',m_bVehicle:false});check(asset.IsLost(),'captured personnel is a loss');}
   const unknown=new Asset();check(!unknown.IsLost(),'missing/dormant entity is not confirmed dead');
-  const Profile=makeClass('AROR_ForceProfile',['VehicleLossValue','ReplacementQuote','GetGroupBudget'],function(){Object.assign(this,{m_eType:0,m_iVehicleLossValue:-1,m_iPersonnelLossValue:25,m_iPersonnelBudget:8,m_iEscortCount:1,m_iEscortLossValue:2000});});
+  const Profile=makeClass('AROR_ForceProfile',['VehicleLossValue','ReplacementQuote','GetGroupBudget'],function(){Object.assign(this,{m_iMinimumReadinessLevel:1,m_eType:0,m_iVehicleLossValue:-1,m_iPersonnelLossValue:25,m_iPersonnelBudget:8,m_iEscortCount:1,m_iEscortLossValue:2000});});
   const profile=new Profile();check(profile.ReplacementQuote()===400,'motorized collateral');profile.m_eType=3;profile.m_iPersonnelBudget=20;check(profile.ReplacementQuote()===4100,'aircraft and all crew quoted');
   profile.m_iVehicleLossValue=700;check(profile.VehicleLossValue()===700,'designer price override');
   const Spot=makeClass('AROR_QRFSpotting',['Find','RecordLook','InView','SetMapOpen_S'],function(){this.m_aSightings=[];this.m_iNextId=0;this.m_aMapObserversBlocked=[];});
@@ -146,10 +150,12 @@ function runQRFTests(sources) {
   check(!Spot.prototype.InView.call(spot,500,0.5,800,0.9),'behind/outside view rejected');
   const aircraftKind=compile(sources.AROR_QRFSpotting,'IsAircraftKind');
   check(aircraftKind(3)&&aircraftKind(4)&&!aircraftKind(5)&&!aircraftKind(2),'light armed contacts use ground observation range, not aircraft range');
+  env.AROR_ResponsePolicy={IsRecipeEligible:compile(sources.AROR_ResponsePolicy,'IsRecipeEligible'),IsProfileUnlocked:compile(sources.AROR_ResponsePolicy,'IsProfileUnlocked')};
   // Execute actual ground selection against bounded authored-recipe mocks.
   const groundCtx={m_Operations:{GetReadinessLevel:()=>5,GetCrackdownLevel:()=>5,GetQRFFinance:()=>({Available:()=>bank.balances[1],Debt:()=>0}),QRFOverhead:t=>50+t*10},m_iMaxGroups:20,m_iMaxMembers:128,m_iMaxVehicles:10,GetReservedGroups:()=>0,GetReservedMembers:()=>0,GetReservedVehicles:()=>0,m_aForceProfiles:[],m_aGroundQRFRecipes:[]};
+  Profile.prototype.GetVehicleBudget=compile(sources.AROR_ForceProfile,'GetVehicleBudget');
   const motor=new Profile();
-  for(let tier=1;tier<=5;tier++)groundCtx.m_aGroundQRFRecipes.push({m_iLevel:tier,Resolve:(profiles,role,faction,out)=>{if(role!==1||faction!=='AROR_OCCUPIERS')return false;for(let i=0;i<tier;i++)out.push(motor);return true;}});
+  for(let tier=1;tier<=5;tier++)groundCtx.m_aGroundQRFRecipes.push({m_iLevel:tier,AllowsReadinessLevel:()=>true,Resolve:(profiles,role,faction,out)=>{if(role!==1||faction!=='AROR_OCCUPIERS')return false;for(let i=0;i<tier;i++)out.push(motor);return true;}});
   const choose=compile(sources.AROR_OperationExecutorComponent,'FindStrategicGroundRecipe');
   for(let funds=0;funds<=10000;funds+=250)for(let desired=1;desired<=5;desired++){
     bank.balances[1]=funds;const recipe=choose.call(groundCtx,1,'AROR_OCCUPIERS',desired);
@@ -165,17 +171,25 @@ function runQRFTests(sources) {
   groundCtx.m_iMaxMembers=1;
   check(!choose.call(groundCtx,1,'AROR_OCCUPIERS',1,true),'minimum response still requires complete personnel capacity');groundCtx.m_iMaxMembers=128;
   check(!choose.call(groundCtx,2,'AROR_INVADERS',1,true),'minimum response cannot borrow another role\'s recipe');
-  methodNames.push('FindStrategicGroundRecipe','HasFriendlyQRFOrigin','IsLaunchPositionSafe');
+  methodNames.push('FindStrategicGroundRecipe','HasFriendlyQRFOrigin','IsLaunchPositionSafe','BestOrigin','IsUsableOrigin','OriginCost','IsGarrisonDepleted');
   let allowMinimum=false;
   groundCtx.FindStrategicGroundRecipe=choose;
   groundCtx.QRFPoolReadinessLevel=compile(sources.AROR_OperationExecutorComponent,'QRFPoolReadinessLevel');
   groundCtx.m_Operations.AllowsMinimumCaptureQRF=()=>allowMinimum;
   env.AROR_FactionRolesComponent={GetInstance:()=>({GetFactionKey:r=>r===1?'AROR_OCCUPIERS':'AROR_INVADERS'})};
   let originOwner=1,originType=8,originSafe=true;
-  const originTarget={GetCenter:()=>[0,10,0]},originSite={GetCenter:()=>[500,10,0],GetControllingRole:()=>originOwner,GetLocationType:()=>originType};
+  const originTarget={GetId:()=> 'site',GetCenter:()=>[0,10,0]},originSite={GetId:()=> 'origin',GetCenter:()=>[500,10,0],GetControllingRole:()=>originOwner,GetLocationType:()=>originType};
   env.AROR_LocationManagerComponent={GetInstance:()=>({GetLocationById:id=>id==='origin'?originSite:id==='site'?originTarget:null,GetLocations:out=>out.push(originSite)})};
   env.AROR_QRFOriginPolicy={IsOriginType:t=>[2,5,8].includes(t)};
   groundCtx.IsLaunchPositionSafe=()=>originSafe;
+  env.float={MAX:Number.MAX_VALUE};
+  env.vector={DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])};
+  env.AROR_QRFOriginPolicy={IsOriginType:t=>[2,5,8].includes(t)};
+  env.AROR_RecaptureComponent={IsContested:()=>false};
+  Object.assign(groundCtx,{m_fMinOriginDistance:1500,m_mOriginLaunchedAt:{Contains:()=>false},
+    OriginCost:env.vector.DistanceXZ,IsGarrisonDepleted:()=>false,
+    BestOrigin:compile(sources.AROR_OperationExecutorComponent,'BestOrigin'),
+    IsUsableOrigin:compile(sources.AROR_OperationExecutorComponent,'IsUsableOrigin')});
   groundCtx.HasFriendlyQRFOrigin=compile(sources.AROR_OperationExecutorComponent,'HasFriendlyQRFOrigin');
   const canFund=compile(sources.AROR_OperationExecutorComponent,'CanFundQRFThreat_S');
   check(!canFund.call(groundCtx,1,5,true),'shared default does not admit an unfunded capture response');allowMinimum=true;
@@ -268,7 +282,7 @@ function runQRFTests(sources) {
   env.AROR_EOperationState={ACTIVE:2,SUCCEEDED:3};let finished=0,failed=0;
   const finish=compile(sources.AROR_OperationExecutorComponent,'FinishGroundQRFIfIdle');
   const endCtx={m_Operations:{ResolveOperation_S:()=>finished++},HasOperatingQRF:()=>false,HasPendingQRF:()=>false,FailOperation:()=>failed++};
-  const ended={IsTerminal:()=>false,GetState:()=>2,GetId:()=> 'ended',m_iRecoveredPackages:1};
+  const ended={IsTerminal:()=>false,GetType:()=>1,GetState:()=>2,GetId:()=> 'ended',m_iRecoveredPackages:1};
   finish.call(endCtx,ended);check(finished===1&&failed===0,'returned survivor completes task');
   ended.m_iRecoveredPackages=0;finish.call(endCtx,ended);check(failed===1,'no survivors fails task');
   endCtx.HasPendingQRF=()=>true;finish.call(endCtx,ended);check(failed===1,'virtual reserve prevents premature terminal state');
@@ -284,7 +298,7 @@ function runQRFTests(sources) {
   receive.call(cache,['stale'],[[1,2,3]],[4],[90],90,[2]);check(cache.s_aIds.length===0,'expired report filtered');
   check(!sources.AROR_QRFMapIntel.includes('m_Entity'),'map stores snapshots only');
   // Actual serializer bodies preserve pending bills without mutating another component during save.
-  env.AROR_OperationManagerComponent={Cast:x=>x};env.ESerializeResult={OK:1};env.VERSION=2;
+  env.AROR_OperationManagerComponent={Cast:x=>x};env.ESerializeResult={OK:1};env.VERSION=Number(sources.AROR_OperationManagerComponentSerializer.match(/VERSION\s*=\s*(\d+)/)[1]);
   const saveFinance=new Finance(),saveAccount=saveFinance.Reserve_S(operation('save',1),500,60),saveSoldier=entity(true);
   saveAccount.Register_S(saveSoldier,25,false,'AROR_OCCUPIERS','US');saveSoldier.dead=true;saveFinance.SetDebt_S(1,100);
   const saved={},saveManager={GetCrackdownForSave:role=>role===1?350:900,GetReadinessPressure:role=>role===1?100:250,GetQRFFinance:()=>saveFinance};
@@ -296,7 +310,7 @@ function runQRFTests(sources) {
   let restored=null;const loadManager={RestoreQRFStrategy_S:(...args)=>restored=args};
   const deserialize=compile(sources.AROR_OperationManagerComponentSerializer,'Deserialize');
   check(deserialize(null,loadManager,{values:saved})&&restored.join(',')==='100,250,125,0,350,900','restore independent pressure, crackdown and liabilities');
-  check(!deserialize(null,loadManager,{values:{...saved,version:3}}),'unknown version rejected');
+  check(!deserialize(null,loadManager,{values:{...saved,version:env.VERSION+1}}),'unknown version rejected');
   check(!deserialize(null,loadManager,{values:{version:1}}),'partial state rejected');
   // Depleted factions keep a bounded baseline capture response, with real bills.
   bank.balances[1]=0;

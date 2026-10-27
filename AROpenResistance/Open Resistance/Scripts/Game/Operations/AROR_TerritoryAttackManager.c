@@ -122,7 +122,13 @@ modded class AROR_OperationManagerComponent
 
 	override protected void NotifyChanged(AROR_Operation operation)
 	{
+		// Subscribers may synchronously resolve ACTIVE; record this transition first.
+		RecordTerritoryOperationChange(operation);
 		super.NotifyChanged(operation);
+	}
+
+	protected void RecordTerritoryOperationChange(AROR_Operation operation)
+	{
 		if (!Replication.IsServer() || !m_bTerritoryAttacksEnabled || !operation || operation.m_bDebugRequest)
 			return;
 		if (operation.GetType() == AROR_EOperationType.ATTACK)

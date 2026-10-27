@@ -692,6 +692,9 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 
 	protected string RequestOperation_S(AROR_EFactionRole role, AROR_EOperationType type, string targetId, int delaySeconds, bool debugRequest = false)
 	{
+		// Unsupported enum values would never enter either scheduler processing pass.
+		if (type != AROR_EOperationType.ATTACK && type != AROR_EOperationType.QRF)
+			return string.Empty;
 		if (role == AROR_EFactionRole.INVADERS && !m_bInvaderOperationsEnabled)
 			return string.Empty;
 		if (!IsReady() || !IsEnemyRole(role) || delaySeconds < 0 || delaySeconds > 86400 || !HasLocation(targetId))

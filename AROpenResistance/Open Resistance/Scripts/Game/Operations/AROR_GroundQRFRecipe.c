@@ -1,4 +1,4 @@
-//! Authored ground mix: level is a tier, and the element list is deployed exactly once.
+//! Authored ground or joint mix: level is a tier; deploy the element list exactly once.
 [BaseContainerProps()]
 class AROR_GroundQRFRecipe
 {
@@ -16,7 +16,7 @@ class AROR_GroundQRFRecipe
 	AROR_EFactionRole m_eRole;
 	[Attribute("AROR_OCCUPIERS", desc: "Required faction from the shared role mapping")]
 	string m_sFactionKey;
-	[Attribute("", desc: "Ordered ground force-profile IDs. Each entry is one complete element; repeat an ID for additional vehicles.")]
+	[Attribute("", desc: "Ordered force-profile IDs. Joint recipes start with one airborne pair, then ground elements. Each entry is deployed once.")]
 	ref array<string> m_aProfileIds;
 
 	bool IsValid()
@@ -49,6 +49,8 @@ class AROR_GroundQRFRecipe
 			return false;
 		if (readinessLevel < 1 || readinessLevel > 5 || !AllowsReadinessLevel(readinessLevel))
 			return false;
+		int airborne;
+		int ground;
 		foreach (string id : m_aProfileIds)
 		{
 			AROR_ForceProfile selected = null;
@@ -63,10 +65,25 @@ class AROR_GroundQRFRecipe
 				return false;
 			if (selected.m_eRole != role || selected.m_sFactionKey != factionKey)
 				return false;
-			if (!selected.HasNativeExecutor() || selected.GetWeight(AROR_EOperationType.QRF) <= 0)
+			if (selected.GetWeight(AROR_EOperationType.QRF) <= 0)
 				return false;
+			if (selected.m_eType == AROR_EForceType.AIRBORNE)
+			{
+				// Joint recipes start with one transport/fireteam/gunship pair.
+				if (m_eResponseType != AROR_EResponseType.AIR_GROUND || !resolved.IsEmpty() || selected.m_iEscortCount != 1)
+					return false;
+				airborne++;
+			}
+			else
+			{
+				if (!selected.HasNativeExecutor())
+					return false;
+				ground++;
+			}
 			resolved.Insert(selected);
 		}
+		if (m_eResponseType == AROR_EResponseType.AIR_GROUND && (airborne != 1 || ground < 1))
+			return false;
 		return true;
 	}
 }

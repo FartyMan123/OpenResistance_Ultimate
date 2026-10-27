@@ -24,6 +24,7 @@ class AROR_ResponsePolicy
 		types.Insert(AROR_EResponseType.AIRBORNE);
 		types.Insert(AROR_EResponseType.COMBINED_ARMS);
 		types.Insert(AROR_EResponseType.LIGHT_SUPPORT);
+		types.Insert(AROR_EResponseType.AIR_GROUND);
 	}
 
 	static string TypeName(int type)
@@ -37,6 +38,7 @@ class AROR_ResponsePolicy
 			case AROR_EResponseType.INFANTRY: return "INFANTRY";
 			case AROR_EResponseType.COMBINED_ARMS: return "COMBINED ARMS";
 			case AROR_EResponseType.LIGHT_SUPPORT: return "LIGHT SUPPORT";
+			case AROR_EResponseType.AIR_GROUND: return "AIR + GROUND";
 		}
 		return "AUTHORED RESPONSE";
 	}
@@ -58,6 +60,11 @@ class AROR_ResponsePolicy
 		result.m_sReason = "No authored response at these Readiness / Crackdown levels";
 		if (!profiles || readiness < 1 || readiness > 5 || crackdown < 1 || crackdown > 5)
 			return result;
+		if (type == AROR_EResponseType.AIR_GROUND && !airborneEnabled)
+		{
+			result.m_sReason = "Airborne adapter is disabled";
+			return result;
+		}
 		AROR_GroundQRFRecipe best;
 		if (recipes)
 		{

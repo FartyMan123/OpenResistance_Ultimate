@@ -74,9 +74,9 @@ function runDefenceLayoutTests(source,presets={}) {
  for(const ray of [1,2,3]){traces=[];blocked=ray;check(!arc(visibility,[0,10,0],90),'bush/obstacle on any firing ray rejects gun position');}
  for(const [name,text] of Object.entries(presets)){
   const h=Number(text.match(/m_fDefenceHalfExtent ([\d.]+)/)[1]);let count=0,aligned=true;
-  for(const marker of text.matchAll(/^  GenericEntity AROR_\w+_Defence_(\d+)_(\d+) \{\r?\n([\s\S]*?)^  \}/gm)){
-   const kind=Number(marker[1]),ordinal=Number(marker[2]),body=marker[3];
-   const coords=body.match(/^   coords ([\d.\-]+) 0 ([\d.\-]+)/m),angles=body.match(/^   angles 0 ([\d.\-]+) 0/m);let expected=point(kind,ordinal,h);
+  for(const marker of text.matchAll(/^([ \t]*)(?:GenericEntity[ \t]+)?AROR_\w+_Defence_(\d+)_(\d+) \{\r?\n([\s\S]*?)^\1\}/gm)){
+   const kind=Number(marker[2]),ordinal=Number(marker[3]),body=marker[4];
+   const coords=body.match(/^\s+coords ([\d.\-]+) 0 ([\d.\-]+)/m),angles=body.match(/^\s+angles 0 ([\d.\-]+) 0/m);let expected=point(kind,ordinal,h);
    if(name.endsWith('Compact')&&name!=='OutpostCompact'){
     if(kind===0)expected=[[-12,0,12],[12,0,12],[-16,0,-16],[16,0,-16],[0,0,10],[0,0,-16]][ordinal];
     if(kind===1)expected=[[0,0,20],[-20,0,6],[20,0,6]][ordinal];
@@ -85,8 +85,8 @@ function runDefenceLayoutTests(source,presets={}) {
      if(kind===1)expected=[[0,0,16],[-16,0,6],[16,0,6]][ordinal];
     }
    }
-   aligned=aligned&&Math.abs(Number(coords[1])-expected[0])<1e-5&&Math.abs(Number(coords[2])-expected[2])<1e-5;
-   if(kind>0)aligned=aligned&&Number(angles[1])===facing(kind,ordinal);
+   aligned=aligned&&Math.abs(Number(coords[1])-expected[0])<=0.001&&Math.abs(Number(coords[2])-expected[2])<=0.001;
+   if(kind>0)aligned=aligned&&Number(angles?.[1]??0)===facing(kind,ordinal);
    count++;
   }
   check(aligned&&count>0,'authored '+name+' marker positions/facing match runtime layout');

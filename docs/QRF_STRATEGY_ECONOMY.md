@@ -1,6 +1,6 @@
 # QRF strategy, prices and response lifecycle
 
-Status: source implementation and offline checks complete; **new Workbench compilation, multiplayer and combat acceptance are pending**. Both opposing roles use the same framework. Chicken enables strategic economy and visual spotting; Chicken also enables Invader ground capture responses; combat/REAPER dispatch remain disabled.
+Status: source implementation and offline checks; **current Workbench compilation, multiplayer and combat acceptance are pending**. Chicken enables both armies' capture responses, explicit airborne selections and Readiness-5 joint responses. Combat-triggered QRF dispatch and the blanket REAPER override remain off. See [release validation](QRF_RELEASE_VALIDATION.md) for current evidence.
 
 ## What happens after a capture
 
@@ -71,6 +71,10 @@ These are initial tuning values, not a claim of measured difficulty. Infantry/cr
 Machine-readable values: [QRF_PRICES.csv](QRF_PRICES.csv). The needed-funds columns include collateral plus overhead; a loss-free return costs only the overhead. Existing six-live-ground-package limits and finite reserve deadlines remain authoritative, so healthy lead packages can prevent the entire reserve from appearing. Level is a response tier, not an infantry-squad multiplier.
 
 For example, a tier-2 US deployment pays 70. Losing one LAV and two soldiers adds 850, for a total 920 campaign cost; the other surviving assets do not incur replacement charges. Losing a truck with its driver costs 225 in addition to that response's overhead.
+
+## Joint responses
+
+Chicken enables authored `occupier_joint_l1`–`l5` and `invader_joint_l1`–`l5` recipes at Readiness 5. Each contains one transport/fireteam/gunship pair followed by ground elements. At equal tier, funded joint recipes are preferred when `m_bAllowJointResponses`, airborne execution and tactical coordination are enabled. An affordable ground alternative can still be selected; the unsecured minimum remains ground-only. Full collateral and overhead include both domains. See [the joint roster and native gates](QRF_RELEASE_VALIDATION.md#joint-airborne-and-ground-responses) and [QRF_PRICES.csv](QRF_PRICES.csv).
 
 ## Readiness and crackdown
 

@@ -75,9 +75,20 @@ class AROR_ForceProfile
 
 	int GetGroupBudget()
 	{
+		if (m_eType == AROR_EForceType.AIRBORNE)
+			return 3;
 		if (m_eType == AROR_EForceType.INFANTRY || m_eType == AROR_EForceType.ARMOUR)
 			return 1;
 		return 2;
+	}
+
+	int GetVehicleBudget()
+	{
+		if (m_eType == AROR_EForceType.AIRBORNE)
+			return 2;
+		if (m_eType == AROR_EForceType.INFANTRY)
+			return 0;
+		return 1;
 	}
 
 	bool HasNativeExecutor()

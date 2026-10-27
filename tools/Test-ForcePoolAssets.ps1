@@ -105,7 +105,7 @@ foreach ($level in $levels) {
 	}
 }
 $recipes = [regex]::Matches($layerText, '(?ms)^\s{4}AROR_GroundQRFRecipe\s*\{(.*?)^\s{4}\}')
-if ($recipes.Count -ne 32) { throw 'Expected two fixed aliases and five responses in three equipment bands for each opposing role' }
+if ($recipes.Count -ne 42) { throw 'Expected 32 ground recipes plus ten joint responses' }
 $invaderTiers = @()
 $occupierTiers = @()
 $coverage = @{}
@@ -130,8 +130,8 @@ foreach ($recipe in $recipes) {
 		if ($tier -ne 1 -or $minimumReadiness -ne 5 -or $maximumReadiness -ne 5) { throw 'Legacy combined-arms fixture must stay at readiness five' }
 	} else {
 		if ($tier -lt 1 -or $tier -gt 5) { throw 'Invalid strategic response tier' }
-		if ($roleId -eq '2' -and $recipeId -cmatch "^invader_(ground|light|mechanized)_l$tier`$") { $invaderTiers += $tier }
-		elseif ($roleId -eq '1' -and $recipeId -cmatch "^occupier_(ground|light|mechanized)_l$tier`$") { $occupierTiers += $tier }
+		if ($roleId -eq '2' -and $recipeId -cmatch "^invader_(ground|light|mechanized|joint)_l$tier`$") { $invaderTiers += $tier }
+		elseif ($roleId -eq '1' -and $recipeId -cmatch "^occupier_(ground|light|mechanized|joint)_l$tier`$") { $occupierTiers += $tier }
 		else { throw 'Invalid strategic recipe role or ID' }
 		$expectedRange = '5,5'
 		if ($recipeId -match '_light_') { $expectedRange = '1,2' }
@@ -153,7 +153,7 @@ foreach ($recipe in $recipes) {
 		if ($profileBody -notmatch ('m_eRole\s+' + $roleId + '\b') -or $profileBody -match 'm_bEnabled\s+0\b') { throw 'Composite element unavailable or wrong role' }
 		$type = [int][regex]::Match($profileBody, 'm_eType\s+(\d+)').Groups[1].Value
 		$types += $type
-		if ($type -eq 2) { $groups++ } elseif ($type -eq 0 -or $type -eq 1) { $groups += 2 } else { throw 'Unexpected element in staged ground recipe' }
+		if ($type -eq 3 -and $recipeId -match '_joint_') { $groups += 3; $vehicles++; $assetCollateral += 2000 } elseif ($type -eq 2) { $groups++ } elseif ($type -eq 0 -or $type -eq 1) { $groups += 2 } else { throw 'Unexpected recipe element' }
 		$members += [int][regex]::Match($profileBody, 'm_iPersonnelBudget\s+(\d+)').Groups[1].Value
 		$assetCollateral += 25 * [int][regex]::Match($profileBody, 'm_iPersonnelBudget\s+(\d+)').Groups[1].Value
 		$assetCollateral += [int][regex]::Match($profileBody, 'm_iVehicleLossValue\s+(\d+)').Groups[1].Value
@@ -188,7 +188,7 @@ if ($managerSource -notmatch '\[Attribute\("0",[^\r\n]*\)\]\s+protected bool m_b
 if ($layerText -notmatch 'm_bCombatQRFs\s+0\b' -or $layerText -notmatch 'm_bOutpostCaptureQRFs\s+1\b') { throw 'Chicken QRFs must be capture-driven, with combat responses disabled' }
 if ($layerText -notmatch 'm_sInvadersAttackTargetId\s+""' -or $layerText -notmatch 'm_sInvadersQRFTestTargetId\s+""') { throw 'Invader automatic/test targets must remain empty' }
 $tacticalFixture = @{
-	m_bMarsEnabled = '1'; m_bAllowAirborneResponses = '1'; m_bTerritoryAttacksEnabled = '1'
+	m_bMarsEnabled = '1'; m_bAllowAirborneResponses = '1'; m_bAllowJointResponses = '1'; m_bTerritoryAttacksEnabled = '1'
 	m_iTerritoryAttackGrace = '900'; m_iTerritoryAttackAfterQRF = '300'; m_iTerritoryAttackRest = '900'
 	m_fReaperLZFallbackRadius = '1200'
 	m_fReaperLZAdjustmentRadius = '60'; m_fQRFRoadLaunchRadius = '300'; m_iQRFSeatRecoveryDelay = '10'
@@ -206,4 +206,4 @@ $tacticalFixture = @{
 foreach ($setting in $tacticalFixture.GetEnumerator()) {
 	if ($layerText -notmatch ('(?m)^\s+' + $setting.Key + '\s+' + [regex]::Escape($setting.Value) + '\s*$')) { throw "Unexpected tactical fixture setting: $($setting.Key)" }
 }
-Write-Output "Verified $verified installed GUIDs, navigation, ten profiles, equipment gates, 32 recipes and all 50 faction/readiness/crackdown combinations against executor budgets and documented prices. Chicken capture responses and explicit MARS airborne selections enabled for both roles; combat reports and the blanket flight override remain disabled. Configuration checks only, not Enforce compilation or gameplay testing."
+Write-Output "Verified $verified installed GUIDs, navigation, ten profiles, equipment gates, 42 recipes and all 50 faction/readiness/crackdown combinations against executor budgets and documented prices. Chicken capture responses and explicit MARS airborne selections enabled for both roles; combat reports and the blanket flight override remain disabled. Configuration checks only, not Enforce compilation or gameplay testing."

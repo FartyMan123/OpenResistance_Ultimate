@@ -115,5 +115,20 @@ if(typeof require!=='undefined'&&require.main===module){
   const sources={};for(const [key,file]of Object.entries({policy:'Commanders/AROR_InvaderCampaignPolicy.c',component:'Commanders/AROR_InvaderCampaignComponent.c',serializer:'Commanders/AROR_InvaderCampaignComponentSerializer.c',observer:'Operations/AROR_QRFCaptureObserver.c',income:'Economy/AROR_IncomeComponent.c'}))sources[key]=fs.readFileSync(path.join(root,file),'utf8');
   const lines=fs.readFileSync(path.resolve(__dirname,'../docs/EVERON_CAMPAIGN_LOCATIONS.csv'),'utf8').trim().split(/\r?\n/),split=l=>l.split(',').map(x=>x.replace(/^"|"$/g,'')),header=split(lines.shift());
   const catalogue=lines.map(l=>Object.fromEntries(split(l).map((x,i)=>[header[i],x])));
+  // The legacy CSV omits three ports and some later authored transforms. Use current placed military roots.
+  const layer=fs.readFileSync(path.resolve(__dirname,'../AROpenResistance/Open Resistance/Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/MilitaryInstallations.layer'),'utf8');
+  let placed=0;
+  for(const match of layer.matchAll(/^([ \t]*)(?:GenericEntity[ \t]+)?AROR_Location_\w+[^\r\n]*\{\r?\n([\s\S]*?)^\1\}/gm)){
+    const body=match[2],id=body.match(/\bm_sId "([^"]+)"/)?.[1],type=body.match(/\bm_eType (\w+)/)?.[1];
+    const positionLine=body.split(/\r?\n/).find(line=>line.startsWith(match[1]+' coords '));
+    const coordinates=positionLine?.trim().split(/\s+/);
+    const position=coordinates?.length===4?coordinates:null;
+    const role=body.match(/\bm_eInitialControllingRole (\w+)/)?.[1];
+    if(!id||!type||!position||!role)throw Error('Incomplete placed military location');
+    let row=catalogue.find(r=>r.Id===id);
+    if(!row){row={Id:id};catalogue.push(row)}
+    Object.assign(row,{Type:type,Role:role,X:position[1],Y:position[2],Z:position[3]});placed++;
+  }
+  if(placed!==26)throw Error('Expected all 26 actual military locations including seaports');
   console.log(runInvaderCampaignTests(sources,catalogue));
 }

@@ -50,6 +50,9 @@ class AROR_QRFSelectionPolicy
 		decision.m_sReason = "No complete affordable ground recipe within permitted tiers";
 		foreach (AROR_GroundQRFRecipe recipe : recipes)
 		{
+			// This provider describes ground stock/routes only; no aircraft availability is implied.
+			if (recipe && recipe.m_eResponseType == AROR_EResponseType.AIR_GROUND)
+				continue;
 			if (!recipe || recipe.m_iLevel < context.m_iMinimumTier || recipe.m_iLevel > ceiling)
 				continue;
 			if (!context.m_bAllowDowngrade && recipe.m_iLevel != context.m_iDesiredTier)

@@ -1,0 +1,20 @@
+﻿{
+    "Locations":  44,
+    "LaunchSites":  20,
+    "DirectedPairs":  860,
+    "PreferredOriginMetres":  600,
+    "AttackPairs":  500,
+    "PortPairs":  60,
+    "Evidence":  "Authored world metadata and endpoint geometry only. No road topology, intermediate slopes, bridges, driving or flight was evaluated.",
+    "Layers":  [
+                   {
+                       "File":  "CivilianLocations.layer",
+                       "SHA256":  "1B33233A11CF67C131658370C7188FFAA0EF28CF2F026901CF0894A68E994D46"
+                   },
+                   {
+                       "File":  "MilitaryInstallations.layer",
+                       "SHA256":  "A55B57737AE976890A0213ECB9EC594568753860A8F63D52EC38ACE62E38FC0B"
+                   }
+               ],
+    "ExecutorSHA256":  "DCC47DEE2E58C3E5EDB03352C1AF4693F0ABB67E2EA50BE931DE17B0F9A0B0C8"
+}
