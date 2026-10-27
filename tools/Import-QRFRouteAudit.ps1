@@ -9,11 +9,12 @@ $lines = [IO.File]::ReadAllLines((Resolve-Path -LiteralPath $LogPath))
 $start = -1
 for ($i=0; $i -lt $lines.Length; $i++) { if ($lines[$i] -match '\[AROR ROUTE AUDIT\] start ') { $start=$i } }
 if ($start -lt 0) { throw 'No route-audit start marker; no native evidence imported' }
-$pairs = @{}; $pads = @{}; $complete=$false
+$pairs = @{}; $lightPairs = @{}; $pads = @{}; $complete=$false
 foreach ($line in $lines[$start..($lines.Length-1)]) {
  if ($line -match '\[AROR ROUTE AUDIT\] pair origin=(\S+) target=(\S+) groundPlanning=(PASS|FAIL) airLaunchPlanning=(PASS|FAIL|NO_SAFE_LZ)') {
   $pairs[$Matches[1]+'/'+$Matches[2]] = @($Matches[3],$Matches[4])
  }
+ if ($line -match '\[AROR ROUTE AUDIT\] pair origin=(\S+) target=(\S+).* lightAirLaunchPlanning=(PASS|FAIL|NO_SAFE_LZ)') { $lightPairs[$Matches[1]+'/'+$Matches[2]]=$Matches[3] }
  if ($line -match '\[AROR ROUTE AUDIT\] landing target=(\S+) checked=\d+/\d+ pads=(\d+)') { $pads[$Matches[1]]=$Matches[2] }
  if ($line -match '\[AROR ROUTE AUDIT\] landing target=(\S+) unavailable;') { $pads[$Matches[1]]='UNAVAILABLE' }
  if ($line -match '\[AROR ROUTE AUDIT\] complete ') { $complete=$true }
@@ -26,6 +27,7 @@ foreach ($row in $rows) {
  $key=$row.OriginId+'/'+$row.TargetId
  $knownPairs[$key]=$true; $knownTargets[$row.TargetId]=$true
  if ($pairs.ContainsKey($key)) { $row.NativeGroundPlanning=$pairs[$key][0]; $row.NativeAirLaunchPlanning=$pairs[$key][1] }
+ if ($lightPairs.ContainsKey($key)) { $row.NativeLightAirLaunchPlanning=$lightPairs[$key] }
  if ($pads.ContainsKey($row.TargetId)) { $row.NativeLandingPads=$pads[$row.TargetId] }
 }
 foreach ($key in $pairs.Keys) { if (!$knownPairs.ContainsKey($key)) { throw "Log contains a pair outside the current Chicken matrix: $key" } }

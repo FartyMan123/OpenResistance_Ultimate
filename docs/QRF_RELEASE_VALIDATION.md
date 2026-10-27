@@ -1,16 +1,18 @@
 # Chicken QRF and attack release validation
 
-**Decision: native release approval is blocked pending gameplay acceptance.** The user reports successful compilation on 28 October 2026. The source audit, mocked policy tests and installed-resource checks support the changes below. Driving, flight, actual landings and packaged dedicated-server replication remain unverified. No route is labelled as driven or flown.
+**Decision: current changes require a fresh compile and native gameplay acceptance.** The user reported successful compilation of the preceding version on 28 October 2026. The subsequent light-air/joint-response and interruption fixes have not been compiled or played by this audit. Driving, flight, actual landings and packaged dedicated-server replication remain unverified. No route is labelled as driven or flown.
 
-Scope: Chicken only, both enemy roles, ordinary capture QRFs, trusted attacks, automatic Occupier attacks and MARS. Base revision: `6c03716ff3cdc573f56b8f428f436c249afc1d52`, branch `chicken-dev`, plus the accompanying working-tree changes. The requested work budget was two hours; simulated campaign ticks and assertion counts are not elapsed native gameplay time.
+Scope: Chicken only, both enemy roles, ordinary capture QRFs, trusted attacks, automatic Occupier attacks and MARS. The first audit started from `6c03716ff3cdc573f56b8f428f436c249afc1d52`; this follow-up starts from `3614c1b` on `chicken-dev`. Historical evidence is retained in Git. The requested work budget was two hours; simulated ticks and assertion counts are not elapsed native gameplay time.
 
 ## Evidence and repeatable checks
 
+Current combined result: **28 suites / 97,206 mocked assertions**, including **31 detected source mutations** and the 10,000-tick simulated scheduler soak. The original 27-suite / 95,936-assertion evidence remains in Git history.
+
 - [Automated results and source hashes](validation/QRF_AUTOMATED_RESULTS.json).
-- [All 350 configured response cells](validation/CHICKEN_RESPONSE_COVERAGE.csv): two armies × seven families × five Readiness levels × five Crackdown levels. 210 cells resolve an available response; the remaining 140 are intentionally locked. Availability does not establish affordability, current origin ownership, free live capacity or successful native deployment.
+- [All 350 configured response cells](validation/CHICKEN_RESPONSE_COVERAGE.csv): two armies × seven families × five Readiness levels × five Crackdown levels. 280 cells resolve an available response; the remaining 70 are intentionally locked. Availability does not establish affordability, current origin ownership, free live capacity or successful native deployment.
 - [All 860 directed origin/target pairs](validation/CHICKEN_OPERATION_ROUTES.csv), [placed locations](validation/CHICKEN_OPERATION_LOCATIONS.csv) and [generation metadata](validation/CHICKEN_OPERATION_ROUTES.json). These are authored endpoints, not a reconstruction of Everon's complete road graph.
 
-Node is absent on the audit machine. JavaScript suites were executed in the available V8 host with repository source snapshots, synchronous `fs`/`path` adapters and prototype restoration between suites. Those adapters do not provide Enfusion services. The Node runner below provides separate-process execution on a machine with Node installed; that runner itself was not executed through Node here.
+A standalone `node` command is not on PATH. The first audit used the tool V8 host with source snapshots and `fs`/`path` adapters. This follow-up also executed the actual separate-process Node runner using VS Code's installed runtime: **Node v24.21.0 / Electron 43.7.7 in Node mode**. All 28 suites, including the Node `vm` mutation adapter, passed against filesystem sources. Enfusion services remain mocked. Electron emitted a nonfatal Crashpad-registration access-denied diagnostic; the runner exited 0 and every child suite passed.
 
 ```powershell
 node tools/Validate-QRFRelease.js
@@ -23,7 +25,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-QRFRouteImport.ps
 git diff --check
 ```
 
-Installed-resource validation covers 27 base-game GUIDs, navigation bindings and faction profiles, all 42 recipes and the 50 campaign army/Readiness/Crackdown budget combinations. All five REAPER pilot/flight-waypoint references match the installed REAPER database. These checks do not validate native group materialization, weapon behavior or aircraft control. Source-structure checks are lexical checks, not compilation.
+On this machine the equivalent Node invocation used the existing VS Code installation, without installing another runtime:
+
+```powershell
+$env:ELECTRON_RUN_AS_NODE = '1'
+& "$env:LOCALAPPDATA/Programs/Microsoft VS Code/Code.exe" tools/Validate-QRFRelease.js | Out-Host
+# Also supports tools/Test-MarsAndAttacks.js --export-coverage.
+```
+
+Installed-resource validation covers 27 base-game GUIDs, navigation bindings, 12 faction profiles, all 62 recipes and the 50 campaign army/Readiness/Crackdown budget combinations. All five REAPER pilot/flight-waypoint references match the installed REAPER database. These checks do not validate native group materialization, weapon behavior or aircraft control. Source-structure checks are lexical checks, not compilation.
 
 The three MARS, Black Market and setup layout GUIDs match their metadata, script/config references and the current local Workbench resource database. Their metadata remains hand-authored; actual widget loading and rendering remain unverified. Repeat that check after resource discovery with `tools/Test-OperationUIResources.ps1`.
 
@@ -46,17 +56,80 @@ The three MARS, Black Market and setup layout GUIDs match their metadata, script
 
 The scheduler soak uses 10,000 **simulated** ticks, 2,935 admitted/deduplicated requests, 27,065 rejected requests and 9,349 notifications. It checks global attack capacity, per-role QRF capacity, conflicting targets, bounded terminal history and nonrecursive notification delivery. It is not a real-time server performance or network soak. Many assertions in the lifecycle suite are repeated state invariants; the total is not a count of distinct gameplay scenarios.
 
-Ten intentional source mutations were also detected: paused boarding, unready reserve dispatch, missing rally processing, disconnected support, late eligibility recording, debug escalation, missing admin authorization, duplicate collateral release, airborne group undercount and invalid operation admission. These run against isolated snapshots without editing game sources. The mutation pass exposed a cooldown masking the invalid-type test; that test now exercises the type guard directly. The pure mutation runner was executed in V8; its Node `vm` adapter remains to be exercised with the Node command above.
+**31 intentional source mutations** are detected against isolated snapshots without editing game sources. The original ten cover paused boarding, unready reserves, staging, support, eligibility ordering, debug escalation, authorization, collateral release, group budgets and operation admission. Twenty-one follow-up mutations cover withdrawal dispatch, foreign drivers, pre-dispatch retention, origin/clearance rechecks, funding waits, player occupancy, duplicate overhead, closed-account collateral, unbounded exit retries, nested finance reconciliation, reinforcement timing, partial-hull holds, empty construction, unused package margin, virtual ownership handoff, escort ownership, preserved player-group queues and unissued retirement orders. The follow-up also replaced a coupled budget expectation with an independent physical-group/vehicle expectation. The actual Node `vm` adapter detected all 31; earlier V8-host results remain historical evidence.
 
 The [site-readiness audit](validation/CHICKEN_SITE_READINESS.csv) includes all 26 military locations in activation-overlap estimates and reports four legacy-catalogue transform differences: Pinewood Lake, Chotain Industrial, Old Wood and Andres Beacon. The world geometry was preserved. Resolve catalogue/generator drift before regenerating location layers. Several overlaps estimate 102 garrison personnel, so capacity pacing and populated-server performance need particular attention. The Invader policy model now reads actual placed military transforms and all three ports, rather than the older 23-site subset.
 
+## Follow-up interruption and route audit
+
+The second source audit adds the following corrections. These changes need a fresh native compile and Play test.
+
+| Area | Confirmed gap | Correction |
+|---|---|---|
+| Ground readiness | An occupied driver slot did not establish that its occupant belonged to the assigned AI crew; readiness could also become stale before dispatch. | Require an assigned AI driver and current mount completion, living crew, healthy hull, owned groups and valid waypoints before issuing orders. |
+| Queued waves | The committed origin and air launch volumes could become unsafe after planning, before a later wave spawned. | Recheck launch-site ownership/type/contention and current player/airspace clearance immediately before construction. |
+| Withdrawal | Newly ready reserves could still receive deployment orders after withdrawal began. | Stop activation and cancel unissued ground/air packages; retain physical actors and release unbuilt quotes through existing authority. |
+| Pre-dispatch cancellation | Materialized actors could be deleted immediately because no orders had been issued yet. | Retain materialized tactical ground forces and aircraft using normal age/player-distance gates. Empty reservations release immediately. Held uncrewed aircraft remain held to avoid an artificial crash; direct player occupancy releases their simulation. |
+| Aborted escort retirement | The retirement queue could issue an escort egress order even though its held package had never dispatched. | Limit retirement flight orders to dispatched packages. Unissued aircraft retain their boarding hold and receive no egress order. |
+| Failed exits | A fixed security task could repeatedly renew its passenger-exit deadline until the manager's much longer timeout. | Default to two additional exit windows, then withdraw that package. Tests exercise limits 0, 1, 2 and 5; no landing or exit clearance checks are weakened. |
+| Reentrant finance | A synchronous Economy subscriber could enter reconciliation while the outer pass still owned the closed-account array index. | Guard nested reconciliation; tests reproduce the invalid second removal when the guard is intentionally removed, for both armies. |
+| Partial-package collateral | Failed construction could consume its virtual reservation without creating actors, or leave unused personnel margin reserved after final cleanup while other waves continued. | Release empty attempts once. Attribute assets to package indices and release only the unused margin after owned spawn queues are cancelled. Virtual proxies and escort children cannot finalize the parent package. Preserve collateral if a player-owned group prevents queue cancellation. |
+| Heavy air reserves | Chicken's 300-second reserve deadline equalled the 300-second gunship support duration. With a six-aircraft live cap, the fifth heavy package could lose its opportunity before initial gunships completed egress. | Extend Chicken's finite reserve window to 450 seconds, leaving modeled support/egress headroom without raising the live cap. Native flight/egress timing still needs acceptance. |
+| Multi-profile selection | An earlier heavy profile could hide a later light profile; an unfunded pool could be mistaken for invalid configuration. | Inspect all enabled/unlocked candidates, choose an affordable eligible profile, and preserve the bounded funding-wait path when no candidate is affordable. |
+
+The interruption suite runs actual source methods with native factories, physics, compartments, geometry and Economy mocked. It injects transport/gunship resource failures, missing physics/groups, oversized infantry queues, failed waypoints and changed clearance. It also checks both armies across all five Readiness levels with funded/unfunded/debug selection, direct player occupancy, origin loss during preparation and active reinforcement, and finite exit recovery.
+
+Funding checks cover cancellation before activation, repeated activation, duplicate asset registration, healthy retirement, confirmed losses, external spending, debt and closed-account removal. The 771-assertion interruption suite also runs actual tracking and final cleanup against missing hull/pilot references, confirmed pilot deaths, player-preserved vehicles and player-owned groups for both armies. Partial cleanup must preserve the next wave's full allocation and the value of physical assets still in the world. Historical registered values prevent a settled loss from being deducted twice when unused margin is released. Healthy cleanup releases collateral without adding money; overhead and confirmed losses are charged exactly once. Nested Economy callbacks must not remove a closed account twice or duplicate its charges. No test establishes native spawn-queue cancellation or physics behavior.
+
+Route recovery was traced through the existing four-retry/30-second search pacing, ingress deadlines, native foot-path checks, landing rejection rules and actual-return requirements. Existing route/landing regressions remain part of the combined run. No road graph, vehicle turning clearance or physical foot route was inferred from endpoint coordinates.
+
+Native reproduction steps are in [light-response acceptance](QRF_LIGHT_RESPONSE_ACCEPTANCE.md). The first audit's 27-suite/95,936-assertion evidence remains available in the preceding Git revision; the linked automated artifact contains current follow-up results.
+
 ## Joint airborne and ground responses
 
-`AIR_GROUND = 7` is appended to the response enum. Existing numeric values and recipe IDs are retained. Chicken enables `m_bAllowJointResponses`; its shared default is off. Airborne execution and tactical coordination must also be enabled.
+`AIR_GROUND = 7` remains the joint response family. Existing numeric values, original profile IDs and heavy recipe IDs are retained. Chicken enables `m_bAllowJointResponses`; the shared default remains off. Joint execution requires both airborne execution and tactical coordination.
 
-Each joint recipe starts with exactly one complete transport/fireteam/gunship package, followed by its ground elements. Both roles receive tiers 1–5, unlocked at Readiness 5. Each list is deployed once; Crackdown does not multiply the list again.
+### Equipment and intensity
 
-| Tier | Ground elements accompanying the air pair | Lead / reserve packages | US / USSR funds required |
+| Readiness | Standalone airborne | Joint response equipment |
+|---|---|---|
+| 1 | Unescorted transport with a fireteam and one pilot | Unavailable |
+| 2 | Unescorted transport packages | One unescorted air package plus trucks/light support |
+| 3–4 | Unescorted transport packages | One unescorted air package plus truck/APC/IFV/light-support combinations |
+| 5 | Escorted transport/fireteam/gunship packages | Existing escorted air package plus heavier ground combinations, including armour |
+
+`us_airborne_light` and `ussr_airborne_light` unlock at Readiness 1. Each reserves two groups (infantry and pilot), eight personnel slots and one aircraft. The eight-slot reservation is a conservative limit, not a claim that eight people spawn. The existing fireteam and transport resources are reused; no new asset GUIDs are introduced. At Crackdown 1 the light package requires 1,860 US or 2,060 USSR funds including overhead. Crackdown 1–5 controls the number of complete standalone packages.
+
+The shared preview chooses the strongest unlocked profile. Automatic airborne execution also checks funding and can fall back to a light profile; if none can be funded, it retains the bounded spawn-wait path. It does not stop at an earlier locked profile in the catalogue. Legacy explicit-profile MARS requests retain their existing behavior without a simulated equipment axis.
+
+The normal capture/attack campaign selector still uses authored ground/joint recipes. Standalone airborne is selected through MARS, an explicit profile request or an enabled scenario airborne override; adding a Readiness-1 profile does not silently replace the campaign's early ground responses.
+
+Each joint recipe starts with one airborne package, followed by its ground elements. There are now **30 joint recipes**: five tiers in each of three equipment bands for each army. The complete Chicken catalogue contains **12 profiles and 62 recipes**. An authored list is deployed once; Crackdown never multiplies it again.
+
+### Early joint recipes
+
+All rows below include one unescorted transport/fireteam package.
+
+| Readiness | Tier | Ground elements | Lead / reserve packages | US / USSR funds required |
+|---|---|---|---:|---:|
+| 2 | 1 | truck | 2 / 0 | 2,260 / 2,460 |
+| 2 | 2 | truck + light support | 3 / 0 | 2,670 / 2,770 |
+| 2 | 3 | truck + truck + light support | 2 / 2 | 3,080 / 3,180 |
+| 2 | 4 | truck + truck + truck + light support | 3 / 2 | 3,490 / 3,590 |
+| 2 | 5 | truck + truck + truck + light support + light support | 3 / 3 | 3,900 / 3,900 |
+| 3–4 | 1 | truck | 2 / 0 | 2,260 / 2,460 |
+| 3–4 | 2 | truck + APC/IFV | 3 / 0 | 3,320 / 3,420 |
+| 3–4 | 3 | truck + APC/IFV + light support | 2 / 2 | 3,730 / 3,730 |
+| 3–4 | 4 | truck + APC/IFV + APC/IFV + light support | 3 / 2 | 4,790 / 4,690 |
+| 3–4 | 5 | truck + truck + APC/IFV + APC/IFV + light support | 3 / 3 | 5,200 / 5,100 |
+
+The early IDs are `occupier_joint_r2_l1`–`l5`, `invader_joint_r2_l1`–`l5`, and the corresponding `*_joint_r3_l1`–`l5` bands. Readiness 3–4 permits mechanized elements; their presence still depends on the authored Crackdown tier. Genuine armour and gunships remain gated to Readiness 5.
+
+### Heavy joint recipes at Readiness 5
+
+Every row includes one transport/fireteam/gunship package.
+
+| Tier | Ground elements | Lead / reserve packages | US / USSR funds required |
 |---|---|---:|---:|
 | 1 | Truck | 2 / 0 | 4,560 / 4,760 |
 | 2 | Truck + APC/IFV | 3 / 0 | 5,620 / 5,720 |
@@ -64,15 +137,17 @@ Each joint recipe starts with exactly one complete transport/fireteam/gunship pa
 | 4 | Truck + 2 APCs/IFVs + armour | 3 / 2 | 7,590 / 7,240 |
 | 5 | 2 trucks + 2 APCs/IFVs + armour + light support | 4 / 3 | 8,400 / 7,950 |
 
-One operation owns the complete funding account, virtual reservations, tactical roster and outcome. All required lead packages must be physically ready before dispatch. Ground and airborne reserves share construction pacing. Pending aircraft cannot be dispatched through the ground path. Joint attacks hold transport insertion at the air approach until the ground rally releases; ordinary joint QRFs retain immediate insertion. Native gunship perception and firing policy remain responsible for engagement.
+### Shared execution and compatibility
 
-At equal authored tier the campaign selector prefers an eligible, affordable joint recipe when enabled; it can retain a higher-tier ground recipe or use an affordable ground alternative. The emergency unsecured capture response remains ground-only. Ground stock-provider previews exclude joint recipes because their provider does not assert aircraft availability. Full-force funding is retained even while later waves wait.
+One operation owns funding, virtual reservations, tactical roster and outcome. Required lead packages must be physically ready before dispatch. Ground and airborne reserves share construction pacing. Joint attacks hold transport insertion at the air approach until ground assault release; ordinary joint QRFs retain immediate insertion. Optional escorts do not allocate phantom groups, aircraft, pilots or replacement charges.
 
-The path deliberately supports one air pair per joint recipe. Independent transport/gunship counts, shared gunships, unescorted transports, specialist anti-armour loadouts and the complete proposed [40-entry design roster](QRF_RESPONSE_ROSTER.md) remain outside implemented coverage. The design CSV is not an executable catalogue.
+At equal authored tier the campaign selector prefers an eligible, affordable joint recipe when enabled. It can retain a higher-tier ground recipe or select an affordable ground alternative. Emergency unsecured capture responses remain ground-only. Ground stock-provider previews exclude joint recipes because their provider does not assert aircraft availability.
 
-**Extender impact:** `AROR_ForceProfile.GetGroupBudget()` now correctly reports three groups for an airborne package; `GetVehicleBudget()` reports two aircraft. `DispatchReadyPackage` and `StartJointResponse` are executor hooks. Ordinary recipes remain ground-only; joint recipes use the explicit family and air-first ordering. The recipe limit accommodates the expanded catalogue. Admin debug access in packaged sessions now requires native administrator roles. No save-format change is introduced; live joint operations remain session-only.
+This implementation supports one transport and zero or one gunship per airborne package, and one airborne package per joint recipe. Independent H/G counts, shared gunships, specialist anti-armour loadouts and the complete proposed [40-entry design roster](QRF_RESPONSE_ROSTER.md) remain outside implemented coverage. The design CSV is not an executable catalogue.
 
-Town security now applies the existing configured support policy, whose default is six percentage points per minute while the conditions hold. This changes campaign behavior compared with the previously disconnected helper and requires balance acceptance.
+**Extender impact:** airborne `m_iEscortCount` now supports 0 or 1. `GetGroupBudget()` returns `2 + escortCount`; `GetVehicleBudget()` returns `1 + escortCount`. `DispatchReadyPackage` and `StartJointResponse` remain executor hooks. Ordinary recipes remain ground-only; joint recipes require airborne-first ordering. New `m_iQRFExitRetryLimit` allows 0–5 additional exit windows and defaults to 2. Existing funding `Register_S` remains compatible; core tracking uses `RegisterPackageAsset_S`. Custom constructors/cleanup must preserve unique package indices and one owner for the frozen package quote, and release unused margin only after their spawn queues are cancelled. No save-format change is introduced; live operations remain session-only.
+
+Town security applies the configured support policy, whose default is six percentage points per minute while its conditions hold. That earlier behavior change and the new low-Readiness force availability require native balance acceptance.
 
 ## Native route sweep
 
@@ -88,7 +163,7 @@ AROR_QRFRouteAudit.Stop_S();
 
 Use the existing Script Editor/debug invocation mechanism for static smoke tests. The audit is Workbench-only and server-only. Do not use it as a background task during combat. It stops when a gameplay operation becomes outstanding and clears its timer/references on executor deletion.
 
-The sweep first advances the production five-pad LZ search for each target at no more than two radial seeds per tick. It then performs one directed pair per second using the production bounded ground launch/approach planners and all airborne launch formation sizes 1–5. Escort headings follow the selected landing pads; cached pads are rechecked before launch probes. At the current 121-candidate limit the worst case is roughly 45 minutes for LZ searches plus 15 minutes for directed pairs, plus scheduler delays. It does not spawn actors, spend money, change territory or give AI orders; navmesh tiles may be loaded by the existing foot-dismount checks.
+The sweep first advances the production five-pad LZ search for each target at no more than two radial seeds per tick. It then performs one directed pair per second using the production bounded ground launch/approach planners and both transport-only and escorted airborne formation sizes 1–5. Escort headings follow selected pads; cached pads are rechecked. At the current 121-candidate limit the worst case is roughly 45 minutes for LZ searches plus 15 minutes for directed pairs, plus scheduler/query delays. It does not spawn actors, spend money, change territory or give AI orders; navmesh tiles may be loaded by existing foot-dismount checks.
 
 Keep the log and import it separately:
 
@@ -96,7 +171,7 @@ Keep the log and import it separately:
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/Import-QRFRouteAudit.ps1 -LogPath '<Workbench log>'
 ```
 
-The importer uses the latest audit start, checks topology counts, rejects unknown origin/target IDs and preserves missing results as `NOT_RUN`. Ground planning, air launch planning and pad counts are separate columns; unavailable landing sites produce `NO_SAFE_LZ` for air launch planning. It never marks driving, actual landing or dedicated-server checks passed. Synthetic importer fixtures were written only to temporary files; no synthetic planning result is included as native evidence.
+The importer uses the latest audit start, checks topology counts, rejects unknown origin/target IDs and preserves missing results as `NOT_RUN`. Ground planning, escorted-air planning, light-air planning and pad counts are separate columns; missing safe landing sites produce `NO_SAFE_LZ` for both air modes. Older logs without light-air results retain `NOT_RUN` for that column. It never marks driving, actual landing or dedicated-server checks passed. Synthetic fixtures are written only to temporary files; no synthetic planning result is included as native evidence.
 
 A planning PASS is a snapshot for one ground package and the configured air launch formations. It does not establish space for a complete ground convoy, a navigable infantry route from every outer LZ, vehicle turning clearance, bridge suitability, gunship engagement or successful travel. Player clearance, loaded tiles, garrisons and dynamic obstructions can change results. Repeat failures after tiles load and with player bodies away from the origin; moving the Game Master camera alone does not change player clearance. Archive the current source hashes with the native log.
 
@@ -104,7 +179,7 @@ A planning PASS is a snapshot for one ground package and the configured air laun
 
 | Gate | Required evidence | Current result |
 |---|---|---|
-| Compilation | Compile current scripts; verify packaged and Workbench variants. | PASS, user-reported; build variants not separately specified |
+| Compilation | Compile current light-response/interruption changes; verify packaged and Workbench variants. | NOT_RUN for current changes; preceding version passed, user-reported |
 | Resource loading | Discover layouts and metadata; reload Chicken and check widget loading. | NOT_RUN |
 | Memory-only native smoke tests | Existing operation/pool/strategy/tactical helpers plus `AROR_JointResponseSmokeTests.Run_S()`. | NOT_RUN |
 | Route planning | Sweep all 860 pairs and 44 landing targets; triage failures, especially ports. | NOT_RUN |

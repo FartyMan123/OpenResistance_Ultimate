@@ -2,6 +2,7 @@
 class AROR_ReaperAirForce : AROR_GroundOperationForce
 {
 	ref AROR_GroundOperationForce m_Escort;
+	bool m_bUnescorted;
 	int m_iPackageCount = 1;
 	vector m_vLaunch;
 	vector m_vEscortLaunch;
@@ -179,6 +180,24 @@ class AROR_ReaperAirForce : AROR_GroundOperationForce
 		m_iReservedVehicles--;
 	}
 
+	//! Occupancy, rather than group membership, protects a player who took an aircraft directly.
+	static bool HasPlayerOccupant(IEntity vehicle)
+	{
+		if (!vehicle)
+			return false;
+		BaseCompartmentManagerComponent compartments = BaseCompartmentManagerComponent.Cast(vehicle.FindComponent(BaseCompartmentManagerComponent));
+		if (!compartments)
+			return false;
+		array<BaseCompartmentSlot> slots = {};
+		compartments.GetCompartments(slots);
+		foreach (BaseCompartmentSlot slot : slots)
+		{
+			if (slot && slot.GetOccupant() && GetGame().GetPlayerManager().GetPlayerIdFromControlledEntity(slot.GetOccupant()) > 0)
+				return true;
+		}
+		return false;
+	}
+
 	static bool BoardPilot_S(SCR_AIGroup group, IEntity vehicle)
 	{
 		if (!Replication.IsServer() || !group || !vehicle || group.GetPlayerCount() > 0)
@@ -215,10 +234,12 @@ class AROR_ReaperAirForce : AROR_GroundOperationForce
 
 	bool BoardPackage_S()
 	{
-		if (!Replication.IsServer() || !m_Escort || !m_Group || !m_Vehicle || m_Group.GetPlayerCount() > 0)
+		if (!Replication.IsServer() || (!m_bUnescorted && !m_Escort) || !m_Group || !m_Vehicle || m_Group.GetPlayerCount() > 0)
 			return false;
 		bool transportReady = BoardPilot_S(m_CrewGroup, m_Vehicle);
-		bool escortReady = BoardPilot_S(m_Escort.m_CrewGroup, m_Escort.m_Vehicle);
+		bool escortReady = m_bUnescorted;
+		if (m_Escort)
+			escortReady = BoardPilot_S(m_Escort.m_CrewGroup, m_Escort.m_Vehicle);
 		BaseCompartmentManagerComponent compartments = BaseCompartmentManagerComponent.Cast(m_Vehicle.FindComponent(BaseCompartmentManagerComponent));
 		if (!compartments)
 			return false;
@@ -301,10 +322,12 @@ class AROR_ReaperAirForce : AROR_GroundOperationForce
 	{
 		if (!Replication.IsServer())
 			return;
-		// Also unfreeze preserved/player-occupied aircraft on abort and world unload.
-		ReleaseAircraft_S();
-		if (m_bOrdersIssued && !m_bImmediateCleanup)
+		bool materialized = m_Vehicle || m_Group || m_CrewGroup || m_Escort;
+		if (materialized && !m_bImmediateCleanup)
 		{
+			// An aborted, uncrewed package stays held until safe removal; never create an artificial crash.
+			if (m_bOrdersIssued || HasPlayerOccupant(m_Vehicle) || (m_Escort && HasPlayerOccupant(m_Escort.m_Vehicle)))
+				ReleaseAircraft_S();
 			if (!m_bCleanupQueued)
 			{
 				m_bCleanupQueued = true;
@@ -312,8 +335,14 @@ class AROR_ReaperAirForce : AROR_GroundOperationForce
 			}
 			return;
 		}
+		// Actual removal and world unload must also unfreeze any player-preserved hull.
+		ReleaseAircraft_S();
 		if (m_Escort)
+		{
 			m_Escort.Cleanup_S();
+			if (m_Escort.m_bPackageQueuesPreserved)
+				m_bPackageQueuesPreserved = true;
+		}
 		m_Escort = null;
 		super.Cleanup_S();
 	}

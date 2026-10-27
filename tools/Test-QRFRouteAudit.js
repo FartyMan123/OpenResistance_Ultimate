@@ -34,7 +34,7 @@ busy=true;check(!audit.Start_S()&&scheduled===0,'active operations block the pla
 check(audit.Start_S()&&scheduled===1,'idle server starts one incremental sweep');
 check(!audit.Start_S()&&scheduled===1,'duplicate start cannot duplicate timers');
 for(let i=0;i<4000&&audit.s_Executor;i++)audit.Tick_S();
-check(queries.length===860&&airQueries===860,'all 20 by 44 non-self pairs receive ground and air launch probes exactly once');
+check(queries.length===860&&airQueries===1720,'all 20 by 44 non-self pairs receive ground, escorted-air and light-air probes exactly once');
 check(landingTargets===44&&audit.s_iAirTarget===44,'every target receives one bounded five-pad landing search');
 check(new Set(queries.map(p=>p.join('/'))).size===860,'no duplicate directed pair');
 check(queries.every(([a,b])=>a!==b&&b!=='hq'),'HQ and self-target routes excluded');

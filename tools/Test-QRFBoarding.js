@@ -88,4 +88,17 @@ f=fixture();f.crew[0].access.entering=false;f.slots[0].reserved=other;
 check(!f.force.ReseatMember(f.crew[0],[f.slots[0]],null),'another actor reservation is not stolen');
 f=fixture();f.crew[0].player=true;
 check(!f.force.Seat(f.crew[0],f.slots[0])&&!f.calls.length,'player never teleported into deployment seat');
+// A nonempty driver seat is insufficient when its occupant is not the assigned crew.
+f=fixture();f.force.ReseatMissing_S(true);
+const spare={...f.slots[1],occupant:f.crew[0]};f.crew[0].access.current=spare;
+f.slots[0].occupant={character:true,GetCharacterController:()=>({IsDead:()=>false})};
+check(!f.force.IsMountComplete(),'foreign driver cannot satisfy readiness while assigned crew sit elsewhere');
+f=fixture();f.force.ReseatMissing_S(true);f.force.m_CrewGroup.GetAgents=()=>{};
+check(!f.force.IsMountComplete(),'empty crew cannot activate merely because the driver compartment is occupied');
+f=fixture();f.force.ReseatMissing_S(true);f.crew[0].dead=true;
+check(!f.force.IsMountComplete(),'a dead assigned driver cannot be hidden by other living crew');
+f=fixture();f.force.ReseatMissing_S(true);f.crew[0].player=true;
+check(!f.force.IsMountComplete(),'player-controlled driver cannot pass automated deployment readiness');
+f=fixture();f.force.ReseatMissing_S(true);f.force.m_CrewGroup.players=1;
+check(!f.force.IsMountComplete(),'player takeover of the crew group revokes deployment readiness');
 console.log(JSON.stringify({assertions,note:'Native paused simulation/queue cancellation must be verified in Workbench Play.'}));

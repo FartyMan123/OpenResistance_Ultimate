@@ -122,7 +122,7 @@ function runQRFProgressionTests(sources) {
     const r={m_iMinimumReadinessLevel:1,m_iMaximumReadinessLevel:5,...fields(m[1]),m_aProfileIds:[...m[1].match(/m_aProfileIds\s*\{([^}]*)\}/)[1].matchAll(/"([^"]+)"/g)].map(v=>v[1])};
     for(const n of ['IsValid','AllowsReadinessLevel','Resolve'])r[n]=compile(sources.recipe,n);return r;
   });
-  check(profiles.length===10&&recipes.length===42,'Chicken contains two light escorts and three complete ground response bands');
+  check(profiles.length===12&&recipes.length===62,'Chicken contains light/escorted air profiles and complete ground/joint readiness bands');
   check(profiles.every(p=>p.IsValid())&&recipes.every(r=>r.IsValid()),'every authored progression profile and recipe passes production configuration validation');
   check(profiles.filter(p=>/_light_support$/.test(p.m_sId)).every(p=>p.GetSpottingKind()===5)&&profiles.find(p=>p.m_sId==='us_armour').GetSpottingKind()===2,'light escorts report their own intelligence class while genuine armour keeps its class');
   check(profiles.filter(p=>/_light_support$/.test(p.m_sId)).every(p=>p.GetWeight(0)===0&&p.GetWeight(1)>0),'new QRF escorts do not change the separate scheduled-attack pool');

@@ -55,7 +55,7 @@ $rows = foreach ($origin in $origins) { foreach ($target in $allSites) {
   StraightLineMetres=[Math]::Round($distance,1); EndpointHeightDifference=[Math]::Round($target.Y-$origin.Y,1)
   CaptureQRF=$true; AutomaticAttack=($target.Type -in $militaryTypes)
   ResponseDomains='GROUND;AIRBORNE;AIR_GROUND'; OwnershipRequirement='Origin owned by responding army; capture/attack target validated at runtime'
-  RiskNotes=($risks -join '; '); NativeGroundPlanning='NOT_RUN'; NativeAirLaunchPlanning='NOT_RUN'; NativeLandingPads='NOT_RUN'
+  RiskNotes=($risks -join '; '); NativeGroundPlanning='NOT_RUN'; NativeAirLaunchPlanning='NOT_RUN'; NativeLightAirLaunchPlanning='NOT_RUN'; NativeLandingPads='NOT_RUN'
   NativeRoadConnectivity='NOT_RUN'; NativeDriving='NOT_RUN'; NativeLanding='NOT_RUN'; DedicatedServer='NOT_RUN'
  }
 }}

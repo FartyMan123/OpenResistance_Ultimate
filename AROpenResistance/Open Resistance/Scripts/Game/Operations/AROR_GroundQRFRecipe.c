@@ -69,8 +69,8 @@ class AROR_GroundQRFRecipe
 				return false;
 			if (selected.m_eType == AROR_EForceType.AIRBORNE)
 			{
-				// Joint recipes start with one transport/fireteam/gunship pair.
-				if (m_eResponseType != AROR_EResponseType.AIR_GROUND || !resolved.IsEmpty() || selected.m_iEscortCount != 1)
+				// Joint recipes start with one airborne package, with an optional gunship.
+				if (m_eResponseType != AROR_EResponseType.AIR_GROUND || !resolved.IsEmpty())
 					return false;
 				airborne++;
 			}

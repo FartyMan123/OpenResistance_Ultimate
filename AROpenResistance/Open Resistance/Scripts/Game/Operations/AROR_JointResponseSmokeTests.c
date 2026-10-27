@@ -62,6 +62,19 @@ class AROR_JointResponseSmokeTests
 		passed = Check(!recipe.Resolve(profiles, AROR_EFactionRole.OCCUPIERS, "joint_test_faction", resolved, 5), "air package must lead the authored list") && passed;
 		recipe.m_aProfileIds = {air.m_sId, air.m_sId, ground.m_sId};
 		passed = Check(!recipe.Resolve(profiles, AROR_EFactionRole.OCCUPIERS, "joint_test_faction", resolved, 5), "multiple air pairs require a separate accepted implementation") && passed;
+		air.m_iMinimumReadinessLevel = 1;
+		air.m_iEscortCount = 0;
+		air.m_sEscortVehicle = "";
+		ground.m_iMinimumReadinessLevel = 1;
+		recipe.m_iMinimumReadinessLevel = 2;
+		recipe.m_iMaximumReadinessLevel = 4;
+		recipe.m_aProfileIds = {air.m_sId, ground.m_sId};
+		passed = Check(air.IsValid() && air.GetGroupBudget() == 2 && air.GetVehicleBudget() == 1, "light air reserves no phantom gunship") && passed;
+		passed = Check(!recipe.Resolve(profiles, AROR_EFactionRole.OCCUPIERS, "joint_test_faction", resolved, 1) && recipe.Resolve(profiles, AROR_EFactionRole.OCCUPIERS, "joint_test_faction", resolved, 2), "light joint equipment gate starts at Readiness two") && passed;
+		selection = AROR_ResponsePolicy.Select(profiles, recipes, AROR_EFactionRole.OCCUPIERS, "joint_test_faction", AROR_EResponseType.AIRBORNE, 1, 1, true);
+		passed = Check(selection.IsAvailable() && selection.m_iGroups == 2 && selection.m_iVehicles == 1, "Readiness-one standalone transport insertion") && passed;
+		air.m_iEscortCount = 2;
+		passed = Check(!air.IsValid(), "unsupported multiple-gunship profile is rejected") && passed;
 		Print(string.Format("[AROR JOINT TEST] Joint response smoke tests passed=%1; no native actors or routes tested", passed), LogLevel.NORMAL);
 		return passed;
 	}

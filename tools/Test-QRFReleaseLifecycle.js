@@ -30,7 +30,7 @@ function compile(source,name){
  let body=m[2].replace(/\barray<[^>]+>\s+(\w+)\s*=\s*\{\s*\};/g,'let $1=[];')
  .replace(/foreach\s*\(\w+\s+(\w+)\s*:\s*([^)]+)\)/g,'for(const $1 of $2)')
  .replace(/\b(?:IEntity|BaseCompartmentSlot|BaseCompartmentManagerComponent|CompartmentAccessComponent|AROR_(?!E[A-Z])\w+)\s+(\w+);/g,'let $1=null;')
- .replace(/\b(?:bool|int|float|string|vector|ResourceName|PlayerManager|Faction|FactionAffiliationComponent|Color|SCR_\w+|Physics|DamageManagerComponent|IEntity|AIAgent|BaseCompartmentSlot|BaseCompartmentManagerComponent|CompartmentAccessComponent|AROR_\w+)\s+(\w+)/g,'let $1')
+ .replace(/\b(?:bool|int|float|string|vector|ResourceName|Resource|PlayerManager|Faction|FactionAffiliationComponent|Color|SCR_\w+|Physics|DamageManagerComponent|IEntity|AIAgent|BaseCompartmentSlot|BaseCompartmentManagerComponent|CompartmentAccessComponent|AROR_\w+)\s+(\w+)/g,'let $1')
  .replace(/let (\w+);/g,'let $1=0;').replace(/(?<![.\w])m_\w+/g,x=>'this.'+x)
  .replace(/super\.(\w+)\(/g,'this.Base$1(')
  .replace(/(?<![.\w])(\w+)\(/g,(s,n)=>names.has(n)?'this.'+s:s);
@@ -105,8 +105,9 @@ env.GetGame=savedGame;
 {
  const actions=['GiveMoney_S','PayIncomeNow_S','FillResistanceStock_S','GrantGameMaster_S','SendTestNotifications_S','AdjustNearestSupport_S'];
  const ctx={m_bMenuAvailable:true,GetMoneyTargetName:()=> 'test'};
- admin=false;sessionAdmin=false;server=true;
- for(const name of actions){compile(src.admin,name).call(ctx,7,1,true,999999);check(true,'ordinary player cannot invoke '+name)}
+ admin=false;sessionAdmin=false;server=true;let unauthorizedEconomyCalls=0;
+ env.AROR_EconomyComponent={GetInstance(){unauthorizedEconomyCalls++;return null}};
+ for(const name of actions){compile(src.admin,name).call(ctx,7,1,true,999999);check(unauthorizedEconomyCalls===0,'ordinary player cannot invoke '+name)}
  admin=true;ctx.m_bMenuAvailable=false;
  for(const name of actions){compile(src.admin,name).call(ctx,7,1,true,999999);check(true,'menu opt-out blocks '+name)}
  ctx.m_bMenuAvailable=true;server=false;
@@ -129,16 +130,17 @@ env.AROR_CommanderManagerComponent={GetInstance:()=>({GetCommander:()=>({GetFact
 env.AROR_LocationManagerComponent={GetInstance:()=>({GetLocationById:()=>({GetName:()=> 'site',GetControllingRole:()=>0,GetCenter:()=>[1000,0,1000],GetRadius:()=>150})})};
 env.AROR_ReaperFlightGeometry={Direction:()=>[0,0,1],FormationPoint:()=>[100,0,100],IsAirspaceClear:()=>true};
 env.Vector=(...v)=>v;
-env.AROR_ReaperAirForce=class {static Cast(x){return x?.air?x:null} constructor(){this.air=true}};
+env.AROR_ReaperAirForce=class {static Cast(x){return x?.air?x:null} static HasPlayerOccupant(x){return !!x?.player} constructor(){this.air=true}};
 env.AROR_QRFDeferredForce=class {};
 env.AROR_OperationForce=class {};
 const jointSource=src.reaper.replace(/#ifdef WORKBENCH[\s\S]*?#endif/g,'');
 const jointStart=compile(jointSource,'StartReaperQRF');
 const makeProfile=(type,personnel)=>({m_sId:'p'+type,m_eType:type,m_eRole:1,m_sFactionKey:'AROR_OCCUPIERS',
- m_bEnabled:true,m_iEscortCount:1,m_iMinimumReadinessLevel:5,m_iPersonnelBudget:personnel,
+ m_bEnabled:true,m_iEscortCount:1,m_iMinimumReadinessLevel:5,m_iPersonnelBudget:personnel,GetWeight:()=>1,
  IsValid:()=>true,GetGroupBudget:compile(src.profile,'GetGroupBudget'),GetVehicleBudget:compile(src.profile,'GetVehicleBudget')});
 const airProfile=makeProfile(3,20),truckProfile=makeProfile(0,8),apcProfile=makeProfile(1,10);
-for(const opType of [0,1])for(const debug of [false,true])for(const blocking of ['none','groups','members','vehicles','landing','funding','origin']){
+for(const escortCount of [0,1])for(const opType of [0,1])for(const debug of [false,true])for(const blocking of ['none','groups','members','vehicles','landing','funding','origin']){
+ airProfile.m_iEscortCount=escortCount;
  let reserved=0,bound=0,failed=0;
  const elements=[airProfile,truckProfile,apcProfile],recipe={m_sId:'joint',m_iLevel:2};
  const o={m_bDebugRequest:debug,m_bUseResponseMetrics:true,m_iPoolReadinessLevel:5,m_iRequestedTier:2,
@@ -147,7 +149,7 @@ for(const opType of [0,1])for(const debug of [false,true])for(const blocking of 
  const ctx={m_aForces:[],m_aForceProfiles:elements,m_bAllowAirborneResponses:true,
  m_iMaxGroups:20,m_iMaxMembers:128,m_iMaxVehicles:10,m_iQRFMaxLiveGround:6,m_iQRFMaxLiveAircraft:6,
  m_fReaperHoldingDistance:700,m_fReaperInsertionHeight:80,m_fReaperGunshipHeight:300,m_fReaperGunshipBand:20,
- FindForce:()=>null,HasMarsOrigin_S:()=>blocking!=='origin',ReaperSettingsValid:()=>true,
+ FindForce:()=>null,HasMarsOrigin_S:()=>blocking!=='origin',ReaperSettingsValid:()=>true,QRFPoolReadinessLevel:()=>5,
  GetReservedGroups:()=>blocking==='groups'?20:0,GetReservedMembers:()=>blocking==='members'?128:0,
  GetReservedVehicles:()=>blocking==='vehicles'?10:0,
  PrepareReaperLanding:()=>blocking!=='landing',
@@ -165,9 +167,9 @@ for(const opType of [0,1])for(const debug of [false,true])for(const blocking of 
  check(ctx.m_aForces.length===(succeeds?3:0),'joint preparation never leaves a partial force on failed preflight '+[opType,debug,blocking]);
  check(bound===(succeeds?1:0),'preflight failure cannot bind a partially deployable response');
  if(succeeds){
-  check(ctx.m_aForces.reduce((n,p)=>n+p.m_iReservedGroups,0)===7,'joint reserves three air and four ground groups');
+  check(ctx.m_aForces.reduce((n,p)=>n+p.m_iReservedGroups,0)===6+escortCount,'joint reserves infantry/pilot groups and only the configured escort');
   check(ctx.m_aForces.reduce((n,p)=>n+p.m_iReservedMembers,0)===38,'joint reserves every pilot/crew/passenger slot');
-  check(ctx.m_aForces.reduce((n,p)=>n+p.m_iReservedVehicles,0)===4,'joint reserves transport, gunship, truck and APC');
+  check(ctx.m_aForces.reduce((n,p)=>n+p.m_iReservedVehicles,0)===3+escortCount,'joint reserves transport, configured gunship, truck and APC');
   check(new Set(ctx.m_aForces.map(p=>p.m_iPackageIndex)).size===3,'joint package identities never collide');
   check(ctx.m_aForces.every(p=>p.m_Funding==='shared'),'all packages use one funding account');
  }
@@ -192,12 +194,12 @@ for(const opType of [0,1])for(const debug of [false,true])for(const blocking of 
 }
 // Native audit launch checks use actual selected pads for escort headings at every package count.
 {
- let volumes=[],formations=[],unsafePad=false,unsafeLaunch=false;
+ let volumes=[],formations=[],unsafePad=false,unsafeLaunch=false,blockedEscort=false;
  const direction=(a,b)=>{const dx=b[0]-a[0],dz=b[2]-a[2],length=Math.hypot(dx,dz);return [dx/length,0,dz/length]};
  env.AROR_ReaperFlightGeometry={LANDING_CLEAR:0,Direction:direction,
  LandingRejectionReason:()=>unsafePad?1:0,
  FormationPoint(launch,heading){formations.push({launch,heading});return launch.map((v,i)=>v-heading[i]*75)},
- IsAirspaceClear(point,height,radius){volumes.push({point,height,radius});return true}};
+ IsAirspaceClear(point,height,radius){volumes.push({point,height,radius});return !blockedEscort||height<200}};
  const probe=compile(src.reaper,'ProbeAirLaunch_S');
  const origin={GetCenter:()=>[0,0,0]},target={GetCenter:()=>[1000,0,1000]};
  const pads=[[1500,0,1400],[1200,0,800]];
@@ -212,6 +214,10 @@ for(const opType of [0,1])for(const debug of [false,true])for(const blocking of 
  const expectedFirst=direction([0,0,0],pads[0]);check(Math.abs(formations[0].heading[0]-expectedFirst[0])<1e-9,'off-axis LZ does not reuse the target-centre heading');
  volumes=[];unsafePad=true;check(!probe.call(ctx,origin,target,pads)&&volumes.length===0,'stale unsafe cached pad cannot receive a launch-planning PASS');
  unsafePad=false;unsafeLaunch=true;check(!probe.call(ctx,origin,target,pads),'player/target launch safety remains enforced by the audit');
+ unsafeLaunch=false;blockedEscort=true;volumes=[];
+ check(!probe.call(ctx,origin,target,pads),'obstructed escort airspace blocks escorted launch planning');
+ volumes=[];check(probe.call(ctx,origin,target,pads,false)&&volumes.length===15,'light-air planning checks all transports without requiring an unused escort corridor');
+ blockedEscort=false;
  unsafeLaunch=false;check(!probe.call(ctx,origin,target,[]),'missing safe pads cannot produce an air-launch PASS');
  server=false;check(!probe.call(ctx,origin,target,pads),'clients cannot probe native air launch plans');server=true;
 }
@@ -259,6 +265,9 @@ server=false;check(!boardPilot(group,vehicle)&&seatRequests===1,'clients cannot 
  for(const [entity,seat]of requests){entity.access.seat=seat;seat.occupant=entity}
  check(board.call(ctx)&&ctx.m_bMounted,'full physical occupancy completes boarding');
  check(board.call(ctx)&&ctx.m_aPassengers.length===2&&requests.length===4,'repeated acknowledgement neither duplicates passenger identities nor reseats them');
+ const light={...ctx,m_Escort:null,m_bUnescorted:true};
+ check(board.call(light)&&light.m_bMounted,'transport-only packages complete boarding without an escort or second pilot');
+ light.m_bUnescorted=false;check(!board.call(light),'an escorted package cannot silently become unescorted after missing construction');
  p2.access.seat=null;transportSeats[2].occupant=null;transportSeats[2].reserved={};
  ctx.m_bMounted=false;check(!board.call(ctx)&&requests.length===4,'one missing passenger and a foreign reserved seat keep the force unready');
  p2.access.seat=escortSeats[0];check(!board.call(ctx),'a passenger in the wrong aircraft cannot satisfy transport occupancy');
@@ -288,6 +297,8 @@ server=false;check(!boardPilot(group,vehicle)&&seatRequests===1,'clients cannot 
  infantry=4;crew=1;escortCrew=1;occupancy=true;effects=0;
  const force=make();
  check(dispatch.call(ctx,force)&&effects===5&&force.m_bOrdersIssued&&force.m_iFlightDeadline===40,'healthy occupied aircraft retain normal dispatch');
+ const light={...make(),m_bUnescorted:true,m_Escort:null};effects=0;
+ check(dispatch.call(ctx,light)&&effects===3&&light.m_bOrdersIssued,'unescorted dispatch touches only transport physics, orders and insertion');
 }
 // Physical staging reaches the release path; route recovery cannot bypass the rally.
 {
@@ -357,17 +368,19 @@ server=false;check(!boardPilot(group,vehicle)&&seatRequests===1,'clients cannot 
  const make=(extra={})=>({m_sOperationId:'joint',m_iReservedGroups:2,m_iReservedMembers:8,m_iReservedVehicles:1,
   m_iPackageIndex:0,m_bTacticalControlled:true,m_bOrdersIssued:false,m_bTacticalRetained:false,Cleanup_S(){this.cleaned=(this.cleaned||0)+1},...extra});
  const ground=make({ground:true,m_bOrdersIssued:true}),air=make({air:true,m_bOrdersIssued:true,m_iReservedGroups:3,m_iReservedVehicles:2});
+ const preparedGround=make({ground:true,m_Vehicle:{GetOrigin:()=>[0,0,0]}});
  const pending=make({deferred:true,m_bReservation:true,m_Funding:funding,m_Profile:{ReplacementQuote:()=>400}});
  const pendingAir=make({air:true,m_bConstructionPending:true,m_Funding:funding,m_Profile:{ReplacementQuote:()=>2000}});
  const other=make({m_sOperationId:'unrelated'});
- const ctx={m_aForces:[ground,air,pending,pendingAir,other],m_iExecutorClock:20,
-  ReleaseForce:compile(src.executor,'ReleaseForce'),RetainTacticalForce:compile(src.executor,'RetainTacticalForce')};
+ const ctx={m_aForces:[ground,preparedGround,air,pending,pendingAir,other],m_iExecutorClock:20,
+  ReleaseForce:compile(src.executor,'ReleaseForce'),RetainTacticalForce:compile(src.executor,'RetainTacticalForce'),ShouldRetainTacticalForce:compile(src.executor,'ShouldRetainTacticalForce')};
  const release=compile(src.executor,'ReleaseOperationForces');
  release.call(ctx,'joint');
- check(ctx.m_aForces.length===2&&ctx.m_aForces.includes(ground)&&ctx.m_aForces.includes(other),'terminal event owns only its operation and retains ordered ground actors');
+ check(ctx.m_aForces.length===3&&ctx.m_aForces.includes(ground)&&ctx.m_aForces.includes(preparedGround)&&ctx.m_aForces.includes(other),'terminal event retains ordered and materialized unissued ground actors, excluding unrelated operations');
+ check(preparedGround.m_bTacticalRetained&&!preparedGround.cleaned,'pre-dispatch materialized hull follows actual terminal retention handling');
  check(ground.m_bTacticalRetained&&!ground.cleaned&&air.cleaned===1,'ground retention and airborne retirement use their separate cleanup paths');
  check(funding.m_iQuote===2600&&pending.m_iReservedMembers===0&&!pendingAir.m_bConstructionPending,'cancelled unbuilt ground and air packages release their quotes exactly once');
- const reserved=compile(src.executor,'GetReservedGroups');check(reserved.call(ctx)===4,'retained ground actors keep consuming the shared group budget');
+ const reserved=compile(src.executor,'GetReservedGroups');check(reserved.call(ctx)===6,'ordered and pre-dispatch retained actors both keep consuming the shared group budget');
  release.call(ctx,'joint');check(funding.m_iQuote===2600&&ground.m_iTacticalRetainedAt===20,'duplicate terminal notification cannot refund or reset retention twice');
  ctx.ReleaseForce(pending);ctx.ReleaseForce(pendingAir);check(funding.m_iQuote===2600,'stale monitor snapshots cannot release virtual collateral twice');
 }
@@ -401,7 +414,7 @@ server=false;check(!boardPilot(group,vehicle)&&seatRequests===1,'clients cannot 
  check(valid.call(defaults),'source defaults remain a valid tactical configuration');
  for(const [field,low,high]of [['m_fAttackStagingDistance',200,1500],['m_iAttackStagingTimeout',30,600],
  ['m_fQRFTownSupportPerMinute',0,30],['m_iOriginLaunchCooldown',0,3600],['m_fOriginMaxGarrisonLoss',0,1],
- ['m_fMinOriginDistance',0,3000],['m_fOriginWaterPenalty',1,10]]){
+ ['m_fMinOriginDistance',0,3000],['m_fOriginWaterPenalty',1,10],['m_iQRFExitRetryLimit',0,5]]){
   check(!valid.call({...defaults,[field]:low-0.01})&&!valid.call({...defaults,[field]:high+0.01}),'out-of-range configuration is rejected: '+field);
   check(valid.call({...defaults,[field]:low})&&valid.call({...defaults,[field]:high}),'documented configuration boundaries remain valid: '+field);
  }

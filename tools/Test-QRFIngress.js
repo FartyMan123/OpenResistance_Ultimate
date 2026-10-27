@@ -5,7 +5,7 @@ function runQRFIngressTests(sources) {
   let assertions=0;
   const check=(ok,msg)=>{assertions++;if(!ok)throw Error(msg);};
   const methods=['GetOwner','IsSeatedInOwnVehicle','TacticalLaunchPoint','TacticalRoadPoint','CanDismountOnFoot','IsLaunchPositionSafe','FailOperation','FailGroundPlanning','ResolveQRFOrigin','FindGroundRoadLaunch','ConfigureForceFunding','FindTacticalApproach','ConvertReservation','SpawnGroundVehicle','SpawnEmptyGroup','SpawnWaypoint','ConfigureGroup'];
-  const env={};
+  const env={GetGame:()=>({GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:e=>e?.player?1:0})})};
   function compile(source,name) {
     const match=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
     if(!match)throw Error('Missing '+name);
@@ -14,7 +14,7 @@ function runQRFIngressTests(sources) {
       .replace(/new TraceBox\(\)/g,'({})')
       .replace(/foreach \(\w+ (\w+) : ([^)]+)\)/g,'for(const $1 of $2)')
       .replace(/vector (\w+);/g,'let $1=[0,0,0];')
-      .replace(/\b(?:bool|float|int|vector|IEntity|ResourceName|Resource|NavmeshWorldComponent|ChimeraAIWorld|BaseWorld|CompartmentAccessComponent|BaseCompartmentSlot|SCR_AIVehicleUsageComponent|AROR_\w+|TraceBox)\s+(\w+)/g,'let $1')
+      .replace(/\b(?:bool|float|int|vector|IEntity|ResourceName|Resource|NavmeshWorldComponent|ChimeraAIWorld|BaseWorld|CompartmentAccessComponent|ChimeraCharacter|BaseCompartmentSlot|SCR_AIVehicleUsageComponent|AROR_\w+|TraceBox)\s+(\w+)/g,'let $1')
       .replace(/let (\w+);/g,'let $1=0;')
       .replace(/(?<![.\w])m_\w+/g,x=>'this.'+x);
     for(const method of methods)body=body.replace(new RegExp('(?<![.\\w])'+method+'\\(', 'g'),'this.'+method+'(');
@@ -31,14 +31,15 @@ function runQRFIngressTests(sources) {
     return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
   }
   env.CompartmentAccessComponent={Cast:x=>x};
+  env.ChimeraCharacter={Cast:x=>x};
   env.SCR_AIVehicleUsageComponent={Cast:x=>x};
   const vehicle={FindComponent:()=>usage},otherVehicle={};
   let occupant={},inSeat=true,gettingIn=false,gettingOut=false,seatVehicle=vehicle;
   const access={IsInCompartment:()=>inSeat,IsGettingIn:()=>gettingIn,IsGettingOut:()=>gettingOut,
     GetCompartment:()=>({GetVehicle:()=>seatVehicle,GetOccupant:()=>occupant})};
-  const person={FindComponent:()=>access};occupant=person;
+  const person={FindComponent:()=>access,GetCharacterController:()=>({IsDead:()=>false})};occupant=person;
   const ownSeat=compile(sources.ground,'IsSeatedInOwnVehicle');
-  const force={m_Vehicle:vehicle,m_bMountRequested:false,m_CrewGroup:{GetAgents:a=>a.push({GetControlledEntity:()=>person})},
+  const force={m_Vehicle:vehicle,m_bMountRequested:false,m_CrewGroup:{GetPlayerCount:()=>0,GetAgents:a=>a.push({GetControlledEntity:()=>person})},
     m_aPassengers:[person],IsSeatedInOwnVehicle:e=>ownSeat.call(force,e)};
   let pilot=person;
   const usage={GetPilotCompartmentSlot:()=>({GetOccupant:()=>pilot})};

@@ -6,6 +6,7 @@ class AROR_QRFFinance
 	int m_iInvaderDebt;
 	int m_iOccupierLossValue;
 	int m_iInvaderLossValue;
+	protected bool m_bReconciling;
 	//! Read-only save snapshot: preserve deaths confirmed since the last periodic reconciliation.
 	int PendingLossValue(AROR_EFactionRole role)
 	{
@@ -145,8 +146,11 @@ class AROR_QRFFinance
 	}
 	void Tick_S()
 	{
-		if (!Replication.IsServer())
+		if (!Replication.IsServer() || m_bReconciling)
 			return;
+		// Economy subscribers can synchronously request another reconciliation.
+		// Do not remove the same closed account from two nested array traversals.
+		m_bReconciling = true;
 		array<AROR_EFactionRole> roles = {};
 		AROR_FactionRoles.GetAIMilitary(roles);
 		foreach (AROR_EFactionRole role : roles)
@@ -167,5 +171,6 @@ class AROR_QRFFinance
 			if (account.m_bClosed && account.Reserved() == 0 && !account.HasUnsettledAssets())
 				m_aDeployments.Remove(index);
 		}
+		m_bReconciling = false;
 	}
 }

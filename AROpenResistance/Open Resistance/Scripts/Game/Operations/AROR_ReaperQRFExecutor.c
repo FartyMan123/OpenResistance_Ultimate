@@ -2,7 +2,7 @@
 //! This development branch loads REAPER through the normal project dependency list.
 modded class AROR_OperationExecutorComponent
 {
-	[Attribute("0", desc: "EXPERIMENTAL: replace new QRF dispatches with REAPER transport/fireteam/gunship packages. Workbench response level sets package count; defaults to one otherwise. Disable to restore native ground QRFs. Requires the REAPER project dependency.")]
+	[Attribute("0", desc: "EXPERIMENTAL: replace new QRF dispatches with REAPER transport/fireteam packages with profile-configured optional gunships. Workbench response level sets package count; defaults to one otherwise. Disable to restore native ground QRFs. Requires the REAPER project dependency.")]
 	protected bool m_bReaperQRFTest;
 	[Attribute("0 0 0", UIWidgets.Coords, desc: "Centre of the bounded LZ search relative to the attacked town marker")]
 	protected vector m_vReaperLZOffset;
@@ -81,9 +81,10 @@ modded class AROR_OperationExecutorComponent
 		{
 			if (!profile || profile.m_eType != AROR_EForceType.AIRBORNE || profile.m_eRole != role)
 				continue;
-			if (!profile.IsValid() || profile.m_sFactionKey != roles.GetFactionKey(role))
+			if (!profile.m_bEnabled || !profile.IsValid() || profile.GetWeight(AROR_EOperationType.QRF) <= 0 || profile.m_sFactionKey != roles.GetFactionKey(role))
 				continue;
-			return AffordableReaperTier(profile, desired) > 0;
+			if (AffordableReaperTier(profile, desired) > 0)
+				return true;
 		}
 		return false;
 	}
@@ -223,22 +224,37 @@ modded class AROR_OperationExecutorComponent
 			FailOperation(operation, "REAPER QRF test configuration/commander/target unavailable");
 			return;
 		}
+		if (!jointRecipe && !operation.m_bDebugRequest && m_Operations.IsQRFStrategyEnabled() && operation.m_iRequestedTier < 1)
+			operation.m_iRequestedTier = m_Operations.GetCrackdownLevel(operation.GetRole());
+		int poolReadiness = QRFPoolReadinessLevel(operation);
+		if (operation.m_bDebugRequest && !operation.m_bUseResponseMetrics)
+			poolReadiness = 5; // Legacy explicit-profile debugger requests have no simulated equipment axis.
 		AROR_ForceProfile profile;
+		AROR_ForceProfile fallback;
 		foreach (AROR_ForceProfile candidate : m_aForceProfiles)
 		{
-			if (!operation.m_sRequestedProfileId.IsEmpty() && candidate && candidate.m_sId != operation.m_sRequestedProfileId)
+			if (!candidate || !candidate.m_bEnabled || !candidate.IsValid() || candidate.m_eType != AROR_EForceType.AIRBORNE)
+				continue;
+			if (!operation.m_sRequestedProfileId.IsEmpty() && candidate.m_sId != operation.m_sRequestedProfileId)
 				continue;
 			if (jointRecipe && candidate != jointElements[0])
 				continue;
-			if (candidate && candidate.m_eType == AROR_EForceType.AIRBORNE && candidate.m_eRole == operation.GetRole() && candidate.m_sFactionKey == commander.GetFactionKey())
-			{
+			if (candidate.m_eRole != operation.GetRole() || candidate.m_sFactionKey != commander.GetFactionKey())
+				continue;
+			if (!AROR_ResponsePolicy.IsProfileUnlocked(candidate, poolReadiness) || candidate.GetWeight(AROR_EOperationType.QRF) <= 0)
+				continue;
+			if (!fallback || candidate.m_iMinimumReadinessLevel > fallback.m_iMinimumReadinessLevel)
+				fallback = candidate;
+			if (!jointRecipe && !operation.m_bDebugRequest && m_Operations.IsQRFStrategyEnabled() && AffordableReaperTier(candidate, operation.m_iRequestedTier, poolReadiness) < 1)
+				continue;
+			if (!profile || candidate.m_iMinimumReadinessLevel > profile.m_iMinimumReadinessLevel)
 				profile = candidate;
-				break;
-			}
 		}
-		if (!profile || !profile.m_bEnabled || !profile.IsValid() || profile.m_iEscortCount != 1)
+		if (!profile)
+			profile = fallback;
+		if (!profile || !profile.m_bEnabled || !profile.IsValid())
 		{
-			FailOperation(operation, "REAPER test requires an airborne profile with exactly one escort");
+			FailOperation(operation, "REAPER response requires a valid airborne profile with zero or one escort");
 			return;
 		}
 		if (operation.m_bUseResponseMetrics && !AROR_ResponsePolicy.IsProfileUnlocked(profile, operation.m_iPoolReadinessLevel))
@@ -258,7 +274,7 @@ modded class AROR_OperationExecutorComponent
 			level = AffordableReaperTier(profile, operation.m_iRequestedTier, QRFPoolReadinessLevel(operation));
 			if (level == 0)
 			{
-				ReportSpawnWait(operation, "No unlocked affordable airborne pair within the requested crackdown level");
+				ReportSpawnWait(operation, "No unlocked affordable airborne package within the requested crackdown level");
 				return;
 			}
 		}
@@ -283,7 +299,7 @@ modded class AROR_OperationExecutorComponent
 				jointVehicles += jointElements[groundIndex].GetVehicleBudget();
 			}
 		}
-		if (GetReservedGroups() + 3 * level + jointGroups > m_iMaxGroups)
+		if (GetReservedGroups() + profile.GetGroupBudget() * level + jointGroups > m_iMaxGroups)
 		{
 			ReportSpawnWait(operation, "Full airborne response exceeds remaining group capacity");
 			return;
@@ -293,7 +309,7 @@ modded class AROR_OperationExecutorComponent
 			ReportSpawnWait(operation, "Full airborne response exceeds remaining personnel capacity");
 			return;
 		}
-		if (GetReservedVehicles() + 2 * level + jointVehicles > m_iMaxVehicles)
+		if (GetReservedVehicles() + profile.GetVehicleBudget() * level + jointVehicles > m_iMaxVehicles)
 		{
 			ReportSpawnWait(operation, "Full airborne response exceeds remaining aircraft capacity");
 			return;
@@ -320,7 +336,7 @@ modded class AROR_OperationExecutorComponent
 			vector launch = home + right * ((index - (level - 1) * 0.5) * 200);
 			vector heading = AROR_ReaperFlightGeometry.Direction(launch, landing);
 			vector escortLaunch = AROR_ReaperFlightGeometry.FormationPoint(launch, heading, m_fReaperFormationSpacing);
-			if (!IsLaunchPositionSafe(launch, target.GetCenter()) || !IsLaunchPositionSafe(escortLaunch, target.GetCenter()))
+			if (!IsLaunchPositionSafe(launch, target.GetCenter()) || (profile.m_iEscortCount > 0 && !IsLaunchPositionSafe(escortLaunch, target.GetCenter())))
 			{
 				FailOperation(operation, "An airborne insertion lane fails target/player distance checks; adjust role launch origin");
 				return;
@@ -331,7 +347,7 @@ modded class AROR_OperationExecutorComponent
 				FailOperation(operation, "Transport air insertion volume obstructed; adjust role launch origin");
 				return;
 			}
-			if (!AROR_ReaperFlightGeometry.IsAirspaceClear(escortLaunch, m_fReaperGunshipHeight + index * m_fReaperGunshipBand, 14))
+			if (profile.m_iEscortCount > 0 && !AROR_ReaperFlightGeometry.IsAirspaceClear(escortLaunch, m_fReaperGunshipHeight + index * m_fReaperGunshipBand, 14))
 			{
 				FailOperation(operation, "Escort air insertion volume obstructed; adjust role launch origin");
 				return;
@@ -345,9 +361,10 @@ modded class AROR_OperationExecutorComponent
 			force.m_iPackageCount = level;
 			force.m_bConstructionPending = true;
 			force.m_sPilotPrefab = pilot;
-			force.m_iReservedGroups = 3;
+			force.m_bUnescorted = profile.m_iEscortCount == 0;
+			force.m_iReservedGroups = profile.GetGroupBudget();
 			force.m_iReservedMembers = profile.m_iPersonnelBudget;
-			force.m_iReservedVehicles = 2;
+			force.m_iReservedVehicles = profile.GetVehicleBudget();
 			force.m_bLogFriendlyDamage = m_bLogFriendlyDamage;
 			force.m_vTown = target.GetCenter();
 			force.m_fTownRadius = target.GetRadius();
@@ -394,7 +411,7 @@ modded class AROR_OperationExecutorComponent
 		int leadAir = level;
 		if (!jointRecipe && operation.m_TacticalCommander)
 			leadAir = operation.m_TacticalCommander.m_iFirstWaveCount;
-		if (leadAir * 2 > m_iQRFMaxLiveAircraft)
+		if (leadAir * profile.GetVehicleBudget() > m_iQRFMaxLiveAircraft)
 		{
 			FailOperation(operation, "QRF lead air wave exceeds live-aircraft limit; enable waves or raise configured limit");
 			return;
@@ -403,9 +420,9 @@ modded class AROR_OperationExecutorComponent
 		AROR_OperationForce reservation = new AROR_OperationForce();
 		reservation.m_sOperationId = operation.GetId();
 		reservation.m_bReservation = true;
-		reservation.m_iReservedGroups = 3 * level + jointGroups;
+		reservation.m_iReservedGroups = profile.GetGroupBudget() * level + jointGroups;
 		reservation.m_iReservedMembers = profile.m_iPersonnelBudget * level + jointMembers;
-		reservation.m_iReservedVehicles = 2 * level + jointVehicles;
+		reservation.m_iReservedVehicles = profile.GetVehicleBudget() * level + jointVehicles;
 		m_aForces.Insert(reservation);
 		foreach (AROR_ReaperAirForce packageForce : prepared)
 		{
@@ -434,10 +451,10 @@ modded class AROR_OperationExecutorComponent
 				reservation.m_iReservedVehicles -= pending.m_iReservedVehicles;
 				m_aForces.Insert(pending);
 			}
-			Print(string.Format("[AROR JOINT] %1 recipe=%2 airPairs=1 groundElements=%3; full force reserved under one tactical command", operation.GetId(), jointRecipe.m_sId, jointElements.Count() - 1), LogLevel.NORMAL);
+			Print(string.Format("[AROR JOINT] %1 recipe=%2 airPackages=1 escorts=%3 groundElements=%4; full force reserved under one tactical command", operation.GetId(), jointRecipe.m_sId, profile.m_iEscortCount, jointElements.Count() - 1), LogLevel.NORMAL);
 		}
 		ReleaseForce(reservation);
-		Print(string.Format("[AROR REAPER] QRF %1 tier=%2 queued airPairs=%3 totalPackages=%4; full force reserved, one construction per executor tick", operation.GetId(), tier, level, totalPackages), LogLevel.NORMAL);
+		Print(string.Format("[AROR REAPER] QRF %1 tier=%2 queued airPackages=%3 totalPackages=%4; full force reserved, one construction per executor tick", operation.GetId(), tier, level, totalPackages), LogLevel.NORMAL);
 	}
 
 	//! Cache progress between retry calls. Advance itself rejects duplicate calls in one tick.
@@ -483,50 +500,67 @@ modded class AROR_OperationExecutorComponent
 
 	protected bool SpawnReaperPackage(AROR_Operation operation, AROR_ReaperAirForce force, ResourceName pilot)
 	{
-		force.m_Escort = new AROR_GroundOperationForce();
-		force.m_Escort.m_sOperationId = operation.GetId();
-		force.m_Escort.m_iPackageIndex = force.m_iPackageIndex;
-		force.m_Escort.m_sFactionKey = force.m_sFactionKey;
-		force.m_Escort.m_sAssetFactionKey = force.m_sAssetFactionKey;
-		force.m_Escort.m_bLogFriendlyDamage = m_bLogFriendlyDamage;
-		ConfigureForceFunding(force.m_Escort, operation, force.m_Profile);
-		force.m_Escort.m_iVehicleLossValue = force.m_Profile.m_iEscortLossValue;
+		// Reservations can wait for later waves; player clearance and insertion volumes may have changed.
+		if (!IsLaunchPositionSafe(force.m_vLaunch, force.m_vTown) || !AROR_ReaperFlightGeometry.IsAirspaceClear(force.m_vLaunch, m_fReaperInsertionHeight + force.m_iPackageIndex * 15, 14))
+			return false;
+		if (!force.m_bUnescorted && (!IsLaunchPositionSafe(force.m_vEscortLaunch, force.m_vTown) || !AROR_ReaperFlightGeometry.IsAirspaceClear(force.m_vEscortLaunch, ReaperGunshipHeight(force), 14)))
+			return false;
 		Resource transport = Resource.Load(force.m_Profile.m_sVehicle);
-		Resource gunship = Resource.Load(force.m_Profile.m_sEscortVehicle);
-		if (transport && transport.IsValid())
-			force.m_Vehicle = SpawnReaperAircraft(transport, force.m_vLaunch, m_fReaperInsertionHeight + force.m_iPackageIndex * 15);
-		if (gunship && gunship.IsValid())
-			force.m_Escort.m_Vehicle = SpawnReaperAircraft(gunship, force.m_vEscortLaunch, ReaperGunshipHeight(force));
-		if (!force.InitializeSpawnFaction_S(force.m_Vehicle))
+		if (!transport || !transport.IsValid())
 			return false;
-		if (!force.m_Escort.InitializeSpawnFaction_S(force.m_Escort.m_Vehicle))
-			return false;
-		if (!force.m_Vehicle.GetPhysics() || !force.m_Escort.m_Vehicle.GetPhysics())
-			return false;
+		force.m_Vehicle = SpawnReaperAircraft(transport, force.m_vLaunch, m_fReaperInsertionHeight + force.m_iPackageIndex * 15);
+		// Own and hold the hull before any later faction/resource failure can abort construction.
 		force.m_bAircraftHeld = true;
 		force.HoldAircraft_S();
+		if (!force.InitializeSpawnFaction_S(force.m_Vehicle) || !force.m_Vehicle.GetPhysics())
+			return false;
 		force.TrackDamage_S(force.m_Vehicle);
-		force.m_Escort.TrackDamage_S(force.m_Escort.m_Vehicle);
+		if (!force.m_bUnescorted)
+		{
+			force.m_Escort = new AROR_GroundOperationForce();
+			force.m_Escort.m_sOperationId = operation.GetId();
+			force.m_Escort.m_iPackageIndex = force.m_iPackageIndex;
+			force.m_Escort.m_sFactionKey = force.m_sFactionKey;
+			force.m_Escort.m_sAssetFactionKey = force.m_sAssetFactionKey;
+			force.m_Escort.m_bLogFriendlyDamage = m_bLogFriendlyDamage;
+			ConfigureForceFunding(force.m_Escort, operation, force.m_Profile);
+			force.m_Escort.m_bOwnsPackageQuote = false; // Parent releases the shared air-package margin after both groups are cancelled.
+			force.m_Escort.m_iVehicleLossValue = force.m_Profile.m_iEscortLossValue;
+			Resource gunship = Resource.Load(force.m_Profile.m_sEscortVehicle);
+			if (!gunship || !gunship.IsValid())
+				return false;
+			force.m_Escort.m_Vehicle = SpawnReaperAircraft(gunship, force.m_vEscortLaunch, ReaperGunshipHeight(force));
+			force.HoldAircraft_S();
+			if (!force.m_Escort.InitializeSpawnFaction_S(force.m_Escort.m_Vehicle) || !force.m_Escort.m_Vehicle.GetPhysics())
+				return false;
+			force.m_Escort.TrackDamage_S(force.m_Escort.m_Vehicle);
+		}
 		vector troopPoint = force.m_vLaunch + Vector(-15, 0, 0);
 		vector pilotPoint = force.m_vLaunch + Vector(8, 0, 0);
-		vector escortPilotPoint = force.m_vEscortLaunch + Vector(8, 0, 0);
 		SCR_AIGroup crew = ReaperGroup(force, m_sCrewGroupPrefab, pilot, pilotPoint);
 		SCR_AIGroup infantry = ReaperGroup(force, force.m_Profile.m_sInfantryGroup, "", troopPoint);
-		SCR_AIGroup escortCrew = ReaperGroup(force.m_Escort, m_sCrewGroupPrefab, pilot, escortPilotPoint);
-		force.m_Escort.m_Group = force.m_Escort.m_CrewGroup;
-		if (!crew || !infantry || !escortCrew)
+		if (!crew || !infantry)
 			return false;
+		if (force.m_Escort)
+		{
+			vector escortPilotPoint = force.m_vEscortLaunch + Vector(8, 0, 0);
+			SCR_AIGroup escortCrew = ReaperGroup(force.m_Escort, m_sCrewGroupPrefab, pilot, escortPilotPoint);
+			force.m_Escort.m_Group = force.m_Escort.m_CrewGroup;
+			if (!escortCrew)
+				return false;
+		}
 		if (!infantry.m_aUnitPrefabSlots || infantry.m_aUnitPrefabSlots.Count() < 1)
 			return false;
-		if (infantry.m_aUnitPrefabSlots.Count() + 2 > force.m_iReservedMembers)
+		if (infantry.m_aUnitPrefabSlots.Count() + 1 + force.m_Profile.m_iEscortCount > force.m_iReservedMembers)
 			return false;
 		force.m_Waypoint = SpawnWaypoint(m_sQRFWaypointPrefab, force.m_vTown);
 		if (!force.m_Waypoint)
 			return false;
 		crew.RequestSpawn(1);
 		infantry.RequestSpawn(infantry.m_aUnitPrefabSlots.Count());
-		escortCrew.RequestSpawn(1);
-		Print(string.Format("[AROR REAPER] QRF %1 package=%2/%3 queued; faction=%4 LZ=%5", operation.GetId(), force.m_iPackageIndex + 1, force.m_iPackageCount, force.m_sFactionKey, force.m_vLanding), LogLevel.NORMAL);
+		if (force.m_Escort)
+			force.m_Escort.m_CrewGroup.RequestSpawn(1);
+		Print(string.Format("[AROR REAPER] %1 package=%2/%3 queued escorts=%4 faction=%5 LZ=%6", operation.GetId(), force.m_iPackageIndex + 1, force.m_iPackageCount, force.m_Profile.m_iEscortCount, force.m_sFactionKey, force.m_vLanding), LogLevel.NORMAL);
 		return true;
 	}
 
@@ -588,19 +622,23 @@ modded class AROR_OperationExecutorComponent
 	{
 		// Readiness may be stale while the rest of a lead wave materializes.
 		// Recheck before releasing physics, replacing flight orders or moving either aircraft.
-		if (!force || !force.m_Escort || !AROR_ReaperAirForce.AircraftAlive(force.m_Vehicle) || !AROR_ReaperAirForce.AircraftAlive(force.m_Escort.m_Vehicle))
+		if (!force || !AROR_ReaperAirForce.AircraftAlive(force.m_Vehicle))
 			return false;
-		if (force.CountInfantry() < 1 || force.CountCrew() < 1 || force.m_Escort.CountCrew() < 1 || !force.BoardPackage_S())
+		if (!force.m_bUnescorted && (!force.m_Escort || !AROR_ReaperAirForce.AircraftAlive(force.m_Escort.m_Vehicle) || force.m_Escort.CountCrew() < 1))
+			return false;
+		if (AROR_ReaperAirForce.HasPlayerOccupant(force.m_Vehicle) || (force.m_Escort && AROR_ReaperAirForce.HasPlayerOccupant(force.m_Escort.m_Vehicle)))
+			return false;
+		if (force.CountInfantry() < 1 || force.CountCrew() < 1 || !force.BoardPackage_S())
 			return false;
 		force.ReleaseAircraft_S();
 		float transportHeight = m_fReaperTransportHeight + force.m_iPackageIndex * 15;
 		if (!ReaperOrder(force, ReaperMovePrefab(), force.m_vAirApproach, m_fReaperTransportSpeed, transportHeight))
 			return false;
-		if (!ReaperOrder(force.m_Escort, ReaperMovePrefab(), force.m_vCover, m_fReaperTransportSpeed, ReaperGunshipHeight(force)))
+		if (force.m_Escort && !ReaperOrder(force.m_Escort, ReaperMovePrefab(), force.m_vCover, m_fReaperTransportSpeed, ReaperGunshipHeight(force)))
 			return false;
 		if (!InsertReaperAircraft(force, force.m_iPackageIndex * 15))
 			return false;
-		if (!InsertReaperAircraft(force.m_Escort, ReaperGunshipHeight(force) - m_fReaperInsertionHeight))
+		if (force.m_Escort && !InsertReaperAircraft(force.m_Escort, ReaperGunshipHeight(force) - m_fReaperInsertionHeight))
 			return false;
 		force.m_bOrdersIssued = true;
 		force.m_iFlightStage = 1;
@@ -643,7 +681,7 @@ modded class AROR_OperationExecutorComponent
 
 #ifdef WORKBENCH
 	//! Read-only audit of every authored homogeneous air formation size; no aircraft spawned.
-	bool ProbeAirLaunch_S(AROR_LocationComponent origin, AROR_LocationComponent target, array<vector> landingPads)
+	bool ProbeAirLaunch_S(AROR_LocationComponent origin, AROR_LocationComponent target, array<vector> landingPads, bool escorted = true)
 	{
 		if (!Replication.IsServer() || !origin || !target || origin == target || !landingPads || landingPads.IsEmpty() || !ReaperSettingsValid())
 			return false;
@@ -663,11 +701,11 @@ modded class AROR_OperationExecutorComponent
 				int padIndex = index % landingPads.Count();
 				vector insertionHeading = AROR_ReaperFlightGeometry.Direction(launch, landingPads[padIndex]);
 				vector escort = AROR_ReaperFlightGeometry.FormationPoint(launch, insertionHeading, m_fReaperFormationSpacing);
-				if (!IsLaunchPositionSafe(launch, target.GetCenter()) || !IsLaunchPositionSafe(escort, target.GetCenter()))
+				if (!IsLaunchPositionSafe(launch, target.GetCenter()) || (escorted && !IsLaunchPositionSafe(escort, target.GetCenter())))
 					return false;
 				if (!AROR_ReaperFlightGeometry.IsAirspaceClear(launch, m_fReaperInsertionHeight + index * 15, 14))
 					return false;
-				if (!AROR_ReaperFlightGeometry.IsAirspaceClear(escort, m_fReaperGunshipHeight + index * m_fReaperGunshipBand, 14))
+				if (escorted && !AROR_ReaperFlightGeometry.IsAirspaceClear(escort, m_fReaperGunshipHeight + index * m_fReaperGunshipBand, 14))
 					return false;
 			}
 		}
@@ -1036,7 +1074,7 @@ modded class AROR_OperationExecutorComponent
 
 	protected void MonitorReaperEscort(AROR_ReaperAirForce force)
 	{
-		if (force.m_bEscortLost)
+		if (force.m_bUnescorted || force.m_bEscortLost)
 			return;
 		AROR_GroundOperationForce escort = force.m_Escort;
 		if (!escort || !escort.m_CrewGroup || !AROR_ReaperAirForce.AircraftAlive(escort.m_Vehicle) || escort.CountLivingMembers() < 1)
@@ -1207,9 +1245,20 @@ modded class AROR_OperationExecutorComponent
 			ReleaseForce(force);
 			return;
 		}
+		if (!force.m_bOrdersIssued && operation.m_TacticalCommander && operation.m_TacticalCommander.m_bWithdraw)
+		{
+			FailReaperPackage(force, operation, "Unissued airborne package cancelled during withdrawal");
+			return;
+		}
 		if (force.m_bConstructionPending)
 		{
 			AROR_QRFTacticalCommander tactical = operation.m_TacticalCommander;
+			if (tactical && !TacticalOriginAvailable(operation))
+			{
+				tactical.m_bWithdraw = true;
+				FailReaperPackage(force, operation, "Committed airborne launch site lost or contested before construction");
+				return;
+			}
 			if (tactical && tactical.ReserveExpired(m_iExecutorClock))
 			{
 				ReleaseForce(force);
@@ -1218,7 +1267,7 @@ modded class AROR_OperationExecutorComponent
 					FailOperation(operation, "Air reserve expired without surviving elements");
 				return;
 			}
-			if (tactical && !tactical.CanConstruct(force.m_iPackageIndex, m_iExecutorClock, LiveTacticalAircraftCount(), m_iQRFMaxLiveAircraft, 2))
+			if (tactical && !tactical.CanConstruct(force.m_iPackageIndex, m_iExecutorClock, LiveTacticalAircraftCount(), m_iQRFMaxLiveAircraft, force.m_Profile.GetVehicleBudget()))
 				return;
 			if (tactical && m_iLastQRFConstructionTick == m_iExecutorClock)
 				return;
@@ -1278,14 +1327,22 @@ modded class AROR_OperationExecutorComponent
 				TryActivateOperation(operation);
 				return;
 			}
-			if (!force.m_CrewGroup || !AROR_ReaperAirForce.AircraftAlive(force.m_Vehicle) || !force.m_Escort || !AROR_ReaperAirForce.AircraftAlive(force.m_Escort.m_Vehicle) || !force.m_Escort.m_CrewGroup)
+			bool missingAircraft = !force.m_CrewGroup || !AROR_ReaperAirForce.AircraftAlive(force.m_Vehicle);
+			if (!force.m_bUnescorted && (!force.m_Escort || !AROR_ReaperAirForce.AircraftAlive(force.m_Escort.m_Vehicle) || !force.m_Escort.m_CrewGroup))
+				missingAircraft = true;
+			if (missingAircraft)
 			{
 				FailReaperPackage(force, operation, "REAPER required aircraft lost before dispatch");
 				return;
 			}
-			if (crew < 1 || infantry < 1 || escorts < 1 || !force.m_Group.IsExpandComplete() || !force.m_CrewGroup.IsExpandComplete() || !force.m_Escort.m_CrewGroup.IsExpandComplete())
+			if (crew < 1 || infantry < 1 || !force.m_Group.IsExpandComplete() || !force.m_CrewGroup.IsExpandComplete())
 				return;
-			if (!ReaperGroupFaction(force.m_Group, force.m_sFactionKey) || !ReaperGroupFaction(force.m_CrewGroup, force.m_sFactionKey) || !ReaperGroupFaction(force.m_Escort.m_CrewGroup, force.m_sFactionKey))
+			if (!force.m_bUnescorted && (escorts < 1 || !force.m_Escort.m_CrewGroup.IsExpandComplete()))
+				return;
+			bool wrongGroup = !ReaperGroupFaction(force.m_Group, force.m_sFactionKey) || !ReaperGroupFaction(force.m_CrewGroup, force.m_sFactionKey);
+			if (force.m_Escort && !ReaperGroupFaction(force.m_Escort.m_CrewGroup, force.m_sFactionKey))
+				wrongGroup = true;
+			if (wrongGroup)
 			{
 				FailReaperPackage(force, operation, "REAPER infantry/pilot group faction mismatch");
 				return;
@@ -1296,11 +1353,14 @@ modded class AROR_OperationExecutorComponent
 				return;
 			}
 			REAPER_AiHelicopterControllerComponent transportController = AROR_ReaperAirForce.Controller(force.m_Vehicle);
-			REAPER_AiHelicopterControllerComponent escortController = AROR_ReaperAirForce.Controller(force.m_Escort.m_Vehicle);
-			if (!transportController || !escortController)
+			REAPER_AiHelicopterControllerComponent escortController;
+			if (force.m_Escort)
+				escortController = AROR_ReaperAirForce.Controller(force.m_Escort.m_Vehicle);
+			if (!transportController || (!force.m_bUnescorted && !escortController))
 				return;
 			transportController.AROR_ConfigureQRF(force.m_sFactionKey, force.m_vTown, force.m_fTownRadius, m_fReaperFriendlyClearance, false);
-			escortController.AROR_ConfigureQRF(force.m_sFactionKey, force.m_vTown, force.m_fTownRadius, m_fReaperFriendlyClearance, false);
+			if (escortController)
+				escortController.AROR_ConfigureQRF(force.m_sFactionKey, force.m_vTown, force.m_fTownRadius, m_fReaperFriendlyClearance, false);
 			force.m_bReady = true;
 			if (operation.m_TacticalCommander)
 				RecordTacticalStrength(force, operation, infantry);
@@ -1449,7 +1509,7 @@ modded class AROR_OperationExecutorComponent
 	{
 		super.OnPostInit(owner);
 		if (GetGame().InPlayMode() && Replication.IsServer() && m_bExecuteOperations && m_bReaperQRFTest)
-			Print("[AROR REAPER] Experimental airborne QRF override ENABLED: response level controls complete transport/fireteam/gunship packages; disable Reaper QRF Test on the executor to restore ground responses", LogLevel.WARNING);
+			Print("[AROR REAPER] Experimental airborne QRF override ENABLED: response level controls complete transport/fireteam packages with authored optional gunships; disable Reaper QRF Test on the executor to restore ground responses", LogLevel.WARNING);
 	}
 
 	override void OnDelete(IEntity owner)

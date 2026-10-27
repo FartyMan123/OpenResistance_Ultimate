@@ -118,10 +118,14 @@ for(const role of [1,2])for(let readiness=1;readiness<=5;readiness++)for(const k
   for(let crackdown=1;crackdown<=5;crackdown++){
     const choice=executor.GetResponsePreview(role,kind,readiness,crackdown);
     responseCoverage.push({Role:role===1?'OCCUPIERS':'INVADERS',Family:env.AROR_ResponsePolicy.TypeName(kind),Readiness:readiness,Crackdown:crackdown,Available:choice.IsAvailable(),Recipe:choice.m_sRecipeId||'',Profile:choice.m_sProfileId||'',Packages:choice.m_aElements.length,ReservedGroups:choice.m_iGroups,ReservedPersonnel:choice.m_iPersonnel,ReservedVehicles:choice.m_iVehicles,Reason:choice.m_sReason,NativeExecution:'NOT_RUN'});
-    const minimum=kind===1?3:([2,3,7].includes(kind)?5:1);
+    const minimum=kind===1?3:(kind===7?2:(kind===2?5:1));
     check(choice.IsAvailable()===(readiness>=minimum),'equipment gate for army/type/Readiness/Crackdown '+[role,kind,readiness,crackdown]);
     if(!choice.IsAvailable())continue;
-    check(choice.m_iGroups===choice.m_aElements.reduce((n,p)=>n+p.GetGroupBudget(),0)&&choice.m_iVehicles===choice.m_aElements.reduce((n,p)=>n+p.GetVehicleBudget(),0)&&choice.m_iPersonnel===choice.m_aElements.reduce((n,p)=>n+p.m_iPersonnelBudget,0),'preview reserves every group, vehicle and personnel slot in the resolved roster');
+    if(kind===3)check(choice.m_aElements.every(p=>p.m_iEscortCount===(readiness<5?0:1)),'Readiness selects light transport-only or heavy escorted air without changing intensity');
+    if(kind===7&&readiness<5)check(choice.m_aElements[0].m_iEscortCount===0&&choice.m_aElements.slice(1).every(p=>p.m_eType!==types.ARMOUR||p.m_bLightVehicle),'early joint responses exclude gunships and heavy armour');
+    const physicalGroups=choice.m_aElements.reduce((n,p)=>n+(p.m_eType===3?2+p.m_iEscortCount:([2,4].includes(p.m_eType)?1:2)),0);
+    const physicalVehicles=choice.m_aElements.reduce((n,p)=>n+(p.m_eType===3?1+p.m_iEscortCount:(p.m_eType===4?0:1)),0);
+    check(choice.m_iGroups===physicalGroups&&choice.m_iVehicles===physicalVehicles&&choice.m_iPersonnel===choice.m_aElements.reduce((n,p)=>n+p.m_iPersonnelBudget,0),'preview reserves actual infantry/pilot/escort groups, vehicles and personnel');
     check(choice.m_aElements.every(p=>p.m_eRole===role&&p.m_iMinimumReadinessLevel<=readiness),'no borrowed or locked profile in preview');
     check(choice.m_aElements.length>=previous,'Crackdown never shrinks the authored element count');
     previous=choice.m_aElements.length;
@@ -181,7 +185,7 @@ let m=manager();const request=compile('AROR_MarsOperationManager','RequestMars_S
  env.AROR_MarsAccess.CanRequest_S=()=>true;
 }
 
-request.call(m,1,credential,1,'type:3',5,1);check(!m.m_aOperations.length,'server rechecks selected Readiness and rejects locked air');
+request.call(m,1,credential,1,'type:2',5,1);check(!m.m_aOperations.length,'server rechecks selected Readiness and rejects locked armour');
 m.m_iClock+=5;request.call(m,1,credential,1,'type:3',5,5);
 check(m.m_aOperations.length===1&&m.m_aOperations[0].m_iPoolReadinessLevel===5&&m.m_aOperations[0].m_bUseResponseMetrics,'server freezes the preview metrics for explicit air dispatch');
 check(m.m_aOperations[0].m_iRequestedTier===5,'server retains Crackdown separately from Readiness');

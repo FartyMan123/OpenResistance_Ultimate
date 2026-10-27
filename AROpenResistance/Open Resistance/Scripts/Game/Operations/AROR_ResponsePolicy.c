@@ -126,17 +126,8 @@ class AROR_ResponsePolicy
 		foreach (AROR_ForceProfile element : result.m_aElements)
 		{
 			result.m_iPersonnel += element.m_iPersonnelBudget;
-			if (element.m_eType == AROR_EForceType.AIRBORNE)
-			{
-				result.m_iGroups += 3;
-				result.m_iVehicles += 2;
-			}
-			else
-			{
-				result.m_iGroups += element.GetGroupBudget();
-				if (element.m_eType != AROR_EForceType.INFANTRY)
-					result.m_iVehicles++;
-			}
+			result.m_iGroups += element.GetGroupBudget();
+			result.m_iVehicles += element.GetVehicleBudget();
 		}
 		result.m_sReason = string.Empty;
 		return result;

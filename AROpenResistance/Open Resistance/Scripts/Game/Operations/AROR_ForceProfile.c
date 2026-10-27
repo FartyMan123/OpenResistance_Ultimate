@@ -29,9 +29,9 @@ class AROR_ForceProfile
 	int m_iCrewCount;
 	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Ground vehicle or transport helicopter prefab", params: "et")]
 	ResourceName m_sVehicle;
-	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Airborne escort gunship prefab", params: "et")]
+	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Optional airborne gunship prefab; required when escort count is one", params: "et")]
 	ResourceName m_sEscortVehicle;
-	[Attribute("1", desc: "Required gunship escort count for airborne profiles")]
+	[Attribute("1", desc: "Airborne gunship escorts: zero for light transport-only packages, one for escorted packages", params: "0 1 1")]
 	int m_iEscortCount;
 	[Attribute("12", desc: "Personnel reservation, including infantry and crew; must cover actual group slots")]
 	int m_iPersonnelBudget;
@@ -76,7 +76,7 @@ class AROR_ForceProfile
 	int GetGroupBudget()
 	{
 		if (m_eType == AROR_EForceType.AIRBORNE)
-			return 3;
+			return 2 + m_iEscortCount;
 		if (m_eType == AROR_EForceType.INFANTRY || m_eType == AROR_EForceType.ARMOUR)
 			return 1;
 		return 2;
@@ -85,7 +85,7 @@ class AROR_ForceProfile
 	int GetVehicleBudget()
 	{
 		if (m_eType == AROR_EForceType.AIRBORNE)
-			return 2;
+			return 1 + m_iEscortCount;
 		if (m_eType == AROR_EForceType.INFANTRY)
 			return 0;
 		return 1;
@@ -120,7 +120,7 @@ class AROR_ForceProfile
 		if (m_sInfantryGroup.IsEmpty() || m_fDismountDistance < 20)
 			return false;
 		if (m_eType == AROR_EForceType.AIRBORNE)
-			return !m_sEscortVehicle.IsEmpty() && m_iEscortCount > 0 && m_iEscortCount <= 4;
+			return m_iEscortCount >= 0 && m_iEscortCount <= 1 && (m_iEscortCount == 0 || !m_sEscortVehicle.IsEmpty());
 		return m_eType == AROR_EForceType.MOTORIZED || m_eType == AROR_EForceType.MECHANIZED;
 	}
 }

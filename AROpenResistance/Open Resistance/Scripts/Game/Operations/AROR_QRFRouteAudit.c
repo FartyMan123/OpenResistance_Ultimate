@@ -102,16 +102,20 @@ class AROR_QRFRouteAudit
 			s_iPassed++;
 		array<vector> pads = s_mLandingPads.Get(target.GetId());
 		string airResult = "NO_SAFE_LZ";
+		string lightAirResult = "NO_SAFE_LZ";
 		if (pads && !pads.IsEmpty())
 		{
 			airResult = "FAIL";
 			if (s_Executor.ProbeAirLaunch_S(origin, target, pads))
 				airResult = "PASS";
+			lightAirResult = "FAIL";
+			if (s_Executor.ProbeAirLaunch_S(origin, target, pads, false))
+				lightAirResult = "PASS";
 		}
 		string result = "FAIL";
 		if (passed)
 			result = "PASS";
-		Print(string.Format("[AROR ROUTE AUDIT] pair origin=%1 target=%2 groundPlanning=%3 airLaunchPlanning=%4 launch=%5 approach=%6", origin.GetId(), target.GetId(), result, airResult, launch, approach), LogLevel.NORMAL);
+		Print(string.Format("[AROR ROUTE AUDIT] pair origin=%1 target=%2 groundPlanning=%3 airLaunchPlanning=%4 lightAirLaunchPlanning=%5 launch=%6 approach=%7", origin.GetId(), target.GetId(), result, airResult, lightAirResult, launch, approach), LogLevel.NORMAL);
 	}
 
 	//! Share the production bounded LZ search: at most two radial seeds per audit tick.

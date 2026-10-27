@@ -11,6 +11,7 @@ class AROR_QRFFunding
 	bool m_bClosed;
 	bool m_bUnsecured;
 	ref array<ref AROR_QRFAssetAccount> m_aAssets = {};
+	protected ref array<int> m_aReleasedPackages = {};
 
 	void Register_S(IEntity entity, int value, bool vehicle, string faction, string nativeFaction)
 	{
@@ -23,12 +24,54 @@ class AROR_QRFFunding
 		}
 		AROR_QRFAssetAccount asset = new AROR_QRFAssetAccount();
 		asset.m_Entity = entity;
+		asset.m_iPackageIndex = -1;
 		asset.m_iValue = value;
 		asset.m_bVehicle = vehicle;
 		asset.m_sFaction = faction;
 		asset.m_sNativeFaction = nativeFaction;
 		m_aAssets.Insert(asset);
 	}
+	//! Preserve the existing registration seam while attributing assets to their owning package.
+	void RegisterPackageAsset_S(IEntity entity, int value, bool vehicle, string faction, string nativeFaction, int packageIndex)
+	{
+		if (!Replication.IsServer() || !entity || packageIndex < 0)
+			return;
+		Register_S(entity, value, vehicle, faction, nativeFaction);
+		foreach (AROR_QRFAssetAccount asset : m_aAssets)
+		{
+			if (asset.m_Entity == entity && asset.m_iPackageIndex < 0)
+			{
+				asset.m_iPackageIndex = packageIndex;
+				return;
+			}
+		}
+	}
+
+	//! Call only after this package's spawn queues are cancelled or its unbuilt reservation is cancelled.
+	//! Keep historical registered value: losses/recoveries are already deducted once by the shared account.
+	void ReleaseUnusedPackageQuote_S(int packageIndex, int packageQuote)
+	{
+		if (!Replication.IsServer() || packageIndex < 0 || packageQuote < 0 || m_aReleasedPackages.Contains(packageIndex))
+			return;
+		int registered;
+		foreach (AROR_QRFAssetAccount asset : m_aAssets)
+		{
+			if (asset.m_iPackageIndex == packageIndex)
+			{
+				registered += asset.m_iValue;
+				// Final owned cleanup also retires a missing/virtualized member after its group queue is cancelled.
+				// This is administrative recovery, never evidence of a combat death.
+				if (!asset.m_bSettled && !asset.m_Entity)
+				{
+					asset.m_bSettled = true;
+					m_iRecovered += asset.m_iValue;
+				}
+			}
+		}
+		m_aReleasedPackages.Insert(packageIndex);
+		m_iQuote = Math.Max(0, m_iQuote - Math.Max(0, packageQuote - registered));
+	}
+
 	int ObserveLosses_S()
 	{
 		if (!Replication.IsServer())

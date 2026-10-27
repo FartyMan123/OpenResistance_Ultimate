@@ -15,6 +15,7 @@ class AROR_GroundOperationForce : AROR_OperationForce
 	bool m_bTacticalDropStarted;
 	int m_iTacticalExitDeadline;
 	int m_iTacticalExitStarted;
+	int m_iTacticalExitRetries;
 	int m_iTacticalNextTravelLog;
 	int m_iVehicleFactionMismatchSince = -1;
 	bool m_bEmptyVehicleFactionLogged;
@@ -216,24 +217,33 @@ class AROR_GroundOperationForce : AROR_OperationForce
 	//! including the driver, before activating or giving either group movement orders.
 	bool IsMountComplete()
 	{
-		if (!m_bMountRequested || !m_Vehicle || !m_CrewGroup)
+		if (!m_bMountRequested || !m_Vehicle || !m_CrewGroup || m_CrewGroup.GetPlayerCount() > 0)
 			return false;
 		SCR_AIVehicleUsageComponent usage = SCR_AIVehicleUsageComponent.Cast(m_Vehicle.FindComponent(SCR_AIVehicleUsageComponent));
 		if (!usage || !usage.GetPilotCompartmentSlot() || !usage.GetPilotCompartmentSlot().GetOccupant())
 			return false;
+		IEntity driver = usage.GetPilotCompartmentSlot().GetOccupant();
+		if (GetGame().GetPlayerManager().GetPlayerIdFromControlledEntity(driver) > 0)
+			return false;
+		ChimeraCharacter driverCharacter = ChimeraCharacter.Cast(driver);
+		if (!driverCharacter || !driverCharacter.GetCharacterController() || driverCharacter.GetCharacterController().IsDead())
+			return false;
+		bool ownDriver;
 		array<AIAgent> crew = {};
 		m_CrewGroup.GetAgents(crew);
 		foreach (AIAgent agent : crew)
 		{
 			if (!agent || !IsSeatedInOwnVehicle(agent.GetControlledEntity()))
 				return false;
+			if (agent.GetControlledEntity() == driver)
+				ownDriver = true;
 		}
 		foreach (IEntity passenger : m_aPassengers)
 		{
 			if (!IsSeatedInOwnVehicle(passenger))
 				return false;
 		}
-		return true;
+		return ownDriver;
 	}
 
 	//! A native seat teleport can be dropped without failing the request. Re-request a free seat for every
@@ -574,6 +584,8 @@ class AROR_GroundOperationForce : AROR_OperationForce
 				m_CrewGroup.RemoveWaypoint(m_CrewWaypoint);
 			if (m_CrewGroup.GetPlayerCount() == 0)
 				SCR_EntityHelper.DeleteEntityAndChildren(m_CrewGroup);
+			else
+				m_bPackageQueuesPreserved = true;
 		}
 		if (m_CrewWaypoint)
 			SCR_EntityHelper.DeleteEntityAndChildren(m_CrewWaypoint);

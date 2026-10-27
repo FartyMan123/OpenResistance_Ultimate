@@ -108,6 +108,8 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 	protected int m_iQRFDetourTimeout;
 	[Attribute("30", desc: "Maximum seconds for animated passenger exits after stopping for a tactical drop", params: "15 90 1")]
 	protected int m_iQRFExitTimeout;
+	[Attribute("2", desc: "Additional animated-exit deadline windows for fixed security tasks before this package withdraws; zero disables retries", params: "0 5 1")]
+	protected int m_iQRFExitRetryLimit;
 	[Attribute("10", desc: "Seconds to allow normal ground passenger exits before native cleared-position recovery for stuck AI passengers; zero disables recovery", params: "0 20 1")]
 	protected int m_iQRFExitRecoveryDelay;
 	[Attribute("180", desc: "Maximum seconds for an infantry investigation/patrol leg, scaled to walking distance", params: "60 300 15")]
@@ -341,12 +343,32 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			pending.m_Funding.m_iQuote = Math.Max(0, pending.m_Funding.m_iQuote - pending.m_Profile.ReplacementQuote());
 			// The deferred object can still appear in an existing monitor snapshot; release once.
 			pending.m_iReservedMembers = 0;
+			pending.m_bOwnsPackageQuote = false;
 		}
 		AROR_ReaperAirForce pendingAir = AROR_ReaperAirForce.Cast(force);
 		if (pendingAir && pendingAir.m_bConstructionPending && pendingAir.m_Funding && pendingAir.m_Profile)
 		{
 			pendingAir.m_Funding.m_iQuote = Math.Max(0, pendingAir.m_Funding.m_iQuote - pendingAir.m_Profile.ReplacementQuote());
 			pendingAir.m_bConstructionPending = false;
+			pendingAir.m_iReservedMembers = 0;
+			pendingAir.m_bOwnsPackageQuote = false;
+		}
+		// A failed construction attempt may have consumed its virtual reservation without creating actors.
+		// Release that package quote now; do not hold unbuilt collateral for the surviving operation.
+		AROR_GroundOperationForce emptyGround = AROR_GroundOperationForce.Cast(force);
+		if (emptyGround && emptyGround.m_Funding && emptyGround.m_Profile && emptyGround.m_iReservedMembers > 0)
+		{
+			if (!emptyGround.m_Vehicle && !emptyGround.m_Group && !emptyGround.m_CrewGroup && (!pendingAir || !pendingAir.m_Escort))
+			{
+				array<IEntity> emptyOwnedMembers = {};
+				emptyGround.GetOwnedMembers(emptyOwnedMembers);
+				if (emptyOwnedMembers.IsEmpty())
+				{
+					emptyGround.m_Funding.m_iQuote = Math.Max(0, emptyGround.m_Funding.m_iQuote - emptyGround.m_Profile.ReplacementQuote());
+					emptyGround.m_iReservedMembers = 0;
+					emptyGround.m_bOwnsPackageQuote = false;
+				}
+			}
 		}
 		force.Cleanup_S();
 		m_aForces.RemoveItem(force);
@@ -362,6 +384,22 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		return null;
 	}
 
+	//! Keep materialized tactical actors and casualties until normal player-distance retention permits removal.
+	//! Empty reservations still release immediately; world unload uses direct cleanup.
+	protected bool ShouldRetainTacticalForce(AROR_OperationForce force)
+	{
+		if (!force || !force.m_bTacticalControlled || force.m_bReservation || AROR_ReaperAirForce.Cast(force))
+			return false;
+		if (force.m_bOrdersIssued || force.m_Group)
+			return true;
+		AROR_GroundOperationForce ground = AROR_GroundOperationForce.Cast(force);
+		if (ground && (ground.m_Vehicle || ground.m_CrewGroup))
+			return true;
+		array<IEntity> members = {};
+		force.GetOwnedMembers(members);
+		return !members.IsEmpty();
+	}
+
 	protected void ReleaseOperationForces(string operationId)
 	{
 		array<ref AROR_OperationForce> snapshot = {};
@@ -372,7 +410,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		}
 		foreach (AROR_OperationForce packageForce : snapshot)
 		{
-			if (packageForce.m_bTacticalControlled && packageForce.m_bOrdersIssued && !AROR_ReaperAirForce.Cast(packageForce))
+			if (ShouldRetainTacticalForce(packageForce))
 				RetainTacticalForce(packageForce);
 			else
 				ReleaseForce(packageForce);
@@ -395,6 +433,8 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			return;
 		AROR_QRFTacticalCommander tactical = operation.m_TacticalCommander;
 		if (operation.GetState() != AROR_EOperationState.SPAWNING && !tactical)
+			return;
+		if (tactical && tactical.m_bWithdraw)
 			return;
 		int packages;
 		foreach (AROR_OperationForce force : m_aForces)
@@ -444,13 +484,28 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		AROR_GroundOperationForce ground = AROR_GroundOperationForce.Cast(ready);
 		if (ground)
 		{
+			if (!ground.m_Vehicle || !ground.m_CrewGroup || !ground.m_Group)
+				return false;
+			if (ground.m_CrewGroup.GetPlayerCount() > 0 || ground.m_Group.GetPlayerCount() > 0)
+				return false;
+			if (ground.CountCrew() < 1 || !ground.IsMountComplete())
+				return false;
+			DamageManagerComponent dispatchDamage = DamageManagerComponent.Cast(ground.m_Vehicle.FindComponent(DamageManagerComponent));
+			if (dispatchDamage && dispatchDamage.IsDestroyed())
+				return false;
+			if (!ground.m_Waypoint || (ground.m_Profile.m_eType != AROR_EForceType.ARMOUR && !ground.m_CrewWaypoint))
+				return false;
 			if (ground.m_Profile.m_eType == AROR_EForceType.ARMOUR)
 				ground.m_CrewGroup.AddWaypoint(ground.m_Waypoint);
 			else
 				ground.m_CrewGroup.AddWaypoint(ground.m_CrewWaypoint);
 		}
 		else
+		{
+			if (!ready.m_Group || !ready.m_Waypoint || ready.m_Group.GetPlayerCount() > 0)
+				return false;
 			ready.m_Group.AddWaypoint(ready.m_Waypoint);
+		}
 		ready.m_bOrdersIssued = true;
 		ready.m_iTacticalLegDeadline = m_iExecutorClock + m_iQRFIngressTimeout;
 		if (ground && tactical && tactical.m_bAssault && !tactical.m_bAssaultReleased)
@@ -469,7 +524,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		Print(string.Format("[AROR] Operation %1 lost package %2: %3", operation.GetId(), force.m_iPackageIndex + 1, reason), LogLevel.NORMAL);
 		if (operation.m_TacticalCommander)
 			operation.m_TacticalCommander.MarkLost(force.m_iPackageIndex);
-		if (force.m_bTacticalControlled && force.m_bOrdersIssued && !AROR_ReaperAirForce.Cast(force))
+		if (ShouldRetainTacticalForce(force))
 			RetainTacticalForce(force);
 		else
 			ReleaseForce(force);
@@ -490,7 +545,12 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		{
 			AROR_OperationForce partial = FindPackage(operation.GetId(), m_iQRFConstructionIndex);
 			if (partial)
-				ReleaseForce(partial);
+			{
+				if (ShouldRetainTacticalForce(partial))
+					RetainTacticalForce(partial);
+				else
+					ReleaseForce(partial);
+			}
 			operation.m_TacticalCommander.MarkLost(m_iQRFConstructionIndex);
 			Print(string.Format("[AROR TACTICAL] %1 reserve construction failed: %2; existing force continues", operation.GetId(), reason), LogLevel.WARNING);
 			return;
@@ -556,6 +616,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 	{
 		if (!reservation || !profile)
 			return;
+		reservation.m_bOwnsPackageQuote = false;
 		reservation.m_iReservedGroups -= profile.GetGroupBudget();
 		reservation.m_iReservedMembers -= profile.m_iPersonnelBudget;
 		if (profile.m_eType != AROR_EForceType.INFANTRY)
@@ -1222,6 +1283,11 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		if (!operation || operation.IsTerminal())
 		{
 			ReleaseForce(force);
+			return;
+		}
+		if (!force.m_bOrdersIssued && operation.m_TacticalCommander && operation.m_TacticalCommander.m_bWithdraw)
+		{
+			FailPackage(force, operation, "Unissued ground package cancelled during withdrawal");
 			return;
 		}
 		if (!force.m_Group || (!force.m_CrewGroup && !force.m_bDismounted))
@@ -1899,6 +1965,8 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		force.m_Funding = operation.m_Funding;
 		if (!profile)
 			return;
+		force.m_iPackageQuote = profile.ReplacementQuote();
+		force.m_bOwnsPackageQuote = true;
 		force.m_iPersonnelLossValue = profile.m_iPersonnelLossValue;
 		force.m_iVehicleLossValue = profile.VehicleLossValue();
 	}
@@ -1946,6 +2014,8 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		if (m_iQRFDetourTimeout < 60 || m_iQRFDetourTimeout > 300)
 			return false;
 		if (m_iQRFExitTimeout < 15 || m_iQRFExitTimeout > 90)
+			return false;
+		if (m_iQRFExitRetryLimit < 0 || m_iQRFExitRetryLimit > 5)
 			return false;
 		if (m_iQRFExitRecoveryDelay < 0 || m_iQRFExitRecoveryDelay > 20 || m_iQRFExitRecoveryDelay >= m_iQRFExitTimeout)
 			return false;
@@ -2123,6 +2193,21 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		return count;
 	}
 
+	//! Recheck the committed launch site immediately before converting a queued package into actors.
+	protected bool TacticalOriginAvailable(AROR_Operation operation)
+	{
+		AROR_QRFTacticalCommander commander = operation.m_TacticalCommander;
+		if (!commander)
+			return false;
+		if (commander.m_sOriginLocationId.IsEmpty())
+			return !m_bQRFRequireFriendlyOrigin && !operation.m_bDebugRequest && operation.GetType() == AROR_EOperationType.QRF;
+		AROR_LocationManagerComponent locations = AROR_LocationManagerComponent.GetInstance();
+		AROR_LocationComponent origin;
+		if (locations)
+			origin = locations.GetLocationById(commander.m_sOriginLocationId);
+		return origin && AROR_QRFOriginPolicy.IsOriginType(origin.GetLocationType()) && origin.GetControllingRole() == operation.GetRole() && !AROR_RecaptureComponent.IsContested(origin.GetId());
+	}
+
 	protected void MonitorDeferredQRF(AROR_QRFDeferredForce pending)
 	{
 		AROR_Operation operation = m_Operations.GetOperation(pending.m_sOperationId);
@@ -2137,6 +2222,12 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			ReleaseForce(pending);
 			Print(string.Format("[AROR TACTICAL] %1 reserve package=%2 cancelled without spawning; deadline/withdrawal", operation.GetId(), pending.m_iPackageIndex + 1), LogLevel.WARNING);
 			FinishGroundQRFIfIdle(operation);
+			return;
+		}
+		if (!TacticalOriginAvailable(operation))
+		{
+			commander.m_bWithdraw = true;
+			FailPackage(pending, operation, "Committed ground launch site lost or contested before construction");
 			return;
 		}
 		if (m_iLastQRFConstructionTick == m_iExecutorClock)
@@ -2184,7 +2275,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			if (locations && !commander.m_sOriginLocationId.IsEmpty())
 			{
 				AROR_LocationComponent origin = locations.GetLocationById(commander.m_sOriginLocationId);
-				if (!origin || origin.GetControllingRole() != operation.GetRole())
+				if (!origin || origin.GetControllingRole() != operation.GetRole() || AROR_RecaptureComponent.IsContested(origin.GetId()))
 				{
 					commander.m_bWithdraw = true;
 					RetargetWithdrawalOrigin(operation, commander, locations);
@@ -3088,6 +3179,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 				{
 					force.m_bTacticalDropStarted = true;
 					force.m_iTacticalExitStarted = m_iExecutorClock;
+					force.m_iTacticalExitRetries = 0;
 					force.m_iTacticalExitDeadline = m_iExecutorClock + m_iQRFExitTimeout;
 					Print(string.Format("[AROR TACTICAL] %1 package=%2 road stop accepted at distance=%3; holding vehicle and unloading infantry", operation.GetId(), force.m_iPackageIndex + 1, distance), LogLevel.NORMAL);
 				}
@@ -3112,8 +3204,9 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 					timedOut = true;
 				if (timedOut)
 				{
-					if (force.m_bTacticalDropStarted && commander.m_iTownHoldSeconds > 0)
+					if (force.m_bTacticalDropStarted && commander.m_iTownHoldSeconds > 0 && force.m_iTacticalExitRetries < m_iQRFExitRetryLimit)
 					{
+						force.m_iTacticalExitRetries++;
 						force.m_iTacticalExitDeadline = m_iExecutorClock + m_iQRFExitTimeout;
 						Print(string.Format("[AROR TACTICAL] %1 package=%2 holding town delivery point and retrying remaining exits; deployed infantry continue investigation", operation.GetId(), force.m_iPackageIndex + 1), LogLevel.WARNING);
 						return true;
