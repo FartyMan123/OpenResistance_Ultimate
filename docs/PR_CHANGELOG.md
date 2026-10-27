@@ -1,49 +1,27 @@
-# Fortify Everon outposts and improve HICOMM orders
+# Add OPS missions and fix mission lifecycle failures
 
 ## Summary
 
-Give Chicken's ordinary and military outposts stronger defensive layouts, varied crewed weapons and equipment stores. Improve HICOMM order controls and make attacking squads travel to their objective before beginning an assault.
+Add the OPS mission board and six Resistance side missions. Address [Rowantrek's review on PR #27](https://github.com/Rowantrek/AR-Open-Resistance/pull/27#pullrequestreview-5659870942): prevent false convoy completion, restore leader management after loading, validate waiting targets, roll back failed spawns and correct rescue/cache rewards.
 
 ## Changes
 
-### Fortified outposts and garrisons
-
-- Bind equipped compositions to 14 ordinary and four military outposts, preserving Chotain castle, stable location IDs, owners and flag/root transforms.
-- Add sandbag perimeters, gun revetments, infantry sectors, command shelters/desks and entrance lanes. Seventeen sites use compact footprints of 28–48 m; Hospital retains its 64 m layout.
-- Add four native equipment containers per equipped site: weapons, ammunition, equipment and medical supplies (72 total), with US/USSR wrappers and server-side inventory observation.
-- Configure two crewed statics for ordinary sites and four for military sites, mixing heavy/medium MG variants. Compact military recipes keep the manned vehicle and omit the spare uncrewed hull.
-- Preserve saved roster losses and variants; revised recipes apply to fresh rosters.
-
-### HICOMM and High Command
-
-- Default to MOVE; left-click plans the selected order and right-click issues it. ATTACK/DEFEND select a nearby location and report when no target is available.
-- Send attacking squads to the objective first, switch to assault on arrival, then defend after the attack waypoint completes.
-- Show HOLD, ALL MINE and NONE selection states, reposition zoom controls around the slider and remove the duplicate enemy war summary from the top bar.
-- Add experimental embedded terrain-map support and isolate its map icons/lifecycle. The terrain view remains disabled by default; the procedural tactical map remains active.
-
-### Editor tools and documentation
-
-- Add an undoable fortified-outpost grounding command that preserves Chotain castle.
-- Add a current-placement audit with blocked-pad, wall-segment and gun-arc diagnostics; retain the bounded relocation-search command.
-- Make audits respect authored defence levels, static counts and compact hull recipes.
-- Archive the initial failed footprint audit, track current trial bindings and guard campaign-layer regeneration against overwriting authored compounds.
-- Document configuration, extender impact and the native test sequence.
+- **Missions / Phone:** six mission types, leader accept/abort controls, OPS dossiers and markers on the game map and HICOMM.
+- **Convoy Ambush:** distinguish unspawned crew from casualties, skip empty unit prefabs and retry seating until surviving crews are aboard. Restored convoys wait for players near their origin before restarting.
+- **Mission lifecycle:** let any current Resistance Leader abort restored missions and receive progress hints. Replicate the session owner ID so the OPS abort button follows the server's permissions.
+- **Deployment:** cancel invalid targets before spawning; immediately remove partial deployments before retrying. Preserve the occupied-vehicle cleanup exemption.
+- **Rewards:** wait for every surviving prisoner to arrive and count only those delivered; retain secured cache crates for looting.
+- **Operations:** retain the existing wider QRF road-launch search and seating retries.
+- **Documentation / checks:** update architecture, lifecycle rules and Workbench acceptance steps; add actual-source mocked regression checks.
 
 ## Testing
 
-- 313 actual-source mocked assertions passed for garrisons, crews, editor audits, grounding and supply observation.
-- 1,549 estimated layout assertions passed for compact geometry, marker spacing, flag access, gun rays, container IDs and infantry/vehicle entrance routes.
-- Installed-asset validation passed 53 native/local resource references; metadata checks found no duplicate resource GUIDs.
-- All 23 military location IDs, 18 equipped bindings and 72 container bindings checked; protected site data retained.
-- `git diff --check` passed.
-- HICOMM's existing commit records Workbench Play testing, without full acceptance coverage.
-- Final outpost scripts/resources have not been compiled or accepted in Workbench. The initial larger-layout audit rejected all 18 trial sites; the compact revisions still require grounding, a new audit and Play testing.
+- 84 assertions passed using selected actual script method bodies with mocked native services, covering convoy activation/seating/casualties, prisoner arrivals, restored abort permissions and hints, and immediate deployment rollback.
+- Workbench Script Editor compile passed (confirmed by the developer). World Editor Play and dedicated-server acceptance checks remain pending; see `docs/MISSIONS.md`.
 
 ## Notes
 
-- Target branch: `master-dev`.
-- Existing saved garrisons retain their recipes and casualties. Use a fresh campaign to test the new counts and variants.
-- Native container stock, looting/depletion, inventory persistence, crew seating, navigation, dedicated-server replication and performance remain acceptance work.
-- Extenders should review `m_aStaticVariants`, `m_iStaticWeaponCountOverride`, `m_bOmitParkedArmour` and the new composition/supply component resources. Server and clients need matching scripts/resources. New resource GUIDs are hand-authored and still require Workbench discovery.
-- No new economy or territory authority is introduced. HICOMM's existing session-only squad model remains.
-- Before testing: compile and reload Chicken, run **Ground fortified outposts (preserve Chotain castle)**, inspect and Save, then run **Audit fortified outposts (current placements)**.
+- Target branch: `master-dev`; review fixes are on `chicken-dev`.
+- Existing version-1 mission saves remain compatible. Restored missions have shared leader management; session IDs are not saved.
+- Extenders: mission snapshot rows now contain 22 fields, including the session owner ID; clients and server need matching scripts. Failed deployments delete tracked provisional entities/groups immediately rather than invoking `Release_S`. Track partial resources in the shared arrays; use `Release_S` for completion rewards and cleanup exemptions.
+- Native AI activation, seating, navigation, loot retention and multiplayer replication still require Workbench acceptance.

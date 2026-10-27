@@ -19,6 +19,7 @@ class AROR_MissionInfo
 	int m_iRisk;
 	int m_iGuards;
 	string m_sLeaderName;
+	int m_iLeaderId;		//!< Session owner; 0 after load means any current leader
 	int m_iPhase;
 	string m_sProgress;
 }

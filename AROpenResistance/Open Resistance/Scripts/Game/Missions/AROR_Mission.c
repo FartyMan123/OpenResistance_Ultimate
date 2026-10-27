@@ -32,6 +32,7 @@ class AROR_Mission
 	int m_iLeaderId;
 	string m_sLeaderName;
 	bool m_bDeployed;
+	bool m_bRestored;			//!< Loaded missions wait for Resistance proximity, including convoys
 	int m_iDeployAttempts;
 	int m_iPhase;
 	string m_sProgress;			//!< Status line shown in OPS and on the map
@@ -59,7 +60,7 @@ class AROR_Mission
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Still worth accepting (e.g. the site is still enemy-held); checked when a leader accepts the offer
+	//! Target remains valid; checked on acceptance and while waiting to deploy
 	bool IsStillValid_S(AROR_MissionBoardComponent board)
 	{
 		AROR_LocationComponent location = board.GetLocation(m_sLocationId);

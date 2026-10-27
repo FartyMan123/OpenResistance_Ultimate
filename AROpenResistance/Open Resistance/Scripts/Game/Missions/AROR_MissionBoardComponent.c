@@ -65,7 +65,7 @@ class AROR_MissionBoardComponent : SCR_BaseGameModeComponent
 
 	protected static const string ROW_SEPARATOR = ";";
 	protected static const string FIELD_SEPARATOR = "|";
-	protected static const int SNAPSHOT_FIELDS = 21;
+	protected static const int SNAPSHOT_FIELDS = 22;
 	protected static const int LOG_LINES = 8;
 
 	protected static const ref array<string> CODE_ADJECTIVES = {"GREY", "BROKEN", "QUIET", "DEAD", "BRIGHT", "OPEN", "SILENT", "IRON", "PALE", "HOLLOW", "COLD", "BLACK", "RED", "LONG", "LAST", "FALLEN", "WILD", "DEEP", "STILL", "BURNT"};
@@ -232,7 +232,7 @@ class AROR_MissionBoardComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! The leader who accepted the mission, or a host, can abort it; nothing is lost but the reward
+	//! The accepting leader or host can abort; after load any current leader can abort.
 	void RequestAbort_S(int playerId, int missionId)
 	{
 		if (!Replication.IsServer())
@@ -246,7 +246,7 @@ class AROR_MissionBoardComponent : SCR_BaseGameModeComponent
 		}
 
 		AROR_HighCommandComponent highCommand = AROR_HighCommandComponent.GetInstance();
-		bool allowed = IsLeader(playerId) && (mission.m_iLeaderId == playerId || (highCommand && highCommand.IsHost(playerId)));
+		bool allowed = IsLeader(playerId) && (mission.m_iLeaderId == 0 || mission.m_iLeaderId == playerId || (highCommand && highCommand.IsHost(playerId)));
 		if (!allowed)
 		{
 			Reply(playerId, "Only the leader who accepted it (or the host) can abort " + mission.m_sCodename);
@@ -749,7 +749,10 @@ class AROR_MissionBoardComponent : SCR_BaseGameModeComponent
 		{
 			CompartmentAccessComponent access = CompartmentAccessComponent.Cast(member.FindComponent(CompartmentAccessComponent));
 			if (!access)
+			{
+				allSeated = false;
 				continue;
+			}
 
 			BaseCompartmentSlot current = access.GetCompartment();
 			if (access.IsInCompartment() && current && current.GetVehicle() == vehicle)
@@ -822,7 +825,20 @@ class AROR_MissionBoardComponent : SCR_BaseGameModeComponent
 	//! Hint to the leader running a mission (progress the whole cell should hear goes to the log instead)
 	void ReplyLeader(AROR_Mission mission, string text)
 	{
-		Reply(mission.m_iLeaderId, mission.m_sCodename + ": " + text);
+		if (mission.m_iLeaderId > 0)
+		{
+			Reply(mission.m_iLeaderId, mission.m_sCodename + ": " + text);
+			return;
+		}
+
+		// Loaded missions have no session owner; current leaders can manage them.
+		array<int> players = {};
+		GetGame().GetPlayerManager().GetPlayers(players);
+		foreach (int playerId : players)
+		{
+			if (IsLeader(playerId))
+				Reply(playerId, mission.m_sCodename + ": " + text);
+		}
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -1123,7 +1139,14 @@ class AROR_MissionBoardComponent : SCR_BaseGameModeComponent
 			AROR_Mission mission = m_aActive[a];
 			mission.m_iRemaining = mission.m_iRemaining - seconds;
 
-			if (!mission.m_bDeployed && (mission.DeploysAtOnce() || IsResistanceNear_S(mission.m_vPosition, m_fDeployRange)))
+			if (!mission.m_bDeployed && !mission.IsStillValid_S(this))
+			{
+				mission.m_sOutcome = "the target is no longer valid";
+				Finish_S(mission, AROR_EMissionResult.FAILED);
+				continue;
+			}
+
+			if (!mission.m_bDeployed && ((!mission.m_bRestored && mission.DeploysAtOnce()) || IsResistanceNear_S(mission.m_vPosition, m_fDeployRange)))
 				TryDeploy_S(mission);
 
 			AROR_EMissionResult result = AROR_EMissionResult.ONGOING;
@@ -1162,8 +1185,35 @@ class AROR_MissionBoardComponent : SCR_BaseGameModeComponent
 			return;
 		}
 
-		// Release whatever was spawned before the failure and try again later
-		mission.Release_S(this, false);
+		// Roll back partial spawns now, even beside players. Deleting the group also
+		// cancels outstanding native spawn requests; members need explicit removal.
+		foreach (SCR_AIGroup group : mission.m_aGroups)
+		{
+			if (!group)
+				continue;
+
+			array<AIAgent> agents = {};
+			group.GetAgents(agents);
+			array<IEntity> members = {};
+			foreach (AIAgent agent : agents)
+			{
+				if (agent && agent.GetControlledEntity())
+					members.Insert(agent.GetControlledEntity());
+			}
+
+			SCR_EntityHelper.DeleteEntityAndChildren(group);
+			foreach (IEntity member : members)
+			{
+				if (member)
+					SCR_EntityHelper.DeleteEntityAndChildren(member);
+			}
+		}
+
+		foreach (IEntity entity : mission.m_aEntities)
+		{
+			if (entity && !HasPlayerAboard(entity))
+				SCR_EntityHelper.DeleteEntityAndChildren(entity);
+		}
 		mission.m_aGroups.Clear();
 		mission.m_aGroupRoles.Clear();
 		mission.m_aAffiliated.Clear();
@@ -1346,7 +1396,17 @@ class AROR_MissionBoardComponent : SCR_BaseGameModeComponent
 
 		mission.m_bActive = true;
 		mission.m_bDeployed = false;
+		mission.m_bRestored = true;
+		mission.m_iLeaderId = 0;
 		mission.m_iPhase = 0;
+		// Convoys restart at their origin, not at the saved last-known marker position.
+		if (mission.m_eType == AROR_EMissionType.CONVOY_AMBUSH)
+		{
+			AROR_LocationComponent origin = GetLocation(mission.m_sLocationId);
+			if (origin)
+				mission.m_vPosition = origin.GetCenter();
+		}
+
 		mission.m_sProgress = mission.GetStartProgress(this);
 		m_iNextId = Math.Max(m_iNextId, mission.m_iId + 1);
 		m_aActive.Insert(mission);
@@ -1418,6 +1478,7 @@ class AROR_MissionBoardComponent : SCR_BaseGameModeComponent
 			string head = string.Format("%1|%2|%3|%4|%5|%6|%7|%8|%9", mission.m_iId, type, activeValue, mission.m_sCodename, mission.m_sLocationId, Math.Round(mission.m_vPosition[0]), Math.Round(mission.m_vPosition[2]), Math.Round(mission.m_fAreaRadius), mission.m_sDestinationId);
 			string middle = string.Format("|%1|%2|%3|%4|%5|%6", Math.Round(mission.m_vDestination[0]), Math.Round(mission.m_vDestination[2]), enemy, mission.m_iFunds, mission.m_iManpower, mission.m_iTimeLimit);
 			string tail = string.Format("|%1|%2|%3|%4|%5", mission.m_iRisk, mission.m_iGuards, mission.m_sLeaderName, mission.m_iPhase, Clean(mission.m_sProgress));
+			tail += "|" + mission.m_iLeaderId.ToString();
 
 			if (i > 0)
 			{
@@ -1497,6 +1558,7 @@ class AROR_MissionBoardComponent : SCR_BaseGameModeComponent
 			info.m_sLeaderName = fields[18];
 			info.m_iPhase = fields[19].ToInt();
 			info.m_sProgress = fields[20];
+			info.m_iLeaderId = fields[21].ToInt();
 			m_aInfos.Insert(info);
 		}
 	}

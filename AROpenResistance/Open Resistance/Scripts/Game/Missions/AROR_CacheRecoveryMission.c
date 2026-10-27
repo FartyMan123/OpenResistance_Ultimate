@@ -131,6 +131,15 @@ class AROR_CacheRecoveryMission : AROR_Mission
 	}
 
 	//------------------------------------------------------------------------------------------------
+	override void Release_S(AROR_MissionBoardComponent board, bool succeeded)
+	{
+		if (succeeded && m_Crate)
+			m_aEntities.RemoveItem(m_Crate);
+
+		super.Release_S(board, succeeded);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	override string GetStartProgress(AROR_MissionBoardComponent board)
 	{
 		return string.Format("Search the marked area near %1 (%2 m radius)", GetLocationName(board), SEARCH_RADIUS);

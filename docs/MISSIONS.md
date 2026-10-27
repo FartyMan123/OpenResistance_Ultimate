@@ -19,18 +19,20 @@ Each mission picks its target when it is offered, and spawns its enemies and pro
 
 All missions also fail when their time limit runs out. **Threat** comes from the target's type: towns are low; cities, outposts, factories and resources moderate; ports and military bases high; airports extreme. Each threat level adds 25% to the funds reward and one guard; high and extreme threats add 1 MP.
 
-Prisoners count as civilians while detained, so the guards leave them alone. Once freed they become Resistance and can be shot on the way out. A truck counts as seized once it has moved 40 m from where it was parked.
+Prisoners count as civilians while detained, so the guards leave them alone. Once freed they become Resistance and can be shot on the way out. Rescue completes when every surviving prisoner reaches the destination; manpower scales with the number actually delivered. No reward is paid while survivors are still on the way. A truck counts as seized once it has moved 40 m from where it was parked.
 
 ## Board and lifecycle
 
 - The board holds 6 offers. Each new offer is the mission type least represented on the board and among active missions, so the board stays varied. Two missions never share a location.
 - Offers expire after 30 minutes. A taken or expired slot is refilled after 90 seconds.
-- At most 3 missions are active at once. Accepting is refused if the offer's site has changed hands since it was offered.
+- At most 3 missions are active at once. Accepting is refused if the offer's site has changed hands since it was offered. Active missions waiting to deploy also fail if their target becomes invalid; cache recovery is independent of the nearby town's owner.
 - An active mission's status line (for example "Truck seized: drive it into a Resistance-held location") shows in OPS, on the game map and in the notifications.
 - Success pays Resistance funds and manpower and shows a headline. Failure (including abort) shows a notification.
-- The leader who accepted a mission, or a host, can abort it (two clicks). Nothing is lost but the reward.
-- Leftovers (guards, vehicles, wrecks, crate) are removed once no Resistance player is within 400 m, or after 15 minutes regardless. A delivered truck stays. Vehicles with a player aboard are never removed.
+- The leader who accepted a mission, or a host, can abort it (two clicks). After reload, any current Resistance Leader can abort it and receives its progress hints. Nothing is lost but the reward.
+- Leftovers (guards, vehicles, wrecks, unsecured crate) are removed once no Resistance player is within 400 m, or after 15 minutes regardless. A delivered truck and a successfully secured cache stay. Vehicles with a player aboard are left in the world and released from cleanup tracking.
+- Failed deployment immediately deletes partial spawns before retrying, including pending groups; it does not wait for proximity cleanup. Extender missions must track provisional entities/groups in the shared arrays. `Release_S` handles mission completion, not deployment rollback.
 - Offers are not saved; the board rerolls on load. Active missions are saved with their identity, target, rewards and time left. A loaded mission deploys again from the start the next time the Resistance comes near.
+- A loaded convoy waits for players near its origin, then starts over there. New convoys still deploy on acceptance. Crew members must materialize before crew casualties can complete the mission, and dropped boarding requests are retried until surviving crew members are seated. Boarding cannot advance just because 120 seconds elapsed.
 
 ## OPS app
 
@@ -55,6 +57,8 @@ Extender mods add mission types through `modded enum AROR_EMissionType` and an `
 
 Clients send `AROR_RequestMissionAccept / Abort` through their player controller; results come back as hints and notifications. Every client parses a replicated string snapshot on the game-mode component: one row per offer and active mission, plus the network log. The server republishes it when anything other than timers changes, and every 30 seconds to resync countdowns, which clients run locally between updates.
 
+The snapshot includes the accepting leader's session ID; a restored mission uses 0 for shared leader management. Server and clients need matching scripts (22 fields per mission row). Existing version-1 saves remain compatible; session IDs are not persisted.
+
 ## Workbench test checklist (not yet run)
 
 1. Script Editor compile.
@@ -69,3 +73,10 @@ Clients send `AROR_RequestMissionAccept / Abort` through their player controller
 7. Abort an active mission (two clicks), let one time out, and destroy a supply-theft truck to check the failure paths.
 8. Save with a mission active, reload, and check that it is still active with its time left and deploys again when you approach.
 9. Join as a second player who is not a leader. OPS should sign in as OPERATIVE, and ACCEPT should be disabled with an explanation.
+10. On a dedicated server, accept a distant convoy and leave it beyond AI activation range for over 120 seconds. It must not pay out or log departure with missing/unseated crews. Approach and verify seating retries, departure, crew casualties, hull destruction and destination failure.
+11. Save an en-route convoy, reload with nobody connected, then approach its origin. It must restart only on approach. As a non-host Resistance Leader, abort a restored mission and verify progress hints reach current leaders; a non-leader must remain blocked.
+12. Capture an accepted mission's target before approaching it. It must cancel without spawning its objective. Cache recovery must remain valid regardless of the nearby town's owner.
+13. Force the second sabotage truck placement to fail. The first truck and any partial groups must disappear immediately, without accumulating across retries. Check occupied vehicles remain exempt.
+14. Deliver only one prisoner while the others remain alive outside the destination: no success or reward yet. Deliver the remaining survivors (including a run with one casualty) and verify the manpower reward. Secure a cache, leave for more than 15 minutes, return and verify it remains lootable.
+
+Mocked regression checks: `node tools/Test-MissionLifecycle.js`. These execute selected script method bodies with native services mocked; they do not compile Enforce Script or validate native AI/replication behavior.

@@ -15,6 +15,7 @@ class AROR_PrisonerRescueMission : AROR_Mission
 	protected vector m_vHoldSpot;
 	protected int m_iPrisonersSeen;
 	protected int m_iRescued;
+	protected ref array<IEntity> m_aObservedPrisoners = {};
 
 	//------------------------------------------------------------------------------------------------
 	override bool Plan_S(AROR_MissionBoardComponent board)
@@ -76,6 +77,23 @@ class AROR_PrisonerRescueMission : AROR_Mission
 
 		array<IEntity> prisoners = {};
 		int alive = AROR_MissionBoardComponent.CountLiving(m_Prisoners, prisoners);
+		array<AIAgent> agents = {};
+		if (m_Prisoners)
+			m_Prisoners.GetAgents(agents);
+		foreach (AIAgent agent : agents)
+		{
+			if (!agent)
+				continue;
+
+			IEntity member = agent.GetControlledEntity();
+			if (member && !m_aObservedPrisoners.Contains(member))
+				m_aObservedPrisoners.Insert(member);
+		}
+
+		// Do not free or reward a partially spawned prisoner group.
+		if (m_aObservedPrisoners.Count() < PRISONERS)
+			return AROR_EMissionResult.ONGOING;
+
 		m_iPrisonersSeen = Math.Max(m_iPrisonersSeen, alive);
 		if (m_iPrisonersSeen > 0 && alive == 0)
 		{
@@ -97,21 +115,28 @@ class AROR_PrisonerRescueMission : AROR_Mission
 			return AROR_EMissionResult.ONGOING;
 		}
 
-		// Escort: done when the first prisoner arrives; every living prisoner counts
+		if (prisoners.IsEmpty())
+			return AROR_EMissionResult.ONGOING;
+
+		// Wait for every survivor; only prisoners physically home count toward rewards.
 		TrackMarker(prisoners[0].GetOrigin(), 150);
 		float arrival = 60;
 		AROR_LocationComponent destination = board.GetLocation(m_sDestinationId);
 		if (destination)
 			arrival = Math.Max(destination.GetRadius(), arrival);
 
+		m_iRescued = 0;
 		foreach (IEntity walker : prisoners)
 		{
 			if (vector.DistanceXZ(walker.GetOrigin(), m_vDestination) <= arrival)
-			{
-				m_iRescued = alive;
-				m_sOutcome = string.Format("%1 prisoners rescued", alive);
-				return AROR_EMissionResult.SUCCEEDED;
-			}
+				m_iRescued++;
+		}
+
+		m_sProgress = string.Format("Prisoners at destination: %1/%2 survivors", m_iRescued, alive);
+		if (m_iRescued == alive)
+		{
+			m_sOutcome = string.Format("%1 prisoners rescued", m_iRescued);
+			return AROR_EMissionResult.SUCCEEDED;
 		}
 
 		return AROR_EMissionResult.ONGOING;

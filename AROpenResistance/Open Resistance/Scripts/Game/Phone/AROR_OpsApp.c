@@ -714,8 +714,7 @@ class AROR_OpsApp : AROR_PhonePooledApp
 			return;
 		}
 
-		string localName = GetPlayerName(localId);
-		bool owner = leader && (localName == info.m_sLeaderName || (highCommand && highCommand.IsHost(localId)));
+		bool owner = leader && (info.m_iLeaderId == 0 || info.m_iLeaderId == localId || (highCommand && highCommand.IsHost(localId)));
 		if (!owner)
 		{
 			Text(x, buttonY + 15, DOSSIER_RIGHT - x, 24, 15, string.Format("Run by %1. Marked on every Resistance map.", info.m_sLeaderName), m_Muted);

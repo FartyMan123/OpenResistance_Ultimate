@@ -8,14 +8,14 @@ class AROR_ConvoyAmbushMission : AROR_Mission
 	protected static const float MIN_ROUTE = 1500;
 	protected static const float MAX_ROUTE = 5000;
 	protected static const float ARRIVAL_RADIUS = 120;
-	protected static const int BOARDING_TIMEOUT = 120;	//!< Seconds; then the convoy leaves with whoever is aboard
 	protected static const int MARKER_INTERVAL = 30;	//!< Seconds between last-known-position updates
 	protected static const int MAX_PASSENGERS = 4;
 
 	protected ref array<IEntity> m_aVehicles = {};
 	protected ref array<SCR_AIGroup> m_aCrews = {};
 	protected ref array<int> m_aCrewSizes = {};
-	protected int m_iBoardingSeconds;
+	protected ref array<IEntity> m_aObservedCrew = {};
+	protected ref array<int> m_aSpawnedCrewCounts = {};
 	protected int m_iMarkerSeconds;
 
 	//------------------------------------------------------------------------------------------------
@@ -79,6 +79,8 @@ class AROR_ConvoyAmbushMission : AROR_Mission
 		m_aVehicles.Clear();
 		m_aCrews.Clear();
 		m_aCrewSizes.Clear();
+		m_aObservedCrew.Clear();
+		m_aSpawnedCrewCounts.Clear();
 		AROR_LocationComponent origin = board.GetLocation(m_sLocationId);
 		if (!origin)
 			return false;
@@ -112,7 +114,6 @@ class AROR_ConvoyAmbushMission : AROR_Mission
 		if (!AddVehicle_S(board, truckPrefab, start, yaw, m_iGuards))
 			return false;
 
-		m_iBoardingSeconds = 0;
 		m_iMarkerSeconds = 0;
 		m_sProgress = "Convoy forming up at " + GetLocationName(board);
 		return true;
@@ -135,14 +136,19 @@ class AROR_ConvoyAmbushMission : AROR_Mission
 		ResourceName crew = board.GetUnitPrefab_S(m_eEnemyRole, AROR_EUnitType.CREW);
 		for (int i = 0; i < crewSeats; i++)
 		{
-			members.Insert(crew);
+			if (!crew.IsEmpty())
+				members.Insert(crew);
 		}
 
 		ResourceName rifleman = board.GetUnitPrefab_S(m_eEnemyRole, AROR_EUnitType.RIFLEMAN);
 		for (int p = 0; p < passengers; p++)
 		{
-			members.Insert(rifleman);
+			if (!rifleman.IsEmpty())
+				members.Insert(rifleman);
 		}
+
+		if (members.IsEmpty())
+			return false;
 
 		vector side = position;
 		vector found;
@@ -156,6 +162,7 @@ class AROR_ConvoyAmbushMission : AROR_Mission
 		m_aVehicles.Insert(vehicle);
 		m_aCrews.Insert(group);
 		m_aCrewSizes.Insert(members.Count());
+		m_aSpawnedCrewCounts.Insert(0);
 		return true;
 	}
 
@@ -165,18 +172,58 @@ class AROR_ConvoyAmbushMission : AROR_Mission
 		UpdateGroups_S(board, m_eEnemyRole);
 		int seconds = board.GetUpdateInterval();
 
-		// Boarding: seat every crew, then send the convoy off
-		if (m_iPhase == 0)
+		// Observe materialized crew, including casualties. No living members does not
+		// prove destruction while a remote group's members are still spawning.
+		bool pendingCrew;
+		bool survivingConvoy;
+		bool seated = true;
+		foreach (int i, IEntity vehicle : m_aVehicles)
 		{
-			m_iBoardingSeconds += seconds;
-			bool seated = true;
-			foreach (int i, IEntity vehicle : m_aVehicles)
+			if (AROR_MissionBoardComponent.IsDestroyed(vehicle))
+				continue;
+
+			array<AIAgent> agents = {};
+			if (m_aCrews[i])
+				m_aCrews[i].GetAgents(agents);
+			foreach (AIAgent agent : agents)
 			{
-				if (!board.SeatGroup_S(m_aCrews[i], vehicle, m_aCrewSizes[i]))
-					seated = false;
+				if (!agent)
+					continue;
+
+				IEntity member = agent.GetControlledEntity();
+				if (member && !m_aObservedCrew.Contains(member))
+				{
+					m_aObservedCrew.Insert(member);
+					m_aSpawnedCrewCounts[i] = m_aSpawnedCrewCounts[i] + 1;
+				}
 			}
 
-			if (!seated && m_iBoardingSeconds < BOARDING_TIMEOUT)
+			if (m_aSpawnedCrewCounts[i] < m_aCrewSizes[i])
+				pendingCrew = true;
+
+			array<IEntity> living = {};
+			int alive = AROR_MissionBoardComponent.CountLiving(m_aCrews[i], living);
+			if (alive == 0)
+				continue;
+
+			survivingConvoy = true;
+			if (m_iPhase == 0 && !board.SeatGroup_S(m_aCrews[i], vehicle, alive))
+				seated = false;
+		}
+
+		if (pendingCrew)
+			return AROR_EMissionResult.ONGOING;
+
+		if (!survivingConvoy)
+		{
+			m_sOutcome = "convoy destroyed";
+			return AROR_EMissionResult.SUCCEEDED;
+		}
+
+		// Retry dropped requests until every surviving crew is actually seated.
+		if (m_iPhase == 0)
+		{
+			if (!seated)
 				return AROR_EMissionResult.ONGOING;
 
 			vector goal = m_vDestination;
@@ -246,6 +293,9 @@ class AROR_ConvoyAmbushMission : AROR_Mission
 	//------------------------------------------------------------------------------------------------
 	override string GetTimeoutOutcome()
 	{
+		if (m_iPhase == 0)
+			return "the convoy could not set off before the deadline";
+
 		return "the convoy slipped through";
 	}
 
