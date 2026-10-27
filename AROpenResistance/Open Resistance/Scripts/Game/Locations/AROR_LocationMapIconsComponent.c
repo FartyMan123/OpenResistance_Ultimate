@@ -47,6 +47,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 
 	protected Widget m_wIconParent;
 	protected ref AROR_QRFMapIntel m_QRFIntel = new AROR_QRFMapIntel();
+	protected ref AROR_MissionMapMarkers m_MissionMarkers = new AROR_MissionMapMarkers();
 	protected ref array<AROR_LocationComponent> m_aIconLocations = {};
 	protected ref array<Widget> m_aIconWidgets = {};
 	protected ref AROR_LocationInfoPopup m_Popup;
@@ -262,6 +263,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	protected void ClearIcons()
 	{
 		m_QRFIntel.ClearWidgets();
+		m_MissionMarkers.ClearWidgets();
 		foreach (Widget widget : m_aIconWidgets)
 		{
 			if (widget)
@@ -336,6 +338,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 
 		UpdateSelector(mapEntity, workspace);
 		m_QRFIntel.Update(m_wIconParent, m_sIconLayout, mapEntity);
+		m_MissionMarkers.Update(m_wIconParent, m_sIconLayout, mapEntity);
 	}
 
 	//------------------------------------------------------------------------------------------------

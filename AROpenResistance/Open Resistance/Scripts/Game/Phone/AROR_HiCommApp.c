@@ -1743,6 +1743,7 @@ class AROR_HiCommApp
 		if (!m_Map.UsesGameMap())
 			DrawGridLabels(width, height);
 		DrawLocations(highCommand, markerScale, zoom, width, height);
+		DrawMissions(markerScale, width, height);
 		DrawSquads(highCommand, squads, localId, markerScale, zoom, unit);
 
 		// Order acknowledgement ping
@@ -1920,6 +1921,43 @@ class AROR_HiCommApp
 		AROR_LocationComponent target = FindLocation(m_sSelectedTarget);
 		if (target)
 			m_Map.DrawReticle(m_Map.WorldToScreen(target.GetCenter()), 13 * markerScale, AROR_HiCommMap.Rgb(PAL_AMBER, 1));
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Active OPS missions: an amber diamond with the codename at the objective, a dashed line to any destination
+	protected void DrawMissions(float markerScale, float width, float height)
+	{
+		AROR_MissionBoardComponent board = AROR_MissionBoardComponent.GetInstance();
+		if (!board)
+			return;
+
+		array<AROR_MissionInfo> missions = {};
+		board.GetMissions(missions);
+		Color amber = AROR_HiCommMap.Rgb(PAL_AMBER, 1);
+		foreach (AROR_MissionInfo mission : missions)
+		{
+			if (!mission.m_bActive)
+				continue;
+
+			vector point = m_Map.WorldToScreen(mission.m_vPosition);
+			if (mission.m_bHasDestination)
+			{
+				vector destination = m_Map.WorldToScreen(mission.m_vDestination);
+				m_Map.DrawDashedLine(point, destination, AROR_HiCommMap.Rgb(PAL_AMBER, 0.6), 1.5, 6, 5);
+				m_Map.DrawSquare(destination, 5 * markerScale, AROR_HiCommMap.Rgb(PAL_GREEN, 0.9), false);
+			}
+
+			if (point[0] < -40 || point[1] < -40 || point[0] > width + 40 || point[1] > height + 40)
+				continue;
+
+			if (mission.m_fAreaRadius > 0)
+				m_Map.DrawCircle(point, mission.m_fAreaRadius * m_Map.PixelsPerMetre(), AROR_HiCommMap.Rgb(PAL_AMBER, 0.5), false, 1.2, 32);
+
+			m_Map.DrawDiamond(point, 7 * markerScale, AROR_HiCommMap.Srgb(4, 10, 7, 0.8), true);
+			m_Map.DrawDiamond(point, 7 * markerScale, amber, false, 2);
+			m_Map.DrawDiamond(point, 2.5 * markerScale, amber, true);
+			AddMapLabel(mission.m_sCodename, point + Vector(12 * markerScale, 6 * markerScale, 0), amber, 13);
+		}
 	}
 
 	//------------------------------------------------------------------------------------------------

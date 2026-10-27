@@ -121,6 +121,30 @@ FrameWidgetClass {
       Anchor 0 0 0 0
      }
     }
+    ImageWidgetClass "{6AC0A0F1A2000001}" {
+     Name "OpsTile"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000001}" {
+      Anchor 0 0 0 0
+     }
+    }
+    CanvasWidgetClass "{6AC0A0F1A2000002}" {
+     Name "OpsTileCanvas"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000002}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000003}" {
+     Name "OpsTileLabel"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000003}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000004}" {
+     Name "OpsTileButton"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000004}" {
+      Anchor 0 0 0 0
+     }
+    }
    }
   }
   FrameWidgetClass "{6AB4E0F1A2B53001}" {
@@ -4010,6 +4034,2440 @@ FrameWidgetClass {
     ButtonWidgetClass "{6AB4E0F1A2B9012F}" {
      Name "HiCommBtn39"
      Slot FrameWidgetSlot "{6AB4E0F1A2BA012F}" {
+      Anchor 0 0 0 0
+     }
+    }
+   }
+  }
+  FrameWidgetClass "{6AC0A0F1A2000137}" {
+   Name "OpsApp"
+   Slot FrameWidgetSlot "{6AC0A0F1A3000137}" {
+    Anchor 0 0 0 0
+   }
+   {
+    ImageWidgetClass "{6AC0A0F1A2000005}" {
+     Name "OpsBackground"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000005}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000006}" {
+     Name "OpsPanel0"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000006}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000007}" {
+     Name "OpsPanel1"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000007}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000008}" {
+     Name "OpsPanel2"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000008}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000009}" {
+     Name "OpsPanel3"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000009}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200000A}" {
+     Name "OpsPanel4"
+     Slot FrameWidgetSlot "{6AC0A0F1A300000A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200000B}" {
+     Name "OpsPanel5"
+     Slot FrameWidgetSlot "{6AC0A0F1A300000B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200000C}" {
+     Name "OpsPanel6"
+     Slot FrameWidgetSlot "{6AC0A0F1A300000C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200000D}" {
+     Name "OpsPanel7"
+     Slot FrameWidgetSlot "{6AC0A0F1A300000D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200000E}" {
+     Name "OpsPanel8"
+     Slot FrameWidgetSlot "{6AC0A0F1A300000E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200000F}" {
+     Name "OpsPanel9"
+     Slot FrameWidgetSlot "{6AC0A0F1A300000F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000010}" {
+     Name "OpsPanel10"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000010}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000011}" {
+     Name "OpsPanel11"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000011}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000012}" {
+     Name "OpsPanel12"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000012}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000013}" {
+     Name "OpsPanel13"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000013}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000014}" {
+     Name "OpsPanel14"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000014}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000015}" {
+     Name "OpsPanel15"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000015}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000016}" {
+     Name "OpsPanel16"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000016}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000017}" {
+     Name "OpsPanel17"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000017}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000018}" {
+     Name "OpsPanel18"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000018}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000019}" {
+     Name "OpsPanel19"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000019}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200001A}" {
+     Name "OpsPanel20"
+     Slot FrameWidgetSlot "{6AC0A0F1A300001A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200001B}" {
+     Name "OpsPanel21"
+     Slot FrameWidgetSlot "{6AC0A0F1A300001B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200001C}" {
+     Name "OpsPanel22"
+     Slot FrameWidgetSlot "{6AC0A0F1A300001C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200001D}" {
+     Name "OpsPanel23"
+     Slot FrameWidgetSlot "{6AC0A0F1A300001D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200001E}" {
+     Name "OpsPanel24"
+     Slot FrameWidgetSlot "{6AC0A0F1A300001E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200001F}" {
+     Name "OpsPanel25"
+     Slot FrameWidgetSlot "{6AC0A0F1A300001F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000020}" {
+     Name "OpsPanel26"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000020}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000021}" {
+     Name "OpsPanel27"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000021}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000022}" {
+     Name "OpsPanel28"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000022}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000023}" {
+     Name "OpsPanel29"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000023}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000024}" {
+     Name "OpsPanel30"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000024}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000025}" {
+     Name "OpsPanel31"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000025}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000026}" {
+     Name "OpsPanel32"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000026}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000027}" {
+     Name "OpsPanel33"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000027}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000028}" {
+     Name "OpsPanel34"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000028}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000029}" {
+     Name "OpsPanel35"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000029}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200002A}" {
+     Name "OpsPanel36"
+     Slot FrameWidgetSlot "{6AC0A0F1A300002A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200002B}" {
+     Name "OpsPanel37"
+     Slot FrameWidgetSlot "{6AC0A0F1A300002B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200002C}" {
+     Name "OpsPanel38"
+     Slot FrameWidgetSlot "{6AC0A0F1A300002C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200002D}" {
+     Name "OpsPanel39"
+     Slot FrameWidgetSlot "{6AC0A0F1A300002D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200002E}" {
+     Name "OpsPanel40"
+     Slot FrameWidgetSlot "{6AC0A0F1A300002E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200002F}" {
+     Name "OpsPanel41"
+     Slot FrameWidgetSlot "{6AC0A0F1A300002F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000030}" {
+     Name "OpsPanel42"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000030}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000031}" {
+     Name "OpsPanel43"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000031}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000032}" {
+     Name "OpsPanel44"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000032}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000033}" {
+     Name "OpsPanel45"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000033}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000034}" {
+     Name "OpsPanel46"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000034}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000035}" {
+     Name "OpsPanel47"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000035}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000036}" {
+     Name "OpsPanel48"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000036}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000037}" {
+     Name "OpsPanel49"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000037}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000038}" {
+     Name "OpsPanel50"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000038}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000039}" {
+     Name "OpsPanel51"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000039}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200003A}" {
+     Name "OpsPanel52"
+     Slot FrameWidgetSlot "{6AC0A0F1A300003A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200003B}" {
+     Name "OpsPanel53"
+     Slot FrameWidgetSlot "{6AC0A0F1A300003B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200003C}" {
+     Name "OpsPanel54"
+     Slot FrameWidgetSlot "{6AC0A0F1A300003C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200003D}" {
+     Name "OpsPanel55"
+     Slot FrameWidgetSlot "{6AC0A0F1A300003D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200003E}" {
+     Name "OpsPanel56"
+     Slot FrameWidgetSlot "{6AC0A0F1A300003E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200003F}" {
+     Name "OpsPanel57"
+     Slot FrameWidgetSlot "{6AC0A0F1A300003F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000040}" {
+     Name "OpsPanel58"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000040}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000041}" {
+     Name "OpsPanel59"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000041}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000042}" {
+     Name "OpsPanel60"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000042}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000043}" {
+     Name "OpsPanel61"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000043}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000044}" {
+     Name "OpsPanel62"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000044}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000045}" {
+     Name "OpsPanel63"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000045}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000046}" {
+     Name "OpsPanel64"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000046}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000047}" {
+     Name "OpsPanel65"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000047}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000048}" {
+     Name "OpsPanel66"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000048}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000049}" {
+     Name "OpsPanel67"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000049}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200004A}" {
+     Name "OpsPanel68"
+     Slot FrameWidgetSlot "{6AC0A0F1A300004A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200004B}" {
+     Name "OpsPanel69"
+     Slot FrameWidgetSlot "{6AC0A0F1A300004B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200004C}" {
+     Name "OpsPanel70"
+     Slot FrameWidgetSlot "{6AC0A0F1A300004C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200004D}" {
+     Name "OpsPanel71"
+     Slot FrameWidgetSlot "{6AC0A0F1A300004D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200004E}" {
+     Name "OpsPanel72"
+     Slot FrameWidgetSlot "{6AC0A0F1A300004E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200004F}" {
+     Name "OpsPanel73"
+     Slot FrameWidgetSlot "{6AC0A0F1A300004F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000050}" {
+     Name "OpsPanel74"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000050}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000051}" {
+     Name "OpsPanel75"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000051}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000052}" {
+     Name "OpsPanel76"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000052}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000053}" {
+     Name "OpsPanel77"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000053}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000054}" {
+     Name "OpsPanel78"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000054}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000055}" {
+     Name "OpsPanel79"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000055}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000056}" {
+     Name "OpsPanel80"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000056}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000057}" {
+     Name "OpsPanel81"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000057}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000058}" {
+     Name "OpsPanel82"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000058}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000059}" {
+     Name "OpsPanel83"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000059}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200005A}" {
+     Name "OpsPanel84"
+     Slot FrameWidgetSlot "{6AC0A0F1A300005A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200005B}" {
+     Name "OpsPanel85"
+     Slot FrameWidgetSlot "{6AC0A0F1A300005B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200005C}" {
+     Name "OpsPanel86"
+     Slot FrameWidgetSlot "{6AC0A0F1A300005C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200005D}" {
+     Name "OpsPanel87"
+     Slot FrameWidgetSlot "{6AC0A0F1A300005D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200005E}" {
+     Name "OpsPanel88"
+     Slot FrameWidgetSlot "{6AC0A0F1A300005E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200005F}" {
+     Name "OpsPanel89"
+     Slot FrameWidgetSlot "{6AC0A0F1A300005F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000060}" {
+     Name "OpsPanel90"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000060}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000061}" {
+     Name "OpsPanel91"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000061}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000062}" {
+     Name "OpsPanel92"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000062}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000063}" {
+     Name "OpsPanel93"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000063}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000064}" {
+     Name "OpsPanel94"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000064}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000065}" {
+     Name "OpsPanel95"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000065}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000460}" {
+     Name "OpsPanel96"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000460}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000461}" {
+     Name "OpsPanel97"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000461}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000462}" {
+     Name "OpsPanel98"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000462}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000463}" {
+     Name "OpsPanel99"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000463}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000464}" {
+     Name "OpsPanel100"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000464}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000465}" {
+     Name "OpsPanel101"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000465}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000466}" {
+     Name "OpsPanel102"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000466}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000467}" {
+     Name "OpsPanel103"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000467}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000468}" {
+     Name "OpsPanel104"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000468}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000469}" {
+     Name "OpsPanel105"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000469}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200046A}" {
+     Name "OpsPanel106"
+     Slot FrameWidgetSlot "{6AC0A0F1A300046A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200046B}" {
+     Name "OpsPanel107"
+     Slot FrameWidgetSlot "{6AC0A0F1A300046B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200046C}" {
+     Name "OpsPanel108"
+     Slot FrameWidgetSlot "{6AC0A0F1A300046C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200046D}" {
+     Name "OpsPanel109"
+     Slot FrameWidgetSlot "{6AC0A0F1A300046D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200046E}" {
+     Name "OpsPanel110"
+     Slot FrameWidgetSlot "{6AC0A0F1A300046E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A200046F}" {
+     Name "OpsPanel111"
+     Slot FrameWidgetSlot "{6AC0A0F1A300046F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000470}" {
+     Name "OpsPanel112"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000470}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000471}" {
+     Name "OpsPanel113"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000471}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000472}" {
+     Name "OpsPanel114"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000472}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000473}" {
+     Name "OpsPanel115"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000473}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000474}" {
+     Name "OpsPanel116"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000474}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000475}" {
+     Name "OpsPanel117"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000475}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000476}" {
+     Name "OpsPanel118"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000476}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A2000477}" {
+     Name "OpsPanel119"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000477}" {
+      Anchor 0 0 0 0
+     }
+    }
+    FrameWidgetClass "{6AC0A0F1A2000067}" {
+     Name "OpsMapClip"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000067}" {
+      Anchor 0 0 0 0
+     }
+     {
+      CanvasWidgetClass "{6AC0A0F1A2000066}" {
+       Name "OpsMapCanvas"
+       Slot FrameWidgetSlot "{6AC0A0F1A3000066}" {
+        Anchor 0 0 0 0
+       }
+      }
+     }
+    }
+    CanvasWidgetClass "{6AC0A0F1A2000068}" {
+     Name "OpsMapOverlay"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000068}" {
+      Anchor 0 0 0 0
+     }
+    }
+    CanvasWidgetClass "{6AC0A0F1A2000069}" {
+     Name "OpsScanlines"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000069}" {
+      Anchor 0 0 0 0
+     }
+    }
+    CanvasWidgetClass "{6AC0A0F1A200006A}" {
+     Name "OpsCrestCanvas"
+     Slot FrameWidgetSlot "{6AC0A0F1A300006A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200006B}" {
+     Name "OpsText0"
+     Slot FrameWidgetSlot "{6AC0A0F1A300006B}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400006B}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200006C}" {
+     Name "OpsText1"
+     Slot FrameWidgetSlot "{6AC0A0F1A300006C}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400006C}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200006D}" {
+     Name "OpsText2"
+     Slot FrameWidgetSlot "{6AC0A0F1A300006D}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400006D}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200006E}" {
+     Name "OpsText3"
+     Slot FrameWidgetSlot "{6AC0A0F1A300006E}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400006E}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200006F}" {
+     Name "OpsText4"
+     Slot FrameWidgetSlot "{6AC0A0F1A300006F}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400006F}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000070}" {
+     Name "OpsText5"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000070}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000070}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000071}" {
+     Name "OpsText6"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000071}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000071}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000072}" {
+     Name "OpsText7"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000072}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000072}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000073}" {
+     Name "OpsText8"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000073}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000073}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000074}" {
+     Name "OpsText9"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000074}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000074}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000075}" {
+     Name "OpsText10"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000075}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000075}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000076}" {
+     Name "OpsText11"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000076}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000076}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000077}" {
+     Name "OpsText12"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000077}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000077}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000078}" {
+     Name "OpsText13"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000078}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000078}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000079}" {
+     Name "OpsText14"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000079}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000079}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200007A}" {
+     Name "OpsText15"
+     Slot FrameWidgetSlot "{6AC0A0F1A300007A}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400007A}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200007B}" {
+     Name "OpsText16"
+     Slot FrameWidgetSlot "{6AC0A0F1A300007B}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400007B}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200007C}" {
+     Name "OpsText17"
+     Slot FrameWidgetSlot "{6AC0A0F1A300007C}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400007C}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200007D}" {
+     Name "OpsText18"
+     Slot FrameWidgetSlot "{6AC0A0F1A300007D}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400007D}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200007E}" {
+     Name "OpsText19"
+     Slot FrameWidgetSlot "{6AC0A0F1A300007E}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400007E}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200007F}" {
+     Name "OpsText20"
+     Slot FrameWidgetSlot "{6AC0A0F1A300007F}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400007F}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000080}" {
+     Name "OpsText21"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000080}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000080}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000081}" {
+     Name "OpsText22"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000081}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000081}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000082}" {
+     Name "OpsText23"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000082}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000082}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000083}" {
+     Name "OpsText24"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000083}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000083}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000084}" {
+     Name "OpsText25"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000084}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000084}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000085}" {
+     Name "OpsText26"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000085}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000085}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000086}" {
+     Name "OpsText27"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000086}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000086}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000087}" {
+     Name "OpsText28"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000087}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000087}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000088}" {
+     Name "OpsText29"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000088}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000088}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000089}" {
+     Name "OpsText30"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000089}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000089}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200008A}" {
+     Name "OpsText31"
+     Slot FrameWidgetSlot "{6AC0A0F1A300008A}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400008A}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200008B}" {
+     Name "OpsText32"
+     Slot FrameWidgetSlot "{6AC0A0F1A300008B}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400008B}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200008C}" {
+     Name "OpsText33"
+     Slot FrameWidgetSlot "{6AC0A0F1A300008C}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400008C}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200008D}" {
+     Name "OpsText34"
+     Slot FrameWidgetSlot "{6AC0A0F1A300008D}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400008D}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200008E}" {
+     Name "OpsText35"
+     Slot FrameWidgetSlot "{6AC0A0F1A300008E}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400008E}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200008F}" {
+     Name "OpsText36"
+     Slot FrameWidgetSlot "{6AC0A0F1A300008F}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400008F}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000090}" {
+     Name "OpsText37"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000090}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000090}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000091}" {
+     Name "OpsText38"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000091}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000091}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000092}" {
+     Name "OpsText39"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000092}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000092}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000093}" {
+     Name "OpsText40"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000093}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000093}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000094}" {
+     Name "OpsText41"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000094}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000094}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000095}" {
+     Name "OpsText42"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000095}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000095}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000096}" {
+     Name "OpsText43"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000096}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000096}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000097}" {
+     Name "OpsText44"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000097}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000097}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000098}" {
+     Name "OpsText45"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000098}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000098}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000099}" {
+     Name "OpsText46"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000099}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000099}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200009A}" {
+     Name "OpsText47"
+     Slot FrameWidgetSlot "{6AC0A0F1A300009A}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400009A}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200009B}" {
+     Name "OpsText48"
+     Slot FrameWidgetSlot "{6AC0A0F1A300009B}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400009B}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200009C}" {
+     Name "OpsText49"
+     Slot FrameWidgetSlot "{6AC0A0F1A300009C}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400009C}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200009D}" {
+     Name "OpsText50"
+     Slot FrameWidgetSlot "{6AC0A0F1A300009D}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400009D}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200009E}" {
+     Name "OpsText51"
+     Slot FrameWidgetSlot "{6AC0A0F1A300009E}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400009E}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200009F}" {
+     Name "OpsText52"
+     Slot FrameWidgetSlot "{6AC0A0F1A300009F}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400009F}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000A0}" {
+     Name "OpsText53"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000A0}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000A0}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000A1}" {
+     Name "OpsText54"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000A1}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000A1}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000A2}" {
+     Name "OpsText55"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000A2}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000A2}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000A3}" {
+     Name "OpsText56"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000A3}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000A3}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000A4}" {
+     Name "OpsText57"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000A4}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000A4}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000A5}" {
+     Name "OpsText58"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000A5}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000A5}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000A6}" {
+     Name "OpsText59"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000A6}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000A6}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000A7}" {
+     Name "OpsText60"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000A7}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000A7}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000A8}" {
+     Name "OpsText61"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000A8}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000A8}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000A9}" {
+     Name "OpsText62"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000A9}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000A9}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000AA}" {
+     Name "OpsText63"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000AA}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000AA}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000AB}" {
+     Name "OpsText64"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000AB}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000AB}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000AC}" {
+     Name "OpsText65"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000AC}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000AC}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000AD}" {
+     Name "OpsText66"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000AD}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000AD}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000AE}" {
+     Name "OpsText67"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000AE}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000AE}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000AF}" {
+     Name "OpsText68"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000AF}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000AF}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000B0}" {
+     Name "OpsText69"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000B0}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000B0}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000B1}" {
+     Name "OpsText70"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000B1}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000B1}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000B2}" {
+     Name "OpsText71"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000B2}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000B2}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000B3}" {
+     Name "OpsText72"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000B3}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000B3}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000B4}" {
+     Name "OpsText73"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000B4}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000B4}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000B5}" {
+     Name "OpsText74"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000B5}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000B5}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000B6}" {
+     Name "OpsText75"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000B6}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000B6}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000B7}" {
+     Name "OpsText76"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000B7}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000B7}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000B8}" {
+     Name "OpsText77"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000B8}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000B8}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000B9}" {
+     Name "OpsText78"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000B9}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000B9}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000BA}" {
+     Name "OpsText79"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000BA}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000BA}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000BB}" {
+     Name "OpsText80"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000BB}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000BB}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000BC}" {
+     Name "OpsText81"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000BC}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000BC}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000BD}" {
+     Name "OpsText82"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000BD}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000BD}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000BE}" {
+     Name "OpsText83"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000BE}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000BE}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000BF}" {
+     Name "OpsText84"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000BF}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000BF}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000C0}" {
+     Name "OpsText85"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000C0}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000C0}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000C1}" {
+     Name "OpsText86"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000C1}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000C1}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000C2}" {
+     Name "OpsText87"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000C2}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000C2}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000C3}" {
+     Name "OpsText88"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000C3}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000C3}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000C4}" {
+     Name "OpsText89"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000C4}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000C4}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000C5}" {
+     Name "OpsText90"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000C5}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000C5}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000C6}" {
+     Name "OpsText91"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000C6}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000C6}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000C7}" {
+     Name "OpsText92"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000C7}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000C7}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000C8}" {
+     Name "OpsText93"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000C8}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000C8}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000C9}" {
+     Name "OpsText94"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000C9}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000C9}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000CA}" {
+     Name "OpsText95"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000CA}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000CA}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000CB}" {
+     Name "OpsText96"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000CB}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000CB}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000CC}" {
+     Name "OpsText97"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000CC}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000CC}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000CD}" {
+     Name "OpsText98"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000CD}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000CD}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000CE}" {
+     Name "OpsText99"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000CE}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000CE}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000CF}" {
+     Name "OpsText100"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000CF}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000CF}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000D0}" {
+     Name "OpsText101"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000D0}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000D0}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000D1}" {
+     Name "OpsText102"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000D1}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000D1}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000D2}" {
+     Name "OpsText103"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000D2}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000D2}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000D3}" {
+     Name "OpsText104"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000D3}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000D3}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000D4}" {
+     Name "OpsText105"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000D4}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000D4}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000D5}" {
+     Name "OpsText106"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000D5}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000D5}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000D6}" {
+     Name "OpsText107"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000D6}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000D6}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000D7}" {
+     Name "OpsText108"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000D7}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000D7}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000D8}" {
+     Name "OpsText109"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000D8}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000D8}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000D9}" {
+     Name "OpsText110"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000D9}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000D9}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000DA}" {
+     Name "OpsText111"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000DA}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000DA}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000DB}" {
+     Name "OpsText112"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000DB}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000DB}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000DC}" {
+     Name "OpsText113"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000DC}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000DC}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000DD}" {
+     Name "OpsText114"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000DD}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000DD}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000DE}" {
+     Name "OpsText115"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000DE}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000DE}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000DF}" {
+     Name "OpsText116"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000DF}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000DF}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000E0}" {
+     Name "OpsText117"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000E0}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000E0}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000E1}" {
+     Name "OpsText118"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000E1}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000E1}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000E2}" {
+     Name "OpsText119"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000E2}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000E2}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000E3}" {
+     Name "OpsBtnBg0"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000E3}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000E4}" {
+     Name "OpsBtnBg1"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000E4}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000E5}" {
+     Name "OpsBtnBg2"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000E5}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000E6}" {
+     Name "OpsBtnBg3"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000E6}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000E7}" {
+     Name "OpsBtnBg4"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000E7}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000E8}" {
+     Name "OpsBtnBg5"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000E8}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000E9}" {
+     Name "OpsBtnBg6"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000E9}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000EA}" {
+     Name "OpsBtnBg7"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000EA}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000EB}" {
+     Name "OpsBtnBg8"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000EB}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000EC}" {
+     Name "OpsBtnBg9"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000EC}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000ED}" {
+     Name "OpsBtnBg10"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000ED}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000EE}" {
+     Name "OpsBtnBg11"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000EE}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000EF}" {
+     Name "OpsBtnBg12"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000EF}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000F0}" {
+     Name "OpsBtnBg13"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000F0}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000F1}" {
+     Name "OpsBtnBg14"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000F1}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000F2}" {
+     Name "OpsBtnBg15"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000F2}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000F3}" {
+     Name "OpsBtnBg16"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000F3}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000F4}" {
+     Name "OpsBtnBg17"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000F4}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000F5}" {
+     Name "OpsBtnBg18"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000F5}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000F6}" {
+     Name "OpsBtnBg19"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000F6}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000F7}" {
+     Name "OpsBtnBg20"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000F7}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000F8}" {
+     Name "OpsBtnBg21"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000F8}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000F9}" {
+     Name "OpsBtnBg22"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000F9}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000FA}" {
+     Name "OpsBtnBg23"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000FA}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000FB}" {
+     Name "OpsBtnBg24"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000FB}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000FC}" {
+     Name "OpsBtnBg25"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000FC}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000FD}" {
+     Name "OpsBtnBg26"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000FD}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AC0A0F1A20000FE}" {
+     Name "OpsBtnBg27"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000FE}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A20000FF}" {
+     Name "OpsBtnLabel0"
+     Slot FrameWidgetSlot "{6AC0A0F1A30000FF}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A40000FF}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000100}" {
+     Name "OpsBtnLabel1"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000100}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000100}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000101}" {
+     Name "OpsBtnLabel2"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000101}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000101}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000102}" {
+     Name "OpsBtnLabel3"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000102}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000102}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000103}" {
+     Name "OpsBtnLabel4"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000103}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000103}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000104}" {
+     Name "OpsBtnLabel5"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000104}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000104}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000105}" {
+     Name "OpsBtnLabel6"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000105}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000105}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000106}" {
+     Name "OpsBtnLabel7"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000106}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000106}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000107}" {
+     Name "OpsBtnLabel8"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000107}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000107}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000108}" {
+     Name "OpsBtnLabel9"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000108}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000108}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000109}" {
+     Name "OpsBtnLabel10"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000109}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000109}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200010A}" {
+     Name "OpsBtnLabel11"
+     Slot FrameWidgetSlot "{6AC0A0F1A300010A}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400010A}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200010B}" {
+     Name "OpsBtnLabel12"
+     Slot FrameWidgetSlot "{6AC0A0F1A300010B}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400010B}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200010C}" {
+     Name "OpsBtnLabel13"
+     Slot FrameWidgetSlot "{6AC0A0F1A300010C}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400010C}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200010D}" {
+     Name "OpsBtnLabel14"
+     Slot FrameWidgetSlot "{6AC0A0F1A300010D}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400010D}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200010E}" {
+     Name "OpsBtnLabel15"
+     Slot FrameWidgetSlot "{6AC0A0F1A300010E}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400010E}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200010F}" {
+     Name "OpsBtnLabel16"
+     Slot FrameWidgetSlot "{6AC0A0F1A300010F}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400010F}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000110}" {
+     Name "OpsBtnLabel17"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000110}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000110}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000111}" {
+     Name "OpsBtnLabel18"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000111}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000111}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000112}" {
+     Name "OpsBtnLabel19"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000112}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000112}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000113}" {
+     Name "OpsBtnLabel20"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000113}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000113}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000114}" {
+     Name "OpsBtnLabel21"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000114}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000114}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000115}" {
+     Name "OpsBtnLabel22"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000115}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000115}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000116}" {
+     Name "OpsBtnLabel23"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000116}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000116}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000117}" {
+     Name "OpsBtnLabel24"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000117}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000117}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000118}" {
+     Name "OpsBtnLabel25"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000118}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000118}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A2000119}" {
+     Name "OpsBtnLabel26"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000119}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A4000119}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    RichTextWidgetClass "{6AC0A0F1A200011A}" {
+     Name "OpsBtnLabel27"
+     Slot FrameWidgetSlot "{6AC0A0F1A300011A}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AC0A0F1A400011A}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A200011B}" {
+     Name "OpsBtn0"
+     Slot FrameWidgetSlot "{6AC0A0F1A300011B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A200011C}" {
+     Name "OpsBtn1"
+     Slot FrameWidgetSlot "{6AC0A0F1A300011C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A200011D}" {
+     Name "OpsBtn2"
+     Slot FrameWidgetSlot "{6AC0A0F1A300011D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A200011E}" {
+     Name "OpsBtn3"
+     Slot FrameWidgetSlot "{6AC0A0F1A300011E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A200011F}" {
+     Name "OpsBtn4"
+     Slot FrameWidgetSlot "{6AC0A0F1A300011F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000120}" {
+     Name "OpsBtn5"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000120}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000121}" {
+     Name "OpsBtn6"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000121}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000122}" {
+     Name "OpsBtn7"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000122}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000123}" {
+     Name "OpsBtn8"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000123}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000124}" {
+     Name "OpsBtn9"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000124}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000125}" {
+     Name "OpsBtn10"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000125}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000126}" {
+     Name "OpsBtn11"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000126}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000127}" {
+     Name "OpsBtn12"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000127}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000128}" {
+     Name "OpsBtn13"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000128}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000129}" {
+     Name "OpsBtn14"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000129}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A200012A}" {
+     Name "OpsBtn15"
+     Slot FrameWidgetSlot "{6AC0A0F1A300012A}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A200012B}" {
+     Name "OpsBtn16"
+     Slot FrameWidgetSlot "{6AC0A0F1A300012B}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A200012C}" {
+     Name "OpsBtn17"
+     Slot FrameWidgetSlot "{6AC0A0F1A300012C}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A200012D}" {
+     Name "OpsBtn18"
+     Slot FrameWidgetSlot "{6AC0A0F1A300012D}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A200012E}" {
+     Name "OpsBtn19"
+     Slot FrameWidgetSlot "{6AC0A0F1A300012E}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A200012F}" {
+     Name "OpsBtn20"
+     Slot FrameWidgetSlot "{6AC0A0F1A300012F}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000130}" {
+     Name "OpsBtn21"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000130}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000131}" {
+     Name "OpsBtn22"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000131}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000132}" {
+     Name "OpsBtn23"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000132}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000133}" {
+     Name "OpsBtn24"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000133}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000134}" {
+     Name "OpsBtn25"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000134}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000135}" {
+     Name "OpsBtn26"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000135}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AC0A0F1A2000136}" {
+     Name "OpsBtn27"
+     Slot FrameWidgetSlot "{6AC0A0F1A3000136}" {
       Anchor 0 0 0 0
      }
     }

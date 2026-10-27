@@ -21,6 +21,8 @@ function runQRFIngressTests(sources) {
     // V8 does not implement Enforce's vector arithmetic. Represent the bounded
     // candidate offset explicitly; all acceptance decisions remain actual source.
     body=body.replace('seed + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * radius','seed.map((v,i)=>v+[Math.sin(angle)*radius,0,Math.cos(angle)*radius][i])')
+      .replace('commander.m_vOrigin + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * radius','commander.m_vOrigin.map((v,i)=>v+[Math.sin(angle)*radius,0,Math.cos(angle)*radius][i])')
+      .replace('(attempt - 12) / 8 + 3','Math.floor((attempt - 12) / 8) + 3')
       .replace('trace.Start + Vector(0, 0.05, 0)','[trace.Start[0],trace.Start[1]+0.05,trace.Start[2]]')
       .replace('commander.m_vTown + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * radius','commander.m_vTown.map((v,i)=>v+[Math.sin(angle)*radius,0,Math.cos(angle)*radius][i])')
       .replace(/approach = (reachable|fallback);/g,'approach.splice(0,3,...$1);')
@@ -52,21 +54,39 @@ function runQRFIngressTests(sources) {
 
   let queries=0,blocked=false,slope=false,water=false,roadOK=true,road=[100,10,100];
   const world={GetSurfaceY:(x,z)=>slope&&x>100?15:10,GetOceanHeight:()=>water?10:0,TraceMove:()=>blocked?0:1};
+  let launchLogs=[];
   Object.assign(env,{GetGame:()=>({GetWorld:()=>world}),Vector:(...v)=>v,TraceFlags:{ENTS:1},
-    Math:{Sin:Math.sin,Cos:Math.cos,AbsFloat:Math.abs,Min:Math.min,Max:Math.max,sin:Math.sin,cos:Math.cos},float:{MAX:Infinity},vector:{DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])},
-    AROR_GroundOperationForce:{Cast:x=>x},Print:()=>{},string:{Format:()=>''},LogLevel:{NORMAL:0}});
+    Math:{Sin:Math.sin,Cos:Math.cos,AbsFloat:Math.abs,Min:Math.min,Max:Math.max,Mod:(a,b)=>a%b,floor:Math.floor,sin:Math.sin,cos:Math.cos},float:{MAX:Infinity},vector:{DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])},
+    AROR_GroundOperationForce:{Cast:x=>x},Print:message=>launchLogs.push(message),string:{Format:(format,...args)=>format.replace(/%(\d+)/g,(_,n)=>String(args[n-1]))},LogLevel:{NORMAL:0,WARNING:1}});
   const launch=compile(sources.executor,'FindGroundRoadLaunch');
-  const context={m_aForces:[],TacticalLaunchPoint:()=>[100,10,100],TacticalRoadPoint:(origin,desired,out)=>{queries++;out.splice(0,3,...road);return roadOK;}};
-  const commander={m_vOrigin:[100,10,100],m_sOriginLocationId:'farm'},point=[0,0,0];
+  const context={m_aForces:[],m_fQRFRoadLaunchRadius:150,IsLaunchPositionSafe:()=>true,TacticalLaunchPoint:()=>[100,10,100],TacticalRoadPoint:(origin,desired,out)=>{queries++;out.splice(0,3,...road);return roadOK;}};
+  const commander={m_vOrigin:[100,10,100],m_vTown:[1000,10,1000],m_sOriginLocationId:'farm'},point=[0,0,0];
   const run=()=>launch.call(context,commander,0,point);
   check(run()&&point[1]===10&&queries===1,'clear level road pad accepted and grounded');
-  queries=0;blocked=true;check(!run()&&queries===12,'obstructed pads rejected within finite road-query budget');blocked=false;
+  queries=0;blocked=true;check(!run()&&queries===36,'obstructed pads rejected within expanded finite road-query budget');blocked=false;
+  check(launchLogs.some(l=>l.includes('obstruction=36')),'failed launch reports obstruction count');
   roadOK=false;check(!run(),'raw outpost position never substitutes for missing road');roadOK=true;
   road=[300,10,100];check(!run(),'road outside origin vicinity rejected');road=[100,10,100];
   water=true;check(!run(),'underwater road candidate rejected');water=false;
   slope=true;check(!run(),'steep pad rejected');slope=false;
   context.m_aForces=[{m_Vehicle:{GetOrigin:()=>[110,10,100]}}];check(!run(),'second vehicle cannot overlap an existing package');
   context.m_aForces=[{m_Vehicle:{GetOrigin:()=>[140,10,100]}}];check(run(),'separated vehicle pad accepted');
+  // Quarry reproduction: nearby queries snap back onto the first two hulls.
+  const nativeLaunchRoad=context.TacticalRoadPoint;
+  context.m_aForces=[{m_Vehicle:{GetOrigin:()=>[100,10,100]}},{m_Vehicle:{GetOrigin:()=>[140,10,100]}}];
+  queries=0;const desiredPoints=[];
+  context.TacticalRoadPoint=(origin,desired,out)=>{queries++;desiredPoints.push(desired);out.splice(0,3,...(queries<=12?[100,10,100]:desired));return true;};
+  check(run()&&queries===13&&point[2]===190,'third package finds a clear outer-origin pad after the former search is exhausted');
+  check(context.m_aForces.every(f=>env.vector.DistanceXZ(point,f.m_Vehicle.GetOrigin())>=25),'outer search preserves separation from both earlier hulls');
+  queries=0;roadOK=false;context.TacticalRoadPoint=nativeLaunchRoad;context.m_aForces=[];launchLogs=[];
+  check(!run()&&queries===36&&launchLogs.some(l=>l.includes('noRoad=36')),'missing connectivity remains bounded and reports its reason');roadOK=true;
+  queries=0;context.IsLaunchPositionSafe=p=>p[0]>=120;
+  context.TacticalRoadPoint=(origin,desired,out)=>{queries++;out.splice(0,3,...(queries===1?[100,10,100]:[130,10,100]));return true;};
+  check(run()&&queries===2&&point[0]===130,'unsafe player/target candidate is skipped instead of rejecting an otherwise usable origin');
+  context.IsLaunchPositionSafe=()=>true;context.m_fQRFRoadLaunchRadius=75;queries=0;let farthest=0;
+  context.TacticalRoadPoint=(origin,desired,out)=>{queries++;farthest=Math.max(farthest,env.vector.DistanceXZ(origin,desired));out.splice(0,3,200,10,100);return true;};
+  check(!run()&&queries===36&&farthest<=75.001,'configured launch radius bounds outer rings and rejects projected roads outside it');
+  context.m_fQRFRoadLaunchRadius=150;context.TacticalRoadPoint=nativeLaunchRoad;
   // Levie's off-road capture point: use an actual planned road stop, then walk in.
   const approach=compile(sources.executor,'FindTacticalApproach'),arrival=compile(sources.executor,'IsQRFDeliveryReached');
   let roadQueries=0,footPad=true,nativeRoad=true,roadPoint=[60,10,0];
