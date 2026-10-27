@@ -18,10 +18,10 @@ class AROR_GroundQRFRecipeSmokeTests
 		array<AROR_ForceProfile> resolved = {};
 		bool passed = Check(recipe.Resolve(profiles, recipe.m_eRole, recipe.m_sFactionKey, resolved), "Truck and IFV resolve");
 		passed = Check(resolved.Count() == 2 && recipe.m_iLevel == 1, "Tier one contains two elements") && passed;
-		ifv.m_iMinimumWarLevel = 3;
-		passed = Check(!recipe.Resolve(profiles, recipe.m_eRole, recipe.m_sFactionKey, resolved, 1), "Low war level cannot unlock an APC") && passed;
-		passed = Check(recipe.Resolve(profiles, recipe.m_eRole, recipe.m_sFactionKey, resolved, 3), "War level unlocks equipment independently of response tier") && passed;
-		ifv.m_iMinimumWarLevel = 1;
+		ifv.m_iMinimumReadinessLevel = 3;
+		passed = Check(!recipe.Resolve(profiles, recipe.m_eRole, recipe.m_sFactionKey, resolved, 1), "Low readiness cannot unlock an APC") && passed;
+		passed = Check(recipe.Resolve(profiles, recipe.m_eRole, recipe.m_sFactionKey, resolved, 3), "Readiness unlocks equipment independently of response tier") && passed;
+		ifv.m_iMinimumReadinessLevel = 1;
 		recipe.m_aProfileIds = {"truck", "missing"};
 		passed = Check(!recipe.Resolve(profiles, recipe.m_eRole, recipe.m_sFactionKey, resolved), "Missing second element cannot reuse first") && passed;
 		recipe.m_aProfileIds = {"truck", "truck"};

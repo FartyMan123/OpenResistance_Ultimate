@@ -1,4 +1,4 @@
-"Role","Tier","Recipe","Motorized","Mechanized","Armour","EstimatedPersonnel","PersonnelSlots","AssetCollateral","Overhead","FundsRequired","LeadElements","ReserveElements","MinimumWarLevel","MaximumWarLevel","LightSupport"
+"Role","Tier","Recipe","Motorized","Mechanized","Armour","EstimatedPersonnel","PersonnelSlots","AssetCollateral","Overhead","FundsRequired","LeadElements","ReserveElements","MinimumReadinessLevel","MaximumReadinessLevel","LightSupport"
 "AROR_OCCUPIERS","1","combined_arms_l1","1","1","0","12","18","1450","60","1510","2","0","5","5","0"
 "AROR_INVADERS","1","combined_arms_l1","1","1","0","12","18","1350","60","1410","2","0","5","5","0"
 "AROR_INVADERS","1","invader_ground_l1","1","1","0","12","18","1350","60","1410","2","0","5","5","0"

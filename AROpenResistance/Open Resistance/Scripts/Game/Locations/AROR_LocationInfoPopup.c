@@ -221,20 +221,20 @@ class AROR_LocationInfoPopup : Managed
 			m_wBackground.SetColor(m_BackgroundColor);
 
 		if (m_wDivider)
-			m_wDivider.SetColor(Color.FromRGBA(255, 255, 255, 40));
+			m_wDivider.SetColor(AROR_UIColors.Get(AROR_UIColors.LINE));
 
-		StyleText(m_wTitle, TITLE_FONT_SIZE, Color.FromRGBA(255, 255, 255, 255), true);
-		StyleText(m_wSubtitle, SMALL_FONT_SIZE, Color.FromRGBA(160, 165, 170, 255), false);
-		StyleText(m_wControl, BODY_FONT_SIZE, Color.FromRGBA(220, 220, 220, 255), false);
-		StyleText(m_wPopulation, BODY_FONT_SIZE, Color.FromRGBA(220, 220, 220, 255), false);
+		StyleText(m_wTitle, TITLE_FONT_SIZE, AROR_UIColors.Get(AROR_UIColors.TEXT), true);
+		StyleText(m_wSubtitle, SMALL_FONT_SIZE, AROR_UIColors.Get(AROR_UIColors.TEXT_MUTED), false);
+		StyleText(m_wControl, BODY_FONT_SIZE, AROR_UIColors.Get(AROR_UIColors.TEXT), false);
+		StyleText(m_wPopulation, BODY_FONT_SIZE, AROR_UIColors.Get(AROR_UIColors.TEXT), false);
 
 		for (int i = 0; i < SUPPORT_ROWS; i++)
 		{
-			StyleText(m_aSupportLabels[i], SMALL_FONT_SIZE, Color.FromRGBA(200, 200, 200, 255), false);
-			StyleText(m_aSupportValues[i], SMALL_FONT_SIZE, Color.FromRGBA(200, 200, 200, 255), false);
+			StyleText(m_aSupportLabels[i], SMALL_FONT_SIZE, AROR_UIColors.Get(AROR_UIColors.TEXT_MUTED), false);
+			StyleText(m_aSupportValues[i], SMALL_FONT_SIZE, AROR_UIColors.Get(AROR_UIColors.TEXT_MUTED), false);
 
 			if (m_aSupportTracks[i])
-				m_aSupportTracks[i].SetColor(Color.FromRGBA(255, 255, 255, 30));
+				m_aSupportTracks[i].SetColor(AROR_UIColors.Get(AROR_UIColors.LINE));
 		}
 	}
 
@@ -247,7 +247,6 @@ class AROR_LocationInfoPopup : Managed
 		text.SetExactFontSize(fontSize);
 		text.SetColor(color);
 		text.SetBold(bold);
-		text.SetShadow(1, 0xFF000000, 0.5, 1, 1);
 	}
 
 	//------------------------------------------------------------------------------------------------

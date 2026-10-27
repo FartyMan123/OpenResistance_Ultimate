@@ -1,4 +1,4 @@
-//! One complete profile package, including its infantry, crew, fuel and ammunition readiness.
+//! One complete profile package, including its infantry, crew, fuel and ammunition availability.
 class AROR_QRFReadyStock
 {
 	string m_sProfileId;
@@ -7,7 +7,7 @@ class AROR_QRFReadyStock
 
 //! Immutable-by-contract server planning input supplied by the future military-resource owner.
 //! Counts are availability, not reservations. Never interpret missing data as unlimited stock.
-class AROR_QRFReadinessSnapshot
+class AROR_QRFAvailabilitySnapshot
 {
 	AROR_EFactionRole m_eRole;
 	string m_sFactionKey;
@@ -59,9 +59,9 @@ class AROR_QRFReadinessSnapshot
 		return true;
 	}
 
-	AROR_QRFReadinessSnapshot WithRuntimeCapacity(int groups, int personnel, int vehicles)
+	AROR_QRFAvailabilitySnapshot WithRuntimeCapacity(int groups, int personnel, int vehicles)
 	{
-		AROR_QRFReadinessSnapshot copy = new AROR_QRFReadinessSnapshot();
+		AROR_QRFAvailabilitySnapshot copy = new AROR_QRFAvailabilitySnapshot();
 		copy.m_eRole = m_eRole;
 		copy.m_sFactionKey = m_sFactionKey;
 		copy.m_sOriginLocationId = m_sOriginLocationId;

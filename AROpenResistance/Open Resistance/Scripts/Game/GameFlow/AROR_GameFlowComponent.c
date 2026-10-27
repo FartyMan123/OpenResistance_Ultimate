@@ -575,12 +575,23 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		int year, month, day, hour, minute, second;
 		save.GetSavePointCreatedLocalDateTime(year, month, day, hour, minute, second);
 
-		string label = string.Format("%1 - %2 (%3-%4-%5 %6:%7)", save.GetPlaythroughName(), save.GetSavePointName(), year, month.ToString(2), day.ToString(2), hour.ToString(2), minute.ToString(2));
-
+		// Fields for the load dialog's campaign card: name | save point | date | compatible (1/0)
+		string separator = AROR_SetupMenu.FIELD_SEPARATOR;
+		string compatible = "1";
 		if (!save.IsSavePointGameVersionCompatible() || !save.AreSavePointAddonsCompatible())
-			label += " [incompatible]";
+			compatible = "0";
 
-		return label;
+		string date = string.Format("%1-%2-%3 %4:%5", year, month.ToString(2), day.ToString(2), hour.ToString(2), minute.ToString(2));
+		return CleanSaveField(save.GetPlaythroughName()) + separator + CleanSaveField(save.GetSavePointName()) + separator + date + separator + compatible;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Names are typed by admins: keep the list and field separators out of them
+	protected static string CleanSaveField(string text)
+	{
+		text.Replace(AROR_SetupMenu.FIELD_SEPARATOR, "/");
+		text.Replace("\n", " ");
+		return text;
 	}
 
 	//------------------------------------------------------------------------------------------------

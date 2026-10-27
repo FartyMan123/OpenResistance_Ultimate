@@ -6,7 +6,7 @@ class AROR_SetupUIComponentClass : SCR_BaseGameModeComponentClass
 //! Client-side setup UI for the server admin (see ARCHITECTURE.md -> Game Flow -> Setup UI).
 //! Reacts to AROR_GameFlowComponent client events and sends requests through the AROR_ methods on SCR_PlayerController.
 //! New: opens the base-game map menu, the admin clicks the HQ position, a dialog confirms it.
-//! Load: a dialog steps through the save list sent by the server.
+//! Start and Load: the setup menu (AROR_SetupMenu) shows the options and the save list sent by the server.
 //! Dialog button actions arrive through QueueDialogAction once the dialog has closed (see AROR_SetupDialogs.c).
 class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 {
@@ -21,10 +21,8 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 	static const string DIALOG_HQ_CONFIRM = "hq_confirm";
 	static const string DIALOG_LOAD = "load";
 
-	protected static const string PRESET_MAIN = "aror_setup_main";
 	protected static const string PRESET_FACTIONS = "aror_setup_factions";
 	protected static const string PRESET_HQ_CONFIRM = "aror_setup_hq_confirm";
-	protected static const string PRESET_LOAD = "aror_setup_load";
 
 	protected AROR_GameFlowComponent m_GameFlow;
 	protected bool m_bPickingHQ;
@@ -38,9 +36,39 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 	protected static const string BASE_PRESET_INVADERS = "USSR_ARMY";
 	protected static const string BASE_PRESET_CIVILIANS = "EVERON_CIV";
 
-	//! Weak reference: owned by the dialog's widgets, becomes null once the dialog is gone
-	protected AROR_SetupMainDialog m_MainDialog;
+	protected static AROR_SetupUIComponent s_Instance;
+
+	// State the setup menu shows (it reads it when it opens): screen, save list and any message from the server
+	protected int m_iMenuScreen = AROR_SetupMenu.SCREEN_START;
+	protected ref array<string> m_aSaveLabels = {};
+	protected string m_sMenuMessage;
 	protected vector m_vPickedPosition;
+
+	//------------------------------------------------------------------------------------------------
+	static AROR_SetupUIComponent GetInstance()
+	{
+		return s_Instance;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Which setup menu screen to show (AROR_SetupMenu.SCREEN_*)
+	int GetMenuScreen()
+	{
+		return m_iMenuScreen;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	array<string> GetSaveLabels()
+	{
+		return m_aSaveLabels;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! The last message from the server for the start screen (e.g. why a request was rejected)
+	string GetMenuMessage()
+	{
+		return m_sMenuMessage;
+	}
 
 	//------------------------------------------------------------------------------------------------
 	void OpenMainDialog()
@@ -51,17 +79,14 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 	//------------------------------------------------------------------------------------------------
 	void OpenMainDialogWithMessage(string message)
 	{
-		// Only one main dialog: if it is already open, just update its message
-		if (!m_MainDialog)
-		{
-			// Create in a local (strong) variable; the dialog's widgets own it once created
-			AROR_SetupMainDialog dialog = new AROR_SetupMainDialog(this);
-			SCR_ConfigurableDialogUi.CreateFromPreset(m_sDialogPresets, PRESET_MAIN, dialog);
-			m_MainDialog = dialog;
-		}
-
-		if (!message.IsEmpty())
-			m_MainDialog.SetMessage(message);
+		// The setup menu replaces the base-game main dialog; one instance, updated in place when open
+		m_iMenuScreen = AROR_SetupMenu.SCREEN_START;
+		m_sMenuMessage = message;
+		AROR_SetupMenu menu = AROR_SetupMenu.GetOpen();
+		if (menu)
+			menu.ShowStart(message);
+		else
+			GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.AROR_SetupMenu);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -78,8 +103,6 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 	{
 		if (dialogId == DIALOG_MAIN)
 		{
-			m_MainDialog = null;
-
 			if (tag == "new")
 				OpenFactionsDialog();
 			else if (tag == "quick")
@@ -240,7 +263,8 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 	//------------------------------------------------------------------------------------------------
 	// Load campaign
 	//------------------------------------------------------------------------------------------------
-	protected void RequestSaveList()
+	//! Asks the server for the save list; the answer arrives in OnSaveListReceived
+	void RequestSaveList()
 	{
 		SCR_PlayerController playerController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
 		if (playerController)
@@ -258,9 +282,13 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 	//------------------------------------------------------------------------------------------------
 	protected void OnSaveListReceived(array<string> saveLabels)
 	{
-		AROR_SetupLoadDialog dialog = new AROR_SetupLoadDialog(this, saveLabels);
-		SCR_ConfigurableDialogUi.CreateFromPreset(m_sDialogPresets, PRESET_LOAD, dialog);
-		dialog.Refresh();
+		m_aSaveLabels.Copy(saveLabels);
+		m_iMenuScreen = AROR_SetupMenu.SCREEN_LOAD;
+		AROR_SetupMenu menu = AROR_SetupMenu.GetOpen();
+		if (menu)
+			menu.ShowLoad(m_aSaveLabels);
+		else
+			GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.AROR_SetupMenu);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -279,6 +307,8 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 		if (!GetGame().InPlayMode() || RplSession.Mode() == RplMode.Dedicated)
 			return;
 
+		s_Instance = this;
+
 		m_GameFlow = AROR_GameFlowComponent.Cast(owner.FindComponent(AROR_GameFlowComponent));
 		if (!m_GameFlow)
 		{
@@ -294,6 +324,8 @@ class AROR_SetupUIComponent : SCR_BaseGameModeComponent
 	//------------------------------------------------------------------------------------------------
 	override void OnDelete(IEntity owner)
 	{
+		if (s_Instance == this)
+			s_Instance = null;
 		GetGame().GetCallqueue().Remove(HandleDialogAction);
 		SCR_MapEntity.GetOnSelection().Remove(OnMapSelection);
 		SCR_MapEntity.GetOnMapOpen().Remove(OnHQMapOpened);

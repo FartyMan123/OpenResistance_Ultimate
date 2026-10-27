@@ -19,6 +19,11 @@ class AROR_OpsApp : AROR_PhonePooledApp
 	//! Content is drawn at this fraction of the phone screen, centred, so nothing touches the screen edges
 	protected static const float CONTENT_SCALE = 0.96;
 
+	// The sign-in column (app units 590-1110 x 98-730) is drawn enlarged about its centre
+	protected static const float LOGIN_ZOOM = 1.32;
+	protected static const float LOGIN_CENTRE_X = 850;
+	protected static const float LOGIN_CENTRE_Y = 414;
+
 	// Board geometry (app units)
 	protected static const float TOP_BAR = 32;
 	protected static const float BODY_TOP = 170;
@@ -137,7 +142,15 @@ class AROR_OpsApp : AROR_PhonePooledApp
 		bool showMap;
 		if (m_eScreen == AROR_EOpsScreen.LOGIN)
 		{
+			// The sign-in column is narrow; draw it enlarged so it fills the tablet screen
+			float scaleBefore = m_fScale;
+			float insetXBefore = m_fInsetX;
+			float insetYBefore = m_fInsetY;
+			ZoomContent(LOGIN_ZOOM, LOGIN_CENTRE_X, LOGIN_CENTRE_Y, WIDTH * 0.5, (TOP_BAR + HEIGHT) * 0.5);
 			DrawLogin(now);
+			m_fScale = scaleBefore;
+			m_fInsetX = insetXBefore;
+			m_fInsetY = insetYBefore;
 			showCrest = true;
 		}
 		else
@@ -160,6 +173,15 @@ class AROR_OpsApp : AROR_PhonePooledApp
 		Panel(28, 12, 7, 7, m_Phos);
 		Text(42, 6, 400, 20, 12, "OPS-T4 FIELD TABLET", m_Muted);
 		TextRight(1672, 6, 12, GetClockText() + " LOCAL", m_Muted);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Until the frame ends or the caller restores it: app point (fromX, fromY) is drawn at (toX, toY), zoom times larger
+	protected void ZoomContent(float zoom, float fromX, float fromY, float toX, float toY)
+	{
+		m_fInsetX += (toX - fromX * zoom) * m_fScale;
+		m_fInsetY += (toY - fromY * zoom) * m_fScale;
+		m_fScale *= zoom;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -192,9 +214,9 @@ class AROR_OpsApp : AROR_PhonePooledApp
 			}
 		}
 
-		array<string> labels = {"Encrypted uplink", "Cell roster", "Intel feed", "Enemy aggression"};
-		array<string> states = {"OK", "SYNCED", string.Format("%1 OPS", offers), AggressionText()};
-		array<ref Color> colors = {m_Phos, m_Phos, m_Phos, AggressionColor()};
+		array<string> labels = {"Encrypted uplink", "Cell roster", "Intel feed", "Enemy crackdown"};
+		array<string> states = {"OK", "SYNCED", string.Format("%1 OPS", offers), CrackdownText()};
+		array<ref Color> colors = {m_Phos, m_Phos, m_Phos, CrackdownColor()};
 		if (!board)
 		{
 			states[2] = "OFFLINE";
@@ -270,7 +292,7 @@ class AROR_OpsApp : AROR_PhonePooledApp
 			Panel(dash, 700, 14, 1, m_Line);
 		}
 
-		TextCentre(left + width * 0.5, 712, 12, "RESTRICTED  ·  RESISTANCE CELLS ONLY  ·  SESSION LOGGED", m_Muted);
+		Text(left, 712, width, 18, 12, "RESTRICTED  ·  RESISTANCE CELLS ONLY  ·  SESSION LOGGED", m_Muted);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -1058,51 +1080,49 @@ class AROR_OpsApp : AROR_PhonePooledApp
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! The stronger of the two enemies' aggression, in words
-	protected static string AggressionText()
+	//! The stronger enemy's crackdown in that army's own words (the REBINTEL label tables)
+	protected static string CrackdownText()
 	{
-		int level = MaxAggressionLevel();
-		if (level < 0)
+		AROR_EFactionRole role;
+		int level = MaxCrackdownLevel(role);
+		if (level < 1)
 			return "UNKNOWN";
 
-		if (level >= 4)
-			return "SEVERE";
-
-		if (level >= 3)
-			return "ELEVATED";
-
-		if (level >= 2)
-			return "MODERATE";
-
-		return "LOW";
+		return AROR_ThreatLabels.ForRole(role).GetLabel(AROR_EThreatScale.CRACKDOWN, level);
 	}
 
 	//------------------------------------------------------------------------------------------------
-	protected Color AggressionColor()
+	//! Amber once crackdown reaches 4; red stays reserved for critical alerts
+	protected Color CrackdownColor()
 	{
-		int level = MaxAggressionLevel();
-		if (level >= 4)
-			return m_Red;
-
-		if (level >= 3)
+		AROR_EFactionRole role;
+		if (MaxCrackdownLevel(role) >= 4)
 			return m_Amber;
 
 		return m_Phos;
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! -1 without an operations manager
-	protected static int MaxAggressionLevel()
+	//! -1 without an operations manager or before the server's first reading
+	protected static int MaxCrackdownLevel(out AROR_EFactionRole role)
 	{
+		role = AROR_EFactionRole.OCCUPIERS;
 		BaseGameMode gameMode = GetGame().GetGameMode();
 		if (!gameMode)
 			return -1;
 
 		AROR_OperationManagerComponent manager = AROR_OperationManagerComponent.Cast(gameMode.FindComponent(AROR_OperationManagerComponent));
-		if (!manager)
+		if (!manager || !manager.HasThreatState())
 			return -1;
 
-		return Math.Max(manager.GetAggressionLevel(AROR_EFactionRole.OCCUPIERS), manager.GetAggressionLevel(AROR_EFactionRole.INVADERS));
+		int occupiers = manager.GetCrackdownLevel(AROR_EFactionRole.OCCUPIERS);
+		int invaders = manager.GetCrackdownLevel(AROR_EFactionRole.INVADERS);
+		if (invaders > occupiers)
+		{
+			role = AROR_EFactionRole.INVADERS;
+			return invaders;
+		}
+		return occupiers;
 	}
 
 	//------------------------------------------------------------------------------------------------

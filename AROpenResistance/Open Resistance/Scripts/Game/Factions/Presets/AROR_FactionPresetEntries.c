@@ -9,8 +9,8 @@ class AROR_FactionPresetEntry
 	[Attribute("0", desc: "Base cost in money", params: "0 inf")]
 	protected int m_iCost;
 
-	[Attribute("1", desc: "War level at which this asset becomes available", params: "1 5 1")]
-	protected int m_iMinimumWarLevel;
+	[Attribute("1", desc: "Readiness at which this asset becomes available", params: "1 5 1")]
+	protected int m_iMinimumReadinessLevel;
 
 	//------------------------------------------------------------------------------------------------
 	ResourceName GetPrefab()
@@ -25,9 +25,9 @@ class AROR_FactionPresetEntry
 	}
 
 	//------------------------------------------------------------------------------------------------
-	int GetMinimumWarLevel()
+	int GetMinimumReadinessLevel()
 	{
-		return m_iMinimumWarLevel;
+		return m_iMinimumReadinessLevel;
 	}
 
 	//------------------------------------------------------------------------------------------------

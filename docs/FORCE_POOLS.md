@@ -4,7 +4,7 @@ See [QRF tactical commander and staged waves](QRF_TACTICAL_COMMANDER.md) for the
 
 The [USSR/Invader framework](INVADER_QRF_FRAMEWORK.md) has levels 1-5 and ground capture-response admission enabled in Chicken; other scenarios default off.
 
-**Current Chicken fixture:** [strategic selection](QRF_STRATEGY_ECONOMY.md) starts at war level 1 and aggression 20%. War gates light/mechanized/combined equipment pools; aggression requests response intensity 1–5. Ground capture responses are enabled for both AI roles, with tactical waves and spotting; combat/flight dispatch remain off. The exact [truck/APC regression fixture](TRUCK_IFV_QRF_TEST.md) requires strategic economy off. Compile and reload before native acceptance.
+**Current Chicken fixture:** [strategic selection](QRF_STRATEGY_ECONOMY.md) starts at readiness 1 and crackdown 20%. Readiness gates light/mechanized/combined equipment pools; crackdown requests response intensity 1–5. Ground capture responses are enabled for both AI roles, with tactical waves and spotting; combat/flight dispatch remain off. The exact [truck/APC regression fixture](TRUCK_IFV_QRF_TEST.md) requires strategic economy off. Compile and reload before native acceptance.
 
 The proposed [QRF response roster](QRF_RESPONSE_ROSTER.md) adds 40 authored responses across eight families and levels 1-5, including combined ground/air compositions. It defines future commander/resource selection; it does not change the current repeated-profile executor or Chicken test. A [CSV catalogue](QRF_RESPONSE_ROSTER.csv) provides stable recipe IDs and nominal accounting.
 

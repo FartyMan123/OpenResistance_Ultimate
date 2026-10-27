@@ -16,7 +16,7 @@ function runEveronQRFIntegrationTests(sources) {
     const args=m[1].replace(/\b(?:int|bool|string|vector|AROR_\w+)\s+/g,'');
     let body=m[2].replace(/\b(?:bool|int|string|Faction|AROR_\w+)\s+(\w+)/g,'let $1').replace(/let (\w+);/g,'let $1=0;')
       .replace(/(?<![.\w])m_\w+/g,x=>'this.'+x);
-    for(const method of ['IsReady','IsEnemyRole','QueueQRFThreat_S','RequestOperation_S','HasPendingQRFThreat','ReportLocationCapture_S','IsCapturableType','IsCapturableLocation','ReportAttack_S','ReportCombatContact_S','GetOperation','RecordStrategicEvidence','RecordCaptureEscalation_S','SetWarPressure_S','GetWarPressure'])
+    for(const method of ['IsReady','IsEnemyRole','QueueQRFThreat_S','RequestOperation_S','HasPendingQRFThreat','ReportLocationCapture_S','IsCapturableType','IsCapturableLocation','ReportAttack_S','ReportCombatContact_S','GetOperation','RecordStrategicEvidence','RecordCaptureEscalation_S','SetReadinessPressure_S','GetReadinessPressure'])
       body=body.replace(new RegExp('(?<![.\\w])'+method+'\\(', 'g'),'this.'+method+'(');
     return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
   }
@@ -27,7 +27,7 @@ function runEveronQRFIntegrationTests(sources) {
   let requested=0,queued=0;
   const manager={m_bTownCaptureQRFs:true,m_bOutpostCaptureQRFs:true,m_bQRFStrategicEconomy:false,m_iQRFReaction:10,
     IsReady:()=>true,IsEnemyRole:r=>r===1||r===2,RequestOperation_S(){requested++;return 'operation';},
-    QueueQRFThreat_S(){queued++;return 'queued';},HasPendingQRFThreat:()=>false};
+    QueueQRFThreat_S(){queued++;return 'queued';},HasPendingQRFThreat:()=>false,GetOperation:()=>null};
   for(const type of [types.TOWN,types.CITY,types.OUTPOST,types.MILITARY_BASE,types.AIRPORT,types.FACTORY,types.PORT,types.RESOURCES]){
     target.type=type;check(capture.call(manager,1,'site')==='operation','capture admission: '+type);
   }
@@ -59,7 +59,7 @@ function runEveronQRFIntegrationTests(sources) {
   manager.m_bQRFStrategicEconomy=false;
   check(manager.ReportAttack_S(1,'site')==='operation'&&requested===beforeDamageRequests+1,'explicit combat opt-in retains non-strategic response path');
   let invaderPressure=100,evidence=0;
-  manager.m_bInvaderOperationsEnabled=false;manager.RecordStrategicEvidence=()=>evidence++;manager.RecordCaptureEscalation_S=()=>invaderPressure+=25;manager.GetWarPressure=()=>invaderPressure;manager.SetWarPressure_S=(r,n)=>invaderPressure=n;
+  manager.m_bInvaderOperationsEnabled=false;manager.RecordStrategicEvidence=()=>evidence++;manager.RecordCaptureEscalation_S=()=>invaderPressure+=25;manager.GetReadinessPressure=()=>invaderPressure;manager.SetReadinessPressure_S=(r,n)=>invaderPressure=n;
   env.AROR_InvaderCampaignComponent.GetInstance=()=>({IsAdvanceActive:()=>true});const requestsBefore=requested,queuesBefore=queued;
   check(capture.call(manager,2,'site')===''&&invaderPressure===125&&evidence===1&&requested===requestsBefore&&queued===queuesBefore,'Resistance capture raises territorial Invader progress without physical dispatch');
   target.owner=1;capture.call(manager,2,'site');check(invaderPressure===125,'AI-versus-AI capture cannot escalate the territorial war by itself');target.owner=0;

@@ -1,13 +1,13 @@
 //! Bounded strategic decisions. No spawning, bank, ownership or random-number authority.
 class AROR_InvaderCampaignPolicy
 {
-	static int TargetShare(int baseline, int war, int aggression)
+	static int TargetShare(int baseline, int readiness, int crackdown)
 	{
-		return Math.Clamp(baseline + Math.Max(0, war - 2) * 5 + Math.Floor(Math.Max(0, aggression - 10) / 10.0), 10, 80);
+		return Math.Clamp(baseline + Math.Max(0, readiness - 2) * 5 + Math.Floor(Math.Max(0, crackdown - 10) / 10.0), 10, 80);
 	}
-	static int Funding(int baseline, int perWar, int perAggression, int war, int aggression)
+	static int Funding(int baseline, int perReadiness, int perCrackdown, int readiness, int crackdown)
 	{
-		return baseline + Math.Max(0, war - 2) * perWar + Math.Clamp(aggression, 0, 100) * perAggression;
+		return baseline + Math.Max(0, readiness - 2) * perReadiness + Math.Clamp(crackdown, 0, 100) * perCrackdown;
 	}
 	//! A soft equilibrium: either side can attack above/below the target, with bounded bias.
 	static int InvaderAttackChance(int held, int total, int targetShare, int invaderWin = 50, int occupierWin = 50)

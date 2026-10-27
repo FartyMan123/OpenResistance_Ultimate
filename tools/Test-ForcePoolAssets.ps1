@@ -46,21 +46,25 @@ foreach ($profile in $profiles) {
 	$profileId = [regex]::Match($body, 'm_sId\s+"([^"]+)"').Groups[1].Value
 	if (!$profileId -or $profileIds -contains $profileId) { throw "Empty/duplicate profile ID: $profileId" }
 	$profileIds += $profileId
-	$minimumWar = [int][regex]::Match($body, 'm_iMinimumWarLevel\s+(\d+)').Groups[1].Value
-	$expectedWar = 1
-	if ($profileId -match '_mechanized$') { $expectedWar = 3 }
-	if ($profileId -match '_(armour|airborne)$') { $expectedWar = 5 }
-	if ($minimumWar -ne $expectedWar) { throw "Wrong equipment unlock for $profileId" }
+	$minimumReadiness = [int][regex]::Match($body, 'm_iMinimumReadinessLevel\s+(\d+)').Groups[1].Value
+	$expectedReadiness = 1
+	if ($profileId -match '_mechanized$') { $expectedReadiness = 3 }
+	if ($profileId -match '_(armour|airborne)$') { $expectedReadiness = 5 }
+	if ($minimumReadiness -ne $expectedReadiness) { throw "Wrong equipment unlock for $profileId" }
 	if ($body -match 'm_eType\s+3\b') {
 		$airborneCount++
-		if ($body -notmatch 'm_bEnabled\s+0\b') { throw "Airborne profile must stay disabled until flight adapter exists: $profileId" }
+		if ($body -notmatch 'm_bEnabled\s+0\b') {
+			$adapterPath = Join-Path $repoPath 'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_ReaperQRFExecutor.c'
+			$adapterText = [IO.File]::ReadAllText($adapterPath)
+			if ($layerText -notmatch 'm_bAllowAirborneResponses\s+1\b' -or !$adapterText.Contains('operation.m_sRequestedProfileId') -or !$adapterText.Contains('StartReaperQRF(operation)')) { throw "Enabled airborne profile needs explicit REAPER dispatch: $profileId" }
+		}
 	}
 	foreach ($reference in [regex]::Matches($body, '\{[0-9A-F]{16}\}(Prefabs/[^"\r\n]+)')) {
 		$manifestEntry = $manifest.resources.PSObject.Properties[$reference.Groups[1].Value]
 		if (!$manifestEntry -or $manifestEntry.Value -cne $reference.Value) { throw "Profile resource absent from verified manifest: $($reference.Value)" }
 	}
 }
-if ($airborneCount -ne 2) { throw 'Expected one disabled airborne profile per faction' }
+if ($airborneCount -ne 2) { throw 'Expected one airborne profile per faction' }
 if ($layerText -match 'm_sResistanceFactionKey|m_sOccupiersFactionKey|m_sInvadersFactionKey|m_sAffiliatedFaction\s+"FIA"') { throw 'Chicken must inherit shared role mappings and the Resistance loadout' }
 $defenderPath = Join-Path $repoPath 'AROpenResistance/Open Resistance/Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/CivilianLocations.layer'
 $defenderText = [IO.File]::ReadAllText($defenderPath)
@@ -71,7 +75,7 @@ $maxVehicles = [int][regex]::Match($layerText, 'm_iMaxVehicles\s+(\d+)').Groups[
 foreach ($profile in $profiles) {
 	$body = $profile.Groups[1].Value
 	$type = [int][regex]::Match($body, 'm_eType\s+(\d+)').Groups[1].Value
-	# Disabled airborne entries are explicitly selected by the REAPER test adapter.
+	# Explicit airborne entries use the REAPER adapter, never native ground dispatch.
 	if ($type -ne 3 -and $body -match 'm_bEnabled\s+0\b') { continue }
 	$groupsPerPackage = 2
 	if ($type -eq 2 -or $type -eq 4) { $groupsPerPackage = 1 }
@@ -119,11 +123,11 @@ foreach ($recipe in $recipes) {
 	if (!$roleFactions.ContainsKey($roleId) -or $faction -cne $roleFactions[$roleId]) { throw 'Composite recipe faction/role mismatch' }
 	$recipeId = [regex]::Match($body, 'm_sId\s+"([^"]+)"').Groups[1].Value
 	$tier = [int][regex]::Match($body, 'm_iLevel\s+(\d+)').Groups[1].Value
-	$minimumWar = [int][regex]::Match($body, 'm_iMinimumWarLevel\s+(\d+)').Groups[1].Value
-	$maximumWar = [int][regex]::Match($body, 'm_iMaximumWarLevel\s+(\d+)').Groups[1].Value
-	if ($minimumWar -lt 1 -or $maximumWar -gt 5 -or $minimumWar -gt $maximumWar) { throw "Invalid recipe war range: $recipeId" }
+	$minimumReadiness = [int][regex]::Match($body, 'm_iMinimumReadinessLevel\s+(\d+)').Groups[1].Value
+	$maximumReadiness = [int][regex]::Match($body, 'm_iMaximumReadinessLevel\s+(\d+)').Groups[1].Value
+	if ($minimumReadiness -lt 1 -or $maximumReadiness -gt 5 -or $minimumReadiness -gt $maximumReadiness) { throw "Invalid recipe readiness range: $recipeId" }
 	if ($recipeId -eq 'combined_arms_l1') {
-		if ($tier -ne 1 -or $minimumWar -ne 5 -or $maximumWar -ne 5) { throw 'Legacy combined-arms fixture must stay at war five' }
+		if ($tier -ne 1 -or $minimumReadiness -ne 5 -or $maximumReadiness -ne 5) { throw 'Legacy combined-arms fixture must stay at readiness five' }
 	} else {
 		if ($tier -lt 1 -or $tier -gt 5) { throw 'Invalid strategic response tier' }
 		if ($roleId -eq '2' -and $recipeId -cmatch "^invader_(ground|light|mechanized)_l$tier`$") { $invaderTiers += $tier }
@@ -132,8 +136,8 @@ foreach ($recipe in $recipes) {
 		$expectedRange = '5,5'
 		if ($recipeId -match '_light_') { $expectedRange = '1,2' }
 		if ($recipeId -match '_mechanized_') { $expectedRange = '3,4' }
-		if ("$minimumWar,$maximumWar" -ne $expectedRange) { throw "Wrong equipment band for $recipeId" }
-		foreach ($war in $minimumWar..$maximumWar) { $coverage["$roleId/$war/$tier"] = $true }
+		if ("$minimumReadiness,$maximumReadiness" -ne $expectedRange) { throw "Wrong equipment band for $recipeId" }
+		foreach ($readinessLevel in $minimumReadiness..$maximumReadiness) { $coverage["$roleId/$readinessLevel/$tier"] = $true }
 	}
 	$idBlock = [regex]::Match($body, '(?s)m_aProfileIds\s*\{(.*?)\}').Groups[1].Value
 	$ids = [regex]::Matches($idBlock, '"([^"]+)"')
@@ -144,8 +148,8 @@ foreach ($recipe in $recipes) {
 		$profile = $profiles | Where-Object { $_.Groups[1].Value -match ('m_sId\s+"' + [regex]::Escape($id.Groups[1].Value) + '"') }
 		if (@($profile).Count -ne 1) { throw 'Missing or ambiguous composite element profile' }
 		$profileBody = $profile.Groups[1].Value
-		$profileWar = [int][regex]::Match($profileBody, 'm_iMinimumWarLevel\s+(\d+)').Groups[1].Value
-		if ($profileWar -gt $minimumWar) { throw "Recipe unlocks equipment too early: $recipeId / $($id.Groups[1].Value)" }
+		$profileReadiness = [int][regex]::Match($profileBody, 'm_iMinimumReadinessLevel\s+(\d+)').Groups[1].Value
+		if ($profileReadiness -gt $minimumReadiness) { throw "Recipe unlocks equipment too early: $recipeId / $($id.Groups[1].Value)" }
 		if ($profileBody -notmatch ('m_eRole\s+' + $roleId + '\b') -or $profileBody -match 'm_bEnabled\s+0\b') { throw 'Composite element unavailable or wrong role' }
 		$type = [int][regex]::Match($profileBody, 'm_eType\s+(\d+)').Groups[1].Value
 		$types += $type
@@ -166,11 +170,11 @@ foreach ($recipe in $recipes) {
 		$fee = 50 + 10 * $tier
 		if ([int]$priceRow[0].AssetCollateral -ne $assetCollateral -or [int]$priceRow[0].Overhead -ne $fee -or [int]$priceRow[0].FundsRequired -ne ($assetCollateral + $fee)) { throw "Documented price differs from fixture: $recipeId" }
 		if ([int]$priceRow[0].PersonnelSlots -ne $members) { throw "Documented personnel reservation differs: $recipeId" }
-		if ([int]$priceRow[0].MinimumWarLevel -ne $minimumWar -or [int]$priceRow[0].MaximumWarLevel -ne $maximumWar) { throw "Documented equipment band differs: $recipeId" }
+		if ([int]$priceRow[0].MinimumReadinessLevel -ne $minimumReadiness -or [int]$priceRow[0].MaximumReadinessLevel -ne $maximumReadiness) { throw "Documented equipment band differs: $recipeId" }
 	}
 }
-foreach ($roleId in @('1','2')) { foreach ($war in 1..5) { foreach ($tier in 1..5) {
-	if (!$coverage.ContainsKey("$roleId/$war/$tier")) { throw "Missing complete faction/war/aggression response: $roleId/$war/$tier" }
+foreach ($roleId in @('1','2')) { foreach ($readinessLevel in 1..5) { foreach ($tier in 1..5) {
+	if (!$coverage.ContainsKey("$roleId/$readinessLevel/$tier")) { throw "Missing complete faction/readiness/crackdown response: $roleId/$readinessLevel/$tier" }
 }}}
 if ($layerText -notmatch 'm_sGroundQRFRecipeId\s+"combined_arms_l1"' -or $layerText -notmatch 'm_bReaperQRFTest\s+0\b') { throw 'Chicken must dispatch the ground recipe instead of the helicopter override' }
 if (($invaderTiers | Sort-Object -Unique) -join ',' -ne '1,2,3,4,5') { throw 'Staged Invader tiers must cover levels 1-5' }
@@ -184,13 +188,17 @@ if ($managerSource -notmatch '\[Attribute\("0",[^\r\n]*\)\]\s+protected bool m_b
 if ($layerText -notmatch 'm_bCombatQRFs\s+0\b' -or $layerText -notmatch 'm_bOutpostCaptureQRFs\s+1\b') { throw 'Chicken QRFs must be capture-driven, with combat responses disabled' }
 if ($layerText -notmatch 'm_sInvadersAttackTargetId\s+""' -or $layerText -notmatch 'm_sInvadersQRFTestTargetId\s+""') { throw 'Invader automatic/test targets must remain empty' }
 $tacticalFixture = @{
+	m_bMarsEnabled = '1'; m_bAllowAirborneResponses = '1'; m_bTerritoryAttacksEnabled = '1'
+	m_iTerritoryAttackGrace = '900'; m_iTerritoryAttackAfterQRF = '300'; m_iTerritoryAttackRest = '900'
+	m_fReaperLZFallbackRadius = '1200'
+	m_fReaperLZAdjustmentRadius = '60'; m_fQRFRoadLaunchRadius = '300'; m_iQRFSeatRecoveryDelay = '10'
 	m_bQRFTacticalCommander = '1'; m_bQRFTwoWaves = '1'; m_iQRFSplitTier = '3'
 	m_iQRFReinforcementDelay = '60'; m_iQRFReserveWait = '300'; m_iQRFMaxLiveGround = '6'; m_iQRFMaxLiveAircraft = '6'
 	m_iQRFTacticalDuration = '600'; m_iQRFTownHoldDuration = '900'; m_iQRFOrderInterval = '15'; m_iQRFApproachAttempts = '12'; m_fQRFThreatDismount = '200'
 	m_fQRFVehicleArrivalTolerance = '20'; m_fQRFObjectiveDeliveryRadius = '100'; m_iQRFIngressTimeout = '600'; m_iQRFExitTimeout = '30'; m_bTownCaptureQRFs = '1'
 	m_iQRFInfantryLegTimeout = '180'; m_fQRFInfantryPlanningSpeed = '1.5'
 	m_fQRFRecoveryRadius = '100'; m_fQRFVehicleRecoveryRadius = '125'
-	m_iStartingWarLevel = '1'; m_iStartingAggression = '20'; m_iCaptureWarPressure = '25'; m_iCaptureAggression = '150'; m_iAggressionQuietTime = '600'; m_iAggressionDecay = '20'
+	m_iStartingReadinessLevel = '1'; m_iStartingCrackdown = '20'; m_iCaptureReadinessPressure = '25'; m_iCaptureCrackdown = '150'; m_iCrackdownQuietTime = '600'; m_iCrackdownDecay = '20'
 	m_iQRFBaseOverhead = '50'; m_iQRFTierOverhead = '10'; m_iQRFThreatLifetime = '180'
 	m_fQRFSpotGroundRange = '800'; m_fQRFSpotAirRange = '1500'; m_fQRFSpotMinimumDot = '0.9'; m_iQRFSpotTraceLimit = '8'; m_iQRFSpotLifetime = '90'
 	m_fQRFWithdrawFraction = '0.4'; m_fQRFLocalWithdrawFraction = '0.5'; m_iQRFGroundRetention = '120'; m_fQRFGroundCleanupDistance = '1200'
@@ -198,4 +206,4 @@ $tacticalFixture = @{
 foreach ($setting in $tacticalFixture.GetEnumerator()) {
 	if ($layerText -notmatch ('(?m)^\s+' + $setting.Key + '\s+' + [regex]::Escape($setting.Value) + '\s*$')) { throw "Unexpected tactical fixture setting: $($setting.Key)" }
 }
-Write-Output "Verified $verified installed GUIDs, navigation, ten profiles, equipment gates, 32 recipes and all 50 faction/war/aggression combinations against executor budgets and documented prices. Chicken capture responses enabled for both roles; combat/flight dispatch disabled. Configuration checks only, not Enforce compilation or gameplay testing."
+Write-Output "Verified $verified installed GUIDs, navigation, ten profiles, equipment gates, 32 recipes and all 50 faction/readiness/crackdown combinations against executor budgets and documented prices. Chicken capture responses and explicit MARS airborne selections enabled for both roles; combat reports and the blanket flight override remain disabled. Configuration checks only, not Enforce compilation or gameplay testing."

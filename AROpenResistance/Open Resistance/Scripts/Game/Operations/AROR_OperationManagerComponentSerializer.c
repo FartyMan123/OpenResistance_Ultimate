@@ -1,7 +1,7 @@
 //! QRF policy persists independently of Economy. Physical deployments/contacts remain session-local.
 class AROR_OperationManagerComponentSerializer : ScriptedComponentSerializer
 {
-	protected static const int VERSION = 2;
+	protected static const int VERSION = 3;
 	override static typename GetTargetType()
 	{
 		return AROR_OperationManagerComponent;
@@ -10,10 +10,10 @@ class AROR_OperationManagerComponentSerializer : ScriptedComponentSerializer
 	{
 		const AROR_OperationManagerComponent manager = AROR_OperationManagerComponent.Cast(component);
 		context.WriteValue("version", VERSION);
-		context.WriteValue("occupierPressure", manager.GetWarPressure(AROR_EFactionRole.OCCUPIERS));
-		context.WriteValue("invaderPressure", manager.GetWarPressure(AROR_EFactionRole.INVADERS));
-		context.WriteValue("occupierAggression", manager.GetAggressionForSave(AROR_EFactionRole.OCCUPIERS));
-		context.WriteValue("invaderAggression", manager.GetAggressionForSave(AROR_EFactionRole.INVADERS));
+		context.WriteValue("occupierPressure", manager.GetReadinessPressure(AROR_EFactionRole.OCCUPIERS));
+		context.WriteValue("invaderPressure", manager.GetReadinessPressure(AROR_EFactionRole.INVADERS));
+		context.WriteValue("occupierCrackdown", manager.GetCrackdownForSave(AROR_EFactionRole.OCCUPIERS));
+		context.WriteValue("invaderCrackdown", manager.GetCrackdownForSave(AROR_EFactionRole.INVADERS));
 		AROR_QRFFinance finance = manager.GetQRFFinance();
 		// Do not debit another component while serializing. Carry pending confirmed losses as debt.
 		context.WriteValue("occupierDebt", finance.Debt(AROR_EFactionRole.OCCUPIERS) + finance.PendingLossValue(AROR_EFactionRole.OCCUPIERS));
@@ -31,16 +31,24 @@ class AROR_OperationManagerComponentSerializer : ScriptedComponentSerializer
 			return false;
 		if (!context.ReadValue("occupierDebt", occupierDebt) || !context.ReadValue("invaderDebt", invaderDebt))
 			return false;
-		int occupierAggression = -1;
-		int invaderAggression = -1;
+		int occupierCrackdown = -1;
+		int invaderCrackdown = -1;
 		if (version >= 2)
 		{
-			if (!context.ReadValue("occupierAggression", occupierAggression) || !context.ReadValue("invaderAggression", invaderAggression))
+			// Version 2 saved the same meter under its old "Aggression" name.
+			string occupierKey = "occupierCrackdown";
+			string invaderKey = "invaderCrackdown";
+			if (version == 2)
+			{
+				occupierKey = "occupierAggression";
+				invaderKey = "invaderAggression";
+			}
+			if (!context.ReadValue(occupierKey, occupierCrackdown) || !context.ReadValue(invaderKey, invaderCrackdown))
 				return false;
-			if (occupierAggression < 0 || occupierAggression > 1000 || invaderAggression < 0 || invaderAggression > 1000)
+			if (occupierCrackdown < 0 || occupierCrackdown > 1000 || invaderCrackdown < 0 || invaderCrackdown > 1000)
 				return false;
 		}
-		manager.RestoreQRFStrategy_S(occupierPressure, invaderPressure, occupierDebt, invaderDebt, occupierAggression, invaderAggression);
+		manager.RestoreQRFStrategy_S(occupierPressure, invaderPressure, occupierDebt, invaderDebt, occupierCrackdown, invaderCrackdown);
 		return true;
 	}
 }

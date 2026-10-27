@@ -17,8 +17,8 @@ function runQRFTests(sources) {
   }
   const bank = {balances:{1:10000,2:10000}, payments:[], GetFactionFunds(role){return this.balances[role]||0;}, SpendFactionFunds_S(role,amount){if(amount<0||this.GetFactionFunds(role)<amount)return false;this.balances[role]-=amount;this.payments.push([role,amount]);return true;}};
   const env = {Replication:{IsServer:()=>true}, AROR_EFactionRole:{RESISTANCE:0,OCCUPIERS:1,INVADERS:2}, AROR_EForceType:{MOTORIZED:0,MECHANIZED:1,ARMOUR:2,AIRBORNE:3,INFANTRY:4}, AROR_ELocationType:{TOWN:0,HQ:1,AIRPORT:2,CITY:3,FACTORY:4,MILITARY_BASE:5,PORT:6,RESOURCES:7,OUTPOST:8}, Math:{...Object.fromEntries(['min','max','floor'].map(n=>[n,Math[n]])), Min:Math.min,Max:Math.max,Floor:Math.floor,Clamp:(x,a,b)=>Math.max(a,Math.min(b,x))}, Print:()=>{},LogLevel:{NORMAL:0},string:{Format:(...xs)=>xs.join(' ')}, AROR_EconomyComponent:{GetInstance:()=>bank}, ChimeraCharacter:{Cast:x=>x?.character?x:null},DamageManagerComponent:{Cast:x=>x},FactionAffiliationComponent:{Cast:x=>x}};
-  const methodNames = ['PressureForLevel','WarLevel','Importance','Priority','DesiredTier','VehicleValue','Debt','SetDebt_S','Available','Reserve_S','Charge_S','Activate_S','Observe_S','Tick_S','Register_S','ObserveLosses_S','Retire_S','Reserved','IsLost','VehicleLossValue','ReplacementQuote','Find','RecordLook','InView','GetReservedGroups','GetReservedMembers','GetReservedVehicles','IsReady','IsEnemyRole','HasLocation','RecordStrategicEvidence','SetWarPressure_S','GetWarPressure','GetWarLevel','GetOperation','RequestOperation_S','GetOwner','Clear','HasOperatingQRF','HasPendingQRF','FailOperation'];
-  methodNames.push('ResponseLevel','GetAggressionLevel','GetAggression','SetAggression_S','RecordCaptureEscalation_S','QRFPoolWarLevel','ReportSpawnWait');
+  const methodNames = ['PressureForLevel','ReadinessLevel','Importance','Priority','DesiredTier','VehicleValue','Debt','SetDebt_S','Available','Reserve_S','Charge_S','Activate_S','Observe_S','Tick_S','Register_S','ObserveLosses_S','Retire_S','Reserved','IsLost','VehicleLossValue','ReplacementQuote','Find','RecordLook','InView','GetReservedGroups','GetReservedMembers','GetReservedVehicles','IsReady','IsEnemyRole','HasLocation','RecordStrategicEvidence','SetReadinessPressure_S','GetReadinessPressure','GetReadinessLevel','GetOperation','RequestOperation_S','GetOwner','Clear','HasOperatingQRF','HasPendingQRF','FailOperation'];
+  methodNames.push('ResponseLevel','GetCrackdownLevel','GetCrackdown','SetCrackdown_S','RecordCaptureEscalation_S','QRFPoolReadinessLevel','ReportSpawnWait');
   function compile(source,name) {
     let {args,body} = extract(source,name);
     args = args.replace(/\b(?:notnull |const )?(?:[A-Za-z_]\w*)(?:<[^>]+>)?\s+(\w+)/g,'$1');
@@ -62,20 +62,20 @@ function runQRFTests(sources) {
   for(const name of methodNames.slice(0,6))policy[name]=compile(sources.AROR_QRFStrategicPolicy,name);
   policy.ResponseLevel=compile(sources.AROR_QRFStrategicPolicy,'ResponseLevel');
   for(let pressure=0;pressure<=1000;pressure++) {
-    const level=policy.WarLevel(pressure);
-    check(level>=1&&level<=5,'bounded war level');
+    const level=policy.ReadinessLevel(pressure);
+    check(level>=1&&level<=5,'bounded readiness');
     check(pressure>=policy.PressureForLevel(level),'pressure threshold');
     if(level<5)check(pressure<policy.PressureForLevel(level+1),'next threshold');
   }
-  for(let war=1;war<=5;war++)for(let roll=0;roll<100;roll++)for(const captured of [false,true]) {
-    const tier=policy.DesiredTier(war,0,captured,roll);
+  for(let crackdownLevel=1;crackdownLevel<=5;crackdownLevel++)for(let roll=0;roll<100;roll++)for(const captured of [false,true]) {
+    const tier=policy.DesiredTier(crackdownLevel,0,captured,roll);
     check(tier>=1&&tier<=5,'tier bounds');
-    check(tier===war,'only aggression level sets desired response strength');
-    check(tier===policy.DesiredTier(war,6,captured,roll,180),'priority and random rolls cannot increase response strength');
+    check(tier===crackdownLevel,'only crackdown level sets desired response strength');
+    check(tier===policy.DesiredTier(crackdownLevel,6,captured,roll,180),'priority and random rolls cannot increase response strength');
   }
-  check(policy.DesiredTier(2,3,false,50)===2,'sustained reports affect queue priority without overriding aggression');
-  check(policy.DesiredTier(2,0,false,50,180)===2,'strategic importance cannot override aggression');
-  for(let pressure=-10;pressure<=1010;pressure++)check(policy.ResponseLevel(pressure)===Math.min(5,1+Math.floor(Math.max(0,Math.min(1000,pressure))/200)),'aggression boundary selects an integer response level');
+  check(policy.DesiredTier(2,3,false,50)===2,'sustained reports affect queue priority without overriding crackdown');
+  check(policy.DesiredTier(2,0,false,50,180)===2,'strategic importance cannot override crackdown');
+  for(let pressure=-10;pressure<=1010;pressure++)check(policy.ResponseLevel(pressure)===Math.min(5,1+Math.floor(Math.max(0,Math.min(1000,pressure))/200)),'crackdown boundary selects an integer response level');
   check(policy.Priority(100,1,true,0)>policy.Priority(100,1,false,0),'capture priority');
   check(policy.Priority(100,1000,false,10000)===250,'bounded reports and aging');
   check(policy.Importance(env.AROR_ELocationType.FACTORY)>policy.Importance(env.AROR_ELocationType.TOWN),'economic importance');
@@ -147,7 +147,7 @@ function runQRFTests(sources) {
   const aircraftKind=compile(sources.AROR_QRFSpotting,'IsAircraftKind');
   check(aircraftKind(3)&&aircraftKind(4)&&!aircraftKind(5)&&!aircraftKind(2),'light armed contacts use ground observation range, not aircraft range');
   // Execute actual ground selection against bounded authored-recipe mocks.
-  const groundCtx={m_Operations:{GetWarLevel:()=>5,GetAggressionLevel:()=>5,GetQRFFinance:()=>({Available:()=>bank.balances[1],Debt:()=>0}),QRFOverhead:t=>50+t*10},m_iMaxGroups:20,m_iMaxMembers:128,m_iMaxVehicles:10,GetReservedGroups:()=>0,GetReservedMembers:()=>0,GetReservedVehicles:()=>0,m_aForceProfiles:[],m_aGroundQRFRecipes:[]};
+  const groundCtx={m_Operations:{GetReadinessLevel:()=>5,GetCrackdownLevel:()=>5,GetQRFFinance:()=>({Available:()=>bank.balances[1],Debt:()=>0}),QRFOverhead:t=>50+t*10},m_iMaxGroups:20,m_iMaxMembers:128,m_iMaxVehicles:10,GetReservedGroups:()=>0,GetReservedMembers:()=>0,GetReservedVehicles:()=>0,m_aForceProfiles:[],m_aGroundQRFRecipes:[]};
   const motor=new Profile();
   for(let tier=1;tier<=5;tier++)groundCtx.m_aGroundQRFRecipes.push({m_iLevel:tier,Resolve:(profiles,role,faction,out)=>{if(role!==1||faction!=='AROR_OCCUPIERS')return false;for(let i=0;i<tier;i++)out.push(motor);return true;}});
   const choose=compile(sources.AROR_OperationExecutorComponent,'FindStrategicGroundRecipe');
@@ -168,7 +168,7 @@ function runQRFTests(sources) {
   methodNames.push('FindStrategicGroundRecipe','HasFriendlyQRFOrigin','IsLaunchPositionSafe');
   let allowMinimum=false;
   groundCtx.FindStrategicGroundRecipe=choose;
-  groundCtx.QRFPoolWarLevel=compile(sources.AROR_OperationExecutorComponent,'QRFPoolWarLevel');
+  groundCtx.QRFPoolReadinessLevel=compile(sources.AROR_OperationExecutorComponent,'QRFPoolReadinessLevel');
   groundCtx.m_Operations.AllowsMinimumCaptureQRF=()=>allowMinimum;
   env.AROR_FactionRolesComponent={GetInstance:()=>({GetFactionKey:r=>r===1?'AROR_OCCUPIERS':'AROR_INVADERS'})};
   let originOwner=1,originType=8,originSafe=true;
@@ -182,7 +182,7 @@ function runQRFTests(sources) {
   check(!canFund.call(groundCtx,1,5,false),'combat reports cannot use the scenario minimum-response opt-in');
   check(canFund.call(groundCtx,1,5,true),'capture preflight admits the configured baseline despite an empty bank');
   const select=compile(sources.AROR_OperationExecutorComponent,'SelectStrategicGroundRecipe');
-  const strategicCapture={m_iPoolWarLevel:0,m_iRequestedTier:5,m_bCaptureThreatRecorded:true,GetRole:()=>1};
+  const strategicCapture={m_iPoolReadinessLevel:0,m_iRequestedTier:5,m_bCaptureThreatRecorded:true,GetRole:()=>1};
   check(select.call(groundCtx,strategicCapture,{GetFactionKey:()=>'AROR_OCCUPIERS'}).m_iLevel===1,'actual bound selection downgrades an unfunded high intent to tier one');
   bank.balances[1]=10000;
   check(select.call(groundCtx,strategicCapture,{GetFactionKey:()=>'AROR_OCCUPIERS'}).m_iLevel===5,'available resources still buy the higher response before the minimum exception');
@@ -204,7 +204,7 @@ function runQRFTests(sources) {
   env.AROR_OperationExecutorComponent={Cast:x=>x};
   env.AROR_QRFThreat=function(){Object.assign(this,{m_iNextAttempt:0,m_iNextWaitLog:0,m_iReports:0,m_iNextEvidence:0,m_iDesiredTier:0,m_iTierRoll:-1,m_bCaptured:false});};
   env.AROR_QRFThreat.prototype.Score=function(now){return policy.Priority(this.m_iImportance,this.m_iReports,this.m_bCaptured,now-this.m_iFirstSeen);};
-  const manager={m_iClock:100,m_bInvaderOperationsEnabled:false,m_aQRFThreats:[],m_aOperations:[],m_iQRFThreatLifetime:180,m_iQRFReaction:10,m_QRFFinance:finance,IsReady:()=>true,IsEnemyRole:r=>r===1||r===2,HasLocation:id=>id!=='missing',RecordStrategicEvidence(){},GetWarPressure:()=>100,SetWarPressure_S(){},GetWarLevel:()=>2,GetAggressionLevel:()=>2,RecordCaptureEscalation_S(){}};
+  const manager={m_iClock:100,m_bInvaderOperationsEnabled:false,m_aQRFThreats:[],m_aOperations:[],m_iQRFThreatLifetime:180,m_iQRFReaction:10,m_QRFFinance:finance,IsReady:()=>true,IsEnemyRole:r=>r===1||r===2,HasLocation:id=>id!=='missing',RecordStrategicEvidence(){},GetReadinessPressure:()=>100,SetReadinessPressure_S(){},GetReadinessLevel:()=>2,GetCrackdownLevel:()=>2,RecordCaptureEscalation_S(){}};
   const queue=compile(sources.AROR_OperationManagerComponent,'QueueQRFThreat_S');
   queue.call(manager,1,'town',false);queue.call(manager,1,'town',false);
   check(manager.m_aQRFThreats.length===1&&manager.m_aQRFThreats[0].m_iReports===1,'coalesce and throttle reports');
@@ -287,7 +287,7 @@ function runQRFTests(sources) {
   env.AROR_OperationManagerComponent={Cast:x=>x};env.ESerializeResult={OK:1};env.VERSION=2;
   const saveFinance=new Finance(),saveAccount=saveFinance.Reserve_S(operation('save',1),500,60),saveSoldier=entity(true);
   saveAccount.Register_S(saveSoldier,25,false,'AROR_OCCUPIERS','US');saveSoldier.dead=true;saveFinance.SetDebt_S(1,100);
-  const saved={},saveManager={GetAggressionForSave:role=>role===1?350:900,GetWarPressure:role=>role===1?100:250,GetQRFFinance:()=>saveFinance};
+  const saved={},saveManager={GetCrackdownForSave:role=>role===1?350:900,GetReadinessPressure:role=>role===1?100:250,GetQRFFinance:()=>saveFinance};
   const serialize=compile(sources.AROR_OperationManagerComponentSerializer,'Serialize');
   const beforeSave=bank.balances[1];
   check(serialize(null,saveManager,{WriteValue:(key,value)=>saved[key]=value})===1,'serialize policy state');
@@ -295,7 +295,7 @@ function runQRFTests(sources) {
   check(bank.balances[1]===beforeSave&&!saveAccount.m_aAssets[0].m_bSettled,'save is read only');
   let restored=null;const loadManager={RestoreQRFStrategy_S:(...args)=>restored=args};
   const deserialize=compile(sources.AROR_OperationManagerComponentSerializer,'Deserialize');
-  check(deserialize(null,loadManager,{values:saved})&&restored.join(',')==='100,250,125,0,350,900','restore independent pressure, aggression and liabilities');
+  check(deserialize(null,loadManager,{values:saved})&&restored.join(',')==='100,250,125,0,350,900','restore independent pressure, crackdown and liabilities');
   check(!deserialize(null,loadManager,{values:{...saved,version:3}}),'unknown version rejected');
   check(!deserialize(null,loadManager,{values:{version:1}}),'partial state rejected');
   // Depleted factions keep a bounded baseline capture response, with real bills.

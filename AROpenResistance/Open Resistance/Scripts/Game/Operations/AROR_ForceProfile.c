@@ -5,8 +5,8 @@ class AROR_ForceProfile
 	string m_sId;
 	[Attribute("1", desc: "Enable this profile for selection")]
 	bool m_bEnabled;
-	[Attribute("1", desc: "Minimum campaign war level permitting this profile in a QRF recipe", params: "1 5 1")]
-	int m_iMinimumWarLevel = 1;
+	[Attribute("1", desc: "Minimum campaign readiness permitting this profile in a QRF recipe", params: "1 5 1")]
+	int m_iMinimumReadinessLevel = 1;
 	[Attribute("0", desc: "Classify a mounted support vehicle as light armed transport in map intelligence. Uses the existing crew-only ground execution policy.")]
 	bool m_bLightVehicle;
 	[Attribute("1", UIWidgets.ComboBox, desc: "Campaign role", enums: AROR_FactionRoles.MilitaryRoleParams())]
@@ -90,7 +90,7 @@ class AROR_ForceProfile
 	{
 		if (m_bLightVehicle && m_eType != AROR_EForceType.ARMOUR)
 			return false;
-		if (m_iMinimumWarLevel < 1 || m_iMinimumWarLevel > 5)
+		if (m_iMinimumReadinessLevel < 1 || m_iMinimumReadinessLevel > 5)
 			return false;
 		if (m_iPersonnelLossValue < 0 || m_iPersonnelLossValue > 100000)
 			return false;

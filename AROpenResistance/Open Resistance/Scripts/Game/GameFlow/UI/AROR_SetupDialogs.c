@@ -53,23 +53,6 @@ class AROR_SetupDialogBase : SCR_ConfigurableDialogUi
 }
 
 //------------------------------------------------------------------------------------------------
-//! Main choice: new or load
-class AROR_SetupMainDialog : AROR_SetupDialogBase
-{
-	//------------------------------------------------------------------------------------------------
-	void AROR_SetupMainDialog(AROR_SetupUIComponent setupUI)
-	{
-		m_SetupUI = setupUI;
-	}
-
-	//------------------------------------------------------------------------------------------------
-	override protected string GetDialogId()
-	{
-		return AROR_SetupUIComponent.DIALOG_MAIN;
-	}
-}
-
-//------------------------------------------------------------------------------------------------
 //! Confirms the HQ position picked on the map
 class AROR_SetupHQConfirmDialog : AROR_SetupDialogBase
 {
@@ -93,67 +76,6 @@ class AROR_SetupHQConfirmDialog : AROR_SetupDialogBase
 		SCR_InputButtonComponent startButton = FindButton("start");
 		if (startButton)
 			startButton.SetEnabled(valid);
-	}
-}
-
-//------------------------------------------------------------------------------------------------
-//! Steps through the saves sent by the server
-class AROR_SetupLoadDialog : AROR_SetupDialogBase
-{
-	protected ref array<string> m_aSaveLabels = {};
-	protected int m_iIndex;
-
-	//------------------------------------------------------------------------------------------------
-	void AROR_SetupLoadDialog(AROR_SetupUIComponent setupUI, notnull array<string> saveLabels)
-	{
-		m_SetupUI = setupUI;
-		m_aSaveLabels.Copy(saveLabels);
-	}
-
-	//------------------------------------------------------------------------------------------------
-	override protected string GetDialogId()
-	{
-		return AROR_SetupUIComponent.DIALOG_LOAD;
-	}
-
-	//------------------------------------------------------------------------------------------------
-	override protected int GetActionValue()
-	{
-		return m_iIndex;
-	}
-
-	//------------------------------------------------------------------------------------------------
-	void Refresh()
-	{
-		int count = m_aSaveLabels.Count();
-		if (count == 0)
-			SetMessage("No saved campaigns for this map.");
-		else
-			SetMessage(string.Format("Save %1 of %2:\n%3", m_iIndex + 1, count, m_aSaveLabels[m_iIndex]));
-
-		SetButtonEnabled("previous", m_iIndex > 0);
-		SetButtonEnabled("next", m_iIndex < count - 1);
-		SetButtonEnabled("load", count > 0);
-	}
-
-	//------------------------------------------------------------------------------------------------
-	override protected void OnButtonPressed(SCR_InputButtonComponent button)
-	{
-		string tag = GetButtonTag(button);
-
-		// Paging keeps the dialog open
-		if (tag == "previous" || tag == "next")
-		{
-			if (tag == "previous" && m_iIndex > 0)
-				m_iIndex--;
-			else if (tag == "next" && m_iIndex < m_aSaveLabels.Count() - 1)
-				m_iIndex++;
-
-			Refresh();
-			return;
-		}
-
-		super.OnButtonPressed(button);
 	}
 }
 

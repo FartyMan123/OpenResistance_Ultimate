@@ -140,9 +140,6 @@ class AROR_HiCommApp
 	//! Phosphor-skinned game map: our map config (colour overrides on the base map) and the tint multiplied over
 	//! everything the map draws. The tint darkens the map's land, whose colour the configs do not expose.
 	protected static const ResourceName GAME_MAP_CONFIG = "{6AB4E0F1A2C0A001}Configs/Map/AROR_HiCommMap.conf";
-	protected static const float GAME_MAP_TINT_R = 0.42;
-	protected static const float GAME_MAP_TINT_G = 0.62;
-	protected static const float GAME_MAP_TINT_B = 0.5;
 
 	//! Map: pick radius and drag threshold (pixels), order ping length (ms), keyboard pan (px/s), wheel zoom step
 	protected static const float PICK_RADIUS = 18;
@@ -162,7 +159,7 @@ class AROR_HiCommApp
 	protected CanvasWidget m_wMapOverlay;
 	protected Widget m_wMapClip;	//!< Clipping frame the base canvas slides in
 	protected Widget m_wGameMapRoot;	//!< Holds the real game map (base-game Map.layout)
-	protected bool m_bUseGameMap;	//!< Terrain view (game map, experimental: its phosphor skin does not apply yet) or tactical view
+	protected bool m_bUseGameMap = true;	//!< Base game map (default for now, untinted) or the procedural tactical view
 	protected bool m_bGameMapOpen;
 	protected Widget m_wMapButton;
 	protected EditBoxWidget m_wNameEdit;
@@ -1176,8 +1173,9 @@ class AROR_HiCommApp
 		if (!m_bGameMapOpen || !gameMap)
 			return;
 
+		// Plain base map for now; a phosphor recolour is to be revisited
 		if (gameMap.GetMapWidget())
-			gameMap.GetMapWidget().SetColor(new Color(GAME_MAP_TINT_R, GAME_MAP_TINT_G, GAME_MAP_TINT_B, 1));
+			gameMap.GetMapWidget().SetColor(Color.FromRGBA(255, 255, 255, 255));
 
 		gameMap.ZoomOut();
 		m_Map.SetGameMap(gameMap);
@@ -1891,11 +1889,8 @@ class AROR_HiCommApp
 			}
 			else
 			{
-				// Dark backing disc so the faction colour reads on any terrain shade
-				m_Map.DrawCircle(point, 9 * markerScale, AROR_HiCommMap.Srgb(4, 10, 7, 0.7), true, 1, 16);
-				m_aIconTextures.Insert(icon);
-				m_aIconPositions.Insert(point);
-				m_aIconColors.Insert(color);
+				// Same military-frame symbol as the location map (AROR_MapFrameIcon)
+				DrawFrameSymbol(point, 22 * markerScale, type, role, color);
 			}
 
 			string id = location.GetId();
@@ -1921,6 +1916,30 @@ class AROR_HiCommApp
 		AROR_LocationComponent target = FindLocation(m_sSelectedTarget);
 		if (target)
 			m_Map.DrawReticle(m_Map.WorldToScreen(target.GetCenter()), 13 * markerScale, AROR_HiCommMap.Rgb(PAL_AMBER, 1));
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! A location's military-frame symbol centred on its map point: frame by owner, pale fill, glyph by type.
+	//! Line widths scale with the symbol, matching the 40-pixel location map icon.
+	protected void DrawFrameSymbol(vector point, float size, AROR_ELocationType type, AROR_EFactionRole owner, Color color)
+	{
+		float left = point[0] - size * 0.5;
+		float top = point[1] - size * 0.5;
+		float lineScale = size / 40;
+		Color stroke = AROR_MapFrameIcon.StrokeColor(color);
+
+		array<float> frame = {};
+		AROR_MapFrameIcon.FrameOutline(owner, left, top, size, frame);
+		m_Map.DrawPolygon(frame, AROR_MapFrameIcon.FillColor(stroke));
+		m_Map.DrawPolyline(frame, AROR_MapFrameIcon.KeylineColor(), AROR_MapFrameIcon.KEYLINE_WIDTH * lineScale, true);
+		m_Map.DrawPolyline(frame, stroke, AROR_MapFrameIcon.BORDER_WIDTH * lineScale, true);
+
+		array<ref array<float>> strokes = {};
+		AROR_MapFrameIcon.GlyphStrokes(type, owner, left, top, size, strokes);
+		foreach (array<float> strokeLine : strokes)
+		{
+			m_Map.DrawPolyline(strokeLine, stroke, AROR_MapFrameIcon.GLYPH_WIDTH * lineScale, false);
+		}
 	}
 
 	//------------------------------------------------------------------------------------------------

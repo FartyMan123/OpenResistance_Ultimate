@@ -11,8 +11,8 @@ function runInvaderCampaignTests(sources, catalogue) {
   const bank={balances:{1:100000,2:10000},payments:[],GetFactionFunds(r){return this.balances[r]??0;},
     AddFactionFunds_S(r,n){if(server)this.balances[r]+=n;},SpendFactionFunds_S(r,n){if(!server||n<0||this.balances[r]<n)return false;this.balances[r]-=n;this.payments.push([r,n]);return true;}};
   const reserves={1:0,2:0},debt={1:0,2:0},finance={Available:r=>debt[r]>0?0:Math.max(0,bank.GetFactionFunds(r)-reserves[r])};
-  let war=2,aggression=10,physical=[],pending=false,allSites=[];
-  const operations={GetWarLevel:()=>war,GetAggressionPercent:()=>aggression,GetQRFFinance:()=>finance,GetOperations:a=>a.Copy(physical),HasPendingQRFThreat:()=>pending};
+  let readinessLevel=2,crackdown=10,physical=[],pending=false,allSites=[];
+  const operations={GetReadinessLevel:()=>readinessLevel,GetCrackdownPercent:()=>crackdown,GetQRFFinance:()=>finance,GetOperations:a=>a.Copy(physical),HasPendingQRFThreat:()=>pending};
   const env={AROR_EFactionRole:role,AROR_ELocationType:type,ESerializeResult:{OK:1},float:{MAX:Infinity},
     Replication:{IsServer:()=>server,BumpMe:()=>bumps++},Math:{Min:Math.min,Max:Math.max,Round:Math.round,Floor:Math.floor,Ceil:Math.ceil,Clamp:(x,a,b)=>Math.max(a,Math.min(b,x)),RandomInt:(a,b)=>rolls.length?rolls.shift():Math.floor(a+random()*(b-a))},
     vector:{DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])},Print(){},LogLevel:{NORMAL:0,ERROR:1},string:{Format:()=>''},
@@ -36,7 +36,7 @@ function runInvaderCampaignTests(sources, catalogue) {
   const policy={};env.AROR_InvaderCampaignPolicy=policy;
   for(const n of names.slice(0,5))policy[n]=compile(sources.policy,n);
   const campaign={m_bInvaderCampaign:true,m_bSeeded:false,m_bQuarantined:false,m_iNextBattleAt:0,m_iRestoredDelay:-1,m_iInitialDelay:120,m_iBattleInterval:300,m_iOpeningGrant:20000,
-    m_sCorridorId:'corridor',m_sForwardBaseId:'base',m_iBaselineShare:40,m_iBattleCost:1000,m_fFrontierReach:3500,m_fPlayerClearance:3000,m_iExternalSupport:1500,m_iFundingPerWar:750,m_iFundingPerAggression:30,
+    m_sCorridorId:'corridor',m_sForwardBaseId:'base',m_iBaselineShare:40,m_iBattleCost:1000,m_fFrontierReach:3500,m_fPlayerClearance:3000,m_iExternalSupport:1500,m_iFundingPerReadiness:750,m_iFundingPerCrackdown:30,
     m_aSites:[],m_aPlayers:[],m_aOperations:[],m_Commanders:{IsCampaignActive:()=>true},m_Operations:operations,m_Economy:bank,Cast:x=>x};
   env.AROR_InvaderCampaignComponent=campaign;campaign.s_Instance=campaign;campaign.GetInstance=()=>campaign;
   const registry={GetLocations:a=>a.Copy(allSites),GetLocationById:id=>allSites.find(s=>s.id===id)};env.AROR_LocationManagerComponent={GetInstance:()=>registry};
@@ -52,7 +52,7 @@ function runInvaderCampaignTests(sources, catalogue) {
   check(policy.BattleChance(1000,0,0,0)>50&&policy.BattleChance(1000,1000,8,0)>50,'funding and industry influence battle strength');
   check(policy.TargetShare(40,1,0)===40&&policy.TargetShare(40,2,10)===40,'calm baseline targets two fifths');
   check(policy.TargetShare(40,5,100)>40&&policy.TargetShare(80,5,100)===80,'escalation expands bounded territorial ambition');
-  check(policy.Funding(1500,750,30,2,10)===1800&&policy.Funding(1500,750,30,5,100)===6750,'war/aggression scale support bonus');
+  check(policy.Funding(1500,750,30,2,10)===1800&&policy.Funding(1500,750,30,5,100)===6750,'readiness/crackdown scale support bonus');
   check(policy.InvaderAttackChance(4,10,40)===50&&policy.InvaderAttackChance(1,10,40)>50&&policy.InvaderAttackChance(8,10,40)<50,'soft target biases advances and counterattacks');
   check(policy.InvaderAttackChance(4,10,40,39,61)===61,'selection compensates for unequal industrial battle odds at equilibrium');
   check(policy.Cost(type.SUPPORT_CORRIDOR,1000)===0&&policy.Cost(type.CITY,1000)===0,'corridor/settlements excluded from simulated military capture');
@@ -60,8 +60,8 @@ function runInvaderCampaignTests(sources, catalogue) {
   campaignReady=false;evaluate();check(!campaign.m_bSeeded&&bank.balances[2]===10000,'no grant before campaign setup');campaignReady=true;
   evaluate();evaluate();check(campaign.m_bSeeded&&bank.balances[2]===30000&&bank.payments.length===0,'opening grant paid once with initial preparation delay');
   check(campaign.GetExternalSupportBonus()===1800,'bonus exposed for the existing income authority');
-  war=5;check(campaign.GetExternalSupportBonus()===4050,'war capability can increase strategic backing while aggression remains low');
-  war=2;aggression=100;check(campaign.GetExternalSupportBonus()===4500,'aggression can increase strategic backing without changing the equipment war level');aggression=10;
+  readinessLevel=5;check(campaign.GetExternalSupportBonus()===4050,'readiness can increase strategic backing while crackdown remains low');
+  readinessLevel=2;crackdown=100;check(campaign.GetExternalSupportBonus()===4500,'crackdown can increase strategic backing without changing the equipment readiness');crackdown=10;
   const income=compile(sources.income,'GetExternalSupport');
   check(income.call({m_iOccupiersExternalSupport:500,m_iInvadersExternalSupport:500},2)===2300&&income.call({m_iOccupiersExternalSupport:500,m_iInvadersExternalSupport:500},1)===500,'only Invader external payout gains escalation bonus');
   campaign.Survey_S();check(campaign.m_aSites.length===3,'survey excludes fixed corridor');
