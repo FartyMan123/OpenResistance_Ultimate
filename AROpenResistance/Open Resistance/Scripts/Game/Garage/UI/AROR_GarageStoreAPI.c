@@ -1,5 +1,5 @@
 //! Client entry point to garage the vehicle under the local character's view (see ARCHITECTURE.md).
-//! Call TryStoreLookedAtVehicle() from a future trigger. No hotkey wired yet.
+//! Triggered from the phone home quick dock (slot 0).
 class AROR_GarageStoreAPI
 {
 	//------------------------------------------------------------------------------------------------

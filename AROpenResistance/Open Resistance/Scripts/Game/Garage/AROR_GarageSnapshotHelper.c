@@ -76,11 +76,7 @@ class AROR_GarageSnapshotHelper
 		AROR_GarageVehicleEntry entry = new AROR_GarageVehicleEntry();
 		entry.m_sPrefab = prefab;
 
-		if (damage)
-			entry.m_fHealthScaled = damage.GetHealthScaled();
-		else
-			entry.m_fHealthScaled = 1;
-
+		CaptureHitZones(vehicle, entry);
 		CaptureFuel(vehicle, entry);
 		CaptureCargo(vehicle, entry);
 		CaptureWeaponAmmo(vehicle, entry);
@@ -94,14 +90,82 @@ class AROR_GarageSnapshotHelper
 		if (!Replication.IsServer() || !vehicle)
 			return;
 
-		DamageManagerComponent damage = DamageManagerComponent.Cast(vehicle.FindComponent(DamageManagerComponent));
-		if (damage)
-			damage.SetHealthScaled(Math.Clamp(entry.m_fHealthScaled, 0, 1));
-
+		ApplyHitZones(vehicle, entry);
 		ApplyFuel(vehicle, entry);
 		ClearCargo(vehicle);
 		ApplyCargo(vehicle, entry);
 		ApplyWeaponAmmo(vehicle, entry);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Captures every hit zone in the vehicle hierarchy (wheels, hull, engine, fuel tanks, …)
+	protected static void CaptureHitZones(IEntity vehicle, notnull AROR_GarageVehicleEntry entry)
+	{
+		entry.m_aHitZones.Clear();
+		entry.m_fHealthScaled = 1;
+
+		DamageManagerComponent damage = DamageManagerComponent.Cast(vehicle.FindComponent(DamageManagerComponent));
+		if (!damage)
+			return;
+
+		entry.m_fHealthScaled = damage.GetHealthScaled();
+
+		array<HitZone> hitZones = {};
+		damage.GetAllHitZonesInHierarchy(hitZones);
+		foreach (HitZone hitZone : hitZones)
+		{
+			if (!hitZone)
+				continue;
+
+			string name = hitZone.GetName();
+			if (name.IsEmpty())
+				continue;
+
+			AROR_GarageHitZoneSnapshot snap = new AROR_GarageHitZoneSnapshot();
+			snap.m_sName = name;
+			snap.m_fHealthScaled = hitZone.GetHealthScaled();
+			entry.m_aHitZones.Insert(snap);
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static void ApplyHitZones(IEntity vehicle, notnull AROR_GarageVehicleEntry entry)
+	{
+		DamageManagerComponent damage = DamageManagerComponent.Cast(vehicle.FindComponent(DamageManagerComponent));
+		if (!damage)
+			return;
+
+		if (entry.m_aHitZones.IsEmpty())
+		{
+			damage.SetHealthScaled(Math.Clamp(entry.m_fHealthScaled, 0, 1));
+			return;
+		}
+
+		array<HitZone> hitZones = {};
+		damage.GetAllHitZonesInHierarchy(hitZones);
+
+		map<string, HitZone> byName = new map<string, HitZone>();
+		foreach (HitZone hitZone : hitZones)
+		{
+			if (!hitZone)
+				continue;
+
+			string name = hitZone.GetName();
+			if (!name.IsEmpty())
+				byName.Set(name, hitZone);
+		}
+
+		foreach (AROR_GarageHitZoneSnapshot snap : entry.m_aHitZones)
+		{
+			if (!snap || snap.m_sName.IsEmpty())
+				continue;
+
+			HitZone hitZone;
+			if (!byName.Find(snap.m_sName, hitZone) || !hitZone)
+				continue;
+
+			hitZone.SetHealthScaled(Math.Clamp(snap.m_fHealthScaled, 0, 1));
+		}
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -143,12 +207,13 @@ class AROR_GarageSnapshotHelper
 	//------------------------------------------------------------------------------------------------
 	protected static void CaptureFuel(IEntity vehicle, notnull AROR_GarageVehicleEntry entry)
 	{
+		entry.m_aFuelTankIds.Clear();
+		entry.m_aFuelAmounts.Clear();
+		entry.m_fFuelNormalized = 0;
+
 		FuelManagerComponent fuelManager = FuelManagerComponent.Cast(vehicle.FindComponent(FuelManagerComponent));
 		if (!fuelManager)
-		{
-			entry.m_fFuelNormalized = 0;
 			return;
-		}
 
 		array<BaseFuelNode> nodes = {};
 		fuelManager.GetFuelNodesList(nodes);
@@ -163,12 +228,16 @@ class AROR_GarageSnapshotHelper
 			entry.m_aFuelAmounts.Insert(amount);
 			total += amount;
 			totalMax += node.GetMaxFuel();
+
+			SCR_FuelNode scrNode = SCR_FuelNode.Cast(node);
+			if (scrNode)
+				entry.m_aFuelTankIds.Insert(scrNode.GetFuelTankID());
+			else
+				entry.m_aFuelTankIds.Insert(-1);
 		}
 
 		if (totalMax > 0)
 			entry.m_fFuelNormalized = Math.Clamp(total / totalMax, 0, 1);
-		else
-			entry.m_fFuelNormalized = 0;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -180,11 +249,36 @@ class AROR_GarageSnapshotHelper
 
 		array<BaseFuelNode> nodes = {};
 		fuelManager.GetFuelNodesList(nodes);
+		if (nodes.IsEmpty())
+			return;
 
-		if (entry.m_aFuelAmounts.Count() == nodes.Count() && !entry.m_aFuelAmounts.IsEmpty())
+		int amountCount = entry.m_aFuelAmounts.Count();
+		int tankCount = entry.m_aFuelTankIds.Count();
+		if (amountCount > 0 && tankCount == amountCount)
 		{
-			int count = nodes.Count();
-			for (int i = 0; i < count; i++)
+			foreach (BaseFuelNode node : nodes)
+			{
+				SCR_FuelNode scrNode = SCR_FuelNode.Cast(node);
+				if (!scrNode)
+					continue;
+
+				int tankId = scrNode.GetFuelTankID();
+				for (int i = 0; i < tankCount; i++)
+				{
+					if (entry.m_aFuelTankIds[i] != tankId)
+						continue;
+
+					scrNode.SetFuel(entry.m_aFuelAmounts[i]);
+					break;
+				}
+			}
+
+			return;
+		}
+
+		if (amountCount == nodes.Count() && amountCount > 0)
+		{
+			for (int i = 0; i < amountCount; i++)
 			{
 				BaseFuelNode node = nodes[i];
 				if (node)

@@ -3,41 +3,32 @@ GenericEntity : "{DB4F61D5F37432F7}Prefabs/Props/Military/Camps/PalletFuel_01.et
  components {
   Persistence "{6AB5C0D1E2F30430}" {
   }
-  RplComponent "{6AB5C0D1E2F30431}" {
-  }
-  ActionsManagerComponent "{6AB5C0D1E2F30432}" {
+  ActionsManagerComponent "{6AB676BC68EE62C9}" {
    ActionContexts {
-    UserActionContext "{6AB5C0D1E2F30433}" {
-     UIInfo SCR_ActionContextUIInfo "{6AB5C0D1E2F30434}" {
+    UserActionContext "{6AB676BC68EE62D0}" {
+     UIInfo SCR_ActionContextUIInfo "{6AB676BC68EE62D1}" {
       Name "Garage"
      }
-     ContextName "default"
-     Position PointInfo "{6AB5C0D1E2F30435}" {
-      Offset 0 1 0
+     ContextName "garage"
+     Position PointInfo "{6AB676BC68EE62D2}" {
+      Offset 0 0.5 0
      }
-     Radius 2
+     Radius 2.5
     }
    }
    additionalActions {
-    AROR_GarageRetrieveAction "{6AB5C0D1E2F30436}" {
+    AROR_GarageRetrieveAction "{6AB676BC68EE62D3}" {
      ParentContextList {
-      "default"
+      "garage"
      }
-     UIInfo SCR_ActionUIInfo "{6AB5C0D1E2F30437}" {
+     UIInfo SCR_ActionUIInfo "{6AB676BC68EE62D4}" {
       Name "Retrieve vehicle"
      }
+     ActionTitle "Open Garage"
      "Sort Priority" 1
-    }
-    AROR_GarageStoreAction "{6AB5C0D1E2F30438}" {
-     ParentContextList {
-      "default"
-     }
-     UIInfo SCR_ActionUIInfo "{6AB5C0D1E2F30439}" {
-      Name "Store vehicle"
-     }
-     "Sort Priority" 2
     }
    }
   }
  }
+ coords 5499.169 95.767 6090.204
 }

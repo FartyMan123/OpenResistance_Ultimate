@@ -2,7 +2,7 @@
 //! Full cargo trees and weapon ammo are flattened to parallel arrays. Nothing is written while empty.
 class AROR_ResistanceGarageComponentSerializer : ScriptedComponentSerializer
 {
-	protected static const int VERSION = 1;
+	protected static const int VERSION = 2;
 
 	//------------------------------------------------------------------------------------------------
 	override static typename GetTargetType()
@@ -26,7 +26,12 @@ class AROR_ResistanceGarageComponentSerializer : ScriptedComponentSerializer
 		array<float> fuelFractions = {};
 
 		array<int> fuelEntryIds = {};
+		array<int> fuelTankIds = {};
 		array<float> fuelAmounts = {};
+
+		array<int> hitZoneEntryIds = {};
+		array<string> hitZoneNames = {};
+		array<float> hitZoneHealths = {};
 
 		array<int> weaponEntryIds = {};
 		array<int> weaponIndices = {};
@@ -50,10 +55,25 @@ class AROR_ResistanceGarageComponentSerializer : ScriptedComponentSerializer
 			healths.Insert(entry.m_fHealthScaled);
 			fuelFractions.Insert(entry.m_fFuelNormalized);
 
-			foreach (float amount : entry.m_aFuelAmounts)
+			int fuelCount = entry.m_aFuelAmounts.Count();
+			for (int f = 0; f < fuelCount; f++)
 			{
 				fuelEntryIds.Insert(entry.m_iId);
-				fuelAmounts.Insert(amount);
+				fuelAmounts.Insert(entry.m_aFuelAmounts[f]);
+				if (f < entry.m_aFuelTankIds.Count())
+					fuelTankIds.Insert(entry.m_aFuelTankIds[f]);
+				else
+					fuelTankIds.Insert(-1);
+			}
+
+			foreach (AROR_GarageHitZoneSnapshot hitZone : entry.m_aHitZones)
+			{
+				if (!hitZone || hitZone.m_sName.IsEmpty())
+					continue;
+
+				hitZoneEntryIds.Insert(entry.m_iId);
+				hitZoneNames.Insert(hitZone.m_sName);
+				hitZoneHealths.Insert(hitZone.m_fHealthScaled);
 			}
 
 			foreach (AROR_GarageWeaponAmmoSnapshot ammo : entry.m_aWeaponAmmo)
@@ -82,7 +102,11 @@ class AROR_ResistanceGarageComponentSerializer : ScriptedComponentSerializer
 		context.WriteValue("healths", healths);
 		context.WriteValue("fuelFractions", fuelFractions);
 		context.WriteValue("fuelEntryIds", fuelEntryIds);
+		context.WriteValue("fuelTankIds", fuelTankIds);
 		context.WriteValue("fuelAmounts", fuelAmounts);
+		context.WriteValue("hitZoneEntryIds", hitZoneEntryIds);
+		context.WriteValue("hitZoneNames", hitZoneNames);
+		context.WriteValue("hitZoneHealths", hitZoneHealths);
 		context.WriteValue("weaponEntryIds", weaponEntryIds);
 		context.WriteValue("weaponIndices", weaponIndices);
 		context.WriteValue("weaponMagPrefabs", weaponMagPrefabs);
@@ -103,7 +127,7 @@ class AROR_ResistanceGarageComponentSerializer : ScriptedComponentSerializer
 
 		int version;
 		context.ReadValue("version", version);
-		if (version != VERSION)
+		if (version < 1 || version > VERSION)
 			return true;
 
 		int nextId = 1;
@@ -114,7 +138,11 @@ class AROR_ResistanceGarageComponentSerializer : ScriptedComponentSerializer
 		array<float> healths = {};
 		array<float> fuelFractions = {};
 		array<int> fuelEntryIds = {};
+		array<int> fuelTankIds = {};
 		array<float> fuelAmounts = {};
+		array<int> hitZoneEntryIds = {};
+		array<string> hitZoneNames = {};
+		array<float> hitZoneHealths = {};
 		array<int> weaponEntryIds = {};
 		array<int> weaponIndices = {};
 		array<ResourceName> weaponMagPrefabs = {};
@@ -133,6 +161,14 @@ class AROR_ResistanceGarageComponentSerializer : ScriptedComponentSerializer
 		context.ReadValue("fuelFractions", fuelFractions);
 		context.ReadValue("fuelEntryIds", fuelEntryIds);
 		context.ReadValue("fuelAmounts", fuelAmounts);
+		if (version >= 2)
+		{
+			context.ReadValue("fuelTankIds", fuelTankIds);
+			context.ReadValue("hitZoneEntryIds", hitZoneEntryIds);
+			context.ReadValue("hitZoneNames", hitZoneNames);
+			context.ReadValue("hitZoneHealths", hitZoneHealths);
+		}
+
 		context.ReadValue("weaponEntryIds", weaponEntryIds);
 		context.ReadValue("weaponIndices", weaponIndices);
 		context.ReadValue("weaponMagPrefabs", weaponMagPrefabs);
@@ -173,6 +209,26 @@ class AROR_ResistanceGarageComponentSerializer : ScriptedComponentSerializer
 				continue;
 
 			entry.m_aFuelAmounts.Insert(fuelAmounts[i]);
+			if (i < fuelTankIds.Count())
+				entry.m_aFuelTankIds.Insert(fuelTankIds[i]);
+			else
+				entry.m_aFuelTankIds.Insert(-1);
+		}
+
+		int hitZoneCount = Math.Min(hitZoneEntryIds.Count(), Math.Min(hitZoneNames.Count(), hitZoneHealths.Count()));
+		for (int i = 0; i < hitZoneCount; i++)
+		{
+			AROR_GarageVehicleEntry entry;
+			if (!byId.Find(hitZoneEntryIds[i], entry) || !entry)
+				continue;
+
+			if (hitZoneNames[i].IsEmpty())
+				continue;
+
+			AROR_GarageHitZoneSnapshot snap = new AROR_GarageHitZoneSnapshot();
+			snap.m_sName = hitZoneNames[i];
+			snap.m_fHealthScaled = hitZoneHealths[i];
+			entry.m_aHitZones.Insert(snap);
 		}
 
 		int weaponCount = Math.Min(Math.Min(weaponEntryIds.Count(), weaponIndices.Count()), Math.Min(weaponMagPrefabs.Count(), weaponAmmoCounts.Count()));

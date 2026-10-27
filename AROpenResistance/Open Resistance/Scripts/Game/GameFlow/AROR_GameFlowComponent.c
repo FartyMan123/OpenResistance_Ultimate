@@ -25,7 +25,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Garage prefab spawned beside the HQ (opposite side from the arsenal)", params: "et")]
 	protected ResourceName m_sGaragePrefab;
 
-	[Attribute("1 0 0", UIWidgets.Coords, desc: "World offset from the HQ origin (flag) used when placing the first arsenal")]
+	[Attribute("0.5 0 0", UIWidgets.Coords, desc: "World offset from the HQ origin (flag): arsenal at +offset, garage at -offset (opposite sides)")]
 	protected vector m_vArsenalOffsetFromHQ;
 
 	[Attribute("100", UIWidgets.Slider, desc: "Minimum distance in metres between the HQ and the edge (radius) of any location", params: "0 5000 10")]

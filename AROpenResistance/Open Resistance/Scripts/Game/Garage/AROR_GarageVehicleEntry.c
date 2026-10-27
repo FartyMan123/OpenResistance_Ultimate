@@ -24,18 +24,31 @@ class AROR_GarageWeaponAmmoSnapshot : Managed
 	int m_iAmmoCount;
 }
 
+//! Per hit-zone health on a garaged vehicle (wheels, engine, fuel tanks, etc.)
+class AROR_GarageHitZoneSnapshot : Managed
+{
+	string m_sName;
+	float m_fHealthScaled = 1;
+}
+
 //! Unique Resistance Garage entry (see ARCHITECTURE.md -> Resistance Garage).
 //! Prefab alone is never the key — each store gets a monotonic id.
 class AROR_GarageVehicleEntry : Managed
 {
 	int m_iId;
 	ResourceName m_sPrefab;
+
+	//! Default hit-zone health for UI summaries (0..1)
 	float m_fHealthScaled = 1;
+
+	//! Full hit-zone map so wheels/parts survive store/retrieve (not just default health)
+	ref array<ref AROR_GarageHitZoneSnapshot> m_aHitZones = {};
 
 	//! 0..1 total fuel / total max fuel at store time (0 when the vehicle has no fuel system)
 	float m_fFuelNormalized;
 
-	//! Per-node absolute fuel amounts (BaseFuelNode order) for accurate restore later
+	//! Per SCR_FuelNode tank id + absolute fuel (matched by id on restore)
+	ref array<int> m_aFuelTankIds = {};
 	ref array<float> m_aFuelAmounts = {};
 
 	ref array<ref AROR_GarageItemSnapshot> m_aCargoRoots = {};

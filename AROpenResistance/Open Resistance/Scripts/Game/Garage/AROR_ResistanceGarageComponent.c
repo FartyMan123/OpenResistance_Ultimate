@@ -418,8 +418,9 @@ class AROR_ResistanceGarageComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Client + server: TraceBox clearance at surface-grounded position
-	bool IsPlacementClear(vector position, out string reason)
+	//! Client + server: TraceBox clearance at surface-grounded position.
+	//! exclude: optional entity (and its hierarchy) ignored — needed so the client ghost does not block itself.
+	bool IsPlacementClear(vector position, out string reason, IEntity exclude = null)
 	{
 		BaseWorld world = GetGame().GetWorld();
 		if (!world)
@@ -429,7 +430,7 @@ class AROR_ResistanceGarageComponent : SCR_BaseGameModeComponent
 		}
 
 		float surfaceY = world.GetSurfaceY(position[0], position[2]);
-		if (surfaceY <= 0)
+		if (surfaceY <= world.GetOceanHeight(position[0], position[2]) + 0.25)
 		{
 			reason = "Cannot place in water";
 			return false;
@@ -441,7 +442,15 @@ class AROR_ResistanceGarageComponent : SCR_BaseGameModeComponent
 		trace.End = trace.Start + Vector(0, 0.05, 0);
 		trace.Mins = Vector(-m_fPlaceClearanceHalfExtent, 0, -m_fPlaceClearanceHalfExtent);
 		trace.Maxs = Vector(m_fPlaceClearanceHalfExtent, m_fPlaceClearanceHeight, m_fPlaceClearanceHalfExtent);
-		trace.Flags = TraceFlags.ENTS | TraceFlags.VISIBILITY;
+		trace.Flags = TraceFlags.ENTS;
+		if (exclude)
+		{
+			array<IEntity> excludes = {};
+			CollectEntityHierarchy(exclude, excludes);
+			trace.Exclude = exclude;
+			trace.ExcludeArray = excludes;
+		}
+
 		if (world.TraceMove(trace, null) != 1)
 		{
 			reason = "Placement blocked";
@@ -449,6 +458,21 @@ class AROR_ResistanceGarageComponent : SCR_BaseGameModeComponent
 		}
 
 		return true;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static void CollectEntityHierarchy(IEntity root, notnull array<IEntity> outEntities)
+	{
+		if (!root)
+			return;
+
+		outEntities.Insert(root);
+		IEntity child = root.GetChildren();
+		while (child)
+		{
+			CollectEntityHierarchy(child, outEntities);
+			child = child.GetSibling();
+		}
 	}
 
 	//------------------------------------------------------------------------------------------------

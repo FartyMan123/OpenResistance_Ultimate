@@ -10,7 +10,6 @@ class AROR_GarageBrowseDialog : SCR_ConfigurableDialogUi
 		SetButtonEnabled("previous", AROR_GarageRetrieveUI.CanStepPrevious());
 		SetButtonEnabled("next", AROR_GarageRetrieveUI.CanStepNext());
 		SetButtonEnabled("spawn", AROR_GarageRetrieveUI.GetSelectedEntryId() > 0);
-		SetButtonEnabled("inventory", AROR_GarageRetrieveUI.GetSelectedEntryId() > 0);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -56,8 +55,6 @@ class AROR_GarageBrowseDialog : SCR_ConfigurableDialogUi
 		AROR_GarageRetrieveUI scheduler = AROR_GarageRetrieveUI.GetScheduler();
 		if (m_sPressedTag == "spawn")
 			GetGame().GetCallqueue().CallLater(scheduler.RequestSpawnPlacement_I, 0, false);
-		else if (m_sPressedTag == "inventory")
-			GetGame().GetCallqueue().CallLater(scheduler.RequestInventory_I, 0, false);
 		else if (m_sPressedTag == "cancel")
 			AROR_GarageRetrieveUI.CloseAll();
 	}

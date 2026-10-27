@@ -1,7 +1,14 @@
-//! Client-only ghost placement for garage retrieve (GM-like: move, rotate, place/cancel).
+//! Client-only ghost placement for garage retrieve (overhead view: move, rotate, place/cancel).
 //! Selection already happened in the browse dialog — no build catalogue.
 class AROR_GaragePlacementController
 {
+	protected static const ResourceName OVERHEAD_CAMERA_PREFAB = "{D6DE32D1C0FCC1C7}Prefabs/Editor/Camera/ManualCameraBase.et";
+	protected static const float OVERHEAD_HEIGHT = 28;
+	protected static const float OVERHEAD_PITCH = -85;
+	protected static const float OVERHEAD_FOV = 40;
+	//! Metres of ground travel per unscaled screen pixel of mouse delta (absolute raycast felt far too fast)
+	protected static const float MOUSE_METERS_PER_PIXEL = 0.025;
+
 	protected static bool s_bActive;
 	protected static int s_iEntryId = -1;
 	protected static ResourceName s_sPrefab;
@@ -14,6 +21,12 @@ class AROR_GaragePlacementController
 	protected static bool s_bPlaceHeld;
 	protected static bool s_bCancelHeld;
 	protected static bool s_bWasValid;
+	protected static bool s_bMouseSeeded;
+	protected static float s_fLastMouseX;
+	protected static float s_fLastMouseY;
+
+	protected static SCR_ManualCamera s_OverheadCamera;
+	protected static CameraBase s_PlayerCamera;
 
 	//------------------------------------------------------------------------------------------------
 	static bool IsActive()
@@ -40,9 +53,13 @@ class AROR_GaragePlacementController
 		s_bWasValid = false;
 		s_bPlaceHeld = false;
 		s_bCancelHeld = false;
+		s_bMouseSeeded = false;
+		s_vPlacePos = anchor.GetOrigin();
+		s_vPlacePos[1] = GetGame().GetWorld().GetSurfaceY(s_vPlacePos[0], s_vPlacePos[2]);
 
 		SpawnGhost();
-		AROR_NotificationManagerComponent.ShowHint("LMB place · RMB/Esc cancel · Q/E or Shift+Wheel rotate");
+		StartOverheadCamera();
+		AROR_NotificationManagerComponent.ShowHint("Space place · Esc/RMB cancel · Q/E or Shift+Wheel rotate");
 		GetGame().GetCallqueue().CallLater(Tick, 0, true);
 	}
 
@@ -50,6 +67,7 @@ class AROR_GaragePlacementController
 	static void Stop()
 	{
 		GetGame().GetCallqueue().Remove(Tick);
+		StopOverheadCamera();
 		DeleteGhost();
 		s_bActive = false;
 		s_iEntryId = -1;
@@ -86,6 +104,84 @@ class AROR_GaragePlacementController
 	}
 
 	//------------------------------------------------------------------------------------------------
+	protected static void StartOverheadCamera()
+	{
+		StopOverheadCamera();
+
+		CameraManager cameraManager = GetGame().GetCameraManager();
+		if (!cameraManager)
+			return;
+
+		s_PlayerCamera = cameraManager.CurrentCamera();
+		PlayerController pc = GetGame().GetPlayerController();
+		if (pc)
+		{
+			CameraBase playerCam = pc.GetPlayerCamera();
+			if (playerCam)
+				s_PlayerCamera = playerCam;
+		}
+
+		Resource resource = Resource.Load(OVERHEAD_CAMERA_PREFAB);
+		if (!resource || !resource.IsValid())
+			return;
+
+		vector focus = s_vPlacePos;
+		if (s_Anchor)
+			focus = s_Anchor.GetOrigin();
+
+		EntitySpawnParams params = new EntitySpawnParams();
+		params.TransformMode = ETransformMode.WORLD;
+		params.Transform[3] = focus + Vector(0, OVERHEAD_HEIGHT, 0);
+
+		s_OverheadCamera = SCR_ManualCamera.Cast(GetGame().SpawnEntityPrefabLocal(resource, GetGame().GetWorld(), params));
+		if (!s_OverheadCamera)
+			return;
+
+		s_OverheadCamera.SetName("AROR_GaragePlaceCam");
+		s_OverheadCamera.SetInputEnabled(false);
+		s_OverheadCamera.SetVerticalFOV(OVERHEAD_FOV);
+		UpdateOverheadCamera(focus);
+		cameraManager.SetCamera(s_OverheadCamera);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static void StopOverheadCamera()
+	{
+		CameraManager cameraManager = GetGame().GetCameraManager();
+		if (s_OverheadCamera)
+		{
+			if (cameraManager)
+			{
+				if (s_PlayerCamera)
+					cameraManager.SetCamera(s_PlayerCamera);
+				else
+					s_OverheadCamera.SwitchToPreviousCamera();
+			}
+
+			s_OverheadCamera.Terminate();
+			SCR_EntityHelper.DeleteEntityAndChildren(s_OverheadCamera);
+			s_OverheadCamera = null;
+		}
+
+		s_PlayerCamera = null;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static void UpdateOverheadCamera(vector focus)
+	{
+		if (!s_OverheadCamera)
+			return;
+
+		s_OverheadCamera.SetOrigin(Vector(focus[0], focus[1] + OVERHEAD_HEIGHT, focus[2]));
+		s_OverheadCamera.SetAngles(Vector(OVERHEAD_PITCH, 0, 0));
+		s_OverheadCamera.SetVerticalFOV(OVERHEAD_FOV);
+
+		CameraManager cameraManager = GetGame().GetCameraManager();
+		if (cameraManager && cameraManager.CurrentCamera() != s_OverheadCamera)
+			cameraManager.SetCamera(s_OverheadCamera);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	protected static void Tick()
 	{
 		if (!s_bActive)
@@ -101,29 +197,31 @@ class AROR_GaragePlacementController
 	//------------------------------------------------------------------------------------------------
 	protected static void UpdateCursorTransform()
 	{
-		vector worldPos;
-		if (!GetCursorWorldPos(worldPos))
-		{
-			s_bValid = false;
-			return;
-		}
+		ApplyMouseDeltaToPlacePos();
+		UpdateOverheadCamera(s_vPlacePos);
 
-		s_vPlacePos = worldPos;
 		float radius = 50;
 		AROR_ResistanceGarageComponent garage = AROR_ResistanceGarageComponent.GetInstance();
 		if (garage)
 			radius = garage.GetPlaceRadius();
 
 		string reason;
-		bool inRange = s_Anchor && vector.DistanceXZ(worldPos, s_Anchor.GetOrigin()) <= radius;
-		bool clear = garage && garage.IsPlacementClear(worldPos, reason);
+		bool inRange = s_Anchor && vector.DistanceXZ(s_vPlacePos, s_Anchor.GetOrigin()) <= radius;
+		bool clear = garage && garage.IsPlacementClear(s_vPlacePos, reason, s_Ghost);
 		s_bValid = inRange && clear;
 
 		if (s_bValid != s_bWasValid)
 		{
 			s_bWasValid = s_bValid;
 			if (!s_bValid)
-				AROR_NotificationManagerComponent.ShowHint("Invalid placement (range or blocked)");
+			{
+				if (!inRange)
+					AROR_NotificationManagerComponent.ShowHint("Too far from garage");
+				else if (!reason.IsEmpty())
+					AROR_NotificationManagerComponent.ShowHint(reason);
+				else
+					AROR_NotificationManagerComponent.ShowHint("Invalid placement");
+			}
 		}
 
 		if (!s_Ghost)
@@ -131,47 +229,67 @@ class AROR_GaragePlacementController
 
 		vector mat[4];
 		Math3D.AnglesToMatrix(Vector(s_fYaw, 0, 0), mat);
-		mat[3] = Vector(worldPos[0], GetGame().GetWorld().GetSurfaceY(worldPos[0], worldPos[2]), worldPos[2]);
+		mat[3] = s_vPlacePos;
 		s_Ghost.SetTransform(mat);
 	}
 
 	//------------------------------------------------------------------------------------------------
-	protected static bool GetCursorWorldPos(out vector worldPos)
+	//! Relative mouse pan (not screen-ray) so sensitivity stays usable at bird's-eye height
+	protected static void ApplyMouseDeltaToPlacePos()
 	{
 		ArmaReforgerScripted game = GetGame();
 		if (!game)
-			return false;
+			return;
 
 		WorkspaceWidget workspace = game.GetWorkspace();
 		BaseWorld world = game.GetWorld();
 		if (!workspace || !world)
-			return false;
+			return;
 
 		int mouseX, mouseY;
 		WidgetManager.GetMousePos(mouseX, mouseY);
 		float sx = workspace.DPIUnscale(mouseX);
 		float sy = workspace.DPIUnscale(mouseY);
 
-		vector outDir;
-		vector start = workspace.ProjScreenToWorld(sx, sy, outDir, world, -1);
-
-		TraceParam trace = new TraceParam();
-		trace.Start = start;
-		trace.End = start + outDir * 2000;
-		trace.Flags = TraceFlags.WORLD;
-
-		float fraction = world.TraceMove(trace, null);
-		if (fraction <= 0 || fraction >= 1)
+		if (!s_bMouseSeeded)
 		{
-			// Fall back to surface under the far ray end projected onto XZ
-			vector farPos = start + outDir * 200;
-			worldPos = Vector(farPos[0], world.GetSurfaceY(farPos[0], farPos[2]), farPos[2]);
-			return worldPos[1] > 0;
+			s_fLastMouseX = sx;
+			s_fLastMouseY = sy;
+			s_bMouseSeeded = true;
+			return;
 		}
 
-		worldPos = start + outDir * (2000 * fraction);
-		worldPos[1] = world.GetSurfaceY(worldPos[0], worldPos[2]);
-		return true;
+		float dx = sx - s_fLastMouseX;
+		float dy = sy - s_fLastMouseY;
+		s_fLastMouseX = sx;
+		s_fLastMouseY = sy;
+
+		if (dx == 0 && dy == 0)
+			return;
+
+		// Top-down: screen +X → world +X; screen +Y (down) → world −Z (north is −screen Y)
+		s_vPlacePos[0] = s_vPlacePos[0] + dx * MOUSE_METERS_PER_PIXEL;
+		s_vPlacePos[2] = s_vPlacePos[2] - dy * MOUSE_METERS_PER_PIXEL;
+
+		float radius = 50;
+		AROR_ResistanceGarageComponent garage = AROR_ResistanceGarageComponent.GetInstance();
+		if (garage)
+			radius = garage.GetPlaceRadius();
+
+		if (s_Anchor && radius > 0)
+		{
+			vector anchor = s_Anchor.GetOrigin();
+			vector delta = Vector(s_vPlacePos[0] - anchor[0], 0, s_vPlacePos[2] - anchor[2]);
+			float dist = delta.Length();
+			if (dist > radius && dist > 0)
+			{
+				delta = delta * (radius / dist);
+				s_vPlacePos[0] = anchor[0] + delta[0];
+				s_vPlacePos[2] = anchor[2] + delta[2];
+			}
+		}
+
+		s_vPlacePos[1] = world.GetSurfaceY(s_vPlacePos[0], s_vPlacePos[2]);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -228,9 +346,11 @@ class AROR_GaragePlacementController
 	//------------------------------------------------------------------------------------------------
 	protected static bool IsConfirmDown()
 	{
-		InputManager input = GetGame().GetInputManager();
-		if (input && (input.GetActionTriggered("MouseLeft") || input.GetActionTriggered("MenuSelect")))
+		if (Debug.KeyState(KeyCode.KC_SPACE))
+		{
+			Debug.ClearKey(KeyCode.KC_SPACE);
 			return true;
+		}
 
 		return false;
 	}
