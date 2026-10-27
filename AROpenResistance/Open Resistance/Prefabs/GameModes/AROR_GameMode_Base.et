@@ -61,6 +61,10 @@ SCR_BaseGameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" 
   }
   AROR_ResistanceStorageComponent "{B8E41C72A05F3D19}" {
   }
+  AROR_ResistanceGarageComponent "{6AB5C0D1E2F30402}" {
+   m_iHqSlots 10
+   m_iObjectiveSlots 2
+  }
   AROR_PlayerLoadoutsComponent "{6AB4F1B2C3D4E501}" {
   }
   SCR_ArsenalManagerComponent "{6AB4F0A1C2D3E401}" {

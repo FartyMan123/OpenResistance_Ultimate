@@ -143,7 +143,7 @@ Purpose: persistent campaign saves, built on the **base-game save system** (`Sav
   - Each component with saved state has a matching `ScriptedComponentSerializer`. Serializers write a version first and keep loading older versions.
   - Locations are referenced by **stable ID**, never by position in a list.
 - Save generated results, not random seeds, so saves survive map and code changes.
-- Saved so far: location control, settlement support, the Resistance HQ, arsenals, faction presets per role, faction funds, manpower, player money, Resistance item stock, per-player arsenal loadout slots, garrison rosters, QRF readiness, crackdown and debt, the Invader campaign state and active Resistance missions.
+- Saved so far: location control, settlement support, the Resistance HQ, arsenals, faction presets per role, faction funds, manpower, player money, Resistance item stock, Resistance garage vehicle snapshots, per-player arsenal loadout slots, garrison rosters, QRF readiness, crackdown and debt, the Invader campaign state and active Resistance missions.
 - Boot rule: if a save is active when the world loads it is restored; otherwise setup starts. A new playthrough writes an initial save point, so new and loaded games share one restore path.
 - Limits: about 101 playthroughs and save points per mission; old autosaves need pruning.
 - Planned: periodic autosave and saves on key events and shutdown; verification on a dedicated server.
@@ -276,6 +276,16 @@ Purpose: the Resistance's shared item stock for the campaign (what gear is on ha
 - Admin: Economy → More can fill stock with one of every Resistance preset item (excl. units/vehicles).
 - **Arsenal**: Prefab inherits vanilla `ArsenalBox_Base` plus `AROR_ResistanceArsenalComponent` (same entity as `SCR_ArsenalComponent`). Lists stocked prefabs (qty > 0), sorted by Resistance preset category then path, with stock quantity on each slot. Takes call `Take_S`; refunds call `AddEntity_S`. Supplies are never the budget (`IsArsenalUsingSupplies` forced off). Game mode has `SCR_ArsenalManagerComponent` so vanilla type flags do not disable the box; Resistance arsenals also force-enable. Modded `SCR_ArsenalComponent`, arsenal slot UI, and `SCR_ResourcePlayerControllerInventoryComponent` implement the bridge. Access: open the box like a normal arsenal. Empty stock shows an empty arsenal until admin Fill or deposits. Placement is not HQ-exclusive; Game Flow spawns the first one beside the HQ via `SpawnArsenal`.
 - **Loadout slots**: `AROR_PlayerLoadoutsComponent` (game mode) holds **three** kits per player, keyed by identity ID (same as personal money) and saved with the playthrough (`AROR_PlayerLoadoutsComponentSerializer`). F-key actions (`AROR_SaveLoadoutSlotAction` / `AROR_LoadLoadoutSlotAction`) save a snapshot of worn gear or load a slot. Load **swaps with stock**: deposit current gear via `AddEntity_S`, take the kit’s flat prefab counts via `Take_S`, then re-equip with vanilla `SCR_PlayerArsenalLoadout` apply. Fails with a hint if stock would be short. Slot occupancy is pushed only to the owning client. Magazine fill and item health follow Storage (not preserved). Wire the six actions in Workbench onto the arsenal’s **inherited** `ActionsManagerComponent` as `additionalActions +` (do not add a second ActionsManager — that breaks the prefab / spawn).
+
+### Resistance Garage — In progress
+Purpose: the Resistance's shared vehicle garage for the campaign — unique stored vehicles with condition preserved, separate from Resistance Storage (fungible item stock).
+
+- `AROR_ResistanceGarageComponent` (game mode): a ledger of **unique vehicle entries** (monotonic id + prefab + hull health + fuel + cargo tree + mounted weapon ammo). Any world vehicle may be stored (not limited to Resistance presets); Occupiers/Invaders have no garage.
+- **Capacity**: 10 slots from the Resistance HQ (`m_iHqSlots`) plus 2 slots per Resistance-controlled military objective (`m_iObjectiveSlots`, `IsCapturableType` only — towns and cities excluded). Recomputed from the location registry. If territory is lost and count exceeds capacity, existing entries are kept and new stores are blocked until under capacity.
+- Server API: `StoreVehicle_S` (snapshot + despawn; rejects destroyed/occupied/full), `DiscardVehicle_S` (remove without spawning), `GetCapacity` / `GetCount` / `GetEntries` (summaries on every machine). Retrieve/spawn and garage pads/UI are deferred; when retrieve is built, spawned hulls will always affiliate to the Resistance.
+- Server-owned full snapshots; compact id/prefab/health/fuel summaries replicate. Change invoker for future UI.
+- Saved: full entries (`AROR_ResistanceGarageComponentSerializer`).
+- Depends on: Game Mode, Locations, Location Capture (capturable type filter), Persistence.
 
 ### Phone — In progress
 Purpose: an in-game phone that hosts player-facing apps. Client only.
