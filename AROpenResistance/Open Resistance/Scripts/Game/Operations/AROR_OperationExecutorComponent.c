@@ -98,6 +98,8 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 	protected bool m_bQRFRequireFriendlyOrigin;
 	[Attribute("600", desc: "Maximum seconds for ground QRF ingress, including bounded stalled-route recovery", params: "120 600 1")]
 	protected int m_iQRFIngressTimeout;
+	[Attribute("90", desc: "Seconds without at least 20 m of net progress toward the objective before a moving ground response tries a bounded alternate road/foot approach", params: "60 300 5")]
+	protected int m_iQRFDetourTimeout;
 	[Attribute("30", desc: "Maximum seconds for animated passenger exits after stopping for a tactical drop", params: "15 90 1")]
 	protected int m_iQRFExitTimeout;
 	[Attribute("10", desc: "Seconds to allow normal ground passenger exits before native cleared-position recovery for stuck AI passengers; zero disables recovery", params: "0 20 1")]
@@ -1897,6 +1899,8 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			return false;
 		if (m_iQRFIngressTimeout < 120 || m_iQRFIngressTimeout > 600)
 			return false;
+		if (m_iQRFDetourTimeout < 60 || m_iQRFDetourTimeout > 300)
+			return false;
 		if (m_iQRFExitTimeout < 15 || m_iQRFExitTimeout > 90)
 			return false;
 		if (m_iQRFExitRecoveryDelay < 0 || m_iQRFExitRecoveryDelay > 20 || m_iQRFExitRecoveryDelay >= m_iQRFExitTimeout)
@@ -2414,7 +2418,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 	}
 	//! Two bounded searches: objective delivery first, then a nearby road dismount.
 	//! The second search changes the vehicle stop, never the physical security objective.
-	protected bool FindTacticalApproach(AROR_GroundOperationForce force, AROR_QRFTacticalCommander commander, vector origin, float standoff, out vector approach, int firstAttempt = 0)
+	protected bool FindTacticalApproach(AROR_GroundOperationForce force, AROR_QRFTacticalCommander commander, vector origin, float standoff, out vector approach, int firstAttempt = 0, bool preferFoot = false)
 	{
 		int phases = 1;
 		if (m_fQRFMaximumRoadDismount > m_fQRFObjectiveDeliveryRadius)
@@ -2430,6 +2434,8 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		for (int phase = 0; phase < phases; phase++)
 		{
 			bool footApproach = phase == 1;
+			if (preferFoot && phases == 2)
+				footApproach = phase == 0;
 			float maximum = Math.Min(m_fQRFObjectiveDeliveryRadius, commander.m_fTownRadius + commander.m_fMargin);
 			if (footApproach)
 				maximum = m_fQRFMaximumRoadDismount;
@@ -2441,7 +2447,11 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 				vector desired = commander.ApproachCandidate(force.m_iPackageIndex, origin, standoff, candidate);
 				if (footApproach)
 				{
-					float angle = candidate * 0.78539816 + force.m_iPackageIndex * 0.2;
+					if (preferFoot)
+						candidate = attempt;
+					// Try the current approach side first, rather than an arbitrary north-facing ring.
+					vector ingress = origin - commander.m_vTown;
+					float angle = Math.Atan2(ingress[0], ingress[2]) + candidate * 0.78539816 + force.m_iPackageIndex * 0.2;
 					float radius = Math.Max(140, m_fQRFObjectiveDeliveryRadius + 60);
 					if (attempt >= 8)
 						radius += 60;
@@ -2744,6 +2754,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 	protected void ReleaseFromStaging(AROR_GroundOperationForce force, AROR_QRFTacticalCommander commander)
 	{
 		force.m_bTacticalStaging = false;
+		force.m_fTacticalBestDistance = -1;
 		force.m_iTacticalLegDeadline = m_iExecutorClock + m_iQRFIngressTimeout;
 		force.m_iTacticalNextRouteCheck = m_iExecutorClock + 30;
 		if (force.m_Vehicle)
@@ -2889,7 +2900,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		Print(string.Format("[AROR TACTICAL] %1 infantry package=%2 task=%3 sector point=%4 contactVersion=%5", operation.GetId(), force.m_iPackageIndex + 1, step, point, commander.m_iContactVersion), LogLevel.NORMAL);
 	}
 
-	//! Native driving can stop before completion; rotate bounded road candidates after no progress.
+	//! Watch progress toward the objective, not just movement: a circulating vehicle is not arriving.
 	protected void RecoverStalledQRFRoute(AROR_GroundOperationForce force, AROR_QRFTacticalCommander commander)
 	{
 		if (m_iExecutorClock < force.m_iTacticalNextRouteCheck || force.m_iTacticalRouteRetries >= 4)
@@ -2898,19 +2909,30 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		vector position = force.m_Vehicle.GetOrigin();
 		float moved = vector.DistanceXZ(position, force.m_vTacticalProgressPosition);
 		force.m_vTacticalProgressPosition = position;
-		if (moved >= 15)
+		float remaining = vector.DistanceXZ(position, commander.m_vTown);
+		if (force.m_fTacticalBestDistance < 0 || remaining < force.m_fTacticalBestDistance - 20)
+		{
+			force.m_fTacticalBestDistance = remaining;
+			force.m_iTacticalLastAdvance = m_iExecutorClock;
+		}
+		// Give native road detours time to work. Four retries and a 30 s check period
+		// still bound all searches, including vehicles moving without closing for 90 s.
+		bool detour = m_iExecutorClock - force.m_iTacticalLastAdvance >= m_iQRFDetourTimeout;
+		if (moved >= 15 && !detour)
 			return;
 		force.m_iTacticalRouteRetries++;
 		if (force.RestoreNearbyDriver_S())
 			Print(string.Format("[AROR TACTICAL] %1 package=%2 nearby AI crew resumed driver seat for town ingress", force.m_sOperationId, force.m_iPackageIndex + 1), LogLevel.NORMAL);
 		vector next;
 		float preferred = m_fQRFObjectiveDeliveryRadius * 0.6;
-		if (!FindTacticalApproach(force, commander, position, preferred, next, force.m_iTacticalRouteRetries * 3))
+		if (!FindTacticalApproach(force, commander, position, preferred, next, force.m_iTacticalRouteRetries * 3, detour))
 			return;
 		if (!ReplaceTacticalWaypoint(force, true, m_sMoveWaypointPrefab, next))
 			return;
 		force.m_vApproachPosition = next;
-		Print(string.Format("[AROR TACTICAL] %1 package=%2 stalled route retry=%3; continuing to town road point %4", force.m_sOperationId, force.m_iPackageIndex + 1, force.m_iTacticalRouteRetries, next), LogLevel.WARNING);
+		force.m_fTacticalBestDistance = remaining;
+		force.m_iTacticalLastAdvance = m_iExecutorClock;
+		Print(string.Format("[AROR TACTICAL] %1 package=%2 route retry=%3 detour=%4 remaining=%5 moved=%6; town road point=%7", force.m_sOperationId, force.m_iPackageIndex + 1, force.m_iTacticalRouteRetries, detour, remaining, moved, next), LogLevel.WARNING);
 	}
 
 	//! Native waypoint completion alone never authorises a remote hillside drop.

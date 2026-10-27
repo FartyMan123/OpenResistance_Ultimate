@@ -26,6 +26,8 @@ class AROR_GroundOperationForce : AROR_OperationForce
 	int m_iTacticalNextRouteCheck;
 	int m_iTacticalRouteRetries;
 	vector m_vTacticalProgressPosition;
+	float m_fTacticalBestDistance = -1;
+	int m_iTacticalLastAdvance;
 	ref AROR_VehicleTownSearch m_TownSearch;
 	vector m_vApproachPosition;
 	// Attack staging: the package waits at a road rally point until the assault is released

@@ -21,6 +21,7 @@ function runQRFIngressTests(sources) {
     // V8 does not implement Enforce's vector arithmetic. Represent the bounded
     // candidate offset explicitly; all acceptance decisions remain actual source.
     body=body.replace('seed + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * radius','seed.map((v,i)=>v+[Math.sin(angle)*radius,0,Math.cos(angle)*radius][i])')
+      .replace('origin - commander.m_vTown','origin.map((v,i)=>v-commander.m_vTown[i])')
       .replace('commander.m_vOrigin + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * radius','commander.m_vOrigin.map((v,i)=>v+[Math.sin(angle)*radius,0,Math.cos(angle)*radius][i])')
       .replace('(attempt - 12) / 8 + 3','Math.floor((attempt - 12) / 8) + 3')
       .replace('trace.Start + Vector(0, 0.05, 0)','[trace.Start[0],trace.Start[1]+0.05,trace.Start[2]]')
@@ -56,7 +57,7 @@ function runQRFIngressTests(sources) {
   const world={GetSurfaceY:(x,z)=>slope&&x>100?15:10,GetOceanHeight:()=>water?10:0,TraceMove:()=>blocked?0:1};
   let launchLogs=[];
   Object.assign(env,{GetGame:()=>({GetWorld:()=>world}),Vector:(...v)=>v,TraceFlags:{ENTS:1},
-    Math:{Sin:Math.sin,Cos:Math.cos,AbsFloat:Math.abs,Min:Math.min,Max:Math.max,Mod:(a,b)=>a%b,floor:Math.floor,sin:Math.sin,cos:Math.cos},float:{MAX:Infinity},vector:{DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])},
+    Math:{Atan2:Math.atan2,Sin:Math.sin,Cos:Math.cos,AbsFloat:Math.abs,Min:Math.min,Max:Math.max,Mod:(a,b)=>a%b,floor:Math.floor,sin:Math.sin,cos:Math.cos},float:{MAX:Infinity},vector:{DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])},
     AROR_GroundOperationForce:{Cast:x=>x},Print:message=>launchLogs.push(message),string:{Format:(format,...args)=>format.replace(/%(\d+)/g,(_,n)=>String(args[n-1]))},LogLevel:{NORMAL:0,WARNING:1}});
   const launch=compile(sources.executor,'FindGroundRoadLaunch');
   const context={m_aForces:[],m_fQRFRoadLaunchRadius:150,IsLaunchPositionSafe:()=>true,TacticalLaunchPoint:()=>[100,10,100],TacticalRoadPoint:(origin,desired,out)=>{queries++;out.splice(0,3,...road);return roadOK;}};
@@ -98,6 +99,11 @@ function runQRFIngressTests(sources) {
   check(plan()&&roadQueries===1&&roadForce.m_fTacticalDeliveryRadius===0,'normal objective road delivery remains preferred');
   roadQueries=0;roadPoint=[160,10,0];
   check(plan()&&roadQueries<=24&&roadForce.m_fTacticalDeliveryRadius===180,'off-road objective permits a bounded planned road dismount with a foot approach');
+  roadQueries=0;
+  check(approach.call(roadContext,roadForce,roadCommander,[500,10,0],60,roadStop,3,true)&&roadQueries===1,'detour recovery tries the bounded road/foot stop before inner objective roads');
+  roadQueries=0;roadPoint=[60,10,0];footPad=false;
+  check(approach.call(roadContext,roadForce,roadCommander,[500,10,0],60,roadStop,3,true)&&roadQueries===13,'unsafe foot approach falls back to normal objective road delivery');
+  footPad=true;roadPoint=[160,10,0];roadForce.m_fTacticalDeliveryRadius=180;
   check(!arrival.call(roadContext,10,160,200),'unplanned remote road proximity cannot authorise unloading');
   check(arrival.call(roadContext,10,160,200,roadForce.m_fTacticalDeliveryRadius),'physical arrival at the planned fallback stop authorises dismount');
   check(!arrival.call(roadContext,21,160,200,180),'fallback still requires proximity to the actual selected stop');

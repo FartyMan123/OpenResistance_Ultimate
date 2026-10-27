@@ -14,6 +14,8 @@ class AROR_ReaperAirForce : AROR_GroundOperationForce
 	int m_iEscortStage;
 	int m_iEscortDeadline;
 	int m_iPassOrdinal;
+	bool m_bGunshipRunIn;
+	vector m_vGunshipRunDirection;
 	vector m_vPassPoint;
 	bool m_bEscortLost;
 	bool m_bTransportLost;

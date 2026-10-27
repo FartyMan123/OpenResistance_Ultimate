@@ -39,6 +39,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
   AROR_OperationExecutorComponent {
    m_bQRFRequireFriendlyOrigin 1
    m_iQRFSeatRecoveryDelay 10
+   m_iQRFDetourTimeout 90
    m_fQRFRoadLaunchRadius 300
    m_bReaperQRFTest 0
    m_bAllowAirborneResponses 1
@@ -527,6 +528,9 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
    m_fReaperLZAdjustmentRadius 60
    m_fReaperLandingSeparation 90
    m_fReaperFormationSpacing 75
+   m_fReaperGunshipRunHeight 110
+   m_fReaperGunshipRunBand 20
+   m_fReaperGunshipRunRadius 450
    m_fReaperCleanupDistance 1500
    m_iReaperRetainSeconds 600
    m_bExecuteOperations 1

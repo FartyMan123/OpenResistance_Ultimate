@@ -48,12 +48,23 @@ modded class AROR_OperationExecutorComponent
 	protected float m_fReaperGunshipHeight;
 	[Attribute("35", desc: "Gunship altitude-band spacing per package, metres", params: "30 60 1")]
 	protected float m_fReaperGunshipBand;
+	[Attribute("110", desc: "Gunship search/run altitude above terrain; ingress and traffic recovery retain the higher cruise bands", params: "90 160 5")]
+	protected float m_fReaperGunshipRunHeight;
+	[Attribute("20", desc: "Support-run altitude spacing per gunship package, metres", params: "20 35 5")]
+	protected float m_fReaperGunshipRunBand;
+	[Attribute("450", desc: "Distance from the reported area to each end of a gunship crossing run, metres", params: "350 700 25")]
+	protected float m_fReaperGunshipRunRadius;
 	[Attribute("100", desc: "Predicted aircraft separation that triggers gunship yielding, metres", params: "60 150 1")]
 	protected float m_fReaperTrafficClearance;
 
 	protected float ReaperGunshipHeight(AROR_ReaperAirForce force)
 	{
 		return m_fReaperGunshipHeight + force.m_iPackageIndex * m_fReaperGunshipBand;
+	}
+
+	protected float ReaperGunshipRunHeight(AROR_ReaperAirForce force)
+	{
+		return m_fReaperGunshipRunHeight + force.m_iPackageIndex * m_fReaperGunshipRunBand;
 	}
 
 	protected ref AROR_ReaperLandingSearch m_ReaperLandingSearch;
@@ -733,6 +744,12 @@ modded class AROR_OperationExecutorComponent
 			return false;
 		if (m_fReaperGunshipBand < 30 || m_fReaperGunshipBand > 60)
 			return false;
+		if (m_fReaperGunshipRunHeight < 90 || m_fReaperGunshipRunHeight > 160)
+			return false;
+		if (m_fReaperGunshipRunBand < 20 || m_fReaperGunshipRunBand > 35)
+			return false;
+		if (m_fReaperGunshipRunRadius < 350 || m_fReaperGunshipRunRadius > 700)
+			return false;
 		if (m_fReaperTrafficClearance < 60 || m_fReaperTrafficClearance > 150)
 			return false;
 		return true;
@@ -809,18 +826,32 @@ modded class AROR_OperationExecutorComponent
 
 	protected bool IssueReaperPass(AROR_ReaperAirForce force)
 	{
-		float angle = Math.Atan2(force.m_vHeading[0], force.m_vHeading[2]) + force.m_iPassOrdinal * 2.4 + force.m_iPackageIndex * 6.2831853 / force.m_iPackageCount;
-		int ring = force.m_iPassOrdinal - (force.m_iPassOrdinal / 3) * 3;
-		force.m_vPassPoint = force.m_vGunshipSearch + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * (320 + ring * 140);
-		force.m_iPassOrdinal++;
+		// Fly to a run-in point, then through the search area to the opposite end.
+		// Replacing perimeter destinations early produced turns outside useful spotting range.
+		bool crossing = force.m_bGunshipRunIn;
+		if (!crossing)
+		{
+			float angle = Math.Atan2(force.m_vHeading[0], force.m_vHeading[2]) + force.m_iPassOrdinal * 1.2 + force.m_iPackageIndex * 6.2831853 / force.m_iPackageCount;
+			force.m_vGunshipRunDirection = Vector(Math.Sin(angle), 0, Math.Cos(angle));
+			force.m_vPassPoint = force.m_vGunshipSearch - force.m_vGunshipRunDirection * m_fReaperGunshipRunRadius;
+		}
+		else
+		{
+			force.m_vPassPoint = force.m_vGunshipSearch + force.m_vGunshipRunDirection * m_fReaperGunshipRunRadius;
+			force.m_iPassOrdinal++;
+		}
+		force.m_bGunshipRunIn = !crossing;
 		force.m_iEscortStage = 1;
 		force.m_iEscortDeadline = m_iExecutorClock + 75;
 		REAPER_AiHelicopterControllerComponent controller = AROR_ReaperAirForce.Controller(force.m_Escort.m_Vehicle);
 		if (!controller)
 			return false;
 		controller.AROR_ConfigureQRF(force.m_sFactionKey, force.m_vGunshipSearch, 500, m_fReaperFriendlyClearance, true);
-		Print(string.Format("[AROR REAPER] QRF %1 gunship pass %2 around last reported contact/town; perceived hostile targets only", force.m_sOperationId, force.m_iPassOrdinal), LogLevel.NORMAL);
-		return ReaperOrder(force.m_Escort, ReaperMovePrefab(), force.m_vPassPoint, 130, ReaperGunshipHeight(force));
+		float height = ReaperGunshipRunHeight(force);
+		vector actual = force.m_Escort.m_Vehicle.GetOrigin();
+		float actualHeight = actual[1] - GetGame().GetWorld().GetSurfaceY(actual[0], actual[2]);
+		Print(string.Format("[AROR REAPER] QRF %1 gunship=%2 run=%3 crossing=%4 search=%5 endpoint=%6 commandedAGL=%7 actualAGL=%8; native perception and hostile-target filters retained", force.m_sOperationId, force.m_iPackageIndex + 1, force.m_iPassOrdinal, crossing, force.m_vGunshipSearch, force.m_vPassPoint, height, actualHeight), LogLevel.NORMAL);
+		return ReaperOrder(force.m_Escort, ReaperMovePrefab(), force.m_vPassPoint, 130, height);
 	}
 
 	protected void UpdateGunshipContact(AROR_ReaperAirForce force)
@@ -838,6 +869,7 @@ modded class AROR_OperationExecutorComponent
 			{
 				force.m_iGunshipContactSequence = 0;
 				force.m_vGunshipSearch = force.m_vTown;
+				force.m_bGunshipRunIn = false;
 				force.m_iEscortDeadline = 0;
 			}
 			return;
@@ -852,6 +884,7 @@ modded class AROR_OperationExecutorComponent
 		if (!retask)
 			return;
 		// Nearby updates refresh intel without interrupting every pass for every bullet.
+		force.m_bGunshipRunIn = false;
 		force.m_iEscortDeadline = 0;
 		Print(string.Format("[AROR REAPER] QRF %1 gunship=%2 investigating allied report=%3 at %4; snapshot only", force.m_sOperationId, force.m_iPackageIndex + 1, contact.m_iSequence, contact.m_vPosition), LogLevel.NORMAL);
 	}
@@ -893,6 +926,7 @@ modded class AROR_OperationExecutorComponent
 		if (force.m_bTrafficYielding)
 		{
 			force.m_bTrafficYielding = false;
+			force.m_bGunshipRunIn = false;
 			force.m_iEscortDeadline = 0;
 		}
 		IEntity conflict = GunshipTrafficConflict(force);
@@ -902,7 +936,8 @@ modded class AROR_OperationExecutorComponent
 		vector position = aircraft.GetOrigin();
 		vector away = AROR_ReaperFlightGeometry.Direction(conflict.GetOrigin(), position);
 		float currentHeight = position[1] - GetGame().GetWorld().GetSurfaceY(position[0], position[2]);
-		float height = Math.Min(600, Math.Max(ReaperGunshipHeight(force), currentHeight + 40));
+		// Return to the cruise band at most; repeated conflicts must not ratchet to 600 m.
+		float height = Math.Min(ReaperGunshipHeight(force), Math.Max(ReaperGunshipRunHeight(force) + 30, currentHeight + 20));
 		REAPER_AiHelicopterControllerComponent controller = AROR_ReaperAirForce.Controller(aircraft);
 		if (controller)
 			controller.AROR_ConfigureQRF(force.m_sFactionKey, force.m_vGunshipSearch, 500, m_fReaperFriendlyClearance, false);
@@ -983,7 +1018,7 @@ modded class AROR_OperationExecutorComponent
 			return;
 		}
 		// Move waypoints allow REAPER's autonomous attack runs; Hover inhibits rockets.
-		if (force.m_iEscortStage == 0 || m_iExecutorClock >= force.m_iEscortDeadline || (force.m_iEscortStage == 1 && vector.DistanceXZ(escort.m_Vehicle.GetOrigin(), force.m_vPassPoint) <= 220))
+		if (force.m_iEscortStage == 0 || m_iExecutorClock >= force.m_iEscortDeadline || (force.m_iEscortStage == 1 && vector.DistanceXZ(escort.m_Vehicle.GetOrigin(), force.m_vPassPoint) <= 80))
 		{
 			if (!IssueReaperPass(force))
 				RetireReaperEscort(force, "attack-pass order unavailable");
