@@ -658,6 +658,206 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
+	// Resistance Garage: client -> server / server -> owner
+	//------------------------------------------------------------------------------------------------
+	protected static const string AROR_GARAGE_CARGO_SEPARATOR = "\n";
+
+	//------------------------------------------------------------------------------------------------
+	void AROR_RequestGarageEntryDetail(int entryId)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_GarageEntryDetail(entryId);
+		else
+			Rpc(AROR_RpcAsk_GarageEntryDetail, entryId);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	void AROR_RequestGarageReserve(int entryId)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_GarageReserve(entryId);
+		else
+			Rpc(AROR_RpcAsk_GarageReserve, entryId);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	void AROR_RequestGarageRelease()
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_GarageRelease();
+		else
+			Rpc(AROR_RpcAsk_GarageRelease);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	void AROR_RequestGarageRetrieve(int entryId, vector position, float yaw, RplId anchorRplId)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_GarageRetrieve(entryId, position, yaw, anchorRplId);
+		else
+			Rpc(AROR_RpcAsk_GarageRetrieve, entryId, position, yaw, anchorRplId);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	void AROR_RequestGarageStore(RplId vehicleRplId)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_GarageStore(vehicleRplId);
+		else
+			Rpc(AROR_RpcAsk_GarageStore, vehicleRplId);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_GarageEntryDetail(int entryId)
+	{
+		AROR_ResistanceGarageComponent garage = AROR_ResistanceGarageComponent.GetInstance();
+		if (!garage)
+			return;
+
+		array<string> labels = {};
+		garage.GetEntryCargoLabels_S(entryId, labels);
+		AROR_SendGarageEntryDetail_S(entryId, labels);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_GarageReserve(int entryId)
+	{
+		AROR_ResistanceGarageComponent garage = AROR_ResistanceGarageComponent.GetInstance();
+		if (!garage)
+			return;
+
+		bool ok = garage.ReserveEntry_S(GetPlayerId(), entryId);
+		AROR_SendGarageReserveResult_S(entryId, ok);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_GarageRelease()
+	{
+		AROR_ResistanceGarageComponent garage = AROR_ResistanceGarageComponent.GetInstance();
+		if (garage)
+			garage.ReleaseReservation_S(GetPlayerId());
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_GarageRetrieve(int entryId, vector position, float yaw, RplId anchorRplId)
+	{
+		AROR_ResistanceGarageComponent garage = AROR_ResistanceGarageComponent.GetInstance();
+		if (!garage)
+			return;
+
+		if (!anchorRplId.IsValid())
+			return;
+
+		IEntity anchor = SCR_EntityHelper.RplIdToEntity(anchorRplId);
+		if (!anchor)
+			return;
+
+		IEntity vehicle = garage.RetrieveVehicle_S(GetPlayerId(), entryId, position, yaw, anchor.GetOrigin());
+		AROR_SendGarageRetrieveResult_S(vehicle != null);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_GarageStore(RplId vehicleRplId)
+	{
+		AROR_ResistanceGarageComponent garage = AROR_ResistanceGarageComponent.GetInstance();
+		if (!garage)
+			return;
+
+		string reason = "Store failed.";
+		if (!vehicleRplId.IsValid())
+		{
+			AROR_SendGarageStoreResult_S(false, reason);
+			return;
+		}
+
+		IEntity vehicle = SCR_EntityHelper.RplIdToEntity(vehicleRplId);
+		int entryId = garage.RequestStoreVehicle_S(GetPlayerId(), vehicle, reason);
+		AROR_SendGarageStoreResult_S(entryId >= 0, reason);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	void AROR_SendGarageEntryDetail_S(int entryId, notnull array<string> labels)
+	{
+		string joined;
+		foreach (int i, string label : labels)
+		{
+			if (i > 0)
+				joined += AROR_GARAGE_CARGO_SEPARATOR;
+
+			joined += label;
+		}
+
+		if (AROR_IsLocal())
+			AROR_RpcDo_GarageEntryDetail(entryId, joined);
+		else
+			Rpc(AROR_RpcDo_GarageEntryDetail, entryId, joined);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	void AROR_SendGarageReserveResult_S(int entryId, bool success)
+	{
+		if (AROR_IsLocal())
+			AROR_RpcDo_GarageReserveResult(entryId, success);
+		else
+			Rpc(AROR_RpcDo_GarageReserveResult, entryId, success);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	void AROR_SendGarageRetrieveResult_S(bool success)
+	{
+		if (AROR_IsLocal())
+			AROR_RpcDo_GarageRetrieveResult(success);
+		else
+			Rpc(AROR_RpcDo_GarageRetrieveResult, success);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	void AROR_SendGarageStoreResult_S(bool success, string reason)
+	{
+		if (AROR_IsLocal())
+			AROR_RpcDo_GarageStoreResult(success, reason);
+		else
+			Rpc(AROR_RpcDo_GarageStoreResult, success, reason);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Owner)]
+	protected void AROR_RpcDo_GarageEntryDetail(int entryId, string joinedLabels)
+	{
+		array<string> labels = {};
+		if (!joinedLabels.IsEmpty())
+			joinedLabels.Split(AROR_GARAGE_CARGO_SEPARATOR, labels, false);
+
+		AROR_GarageRetrieveUI.OnEntryDetailReceived(entryId, labels);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Owner)]
+	protected void AROR_RpcDo_GarageReserveResult(int entryId, bool success)
+	{
+		AROR_GarageRetrieveUI.OnReserveResultReceived(entryId, success);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Owner)]
+	protected void AROR_RpcDo_GarageRetrieveResult(bool success)
+	{
+		AROR_GarageRetrieveUI.OnRetrieveResultReceived(success);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Owner)]
+	protected void AROR_RpcDo_GarageStoreResult(bool success, string reason)
+	{
+		AROR_GarageStoreAPI.OnStoreResultReceived(success, reason);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! True if this controller belongs to the local player (e.g. the host or Workbench player)
 	protected bool AROR_IsLocal()
 	{

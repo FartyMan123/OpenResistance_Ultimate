@@ -76,6 +76,12 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	protected static const float TILE_CORNER_FRACTION = 0.22;	//!< Corner radius as a fraction of the tile, matching the Bank icon art
 	protected static const float TILE_ROW_SPACING = 110;	//!< From the bottom of one tile row to the top of the next (room for labels)
 
+	// Home quick-action dock (4 slots along the bottom of the portrait screen)
+	protected static const int QUICK_SLOT_COUNT = 4;
+	protected static const float QUICK_DOCK_BOTTOM = 80;	//!< Gap above the bottom of the screen cutout
+	protected static const float QUICK_SLOT_SIZE = 160;
+	protected static const float QUICK_SLOT_GAP = 30;
+
 	// Bank screen rectangles (screen pixels of AROR_Bank_AppHome)
 	protected static const float BANK_NAME_X = 150;
 	protected static const float BANK_NAME_Y = 416;
@@ -155,6 +161,17 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	protected RichTextWidget m_wBlackMarketTileLabel;
 	protected Widget m_wBlackMarketTileButton;
 
+	//! Home quick dock: slot 0 = garage store; 1–3 empty placeholders
+	protected ImageWidget m_wQuickSlot0;
+	protected RichTextWidget m_wQuickSlot0Glyph;
+	protected Widget m_wQuickSlot0Button;
+	protected ImageWidget m_wQuickSlot1;
+	protected Widget m_wQuickSlot1Button;
+	protected ImageWidget m_wQuickSlot2;
+	protected Widget m_wQuickSlot2Button;
+	protected ImageWidget m_wQuickSlot3;
+	protected Widget m_wQuickSlot3Button;
+
 	protected Widget m_wBankApp;
 	protected ImageWidget m_wBankBackground;
 	protected RichTextWidget m_wBankName;
@@ -218,6 +235,12 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			OpenApp(AROR_EPhoneApp.OPS);
 		else if (buttonName == "BlackMarketTileButton")
 			OpenApp(AROR_EPhoneApp.BLACK_MARKET);
+		else if (buttonName == "QuickSlot0Button")
+		{
+			// Store first so the look ray still has a character/camera, then close the phone
+			AROR_GarageStoreAPI.TryStoreLookedAtVehicle();
+			RequestClose();
+		}
 		else if (buttonName == "BankTransferButton")
 		{
 			OpenApp(AROR_EPhoneApp.BANK_TRANSFER);
@@ -353,6 +376,16 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			Print("[AROR] Black Market app layout unavailable; other phone apps remain available", LogLevel.WARNING);
 		}
 
+		m_wQuickSlot0 = ImageWidget.Cast(root.FindAnyWidget("QuickSlot0"));
+		m_wQuickSlot0Glyph = RichTextWidget.Cast(root.FindAnyWidget("QuickSlot0Glyph"));
+		m_wQuickSlot0Button = root.FindAnyWidget("QuickSlot0Button");
+		m_wQuickSlot1 = ImageWidget.Cast(root.FindAnyWidget("QuickSlot1"));
+		m_wQuickSlot1Button = root.FindAnyWidget("QuickSlot1Button");
+		m_wQuickSlot2 = ImageWidget.Cast(root.FindAnyWidget("QuickSlot2"));
+		m_wQuickSlot2Button = root.FindAnyWidget("QuickSlot2Button");
+		m_wQuickSlot3 = ImageWidget.Cast(root.FindAnyWidget("QuickSlot3"));
+		m_wQuickSlot3Button = root.FindAnyWidget("QuickSlot3Button");
+
 		m_wBankApp = root.FindAnyWidget("BankApp");
 		m_wBankBackground = ImageWidget.Cast(root.FindAnyWidget("BankBackground"));
 		m_wBankName = RichTextWidget.Cast(root.FindAnyWidget("BankName"));
@@ -380,6 +413,8 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		ready = ready && rebIntelReady && m_wRebIntelTile && m_wRebIntelTileGlyph && m_wRebIntelTileLabel && m_wRebIntelTileButton;
 		ready = ready && hiCommReady && m_wHiCommTile && m_wHiCommTileGlyph && m_wHiCommTileCanvas && m_wHiCommTileLabel && m_wHiCommTileButton;
 		ready = ready && opsReady && m_wOpsTile && m_wOpsTileCanvas && m_wOpsTileLabel && m_wOpsTileButton;
+		ready = ready && m_wQuickSlot0 && m_wQuickSlot0Glyph && m_wQuickSlot0Button;
+		ready = ready && m_wQuickSlot1 && m_wQuickSlot1Button && m_wQuickSlot2 && m_wQuickSlot2Button && m_wQuickSlot3 && m_wQuickSlot3Button;
 		if (!ready)
 		{
 			Print("[AROR] Phone layout is missing widgets", LogLevel.ERROR);
@@ -390,7 +425,8 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		ApplyStyle();
 
 		m_ButtonHandler = new AROR_PhoneButtonHandler(this);
-		array<Widget> buttons = {m_wBankTileButton, m_wTestTileButton, m_wRebIntelTileButton, m_wHiCommTileButton, m_wOpsTileButton, m_wBankTransferButton, m_wTestBackButton, m_wHomeButton};
+		// Empty quick slots keep buttons for layout but are not registered (not clickable)
+		array<Widget> buttons = {m_wBankTileButton, m_wTestTileButton, m_wRebIntelTileButton, m_wHiCommTileButton, m_wOpsTileButton, m_wQuickSlot0Button, m_wBankTransferButton, m_wTestBackButton, m_wHomeButton};
 		m_BankTransfer.CollectButtons(buttons);
 		if (m_wBlackMarketTileButton)
 		{
@@ -674,6 +710,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		}
 
 		DrawRoundedTiles(scale);
+		LayoutQuickDock(scale);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -728,6 +765,28 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		edge.m_Vertices = outline;
 		edge.m_bShouldEnclose = true;
 		m_aTileCommands.Insert(edge);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Four equal slots along the bottom of the home screen (slot 0 = garage store; 1–3 empty)
+	protected void LayoutQuickDock(float scale)
+	{
+		float rowWidth = QUICK_SLOT_COUNT * QUICK_SLOT_SIZE + (QUICK_SLOT_COUNT - 1) * QUICK_SLOT_GAP;
+		float startLeft = (SCREEN_WIDTH - rowWidth) * 0.5;
+		float slotTop = SCREEN_HEIGHT - QUICK_DOCK_BOTTOM - QUICK_SLOT_SIZE;
+
+		array<ImageWidget> slots = {m_wQuickSlot0, m_wQuickSlot1, m_wQuickSlot2, m_wQuickSlot3};
+		array<Widget> buttons = {m_wQuickSlot0Button, m_wQuickSlot1Button, m_wQuickSlot2Button, m_wQuickSlot3Button};
+
+		for (int i = 0; i < QUICK_SLOT_COUNT; i++)
+		{
+			float slotLeft = startLeft + i * (QUICK_SLOT_SIZE + QUICK_SLOT_GAP);
+			Place(slots[i], slotLeft * scale, slotTop * scale, QUICK_SLOT_SIZE * scale, QUICK_SLOT_SIZE * scale);
+			Place(buttons[i], slotLeft * scale, slotTop * scale, QUICK_SLOT_SIZE * scale, QUICK_SLOT_SIZE * scale);
+		}
+
+		SetFontSize(m_wQuickSlot0Glyph, 64 * scale);
+		CentreText(m_wQuickSlot0Glyph, (startLeft + QUICK_SLOT_SIZE * 0.5) * scale, (slotTop + QUICK_SLOT_SIZE * 0.5) * scale);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -825,12 +884,25 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		}
 		SetColor(m_wTestBackBackground, Color.FromRGBA(255, 255, 255, 40));
 
+		// Quick dock: slot 0 active (garage); 1–3 muted empty placeholders
+		SetColor(m_wQuickSlot0, Color.FromRGBA(36, 72, 48, 255));
+		SetColor(m_wQuickSlot1, Color.FromRGBA(28, 32, 36, 180));
+		SetColor(m_wQuickSlot2, Color.FromRGBA(28, 32, 36, 180));
+		SetColor(m_wQuickSlot3, Color.FromRGBA(28, 32, 36, 180));
+
 		// Buttons only catch clicks; the visuals are the widgets underneath
-		array<Widget> buttons = {m_wBankTileButton, m_wTestTileButton, m_wRebIntelTileButton, m_wHiCommTileButton, m_wOpsTileButton, m_wBankTransferButton, m_wTestBackButton, m_wHomeButton};
+		array<Widget> buttons = {m_wBankTileButton, m_wTestTileButton, m_wRebIntelTileButton, m_wHiCommTileButton, m_wOpsTileButton, m_wQuickSlot0Button, m_wQuickSlot1Button, m_wQuickSlot2Button, m_wQuickSlot3Button, m_wBankTransferButton, m_wTestBackButton, m_wHomeButton};
 		foreach (Widget button : buttons)
 		{
 			SetColor(button, Color.FromRGBA(0, 0, 0, 0));
 		}
+
+		if (m_wQuickSlot1Button)
+			m_wQuickSlot1Button.SetEnabled(false);
+		if (m_wQuickSlot2Button)
+			m_wQuickSlot2Button.SetEnabled(false);
+		if (m_wQuickSlot3Button)
+			m_wQuickSlot3Button.SetEnabled(false);
 
 		StyleText(m_wClock, "--:--", true);
 		StyleText(m_wBankTileLabel, "Bank", false);
@@ -855,6 +927,9 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			if (glyph)
 				glyph.SetColor(AROR_UIColors.Get(AROR_UIColors.REBEL));
 		}
+		StyleText(m_wQuickSlot0Glyph, "G", true);
+		if (m_wQuickSlot0Glyph)
+			m_wQuickSlot0Glyph.SetColor(Color.FromRGBA(168, 240, 196, 255));
 		StyleText(m_wBankName, string.Empty, true);
 		StyleText(m_wBankPersonal, string.Empty, true);
 		StyleText(m_wBankResistance, string.Empty, true);
@@ -862,7 +937,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		StyleText(m_wTestBody, "The phone turned to landscape. Press Back to return, or Esc to close the phone.", false);
 		StyleText(m_wTestBackLabel, "Back", true);
 
-		array<Widget> texts = {m_wClock, m_wBankTileLabel, m_wTestTileGlyph, m_wTestTileLabel, m_wRebIntelTileGlyph, m_wRebIntelTileLabel, m_wHiCommTileGlyph, m_wHiCommTileLabel, m_wOpsTileLabel, m_wBankName, m_wBankPersonal, m_wBankResistance, m_wTestTitle, m_wTestBody, m_wTestBackLabel};
+		array<Widget> texts = {m_wClock, m_wBankTileLabel, m_wTestTileGlyph, m_wTestTileLabel, m_wRebIntelTileGlyph, m_wRebIntelTileLabel, m_wHiCommTileGlyph, m_wHiCommTileLabel, m_wOpsTileLabel, m_wQuickSlot0Glyph, m_wBankName, m_wBankPersonal, m_wBankResistance, m_wTestTitle, m_wTestBody, m_wTestBackLabel};
 		foreach (Widget text : texts)
 		{
 			if (text)
