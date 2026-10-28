@@ -8,8 +8,10 @@ class AROR_ForceProfile
 	bool m_bEnabled;
 	[Attribute("1", desc: "Minimum campaign readiness permitting this profile in a QRF recipe", params: "1 5 1")]
 	int m_iMinimumReadinessLevel;
-	[Attribute("0", desc: "Classify a mounted support vehicle as light armed transport in map intelligence. Uses the existing crew-only ground execution policy.")]
+	[Attribute("0", desc: "Classify a mounted support vehicle as light armed transport in map intelligence. Passenger delivery can be enabled independently.")]
 	bool m_bLightVehicle;
+	[Attribute("0", desc: "Fill every usable ground passenger seat with infantry, within the reserved personnel budget. Driver and turret crew remain a separate group.")]
+	bool m_bFillPassengerSeats;
 	[Attribute("1", UIWidgets.ComboBox, desc: "Campaign role", enums: AROR_FactionRoles.MilitaryRoleParams())]
 	AROR_EFactionRole m_eRole;
 	[Attribute("AROR_OCCUPIERS", desc: "Required campaign faction key from AROR_FactionRolesComponent")]
@@ -89,7 +91,7 @@ class AROR_ForceProfile
 	{
 		if (m_eType == AROR_EForceType.AIRBORNE)
 			return 2 + m_iEscortCount;
-		if (m_eType == AROR_EForceType.INFANTRY || m_eType == AROR_EForceType.ARMOUR)
+		if (m_eType == AROR_EForceType.INFANTRY || (m_eType == AROR_EForceType.ARMOUR && !m_bFillPassengerSeats))
 			return 1;
 		return 2;
 	}
@@ -111,6 +113,8 @@ class AROR_ForceProfile
 
 	bool IsValid()
 	{
+		if (m_bFillPassengerSeats && (m_eType == AROR_EForceType.INFANTRY || m_eType == AROR_EForceType.AIRBORNE))
+			return false;
 		if (m_bLightVehicle && m_eType != AROR_EForceType.ARMOUR)
 			return false;
 		if (m_iMinimumReadinessLevel < 1 || m_iMinimumReadinessLevel > 5)
@@ -127,12 +131,12 @@ class AROR_ForceProfile
 			return !m_sInfantryGroup.IsEmpty();
 		if (m_sVehicle.IsEmpty() || m_sCrewCharacter.IsEmpty() || m_iCrewCount < 1 || m_iCrewCount > 8 || m_iCrewCount > m_iPersonnelBudget)
 			return false;
-		if (m_eType == AROR_EForceType.ARMOUR)
+		if (m_eType == AROR_EForceType.ARMOUR && !m_bFillPassengerSeats)
 			return true;
 		if (m_sInfantryGroup.IsEmpty() || m_fDismountDistance < 20)
 			return false;
 		if (m_eType == AROR_EForceType.AIRBORNE)
 			return m_iEscortCount >= 0 && m_iEscortCount <= 1 && (m_iEscortCount == 0 || !m_sEscortVehicle.IsEmpty());
-		return m_eType == AROR_EForceType.MOTORIZED || m_eType == AROR_EForceType.MECHANIZED;
+		return m_eType == AROR_EForceType.MOTORIZED || m_eType == AROR_EForceType.MECHANIZED || (m_eType == AROR_EForceType.ARMOUR && m_bFillPassengerSeats);
 	}
 }

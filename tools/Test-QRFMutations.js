@@ -1,5 +1,9 @@
 // Mutation checks prove selected regressions are caught; source files are never edited.
 const cases=[
+ {name:'full vehicle ignores native passenger capacity',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_GroundOperationForce.c',suite:'Test-QRFBoarding.js',
+  mutate:s=>s.replace('int passengers = cargoSeats - (m_Profile.m_iCrewCount - crewSeats);','int passengers = 1;')},
+ {name:'full load overruns personnel reservation',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_GroundOperationForce.c',suite:'Test-QRFBoarding.js',
+  mutate:s=>s.replace(' || passengers + m_Profile.m_iCrewCount > m_iReservedMembers','')},
  {name:'asynchronous pilot requests treated as paused=false',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_ReaperAirForce.c',suite:'Test-QRFReleaseLifecycle.js',
   mutate:s=>s.replace('access.GetInVehicle(vehicle, slot, true, -1, ECloseDoorAfterActions.CLOSE_DOOR, true);','access.GetInVehicle(vehicle, slot, true, -1, ECloseDoorAfterActions.CLOSE_DOOR, false);')},
  {name:'unready reserve dispatched',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_OperationExecutorComponent.c',suite:'Test-QRFReleaseLifecycle.js',
@@ -22,6 +26,10 @@ const cases=[
   mutate:s=>s.replace('if (type != AROR_EOperationType.ATTACK && type != AROR_EOperationType.QRF)','if (false)')},
  {name:'withdrawal dispatches ready reserves',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_OperationExecutorComponent.c',suite:'Test-QRFInterruptions.js',
   mutate:s=>s.replace('if (tactical && tactical.m_bWithdraw)','if (false)')},
+ {name:'empty gunner accepted while crew sit in cargo',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_GroundOperationForce.c',suite:'Test-QRFBoarding.js',
+  mutate:s=>s.replace('if (!IsRequiredGunnerSeat(slot))','if (true)')},
+ {name:'mounted cargo-style weapon omitted from crew seats',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_GroundOperationForce.c',suite:'Test-QRFBoarding.js',
+  mutate:s=>s.replace(' || slot.GetAttachedTurret()','')},
  {name:'foreign driver accepted as ready',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_GroundOperationForce.c',suite:'Test-QRFBoarding.js',
   mutate:s=>s.replace('return ownDriver;','return true;')},
  {name:'unissued infantry group skipped by retention',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_OperationExecutorComponent.c',suite:'Test-QRFInterruptions.js',

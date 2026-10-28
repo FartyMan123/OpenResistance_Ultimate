@@ -78,7 +78,7 @@ foreach ($profile in $profiles) {
 	# Explicit airborne entries use the REAPER adapter, never native ground dispatch.
 	if ($type -ne 3 -and $body -match 'm_bEnabled\s+0\b') { continue }
 	$groupsPerPackage = 2
-	if ($type -eq 2 -or $type -eq 4) { $groupsPerPackage = 1 }
+	if (($type -eq 2 -and $body -notmatch 'm_bFillPassengerSeats\s+1\b') -or $type -eq 4) { $groupsPerPackage = 1 }
 	if ($type -eq 3) {
 		$escorts = [int][regex]::Match($body, 'm_iEscortCount\s+(\d+)').Groups[1].Value
 		if ($escorts -lt 0 -or $escorts -gt 1) { throw 'REAPER adapter supports zero or one escort per package' }
@@ -157,7 +157,9 @@ foreach ($recipe in $recipes) {
 		if ($type -eq 3 -and $recipeId -match '_joint_') {
 			$escorts = [int][regex]::Match($profileBody, 'm_iEscortCount\s+(\d+)').Groups[1].Value
 			$groups += 2 + $escorts; $vehicles += $escorts; $assetCollateral += 2000 * $escorts
-		} elseif ($type -eq 2) { $groups++ } elseif ($type -eq 0 -or $type -eq 1) { $groups += 2 } else { throw 'Unexpected recipe element' }
+		} elseif ($type -eq 2) {
+			if ($profileBody -match 'm_bFillPassengerSeats\s+1\b') { $groups += 2 } else { $groups++ }
+		} elseif ($type -eq 0 -or $type -eq 1) { $groups += 2 } else { throw 'Unexpected recipe element' }
 		$members += [int][regex]::Match($profileBody, 'm_iPersonnelBudget\s+(\d+)').Groups[1].Value
 		$assetCollateral += 25 * [int][regex]::Match($profileBody, 'm_iPersonnelBudget\s+(\d+)').Groups[1].Value
 		$assetCollateral += [int][regex]::Match($profileBody, 'm_iVehicleLossValue\s+(\d+)').Groups[1].Value
@@ -165,7 +167,7 @@ foreach ($recipe in $recipes) {
 	}
 	if ($recipeId -eq 'combined_arms_l1') {
 		if (($types | Sort-Object) -join ',' -ne '0,1') { throw 'Composite tier 1 must contain motorized and mechanized elements' }
-		if ($groups -ne 4 -or $members -ne 18 -or $vehicles -ne 2) { throw 'Tier 1 reservation must be four groups, 18 slots and two vehicles' }
+		if ($groups -ne 4 -or $members -ne 34 -or $vehicles -ne 2) { throw 'Tier 1 full-load reservation must be four groups, 34 slots and two vehicles' }
 	}
 	if ($groups -gt $maxGroups -or $members -gt $maxMembers -or $vehicles -gt $maxVehicles) { throw 'Composite response exceeds executor capacity' }
 	& {

@@ -135,7 +135,7 @@ function runQRFProgressionTests(sources) {
   for(const role of [1,2])for(let readinessLevel=1;readinessLevel<=5;readinessLevel++)for(let intensity=1;intensity<=5;intensity++){
     const faction=role===1?'AROR_OCCUPIERS':'AROR_INVADERS';
     const r=context.FindStrategicGroundRecipe(role,faction,intensity,false,readinessLevel),elements=[];
-    check(r&&r.m_iLevel===intensity,'each readiness/intensity/faction cell has a funded complete response');
+    check(r&&r.m_iLevel===intensity,'each readiness/intensity/faction cell has a funded complete response: '+[role,readinessLevel,intensity,r?.m_sId]);
     check(r.Resolve(profiles,role,faction,elements,readinessLevel)&&elements.every(p=>p.m_iMinimumReadinessLevel<=readinessLevel),'every selected element respects the equipment unlock');
     if(readinessLevel<=2)check(elements.every(p=>/motorized|light_support/.test(p.m_sId)),'even maximum early crackdown excludes APC/armour/aircraft');
     if(readinessLevel>=3&&readinessLevel<=4)check(elements.some(p=>/mechanized/.test(p.m_sId))&&elements.every(p=>!/_(armour|airborne)$/.test(p.m_sId)),'middle readiness introduces APCs without late support/aircraft');

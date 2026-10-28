@@ -123,7 +123,7 @@ for(const role of [1,2])for(let readiness=1;readiness<=5;readiness++)for(const k
     if(!choice.IsAvailable())continue;
     if(kind===3)check(choice.m_aElements.every(p=>p.m_iEscortCount===(readiness<5?0:1)),'Readiness selects light transport-only or heavy escorted air without changing intensity');
     if(kind===7&&readiness<5)check(choice.m_aElements[0].m_iEscortCount===0&&choice.m_aElements.slice(1).every(p=>p.m_eType!==types.ARMOUR||p.m_bLightVehicle),'early joint responses exclude gunships and heavy armour');
-    const physicalGroups=choice.m_aElements.reduce((n,p)=>n+(p.m_eType===3?2+p.m_iEscortCount:([2,4].includes(p.m_eType)?1:2)),0);
+    const physicalGroups=choice.m_aElements.reduce((n,p)=>n+(p.m_eType===3?2+p.m_iEscortCount:((p.m_eType===4||(p.m_eType===2&&!p.m_bFillPassengerSeats))?1:2)),0);
     const physicalVehicles=choice.m_aElements.reduce((n,p)=>n+(p.m_eType===3?1+p.m_iEscortCount:(p.m_eType===4?0:1)),0);
     check(choice.m_iGroups===physicalGroups&&choice.m_iVehicles===physicalVehicles&&choice.m_iPersonnel===choice.m_aElements.reduce((n,p)=>n+p.m_iPersonnelBudget,0),'preview reserves actual infantry/pilot/escort groups, vehicles and personnel');
     check(choice.m_aElements.every(p=>p.m_eRole===role&&p.m_iMinimumReadinessLevel<=readiness),'no borrowed or locked profile in preview');

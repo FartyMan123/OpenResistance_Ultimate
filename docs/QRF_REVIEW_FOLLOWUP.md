@@ -1,5 +1,27 @@
 # QRF review follow-up
 
+## Full ground transport loads
+
+Chicken's eight ground profiles now enable `m_bFillPassengerSeats`. Before requesting any character spawns, the executor inspects the actual vehicle compartments, reserves driver/turret seats for crew, and repeats the profile's authored infantry mix to fill usable passenger seats. Infantry and vehicle crew remain separate groups. The delivery pipeline now also covers light-support and armoured profiles carrying passengers: drive to the planned safe road stop, request infantry exits, verify completion, then assign infantry ground orders while the driver/gunners retain the vehicle. Existing bounded exit retries, native exit clearance and player protections remain enforced.
+
+The personnel ceilings are 22 per truck, 12 per LAV/BTR, and 8 per Humvee/UAZ/BRDM. These are conservative reservation limits, not measured occupancy counts. Actual capacity determines spawning. A hull whose required crew, passenger capacity or configuration cannot fit its frozen reservation fails preparation before character spawning; this must be checked on the installed native vehicles, including the BRDM's compartment layout. Crew-only extender profiles retain their existing behavior by leaving the new attribute off. Airborne passenger loads are unchanged.
+
+Passenger-carrying armour/light profiles reserve two groups. Updated collateral and slot ceilings appear in [QRF prices](QRF_PRICES.csv); exact physical totals remain `NOT_RUN` until native observation. No actor is added beyond its profile allocation. The 62 recipes and all 50 army/Readiness/Crackdown combinations pass installed-resource/configuration checks against the unchanged 128-person/20-group/10-vehicle executor caps. Full-load and reservation mutations exercise the new roster construction, and animated-exit tests cover a 13-soldier load while leaving driver/gunner exit queues untouched.
+
+**Native status:** the gunner-only version compiled successfully in the observed 19:26 Workbench run on 28 October 2026. That run subsequently showed rejected boarding retries for a truck and Humvee, ending in a spawn-acknowledgement timeout at 19:29:33. The existing logs do not establish the native rejection cause. This full-load revision needs a fresh compile and Play test; neither the boarding timeout nor sustained native crew occupancy is claimed resolved. Repeat ordinary QRFs and joint reserve waves for both armies, counting passengers at departure and after unloading. Confirm all infantry exit only after arrival, every required crew seat remains occupied, and no player is moved or ejected.
+
+## Armed vehicle crew follow-up
+
+The user observed an M2 Humvee with its weapon present but its gunner seat empty. Source inspection confirmed that dispatch checked the driver and whether crew were aboard, without requiring turret occupancy. Seating recognised only `TurretCompartmentSlot`; the installed native API also exposes attached turrets on other compartment types. The exact native seat type and the moment the Humvee lost its gunner remain unverified.
+
+Ground preparation and recovery now prioritise turret seats and compartments with `GetAttachedTurret()`. Occupied or inaccessible required seats are not silently omitted. Immediately before dispatch, every such seat must contain a living AI member of the assigned crew group; an empty seat, foreign occupant, player or dead gunner blocks dispatch. Direct seating also respects accessibility and other actors' reservations. No extra personnel are spawned and funding/capacity budgets are unchanged. Existing preparation deadlines and package failure policy still apply.
+
+Behavioral regressions cover attached weapons enumerated after passenger seats, crew aboard in cargo while the gunner seat is empty, insufficient crew, multiple turrets, blocked/reserved seats and gunner loss before dispatch. Two mutations remove attached-weapon recognition and the gunner readiness gate to establish that the tests detect either regression. Retry logs now report occupied/required gunner seats.
+
+Native acceptance: compile and reload Chicken; dispatch US M2 Humvee, USSR PKM UAZ, LAV, BTR and BRDM packages, including joint reserves. Inspect the driver and every gunner before movement and at contact. Kill or remove a gunner before dispatch and verify that the package does not receive orders with an empty turret. Repeat with a player or foreign AI occupying the seat, checking that nobody is displaced. Also watch for native AI abandoning a turret after dispatch: this change gates departure; it does not replace combat casualties or prove native AI remains mounted. Compile and Play are not available to this audit.
+
+## Original six-issue review
+
 Reviewed the six reported issues against `f6277ac`. The changes below need a fresh Workbench compile and native acceptance. Current automated evidence: 28 suites, 97,342 mocked assertions and 35 detected mutations. See [release validation](QRF_RELEASE_VALIDATION.md) for source hashes and broader limits.
 
 | Issue | Finding and action | Remaining limit |

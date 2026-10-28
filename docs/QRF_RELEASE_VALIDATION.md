@@ -12,7 +12,11 @@ The [combined reconciliation](RECONCILIATION_VALIDATION.md) includes the new str
 
 The six review issues and their dispositions, shipped settings and native reproductions are recorded in [Rowan review follow-up](QRF_REVIEW_FOLLOWUP.md). Four additional mutations cover active dispatch failure, reserve boarding deadlines, unknown-removal classification and banner estimate consistency. Long Cyrillic/proportional-font rendering remains visually unverified.
 
-Current combined result: **29 suites / 97,366 mocked assertions**, including **43 detected source mutations** and the 10,000-tick simulated scheduler soak. The original 27-suite / 95,936-assertion evidence remains in Git history.
+Current combined result: **29 suites / 97,289 mocked assertions**, including **47 detected source mutations** and the 10,000-tick simulated scheduler soak. The original 27-suite / 95,936-assertion evidence remains in Git history.
+
+The [full-load follow-up](QRF_REVIEW_FOLLOWUP.md#full-ground-transport-loads) fills native ground passenger capacity within updated reserved ceilings and routes passenger-carrying light/armoured profiles through delivery and infantry unloading. Driver/gunner crews remain separate. Prices and response coverage reflect the larger reservations. Physical occupancy counts remain unverified; `EstimatedPersonnel` in the price CSV is `NOT_RUN`. Fewer affordability-loop assertions execute because larger full-load quotes exceed more sampled balances; all 50 funded army/Readiness/Crackdown combinations still pass.
+
+The [armed-vehicle crew follow-up](QRF_REVIEW_FOLLOWUP.md#armed-vehicle-crew-follow-up) addresses the reported empty M2 Humvee gunner seat: every ground turret/attached-weapon seat now requires assigned living AI before dispatch. The observed gunner-only version compiled successfully, then a truck and Humvee failed native boarding and timed out. The full-load revision adds native entry-state diagnostics to existing paced retry logs; the rejection cause remains unresolved. Fresh compile/Play acceptance is required for this revision.
 
 - [Automated results and source hashes](validation/QRF_AUTOMATED_RESULTS.json).
 - [All 350 configured response cells](validation/CHICKEN_RESPONSE_COVERAGE.csv): two armies × seven families × five Readiness levels × five Crackdown levels. 280 cells resolve an available response; the remaining 70 are intentionally locked. Availability does not establish affordability, current origin ownership, free live capacity or successful native deployment.
@@ -118,16 +122,16 @@ All rows below include one unescorted transport/fireteam package.
 
 | Readiness | Tier | Ground elements | Lead / reserve packages | US / USSR funds required |
 |---|---|---|---:|---:|
-| 2 | 1 | truck | 2 / 0 | 2,260 / 2,460 |
-| 2 | 2 | truck + light support | 3 / 0 | 2,670 / 2,770 |
-| 2 | 3 | truck + truck + light support | 2 / 2 | 3,080 / 3,180 |
-| 2 | 4 | truck + truck + truck + light support | 3 / 2 | 3,490 / 3,590 |
-| 2 | 5 | truck + truck + truck + light support + light support | 3 / 3 | 3,900 / 3,900 |
-| 3–4 | 1 | truck | 2 / 0 | 2,260 / 2,460 |
-| 3–4 | 2 | truck + APC/IFV | 3 / 0 | 3,320 / 3,420 |
-| 3–4 | 3 | truck + APC/IFV + light support | 2 / 2 | 3,730 / 3,730 |
-| 3–4 | 4 | truck + APC/IFV + APC/IFV + light support | 3 / 2 | 4,790 / 4,690 |
-| 3–4 | 5 | truck + truck + APC/IFV + APC/IFV + light support | 3 / 3 | 5,200 / 5,100 |
+| 2 | 1 | truck | 2 / 0 | 2,610 / 2,810 |
+| 2 | 2 | truck + light support | 3 / 0 | 3,120 / 3,220 |
+| 2 | 3 | truck + truck + light support | 2 / 2 | 3,880 / 3,980 |
+| 2 | 4 | truck + truck + truck + light support | 3 / 2 | 4,640 / 4,740 |
+| 2 | 5 | truck + truck + truck + light support + light support | 3 / 3 | 5,150 / 5,150 |
+| 3–4 | 1 | truck | 2 / 0 | 2,610 / 2,810 |
+| 3–4 | 2 | truck + APC/IFV | 3 / 0 | 3,720 / 3,820 |
+| 3–4 | 3 | truck + APC/IFV + light support | 2 / 2 | 4,230 / 4,230 |
+| 3–4 | 4 | truck + APC/IFV + APC/IFV + light support | 3 / 2 | 5,340 / 5,240 |
+| 3–4 | 5 | truck + truck + APC/IFV + APC/IFV + light support | 3 / 3 | 6,100 / 6,000 |
 
 The early IDs are `occupier_joint_r2_l1`–`l5`, `invader_joint_r2_l1`–`l5`, and the corresponding `*_joint_r3_l1`–`l5` bands. Readiness 3–4 permits mechanized elements; their presence still depends on the authored Crackdown tier. Genuine armour and gunships remain gated to Readiness 5.
 
@@ -137,11 +141,11 @@ Every row includes one transport/fireteam/gunship package.
 
 | Tier | Ground elements | Lead / reserve packages | US / USSR funds required |
 |---|---|---:|---:|
-| 1 | Truck | 2 / 0 | 4,560 / 4,760 |
-| 2 | Truck + APC/IFV | 3 / 0 | 5,620 / 5,720 |
-| 3 | Truck + APC/IFV + armour | 2 / 2 | 6,530 / 6,280 |
-| 4 | Truck + 2 APCs/IFVs + armour | 3 / 2 | 7,590 / 7,240 |
-| 5 | 2 trucks + 2 APCs/IFVs + armour + light support | 4 / 3 | 8,400 / 7,950 |
+| 1 | Truck | 2 / 0 | 4,910 / 5,110 |
+| 2 | Truck + APC/IFV | 3 / 0 | 6,020 / 6,120 |
+| 3 | Truck + APC/IFV + armour | 2 / 2 | 7,130 / 6,780 |
+| 4 | Truck + 2 APCs/IFVs + armour | 3 / 2 | 8,240 / 7,790 |
+| 5 | 2 trucks + 2 APCs/IFVs + armour + light support | 4 / 3 | 9,500 / 8,950 |
 
 ### Shared execution and compatibility
 

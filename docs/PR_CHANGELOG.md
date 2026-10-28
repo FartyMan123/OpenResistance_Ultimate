@@ -8,6 +8,10 @@ Reconcile the QRF lifecycle fixes with Fortress Vostok, Stronghold Delaware, exp
 
 ## Changes
 
+- **Full ground loads:** fill native passenger seats with the authored infantry mix for all eight Chicken ground profiles, including armed light vehicles. Keep infantry separate from vehicle crews, deliver passenger-carrying armour through the road-stop/unload path, and retain driver/gunners during infantry exit requests. Raise reserved personnel/collateral ceilings within existing executor caps; update prices and response coverage. Add bounded boarding-rejection diagnostics. Native boarding rejection remains unresolved pending a fresh Play run.
+
+- **Armed vehicle crews:** require living assigned AI in every ground turret/attached-weapon seat before dispatch, including joint waves. Recognise mounted weapons on cargo-style seats, preserve required seats during assignment, and respect accessibility/reservations. Add gunner-occupancy regressions and two mutation checks. Native Humvee/UAZ and armoured-vehicle acceptance remains required.
+
 - **Native retaliation fix:** remove seven attributed script initializers that Workbench reported were overwriting authored recipe/profile values and disabling the executor. Preserve defaults in Attribute metadata and explicit script factories. Announce stronghold responses after confirmed deployment, keeping failed preparation retries silent. See [observed Vostok/Crow Hill failure](QRF_RETALIATION_FAILURE.md).
 
 - **Integration:** merge current `master-dev`, preserving Rowan's Resistance Garage and phone quick dock alongside the stronghold/QRF work. Resolve the architecture saved-state list by retaining both Garage snapshots and stronghold state; bind the quick-store glyph to the existing Roboto Condensed font. Native Garage workflows remain unverified by this audit.

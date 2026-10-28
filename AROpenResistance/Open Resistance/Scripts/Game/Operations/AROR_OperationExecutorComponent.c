@@ -494,9 +494,9 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			DamageManagerComponent dispatchDamage = DamageManagerComponent.Cast(ground.m_Vehicle.FindComponent(DamageManagerComponent));
 			if (dispatchDamage && dispatchDamage.IsDestroyed())
 				return false;
-			if (!ground.m_Waypoint || (ground.m_Profile.m_eType != AROR_EForceType.ARMOUR && !ground.m_CrewWaypoint))
+			if (!ground.m_Waypoint || ((ground.m_Profile.m_eType != AROR_EForceType.ARMOUR || ground.m_Profile.m_bFillPassengerSeats) && !ground.m_CrewWaypoint))
 				return false;
-			if (ground.m_Profile.m_eType == AROR_EForceType.ARMOUR)
+			if ((ground.m_Profile.m_eType == AROR_EForceType.ARMOUR && !ground.m_Profile.m_bFillPassengerSeats))
 				ground.m_CrewGroup.AddWaypoint(ground.m_Waypoint);
 			else
 				ground.m_CrewGroup.AddWaypoint(ground.m_CrewWaypoint);
@@ -1003,7 +1003,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		if (operation.m_TacticalCommander)
 			objectivePosition = operation.m_TacticalCommander.m_vTown;
 		vector approach = objectivePosition;
-		if (profile.m_eType != AROR_EForceType.ARMOUR)
+		if ((profile.m_eType != AROR_EForceType.ARMOUR || profile.m_bFillPassengerSeats))
 		{
 			float distance = vector.DistanceXZ(launchPosition, target.GetCenter());
 			if (distance <= profile.m_fDismountDistance + 20 && !operation.m_TacticalCommander)
@@ -1064,7 +1064,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		force.m_CrewGroup.m_aUnitPrefabSlots.Clear();
 		for (int c = 0; c < profile.m_iCrewCount; c++)
 			force.m_CrewGroup.m_aUnitPrefabSlots.Insert(profile.m_sCrewCharacter);
-		if (profile.m_eType == AROR_EForceType.ARMOUR)
+		if ((profile.m_eType == AROR_EForceType.ARMOUR && !profile.m_bFillPassengerSeats))
 			force.m_Group = force.m_CrewGroup;
 		else
 		{
@@ -1084,6 +1084,11 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			FailOperation(operation, "Infantry group cannot adopt the configured campaign faction");
 			return;
 		}
+		if (!force.PreparePassengerRoster_S())
+		{
+			FailOperation(operation, "Native passenger capacity or required crew exceeds the reserved full-load profile");
+			return;
+		}
 		int requested = force.m_Group.m_aUnitPrefabSlots.Count();
 		int totalRequested = requested;
 		if (force.m_Group != force.m_CrewGroup)
@@ -1097,10 +1102,10 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		if (operation.UsesTacticalResponse())
 			objectiveWaypoint = m_sQRFWaypointPrefab;
 		force.m_Waypoint = SpawnWaypoint(objectiveWaypoint, objectivePosition);
-		if (profile.m_eType != AROR_EForceType.ARMOUR)
+		if ((profile.m_eType != AROR_EForceType.ARMOUR || profile.m_bFillPassengerSeats))
 			force.m_CrewWaypoint = SpawnWaypoint(m_sMoveWaypointPrefab, approach);
 		force.m_vApproachPosition = approach;
-		if (!force.m_Waypoint || (profile.m_eType != AROR_EForceType.ARMOUR && !force.m_CrewWaypoint))
+		if (!force.m_Waypoint || ((profile.m_eType != AROR_EForceType.ARMOUR || profile.m_bFillPassengerSeats) && !force.m_CrewWaypoint))
 		{
 			FailOperation(operation, "Ground-force waypoint resource failed");
 			return;
@@ -1386,7 +1391,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			force.m_bMounted = true;
 			force.m_bReady = true;
 			int initialStrength = infantry + crew;
-			if (force.m_Profile.m_eType == AROR_EForceType.ARMOUR)
+			if ((force.m_Profile.m_eType == AROR_EForceType.ARMOUR && !force.m_Profile.m_bFillPassengerSeats))
 				initialStrength = crew;
 			RecordTacticalStrength(force, operation, initialStrength);
 			FactionAffiliationComponent deployedFaction = FactionAffiliationComponent.Cast(force.m_Vehicle.FindComponent(FactionAffiliationComponent));
@@ -1411,7 +1416,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			return;
 		if (UpdateTownSearch(force, operation))
 			return;
-		if (force.m_Profile.m_eType != AROR_EForceType.ARMOUR && !force.m_bDismounted)
+		if ((force.m_Profile.m_eType != AROR_EForceType.ARMOUR || force.m_Profile.m_bFillPassengerSeats) && !force.m_bDismounted)
 		{
 			if (!force.ArePassengersOut() && !force.m_CrewGroup.GetCurrentWaypoint() && vector.DistanceXZ(force.m_Vehicle.GetOrigin(), force.m_vApproachPosition) <= 30)
 			{
@@ -1471,7 +1476,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			if (!location || !force.m_Vehicle)
 				return false;
 			AIWaypoint previousWaypoint = force.m_CrewWaypoint;
-			if (force.m_Profile.m_eType == AROR_EForceType.ARMOUR)
+			if ((force.m_Profile.m_eType == AROR_EForceType.ARMOUR && !force.m_Profile.m_bFillPassengerSeats))
 			{
 				previousWaypoint = force.m_Waypoint;
 			}
@@ -1498,7 +1503,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		if (force.m_TownSearch && force.m_TownSearch.Tick_S(m_iExecutorClock))
 			return true;
 		force.m_bTownSearchFinished = true;
-		if (force.m_Profile.m_eType == AROR_EForceType.ARMOUR)
+		if ((force.m_Profile.m_eType == AROR_EForceType.ARMOUR && !force.m_Profile.m_bFillPassengerSeats))
 			force.m_CrewGroup.AddWaypoint(force.m_Waypoint);
 		else
 			force.m_CrewGroup.AddWaypoint(force.m_CrewWaypoint);
@@ -2418,7 +2423,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			return;
 		force.m_iTacticalNextOrder = m_iExecutorClock + 15;
 		AROR_GroundOperationForce ground = AROR_GroundOperationForce.Cast(force);
-		if (ground && !ground.m_bDismounted && ground.m_Vehicle && ground.m_Profile.m_eType != AROR_EForceType.ARMOUR)
+		if (ground && !ground.m_bDismounted && ground.m_Vehicle && (ground.m_Profile.m_eType != AROR_EForceType.ARMOUR || ground.m_Profile.m_bFillPassengerSeats))
 		{
 			Physics physics = ground.m_Vehicle.GetPhysics();
 			vector position = ground.m_Vehicle.GetOrigin();
@@ -2881,7 +2886,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			bool unloadingComplete = force.m_bDismounted;
 			if (force.m_bMounted && force.CountInfantry() > 0 && force.ArePassengersOut())
 				unloadingComplete = true;
-			if (unloadingComplete && !occupied && force.m_Profile.m_eType != AROR_EForceType.ARMOUR)
+			if (unloadingComplete && !occupied && (force.m_Profile.m_eType != AROR_EForceType.ARMOUR || force.m_Profile.m_bFillPassengerSeats))
 			{
 				// Native occupancy/faction updates can precede this tick's delivery state update.
 				force.m_bDismounted = true;
@@ -2970,7 +2975,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		force.m_iTacticalNextRouteCheck = m_iExecutorClock + 30;
 		if (force.m_Vehicle)
 			force.m_vTacticalProgressPosition = force.m_Vehicle.GetOrigin();
-		if (force.m_Profile.m_eType == AROR_EForceType.ARMOUR)
+		if ((force.m_Profile.m_eType == AROR_EForceType.ARMOUR && !force.m_Profile.m_bFillPassengerSeats))
 			ReplaceTacticalWaypoint(force, true, m_sQRFWaypointPrefab, commander.m_vTown);
 		else
 			ReplaceTacticalWaypoint(force, true, m_sMoveWaypointPrefab, force.m_vApproachPosition);
@@ -3166,7 +3171,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		if (force.m_CrewGroup && force.m_CrewGroup.GetPlayerCount() > 0)
 			return true;
 		int strength = infantry + crew;
-		if (force.m_Profile.m_eType == AROR_EForceType.ARMOUR)
+		if ((force.m_Profile.m_eType == AROR_EForceType.ARMOUR && !force.m_Profile.m_bFillPassengerSeats))
 			strength = crew;
 		RecordTacticalStrength(force, operation, strength);
 		bool retreat = commander.m_bWithdraw || force.m_bTacticalWithdrawing;
@@ -3190,7 +3195,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 				return true;
 			ReleaseFromStaging(force, commander);
 		}
-		if (force.m_Profile.m_eType == AROR_EForceType.ARMOUR && force.m_Vehicle && crew > 0)
+		if ((force.m_Profile.m_eType == AROR_EForceType.ARMOUR && !force.m_Profile.m_bFillPassengerSeats) && force.m_Vehicle && crew > 0)
 		{
 			if (vector.DistanceXZ(force.m_Vehicle.GetOrigin(), commander.m_vTown) <= m_fQRFObjectiveDeliveryRadius && commander.BeginTownHold(m_iExecutorClock))
 				Print(string.Format("[AROR TACTICAL] %1 armour entered town; fixed security hold starts now for %2 seconds", operation.GetId(), commander.m_iTownHoldSeconds), LogLevel.NORMAL);
@@ -3205,7 +3210,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			if ((!hull || !hull.IsDestroyed()) && vector.DistanceXZ(force.m_Vehicle.GetOrigin(), commander.m_vTown) > m_fQRFObjectiveDeliveryRadius)
 				RecoverStalledQRFRoute(force, commander);
 		}
-		if (force.m_Profile.m_eType != AROR_EForceType.ARMOUR && !force.m_bDismounted)
+		if ((force.m_Profile.m_eType != AROR_EForceType.ARMOUR || force.m_Profile.m_bFillPassengerSeats) && !force.m_bDismounted)
 		{
 			vector vehiclePosition = force.m_Vehicle.GetOrigin();
 			float distance = vector.DistanceXZ(vehiclePosition, force.m_vApproachPosition);
@@ -3268,7 +3273,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 				return true;
 			}
 		}
-		if (force.m_Profile.m_eType != AROR_EForceType.ARMOUR)
+		if ((force.m_Profile.m_eType != AROR_EForceType.ARMOUR || force.m_Profile.m_bFillPassengerSeats))
 			TacticalInfantryOrders(force, operation);
 		if (m_iExecutorClock < force.m_iTacticalNextSupport)
 			return true;

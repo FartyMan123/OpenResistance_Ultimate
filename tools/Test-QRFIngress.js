@@ -10,11 +10,11 @@ function runQRFIngressTests(sources) {
     const match=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
     if(!match)throw Error('Missing '+name);
     let args=match[1].replace(/\bout\s+/g,'').replace(/\b(?:bool|vector|float|int|IEntity|AROR_\w+)\s+/g,'');
-    let body=match[2].replace(/array<AIAgent> (\w+) = \{\};/g,'let $1=[];')
+    let body=match[2].replace(/array<\w+> (\w+) = \{\};/g,'let $1=[];')
       .replace(/new TraceBox\(\)/g,'({})')
       .replace(/foreach \(\w+ (\w+) : ([^)]+)\)/g,'for(const $1 of $2)')
       .replace(/vector (\w+);/g,'let $1=[0,0,0];')
-      .replace(/\b(?:bool|float|int|vector|IEntity|ResourceName|Resource|NavmeshWorldComponent|ChimeraAIWorld|BaseWorld|CompartmentAccessComponent|ChimeraCharacter|BaseCompartmentSlot|SCR_AIVehicleUsageComponent|AROR_\w+|TraceBox)\s+(\w+)/g,'let $1')
+      .replace(/\b(?:bool|float|int|vector|IEntity|ResourceName|Resource|NavmeshWorldComponent|ChimeraAIWorld|BaseWorld|CompartmentAccessComponent|ChimeraCharacter|BaseCompartmentSlot|BaseCompartmentManagerComponent|SCR_AIVehicleUsageComponent|AROR_\w+|TraceBox)\s+(\w+)/g,'let $1')
       .replace(/let (\w+);/g,'let $1=0;')
       .replace(/(?<![.\w])m_\w+/g,x=>'this.'+x);
     for(const method of methods)body=body.replace(new RegExp('(?<![.\\w])'+method+'\\(', 'g'),'this.'+method+'(');
@@ -33,7 +33,8 @@ function runQRFIngressTests(sources) {
   env.CompartmentAccessComponent={Cast:x=>x};
   env.ChimeraCharacter={Cast:x=>x};
   env.SCR_AIVehicleUsageComponent={Cast:x=>x};
-  const vehicle={FindComponent:()=>usage},otherVehicle={};
+  env.BaseCompartmentManagerComponent={Cast:x=>x};
+  const vehicle={FindComponent:type=>type===env.BaseCompartmentManagerComponent?{GetCompartments:()=>{}}:usage},otherVehicle={};
   let occupant={},inSeat=true,gettingIn=false,gettingOut=false,seatVehicle=vehicle;
   const access={IsInCompartment:()=>inSeat,IsGettingIn:()=>gettingIn,IsGettingOut:()=>gettingOut,
     GetCompartment:()=>({GetVehicle:()=>seatVehicle,GetOccupant:()=>occupant})};
