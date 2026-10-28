@@ -8,7 +8,7 @@ const suites=[
  'Test-QRFSupportAndHeadlines.js','Test-QRFVehicleFaction.js','Test-QRFTownHold.js',
  'Test-EveronQRFIntegration.js','Test-InvaderCampaign.js','Test-RebIntel.js','Test-MissionLifecycle.js',
  'Test-CapturePlacement.js','Test-GarrisonsAndSupport.js','Test-GarrisonCrew.js',
- 'Test-OutpostEquipment.js','Test-DefenceLayout.js','Test-FortifiedOutpostLayouts.js',
+ 'Test-OutpostEquipment.js','Test-PostsAndPads.js','Test-DefenceLayout.js','Test-FortifiedOutpostLayouts.js',
  'Test-DefenceSiteAudit.js','Test-DefenceWallGrounding.js','Test-CampaignFlagEditor.js'
 ];
 const start=Date.now();
