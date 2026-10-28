@@ -622,5 +622,16 @@ GenericEntity : "{3D1925CD1FA54115}Prefabs/Locations/AROR_Location_Outpost.et" {
    coords 3 0 -2
    angles 0 0 0
   }
+  GenericEntity AROR_Outpost_CheckpointFortified_Fort_Tower_0 : "{AB87B392A989CA95}Prefabs/Compositions/Slotted/SlotFlatSmall/GuardTower_S_US_01.et" {
+   ID "F3A694ECACF8037A"
+   components {
+    AROR_DefenceWallComponent {
+    }
+    AROR_SentryPostComponent {
+     m_fFloorHeight 3.5
+    }
+   }
+   coords 0 0 4
+  }
  }
 }

@@ -14,7 +14,7 @@ function runFortifiedLayoutChecks(files) {
    return {name:m[1],ref:m[2]||'',block,x:+p[1],z:+p[3],yaw:a?+a[1]:0,id:block.match(/ID "([^"]+)"/)?.[1]};
   });
  }
- const sizes={Sandbag_01_long_burlap:[1.3,.45],Sandbag_01_long_high_burlap:[1.3,.5],Sandbag_01_bunker_burlap_camonet:[5,5],TableMilitary_US_01:[1.5,.75]};
+ const sizes={Sandbag_01_long_burlap:[1.3,.45],Sandbag_01_long_high_burlap:[1.3,.5],Sandbag_01_bunker_burlap_camonet:[5,5],TableMilitary_US_01:[1.5,.75],GuardTower_S_US_01:[1.75,1.75]};
  function envelope(p){
   const name=p.ref.split('/').pop().replace('.et','');
   const size=name.startsWith('EquipmentBoxWooden_')?[1,1]:sizes[name];
@@ -50,13 +50,17 @@ function runFortifiedLayoutChecks(files) {
    check(boxes.every((b,i)=>b.id===previous[i].id),'container IDs retained across layout changes '+wrapperPath);
    const props=[...scenery,...boxes];
    for(const p of props){
-    check(p.block.includes('Hierarchy {')&&p.block.includes('AROR_DefenceWallComponent {'),'groundable prop '+p.name);
+    // Composite prefabs (bunkers, slotted compositions) bring their own Hierarchy: repeating it drops the component block
+    const composite=/Compositions\/Slotted|_bunker_/.test(p.ref);
+    check(p.block.includes('Hierarchy {')!==composite&&p.block.includes('AROR_DefenceWallComponent {'),'groundable prop '+p.name);
     const [a,b]=envelope(p);
     check(Math.hypot(Math.max(0,Math.abs(p.x)-a),Math.max(0,Math.abs(p.z)-b))>=2,'clear flag interaction area '+p.name);
    }
    for(const m of markers){
     const pad=({0:2.5,1:1.5,2:5,3:5,4:.6}[m.kind])*Math.SQRT2;
-    check(props.every(p=>{const[a,b]=envelope(p);return Math.abs(m.x-p.x)>=a+pad+.2||Math.abs(m.z-p.z)>=b+pad+.2;}),'estimated pad clearance at any root yaw '+m.name+'/'+role);
+    // A raised gun stands on its own guard tower
+    const raised=m.kind===1&&/m_fElevation/.test(m.block);
+    check(props.every(p=>{if(raised&&/GuardTower_/.test(p.ref)&&Math.hypot(m.x-p.x,m.z-p.z)<.5)return true;const[a,b]=envelope(p);return Math.abs(m.x-p.x)>=a+pad+.2||Math.abs(m.z-p.z)>=b+pad+.2;}),'estimated pad clearance at any root yaw '+m.name+'/'+role);
    }
    for(const g of markers.filter(p=>p.kind===1))for(const delta of[-15,0,15]){
     const angle=(g.yaw+delta)*Math.PI/180;

@@ -52,3 +52,12 @@ Static guns sit on low tripods and fire from about 0.6 m, so even a low sandbag 
 Estimated envelopes are not measured model bounds. Native compile, terrain fit, grounding, actual collision, inventory, seating, replication and Play acceptance remain pending for the revised layouts. Keep the trial manifest separate from the historical CSV and wall-offset archives. The campaign-layer generator deliberately refuses `-Apply` while these overrides exist, preventing accidental loss of the castle and authored trial bindings.
 
 Extenders can configure static variants and counts on the existing garrison bindings and inherit the geometry/equipped wrappers. The optional compact recipe switch defaults off, preserving existing templates. Server and clients need matching updated scripts/resources. No new economy, spawn authority or ownership system is introduced.
+
+## Towers and fighting positions
+
+`tools/Add-OutpostFortifications.ps1 -Apply` adds AI fortifications to the shared outpost, military base, factory and depot compositions (the strongholds have their own generators):
+
+- a US guard tower beside the north-wall gun pit, and beside the east flank gun at the larger sites. Each tower is a sentry post (`AROR_SentryPostComponent`): the garrison posts one marksman on it as his own group, and he holds the platform without move orders. A tripod gun cannot fire over the tower's sandbag parapet, so the guns stay in their pits. Lamentin's coastal base has no room for a tower.
+- a low sandbag fighting position 5-8 m in front of each infantry team position, where it fits without crowding a spawn position, a gun lane or another prop.
+- a bunker where a layout has none and one fits; none currently fits by the layout test's clearance rules. Every existing bunker is turned to face out of the compound (to the nearest quarter turn) and is a ground-level sentry post: one soldier holds it.
+ it again after regenerating presets with `Set-MilitaryDefencePresets.ps1 -Apply`, which rewrites those compositions. Without `-Apply` it checks the additions are present. The tower floor height (3.5 m) is an estimate until checked in Play; without a platform the marksman stands at the tower's foot. Bunkers and slotted compositions must not repeat their prefab's `Hierarchy` component: Workbench rejects the whole component block. The script strips any it finds.
