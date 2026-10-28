@@ -17,6 +17,9 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	[Attribute("16", desc: "Font size of the name beside military, port and industrial site icons, in reference pixels", params: "8 32 1")]
 	protected int m_iLabelFontSize;
 
+	[Attribute("90", desc: "Map scale, in reference pixels per kilometre, below which site names are hidden to declutter the overview. Stronghold names always show. 0 always shows names.", params: "0 1000 1")]
+	protected float m_fLabelMinPixelsPerKm;
+
 	[Attribute("1", desc: "Draw locations as military-frame symbols (rectangle ours, diamond enemy) instead of the icon textures")]
 	protected bool m_bFrameIcons;
 
@@ -46,9 +49,10 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	protected static const string FRAME_WIDGET_NAME = "Frame";
 	protected static const float LABEL_MAX_WIDTH = 360;	//!< Room for the longest site name beside its icon
 	protected static const float LABEL_GAP = 5;			//!< Space between an icon's right edge and its name
-	protected static const int LABEL_GLOW_SIZE = 3;		//!< Soft halo behind location names, in pixels
+	protected static const int LABEL_GLOW_SIZE = 4;		//!< Light halo behind location names, in pixels
 	protected static const int LABEL_GLOW_COLOR = 0xFFFFFFFF;
-	protected static const float LABEL_GLOW_OPACITY = 0.75;
+	protected static const float LABEL_GLOW_OPACITY = 1;
+	protected static const float LABEL_INK = 0.5;		//!< Owner colour darkened to this fraction, for contrast against the halo
 
 	//! Extra clickable margin around an icon, in reference pixels
 	protected static const float CLICK_MARGIN = 4;
@@ -367,7 +371,8 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Name in the owner's colour (the icon's stroke colour) with a soft light glow, so it reads over land and sea
+	//! Name in a deep shade of the owner's colour inside a solid light halo: the pale faction tints alone vanish
+	//! over Everon's light terrain and sea
 	protected void ApplyLabelColor(notnull RichTextWidget label, notnull AROR_LocationComponent location)
 	{
 		Color color;
@@ -378,7 +383,8 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 			if (faction)
 				color = faction.GetFactionColor();
 		}
-		label.SetColor(AROR_MapFrameIcon.StrokeColor(color));
+		Color stroke = AROR_MapFrameIcon.StrokeColor(color);
+		label.SetColor(new Color(stroke.R() * LABEL_INK, stroke.G() * LABEL_INK, stroke.B() * LABEL_INK, 1));
 		label.SetShadow(LABEL_GLOW_SIZE, LABEL_GLOW_COLOR, LABEL_GLOW_OPACITY, 0, 0);
 	}
 
@@ -479,6 +485,12 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		WorkspaceWidget workspace = GetGame().GetWorkspace();
 		int screenX, screenY;
 
+		// Current map scale from a one-kilometre span; zoomed out, ordinary site names overlap into noise
+		int kmX, kmY;
+		mapEntity.WorldToScreen(0, 0, screenX, screenY, true);
+		mapEntity.WorldToScreen(1000, 0, kmX, kmY, true);
+		bool showNames = workspace.DPIUnscale(Math.AbsInt(kmX - screenX)) >= m_fLabelMinPixelsPerKm;
+
 		foreach (int i, AROR_LocationComponent location : m_aIconLocations)
 		{
 			Widget widget = m_aIconWidgets[i];
@@ -492,7 +504,12 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 			FrameSlot.SetPos(widget, x, y);
 			Widget label = m_aLabelWidgets[i];
 			if (label)
+			{
 				FrameSlot.SetPos(label, x + m_fIconSize * 0.5 + LABEL_GAP, y);
+				bool show = showNames || location.GetOwner().FindComponent(AROR_StrongholdComponent) != null;
+				if (label.IsVisible() != show)
+					label.SetVisible(show);
+			}
 
 			// Popup sits to the right of its icon (clear of the selector), top-aligned with it
 			if (m_Popup && m_Popup.GetLocation() == location)
