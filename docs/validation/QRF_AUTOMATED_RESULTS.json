@@ -9,8 +9,8 @@
     "evidence": "Compilation history and current native acceptance status are recorded in docs/QRF_RELEASE_VALIDATION.md."
   },
   "releaseApproved": false,
-  "generatedAt": "2026-10-28T07:27:13.521Z",
-  "elapsedMs": 3661,
+  "generatedAt": "2026-10-28T07:42:26.740Z",
+  "elapsedMs": 2888,
   "nativeVerified": false,
   "passed": true,
   "assertions": 97348,
@@ -19,233 +19,233 @@
       "name": "Test-MarsAndAttacks.js",
       "passed": true,
       "assertions": 1666,
-      "elapsedMs": 101,
+      "elapsedMs": 85,
       "exitCode": 0,
-      "output": "{\"assertions\":1666,\"note\":\"Native AI, REAPER flight, UI and replication require Workbench compile and Play.\"}\n[1028/182709.893:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":1666,\"note\":\"Native AI, REAPER flight, UI and replication require Workbench compile and Play.\"}\n[1028/184223.875:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-QRFReleaseLifecycle.js",
       "passed": true,
       "assertions": 20587,
-      "elapsedMs": 91,
+      "elapsedMs": 124,
       "exitCode": 0,
-      "output": "{\"assertions\":20587,\"note\":\"Actual-source state transitions and dispatch/boarding policy; native AI, route reachability and replication remain unverified.\"}\n[1028/182709.993:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":20587,\"note\":\"Actual-source state transitions and dispatch/boarding policy; native AI, route reachability and replication remain unverified.\"}\n[1028/184224.014:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-QRFInterruptions.js",
       "passed": true,
       "assertions": 894,
-      "elapsedMs": 112,
+      "elapsedMs": 88,
       "exitCode": 0,
-      "output": "{\"assertions\":894,\"settingsEvidence\":[{\"fixture\":\"source defaults\",\"values\":{\"m_fAttackStagingDistance\":500,\"m_iAttackStagingTimeout\":180,\"m_fQRFTownSupportPerMinute\":6,\"m_iOriginLaunchCooldown\":600,\"m_fOriginMaxGarrisonLoss\":0.5,\"m_fMinOriginDistance\":600,\"m_fOriginWaterPenalty\":2,\"m_iQRFSplitTier\":3,\"m_iQRFReinforcementDelay\":60,\"m_iQRFReserveWait\":300,\"m_iQRFMaxLiveGround\":6,\"m_iQRFMaxLiveAircraft\":6,\"m_iQRFTacticalDuration\":600,\"m_iQRFTownHoldDuration\":900,\"m_iQRFOrderInterval\":15,\"m_iQRFApproachAttempts\":12,\"m_fQRFRoadLaunchRadius\":150,\"m_fQRFVehicleArrivalTolerance\":20,\"m_fQRFObjectiveDeliveryRadius\":100,\"m_fQRFMaximumRoadDismount\":300,\"m_iQRFIngressTimeout\":600,\"m_iQRFDetourTimeout\":90,\"m_iQRFExitTimeout\":30,\"m_iQRFExitRetryLimit\":2,\"m_iQRFExitRecoveryDelay\":10,\"m_iQRFInfantryLegTimeout\":180,\"m_fQRFInfantryPlanningSpeed\":1.5,\"m_fQRFRecoveryRadius\":100,\"m_fQRFVehicleRecoveryRadius\":125,\"m_fQRFThreatDismount\":200,\"m_fQRFWithdrawFraction\":0.4,\"m_fQRFLocalWithdrawFraction\":0.5,\"m_iQRFGroundRetention\":120,\"m_fQRFGroundCleanupDistance\":1200,\"m_iReaperPreparationTimeout\":120,\"m_iReaperFlightTimeout\":180,\"m_fReaperInsertionHeight\":120,\"m_fReaperTransportSpeed\":160,\"m_fReaperTransportHeight\":60,\"m_fReaperHoldingDistance\":700,\"m_iReaperTouchdownTicks\":2,\"m_fReaperDepartureSpeed\":180,\"m_vReaperLZOffset\":[0,0,0],\"m_fReaperLZSearchRadius\":400,\"m_fReaperLandingSeparation\":90,\"m_fReaperLZFallbackRadius\":1200,\"m_fReaperLZAdjustmentRadius\":60,\"m_fReaperPadClearance\":18,\"m_fReaperFormationSpacing\":75,\"m_fReaperCleanupDistance\":1500,\"m_iReaperRetainSeconds\":600,\"m_iReaperSupportSeconds\":300,\"m_fReaperFriendlyClearance\":100,\"m_fReaperSupportRadius\":2000,\"m_iReaperContactAge\":90,\"m_fReaperGunshipHeight\":210,\"m_fReaperGunshipBand\":35,\"m_fReaperGunshipRunHeight\":110,\"m_fReaperGunshipRunBand\":20,\"m_fReaperGunshipRunRadius\":450,\"m_fReaperTrafficClearance\":100}},{\"fixture\":\"Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/Managers.layer\",\"values\":{\"m_fAttackStagingDistance\":500,\"m_iAttackStagingTimeout\":180,\"m_fQRFTownSupportPerMinute\":6,\"m_iOriginLaunchCooldown\":600,\"m_fOriginMaxGarrisonLoss\":0.5,\"m_fMinOriginDistance\":600,\"m_fOriginWaterPenalty\":2,\"m_iQRFSplitTier\":3,\"m_iQRFReinforcementDelay\":60,\"m_iQRFReserveWait\":450,\"m_iQRFMaxLiveGround\":6,\"m_iQRFMaxLiveAircraft\":6,\"m_iQRFTacticalDuration\":600,\"m_iQRFTownHoldDuration\":900,\"m_iQRFOrderInterval\":15,\"m_iQRFApproachAttempts\":12,\"m_fQRFRoadLaunchRadius\":300,\"m_fQRFVehicleArrivalTolerance\":20,\"m_fQRFObjectiveDeliveryRadius\":100,\"m_fQRFMaximumRoadDismount\":300,\"m_iQRFIngressTimeout\":600,\"m_iQRFDetourTimeout\":90,\"m_iQRFExitTimeout\":30,\"m_iQRFExitRetryLimit\":2,\"m_iQRFExitRecoveryDelay\":10,\"m_iQRFInfantryLegTimeout\":180,\"m_fQRFInfantryPlanningSpeed\":1.5,\"m_fQRFRecoveryRadius\":100,\"m_fQRFVehicleRecoveryRadius\":125,\"m_fQRFThreatDismount\":200,\"m_fQRFWithdrawFraction\":0.4,\"m_fQRFLocalWithdrawFraction\":0.5,\"m_iQRFGroundRetention\":120,\"m_fQRFGroundCleanupDistance\":1200,\"m_iReaperPreparationTimeout\":120,\"m_iReaperFlightTimeout\":180,\"m_fReaperInsertionHeight\":120,\"m_fReaperTransportSpeed\":160,\"m_fReaperTransportHeight\":60,\"m_fReaperHoldingDistance\":700,\"m_iReaperTouchdownTicks\":2,\"m_fReaperDepartureSpeed\":180,\"m_vReaperLZOffset\":[0,0,0],\"m_fReaperLZSearchRadius\":400,\"m_fReaperLandingSeparation\":90,\"m_fReaperLZFallbackRadius\":1200,\"m_fReaperLZAdjustmentRadius\":60,\"m_fReaperPadClearance\":18,\"m_fReaperFormationSpacing\":75,\"m_fReaperCleanupDistance\":1500,\"m_iReaperRetainSeconds\":600,\"m_iReaperSupportSeconds\":300,\"m_fReaperFriendlyClearance\":100,\"m_fReaperSupportRadius\":2000,\"m_iReaperContactAge\":90,\"m_fReaperGunshipHeight\":210,\"m_fReaperGunshipBand\":35,\"m_fReaperGunshipRunHeight\":110,\"m_fReaperGunshipRunBand\":20,\"m_fReaperGunshipRunRadius\":450,\"m_fReaperTrafficClearance\":100}}],\"note\":\"Actual-source interruption, optional-escort, retention and Economy checks; native physics, spawn queues and multiplayer still require Workbench.\"}\n[1028/182710.083:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":894,\"settingsEvidence\":[{\"fixture\":\"source defaults\",\"values\":{\"m_fAttackStagingDistance\":500,\"m_iAttackStagingTimeout\":180,\"m_fQRFTownSupportPerMinute\":6,\"m_iOriginLaunchCooldown\":600,\"m_fOriginMaxGarrisonLoss\":0.5,\"m_fMinOriginDistance\":600,\"m_fOriginWaterPenalty\":2,\"m_iQRFSplitTier\":3,\"m_iQRFReinforcementDelay\":60,\"m_iQRFReserveWait\":300,\"m_iQRFMaxLiveGround\":6,\"m_iQRFMaxLiveAircraft\":6,\"m_iQRFTacticalDuration\":600,\"m_iQRFTownHoldDuration\":900,\"m_iQRFOrderInterval\":15,\"m_iQRFApproachAttempts\":12,\"m_fQRFRoadLaunchRadius\":150,\"m_fQRFVehicleArrivalTolerance\":20,\"m_fQRFObjectiveDeliveryRadius\":100,\"m_fQRFMaximumRoadDismount\":300,\"m_iQRFIngressTimeout\":600,\"m_iQRFDetourTimeout\":90,\"m_iQRFExitTimeout\":30,\"m_iQRFExitRetryLimit\":2,\"m_iQRFExitRecoveryDelay\":10,\"m_iQRFInfantryLegTimeout\":180,\"m_fQRFInfantryPlanningSpeed\":1.5,\"m_fQRFRecoveryRadius\":100,\"m_fQRFVehicleRecoveryRadius\":125,\"m_fQRFThreatDismount\":200,\"m_fQRFWithdrawFraction\":0.4,\"m_fQRFLocalWithdrawFraction\":0.5,\"m_iQRFGroundRetention\":120,\"m_fQRFGroundCleanupDistance\":1200,\"m_iReaperPreparationTimeout\":120,\"m_iReaperFlightTimeout\":180,\"m_fReaperInsertionHeight\":120,\"m_fReaperTransportSpeed\":160,\"m_fReaperTransportHeight\":60,\"m_fReaperHoldingDistance\":700,\"m_iReaperTouchdownTicks\":2,\"m_fReaperDepartureSpeed\":180,\"m_vReaperLZOffset\":[0,0,0],\"m_fReaperLZSearchRadius\":400,\"m_fReaperLandingSeparation\":90,\"m_fReaperLZFallbackRadius\":1200,\"m_fReaperLZAdjustmentRadius\":60,\"m_fReaperPadClearance\":18,\"m_fReaperFormationSpacing\":75,\"m_fReaperCleanupDistance\":1500,\"m_iReaperRetainSeconds\":600,\"m_iReaperSupportSeconds\":300,\"m_fReaperFriendlyClearance\":100,\"m_fReaperSupportRadius\":2000,\"m_iReaperContactAge\":90,\"m_fReaperGunshipHeight\":210,\"m_fReaperGunshipBand\":35,\"m_fReaperGunshipRunHeight\":110,\"m_fReaperGunshipRunBand\":20,\"m_fReaperGunshipRunRadius\":450,\"m_fReaperTrafficClearance\":100}},{\"fixture\":\"Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/Managers.layer\",\"values\":{\"m_fAttackStagingDistance\":500,\"m_iAttackStagingTimeout\":180,\"m_fQRFTownSupportPerMinute\":6,\"m_iOriginLaunchCooldown\":600,\"m_fOriginMaxGarrisonLoss\":0.5,\"m_fMinOriginDistance\":600,\"m_fOriginWaterPenalty\":2,\"m_iQRFSplitTier\":3,\"m_iQRFReinforcementDelay\":60,\"m_iQRFReserveWait\":450,\"m_iQRFMaxLiveGround\":6,\"m_iQRFMaxLiveAircraft\":6,\"m_iQRFTacticalDuration\":600,\"m_iQRFTownHoldDuration\":900,\"m_iQRFOrderInterval\":15,\"m_iQRFApproachAttempts\":12,\"m_fQRFRoadLaunchRadius\":300,\"m_fQRFVehicleArrivalTolerance\":20,\"m_fQRFObjectiveDeliveryRadius\":100,\"m_fQRFMaximumRoadDismount\":300,\"m_iQRFIngressTimeout\":600,\"m_iQRFDetourTimeout\":90,\"m_iQRFExitTimeout\":30,\"m_iQRFExitRetryLimit\":2,\"m_iQRFExitRecoveryDelay\":10,\"m_iQRFInfantryLegTimeout\":180,\"m_fQRFInfantryPlanningSpeed\":1.5,\"m_fQRFRecoveryRadius\":100,\"m_fQRFVehicleRecoveryRadius\":125,\"m_fQRFThreatDismount\":200,\"m_fQRFWithdrawFraction\":0.4,\"m_fQRFLocalWithdrawFraction\":0.5,\"m_iQRFGroundRetention\":120,\"m_fQRFGroundCleanupDistance\":1200,\"m_iReaperPreparationTimeout\":120,\"m_iReaperFlightTimeout\":180,\"m_fReaperInsertionHeight\":120,\"m_fReaperTransportSpeed\":160,\"m_fReaperTransportHeight\":60,\"m_fReaperHoldingDistance\":700,\"m_iReaperTouchdownTicks\":2,\"m_fReaperDepartureSpeed\":180,\"m_vReaperLZOffset\":[0,0,0],\"m_fReaperLZSearchRadius\":400,\"m_fReaperLandingSeparation\":90,\"m_fReaperLZFallbackRadius\":1200,\"m_fReaperLZAdjustmentRadius\":60,\"m_fReaperPadClearance\":18,\"m_fReaperFormationSpacing\":75,\"m_fReaperCleanupDistance\":1500,\"m_iReaperRetainSeconds\":600,\"m_iReaperSupportSeconds\":300,\"m_fReaperFriendlyClearance\":100,\"m_fReaperSupportRadius\":2000,\"m_iReaperContactAge\":90,\"m_fReaperGunshipHeight\":210,\"m_fReaperGunshipBand\":35,\"m_fReaperGunshipRunHeight\":110,\"m_fReaperGunshipRunBand\":20,\"m_fReaperGunshipRunRadius\":450,\"m_fReaperTrafficClearance\":100}}],\"note\":\"Actual-source interruption, optional-escort, retention and Economy checks; native physics, spawn queues and multiplayer still require Workbench.\"}\n[1028/184224.086:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-StrongholdIntegration.js",
       "passed": true,
       "assertions": 89,
-      "elapsedMs": 71,
+      "elapsedMs": 57,
       "exitCode": 0,
-      "output": "{\"assertions\":89,\"note\":\"Actual-source scripted admission, funding, wave, stronghold lifecycle and save policy. Native placement, flight, garrison queues and multiplayer remain unverified.\"}\n[1028/182710.194:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":89,\"note\":\"Actual-source scripted admission, funding, wave, stronghold lifecycle and save policy. Native placement, flight, garrison queues and multiplayer remain unverified.\"}\n[1028/184224.173:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-QRFManagerSoak.js",
       "passed": true,
       "assertions": 60024,
-      "elapsedMs": 106,
+      "elapsedMs": 86,
       "exitCode": 0,
-      "output": "{\"assertions\":60024,\"simulatedTicks\":10000,\"admittedOrDeduplicated\":2935,\"rejected\":27065,\"notifications\":9349,\"maxCallbackDepth\":1,\"note\":\"Deterministic mocked scheduler soak; no native driving, combat, network or real-time performance evidence.\"}\n[1028/182710.269:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":60024,\"simulatedTicks\":10000,\"admittedOrDeduplicated\":2935,\"rejected\":27065,\"notifications\":9349,\"maxCallbackDepth\":1,\"note\":\"Deterministic mocked scheduler soak; no native driving, combat, network or real-time performance evidence.\"}\n[1028/184224.232:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-QRFMutations.js",
       "passed": true,
       "assertions": 40,
-      "elapsedMs": 828,
+      "elapsedMs": 690,
       "exitCode": 0,
-      "output": "{\"assertions\":40,\"results\":[{\"name\":\"asynchronous pilot requests treated as paused=false\",\"suite\":\"Test-QRFReleaseLifecycle.js\",\"killed\":true,\"error\":\"Error: pilot boarding works outside player simulation bubble\"},{\"name\":\"unready reserve dispatched\",\"suite\":\"Test-QRFReleaseLifecycle.js\",\"killed\":true,\"error\":\"Error: unready reserve aircraft never dispatched\"},{\"name\":\"ground staging bypassed\",\"suite\":\"Test-QRFReleaseLifecycle.js\",\"killed\":true,\"error\":\"Error: first physical rally arrival waits for the other package\"},{\"name\":\"town pacification disconnected\",\"suite\":\"Test-QRFReleaseLifecycle.js\",\"killed\":true,\"error\":\"Error: multiple ticks and packages cannot multiply town support gain\"},{\"name\":\"capture activation recorded after subscribers\",\"suite\":\"Test-QRFReleaseLifecycle.js\",\"killed\":true,\"error\":\"Error: nested terminal callback retains physical activation evidence\"},{\"name\":\"debug damage escalates campaign\",\"suite\":\"Test-QRFReleaseLifecycle.js\",\"killed\":true,\"error\":\"Error: debug damage contact explicitly suppresses strategic evidence\"},{\"name\":\"admin mutation loses role gate\",\"suite\":\"Test-QRFReleaseLifecycle.js\",\"killed\":true,\"error\":\"Error: ordinary player cannot invoke GiveMoney_S\"},{\"name\":\"unbuilt collateral refunded twice\",\"suite\":\"Test-QRFReleaseLifecycle.js\",\"killed\":true,\"error\":\"Error: stale monitor snapshots cannot release virtual collateral twice\"},{\"name\":\"air group budget undercounted\",\"suite\":\"Test-MarsAndAttacks.js\",\"killed\":true,\"error\":\"Error: preview reserves actual infantry/pilot/escort groups, vehicles and personnel\"},{\"name\":\"unknown operation types admitted\",\"suite\":\"Test-MarsAndAttacks.js\",\"killed\":true,\"error\":\"Error: unsupported operation types cannot create immortal scheduler records\"},{\"name\":\"withdrawal dispatches ready reserves\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: withdrawal suppresses ready-package activation\"},{\"name\":\"foreign driver accepted as ready\",\"suite\":\"Test-QRFBoarding.js\",\"killed\":true,\"error\":\"Error: foreign driver cannot satisfy readiness while assigned crew sit elsewhere\"},{\"name\":\"unissued infantry group skipped by retention\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: retention follows physical ownership, not only issued orders: group\"},{\"name\":\"aborted materialized aircraft deleted immediately\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: pre-dispatch abort retains held hull without dropping an uncrewed aircraft\"},{\"name\":\"queued ground origin is not rechecked\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: lost origin cancels queued ground construction before spawning in state 1\"},{\"name\":\"air construction ignores changed player clearance\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: optional-escort construction/failure outcome false,airspace\"},{\"name\":\"funding shortage becomes configuration failure\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: funding shortages wait instead of becoming configuration failures: 1,1,none,false,REAPER response requires a valid airborne profile with zero or one escort\"},{\"name\":\"player aircraft occupancy ignored\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: player in any compartment is detected even without crew-group ownership\"},{\"name\":\"activation overhead charged twice\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: overhead and losses reconcile exactly once across external spending\"},{\"name\":\"closed account keeps unbuilt collateral\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: closed, settled deployment releases all collateral\"},{\"name\":\"fixed-task exits retry without a bound\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: exit retries reach finite package withdrawal at configured limit 0\"},{\"name\":\"nested finance traversal removes an account twice\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: nested reconciliation cannot remove a closed account twice\"},{\"name\":\"reserve window expires before gunship egress\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: authored reserve window permits the fifth package after configured support and modeled egress\"},{\"name\":\"partially validated aircraft have no boarding hold\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: partial construction failures hold owned hulls before validation can abort\"},{\"name\":\"empty failed construction keeps its collateral\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: failed empty ground releases quote once even after its construction flag was consumed\"},{\"name\":\"unused partial-package collateral never released\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: partial cleanup preserves later waves and player-owned spawn queues: healthy\"},{\"name\":\"virtual proxy retains package finalization ownership\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: conversion transfers quote finalization from virtual to physical owner\"},{\"name\":\"escort child finalizes transport collateral\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: escort child cannot finalize the shared package before transport queues are cancelled\"},{\"name\":\"player-owned pending spawn queue releases collateral early\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: partial cleanup preserves later waves and player-owned spawn queues: playerGroup\"},{\"name\":\"escort player queue not propagated to package owner\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: transport finalization inherits preserved escort spawn queues\"},{\"name\":\"retirement orders unissued escort to fly\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: retirement issues egress only for already-dispatched aircraft\"},{\"name\":\"active dispatch failure terminates healthy packages\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: one active dispatch failure degrades only its package\"},{\"name\":\"active reserve boarding loses its preparation deadline\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: initial or reserve boarding expires exactly at its own deadline\"},{\"name\":\"unobserved removal is labelled recovered\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: an unobserved missing pilot is not labelled recovered\"},{\"name\":\"headline width and row estimates diverge\",\"suite\":\"Test-QRFSupportAndHeadlines.js\",\"killed\":true,\"error\":\"Error: natural width uses the same estimate as wrapping\"},{\"name\":\"scripted coast is treated as safe friendly recovery\",\"suite\":\"Test-StrongholdIntegration.js\",\"killed\":true,\"error\":\"Error: only an owned base can qualify as a safe return\"},{\"name\":\"scripted admission overlaps an ordinary target operation\",\"suite\":\"Test-StrongholdIntegration.js\",\"killed\":true,\"error\":\"Error: scripted admission also preserves ordinary operation target conflicts\"},{\"name\":\"stronghold loses dispatch receipt between polls\",\"suite\":\"Test-StrongholdIntegration.js\",\"killed\":true,\"error\":\"Error: deployment receipt distinguishes normal cooldown from construction retry\"},{\"name\":\"retired garrison defender fabricates a retaliation kill\",\"suite\":\"Test-StrongholdIntegration.js\",\"killed\":true,\"error\":\"Error: retired defender cannot trigger a retaliation\"},{\"name\":\"forced scripted waves disconnected from construction\",\"suite\":\"Test-StrongholdIntegration.js\",\"killed\":true,\"error\":\"Error: normal tactical construction and requested two-wave policy remain connected\"}],\"note\":\"Intentional mutations in isolated source snapshots; no native behavior or source-file edits.\"}\n[1028/182710.373:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":40,\"results\":[{\"name\":\"asynchronous pilot requests treated as paused=false\",\"suite\":\"Test-QRFReleaseLifecycle.js\",\"killed\":true,\"error\":\"Error: pilot boarding works outside player simulation bubble\"},{\"name\":\"unready reserve dispatched\",\"suite\":\"Test-QRFReleaseLifecycle.js\",\"killed\":true,\"error\":\"Error: unready reserve aircraft never dispatched\"},{\"name\":\"ground staging bypassed\",\"suite\":\"Test-QRFReleaseLifecycle.js\",\"killed\":true,\"error\":\"Error: first physical rally arrival waits for the other package\"},{\"name\":\"town pacification disconnected\",\"suite\":\"Test-QRFReleaseLifecycle.js\",\"killed\":true,\"error\":\"Error: multiple ticks and packages cannot multiply town support gain\"},{\"name\":\"capture activation recorded after subscribers\",\"suite\":\"Test-QRFReleaseLifecycle.js\",\"killed\":true,\"error\":\"Error: nested terminal callback retains physical activation evidence\"},{\"name\":\"debug damage escalates campaign\",\"suite\":\"Test-QRFReleaseLifecycle.js\",\"killed\":true,\"error\":\"Error: debug damage contact explicitly suppresses strategic evidence\"},{\"name\":\"admin mutation loses role gate\",\"suite\":\"Test-QRFReleaseLifecycle.js\",\"killed\":true,\"error\":\"Error: ordinary player cannot invoke GiveMoney_S\"},{\"name\":\"unbuilt collateral refunded twice\",\"suite\":\"Test-QRFReleaseLifecycle.js\",\"killed\":true,\"error\":\"Error: stale monitor snapshots cannot release virtual collateral twice\"},{\"name\":\"air group budget undercounted\",\"suite\":\"Test-MarsAndAttacks.js\",\"killed\":true,\"error\":\"Error: preview reserves actual infantry/pilot/escort groups, vehicles and personnel\"},{\"name\":\"unknown operation types admitted\",\"suite\":\"Test-MarsAndAttacks.js\",\"killed\":true,\"error\":\"Error: unsupported operation types cannot create immortal scheduler records\"},{\"name\":\"withdrawal dispatches ready reserves\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: withdrawal suppresses ready-package activation\"},{\"name\":\"foreign driver accepted as ready\",\"suite\":\"Test-QRFBoarding.js\",\"killed\":true,\"error\":\"Error: foreign driver cannot satisfy readiness while assigned crew sit elsewhere\"},{\"name\":\"unissued infantry group skipped by retention\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: retention follows physical ownership, not only issued orders: group\"},{\"name\":\"aborted materialized aircraft deleted immediately\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: pre-dispatch abort retains held hull without dropping an uncrewed aircraft\"},{\"name\":\"queued ground origin is not rechecked\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: lost origin cancels queued ground construction before spawning in state 1\"},{\"name\":\"air construction ignores changed player clearance\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: optional-escort construction/failure outcome false,airspace\"},{\"name\":\"funding shortage becomes configuration failure\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: funding shortages wait instead of becoming configuration failures: 1,1,none,false,REAPER response requires a valid airborne profile with zero or one escort\"},{\"name\":\"player aircraft occupancy ignored\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: player in any compartment is detected even without crew-group ownership\"},{\"name\":\"activation overhead charged twice\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: overhead and losses reconcile exactly once across external spending\"},{\"name\":\"closed account keeps unbuilt collateral\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: closed, settled deployment releases all collateral\"},{\"name\":\"fixed-task exits retry without a bound\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: exit retries reach finite package withdrawal at configured limit 0\"},{\"name\":\"nested finance traversal removes an account twice\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: nested reconciliation cannot remove a closed account twice\"},{\"name\":\"reserve window expires before gunship egress\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: authored reserve window permits the fifth package after configured support and modeled egress\"},{\"name\":\"partially validated aircraft have no boarding hold\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: partial construction failures hold owned hulls before validation can abort\"},{\"name\":\"empty failed construction keeps its collateral\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: failed empty ground releases quote once even after its construction flag was consumed\"},{\"name\":\"unused partial-package collateral never released\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: partial cleanup preserves later waves and player-owned spawn queues: healthy\"},{\"name\":\"virtual proxy retains package finalization ownership\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: conversion transfers quote finalization from virtual to physical owner\"},{\"name\":\"escort child finalizes transport collateral\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: escort child cannot finalize the shared package before transport queues are cancelled\"},{\"name\":\"player-owned pending spawn queue releases collateral early\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: partial cleanup preserves later waves and player-owned spawn queues: playerGroup\"},{\"name\":\"escort player queue not propagated to package owner\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: transport finalization inherits preserved escort spawn queues\"},{\"name\":\"retirement orders unissued escort to fly\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: retirement issues egress only for already-dispatched aircraft\"},{\"name\":\"active dispatch failure terminates healthy packages\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: one active dispatch failure degrades only its package\"},{\"name\":\"active reserve boarding loses its preparation deadline\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: initial or reserve boarding expires exactly at its own deadline\"},{\"name\":\"unobserved removal is labelled recovered\",\"suite\":\"Test-QRFInterruptions.js\",\"killed\":true,\"error\":\"Error: an unobserved missing pilot is not labelled recovered\"},{\"name\":\"headline width and row estimates diverge\",\"suite\":\"Test-QRFSupportAndHeadlines.js\",\"killed\":true,\"error\":\"Error: natural width uses the same estimate as wrapping\"},{\"name\":\"scripted coast is treated as safe friendly recovery\",\"suite\":\"Test-StrongholdIntegration.js\",\"killed\":true,\"error\":\"Error: only an owned base can qualify as a safe return\"},{\"name\":\"scripted admission overlaps an ordinary target operation\",\"suite\":\"Test-StrongholdIntegration.js\",\"killed\":true,\"error\":\"Error: scripted admission also preserves ordinary operation target conflicts\"},{\"name\":\"stronghold loses dispatch receipt between polls\",\"suite\":\"Test-StrongholdIntegration.js\",\"killed\":true,\"error\":\"Error: deployment receipt distinguishes normal cooldown from construction retry\"},{\"name\":\"retired garrison defender fabricates a retaliation kill\",\"suite\":\"Test-StrongholdIntegration.js\",\"killed\":true,\"error\":\"Error: retired defender cannot trigger a retaliation\"},{\"name\":\"forced scripted waves disconnected from construction\",\"suite\":\"Test-StrongholdIntegration.js\",\"killed\":true,\"error\":\"Error: normal tactical construction and requested two-wave policy remain connected\"}],\"note\":\"Intentional mutations in isolated source snapshots; no native behavior or source-file edits.\"}\n[1028/184224.315:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-QRFRouteAudit.js",
       "passed": true,
       "assertions": 147,
-      "elapsedMs": 71,
+      "elapsedMs": 97,
       "exitCode": 0,
-      "output": "{\"assertions\":147,\"note\":\"Audit scheduling and coverage only. Run the sweep in Workbench for native planning evidence.\"}\n[1028/182711.200:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":147,\"note\":\"Audit scheduling and coverage only. Run the sweep in Workbench for native planning evidence.\"}\n[1028/184225.014:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-QRFStrategy.js",
       "passed": true,
       "assertions": 7254,
-      "elapsedMs": 103,
+      "elapsedMs": 77,
       "exitCode": 0,
-      "output": "{\n  assertions: 7254,\n  note: 'Actual-source bodies; native lifecycle, perception, replication and serialization remain mocked/unverified.'\n}\n[1028/182711.276:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\n  assertions: 7254,\n  note: 'Actual-source bodies; native lifecycle, perception, replication and serialization remain mocked/unverified.'\n}\n[1028/184225.104:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-QRFProgression.js",
       "passed": true,
       "assertions": 3988,
-      "elapsedMs": 107,
+      "elapsedMs": 89,
       "exitCode": 0,
-      "output": "{\n  assertions: 3988,\n  note: 'Actual source and all Chicken readiness/intensity cells; native compile, driving, crew, replication and balance remain unverified.'\n}\n[1028/182711.375:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\n  assertions: 3988,\n  note: 'Actual source and all Chicken readiness/intensity cells; native compile, driving, crew, replication and balance remain unverified.'\n}\n[1028/184225.179:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-ReaperLandingSearch.js",
       "passed": true,
       "assertions": 159,
-      "elapsedMs": 93,
+      "elapsedMs": 55,
       "exitCode": 0,
-      "output": "{\"assertions\":159,\"note\":\"Native Lamentin terrain and REAPER landings still require Workbench Play.\"}\n[1028/182711.484:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":159,\"note\":\"Native Lamentin terrain and REAPER landings still require Workbench Play.\"}\n[1028/184225.270:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-QRFBoarding.js",
       "passed": true,
       "assertions": 54,
-      "elapsedMs": 99,
+      "elapsedMs": 51,
       "exitCode": 0,
-      "output": "{\"assertions\":54,\"note\":\"Native paused simulation/queue cancellation must be verified in Workbench Play.\"}\n[1028/182711.593:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":54,\"note\":\"Native paused simulation/queue cancellation must be verified in Workbench Play.\"}\n[1028/184225.322:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-QRFIngress.js",
       "passed": true,
       "assertions": 45,
-      "elapsedMs": 74,
+      "elapsedMs": 57,
       "exitCode": 0,
-      "output": "{\"assertions\":45,\"note\":\"Mocked native services; Workbench compile and airport driving/unloading required.\"}\n[1028/182711.674:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":45,\"note\":\"Mocked native services; Workbench compile and airport driving/unloading required.\"}\n[1028/184225.376:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-QRFUnloading.js",
       "passed": true,
       "assertions": 40,
-      "elapsedMs": 72,
+      "elapsedMs": 50,
       "exitCode": 0,
-      "output": "{\"assertions\":40,\"note\":\"Native clearance, animation and replication mocked; compile and Play required.\"}\n[1028/182711.748:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":40,\"note\":\"Native clearance, animation and replication mocked; compile and Play required.\"}\n[1028/184225.430:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-QRFSupportAndHeadlines.js",
       "passed": true,
       "assertions": 94,
-      "elapsedMs": 80,
+      "elapsedMs": 56,
       "exitCode": 0,
-      "output": "{\"assertions\":94,\"note\":\"Native banner rendering, terrain flight, target spotting and road navigation require Workbench compile and Play.\"}\n[1028/182711.824:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":94,\"note\":\"Native banner rendering, terrain flight, target spotting and road navigation require Workbench compile and Play.\"}\n[1028/184225.481:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-QRFVehicleFaction.js",
       "passed": true,
       "assertions": 14,
-      "elapsedMs": 71,
+      "elapsedMs": 54,
       "exitCode": 0,
-      "output": "{\"assertions\":14,\"note\":\"Compile and combat test required; no vehicle re-factioning or loss-price changes.\"}\n[1028/182711.899:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":14,\"note\":\"Compile and combat test required; no vehicle re-factioning or loss-price changes.\"}\n[1028/184225.538:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-QRFTownHold.js",
       "passed": true,
       "assertions": 20,
-      "elapsedMs": 68,
+      "elapsedMs": 51,
       "exitCode": 0,
-      "output": "{\"assertions\":20,\"note\":\"Native navigation, dismounting and town occupation still require Play verification.\"}\n[1028/182711.970:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":20,\"note\":\"Native navigation, dismounting and town occupation still require Play verification.\"}\n[1028/184225.592:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-EveronQRFIntegration.js",
       "passed": true,
       "assertions": 50,
-      "elapsedMs": 72,
+      "elapsedMs": 49,
       "exitCode": 0,
-      "output": "{\"assertions\":50,\"note\":\"Native events, faction manager and response execution mocked; Play verification required.\"}\n[1028/182712.038:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":50,\"note\":\"Native events, faction manager and response execution mocked; Play verification required.\"}\n[1028/184225.640:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-InvaderCampaign.js",
       "passed": true,
       "assertions": 44,
-      "elapsedMs": 121,
+      "elapsedMs": 93,
       "exitCode": 0,
-      "output": "{\n  assertions: 44,\n  baselineMeanPercent: 40.2,\n  escalatedMeanPercent: 63.5,\n  note: 'Funded policy model, not native gameplay or sustained income/performance acceptance.'\n}\n[1028/182712.109:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\n  assertions: 44,\n  baselineMeanPercent: 40.2,\n  escalatedMeanPercent: 63.5,\n  note: 'Funded policy model, not native gameplay or sustained income/performance acceptance.'\n}\n[1028/184225.689:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-RebIntel.js",
       "passed": true,
       "assertions": 86,
-      "elapsedMs": 88,
+      "elapsedMs": 60,
       "exitCode": 0,
-      "output": "{\n  assertions: 86,\n  note: 'Native rendering, replication/JIP and Enforce compilation still require Workbench.'\n}\n[1028/182712.232:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\n  assertions: 86,\n  note: 'Native rendering, replication/JIP and Enforce compilation still require Workbench.'\n}\n[1028/184225.784:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-MissionLifecycle.js",
       "passed": true,
       "assertions": 84,
-      "elapsedMs": 77,
+      "elapsedMs": 52,
       "exitCode": 0,
-      "output": "{\"assertions\":84,\"note\":\"Native spawning, seating and replication mocked; Workbench compile and Play required.\"}\n[1028/182712.321:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":84,\"note\":\"Native spawning, seating and replication mocked; Workbench compile and Play required.\"}\n[1028/184225.844:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-CapturePlacement.js",
       "passed": true,
       "assertions": 14,
-      "elapsedMs": 65,
+      "elapsedMs": 59,
       "exitCode": 0,
-      "output": "{\"assertions\":14,\"note\":\"Native traces, navmesh access, replication and driving still require Workbench verification.\"}\n[1028/182712.392:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":14,\"note\":\"Native traces, navmesh access, replication and driving still require Workbench verification.\"}\n[1028/184225.901:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-GarrisonsAndSupport.js",
       "passed": true,
       "assertions": 192,
-      "elapsedMs": 125,
+      "elapsedMs": 91,
       "exitCode": 0,
-      "output": "{\"assertions\":192,\"note\":\"Mocked native services; Workbench compile, crew seating, placement, replication and save/load remain required.\"}\n[1028/182712.462:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":192,\"note\":\"Mocked native services; Workbench compile, crew seating, placement, replication and save/load remain required.\"}\n[1028/184225.954:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-GarrisonCrew.js",
       "passed": true,
       "assertions": 37,
-      "elapsedMs": 70,
+      "elapsedMs": 53,
       "exitCode": 0,
-      "output": "{\n  assertions: 37,\n  note: 'Native compartments and AI mocked; Workbench compile and sustained mounted-defence acceptance still required.'\n}\n[1028/182712.586:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\n  assertions: 37,\n  note: 'Native compartments and AI mocked; Workbench compile and sustained mounted-defence acceptance still required.'\n}\n[1028/184226.046:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-OutpostEquipment.js",
       "passed": true,
       "assertions": 12,
-      "elapsedMs": 76,
+      "elapsedMs": 52,
       "exitCode": 0,
-      "output": "{\n  assertions: 12,\n  note: 'Native inventories mocked. Container contents, access, depletion and save/load require Workbench.'\n}\n[1028/182712.662:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\n  assertions: 12,\n  note: 'Native inventories mocked. Container contents, access, depletion and save/load require Workbench.'\n}\n[1028/184226.099:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-DefenceLayout.js",
       "passed": true,
       "assertions": 174,
-      "elapsedMs": 87,
+      "elapsedMs": 56,
       "exitCode": 0,
-      "output": "{\n  assertions: 174,\n  note: 'Native terrain/trace services mocked; actual bushes, walls, gun height, navigation and AI need Workbench.'\n}\n[1028/182712.733:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\n  assertions: 174,\n  note: 'Native terrain/trace services mocked; actual bushes, walls, gun height, navigation and AI need Workbench.'\n}\n[1028/184226.152:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-FortifiedOutpostLayouts.js",
       "passed": true,
       "assertions": 1445,
-      "elapsedMs": 412,
+      "elapsedMs": 338,
       "exitCode": 0,
-      "output": "{\n  assertions: 1445,\n  note: 'Estimated envelopes only; native bounds, terrain, navigation and loot acceptance required.'\n}\n[1028/182712.825:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\n  assertions: 1445,\n  note: 'Estimated envelopes only; native bounds, terrain, navigation and loot acceptance required.'\n}\n[1028/184226.206:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-DefenceSiteAudit.js",
       "passed": true,
       "assertions": 60,
-      "elapsedMs": 110,
+      "elapsedMs": 84,
       "exitCode": 0,
-      "output": "{\n  assertions: 60,\n  note: 'Editor orchestration and geometry services mocked; native compile and dense scan still required.'\n}\n[1028/182713.231:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\n  assertions: 60,\n  note: 'Editor orchestration and geometry services mocked; native compile and dense scan still required.'\n}\n[1028/184226.545:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-DefenceWallGrounding.js",
       "passed": true,
       "assertions": 21,
-      "elapsedMs": 87,
+      "elapsedMs": 51,
       "exitCode": 0,
-      "output": "{\n  assertions: 21,\n  note: 'Editor invalidation reproduced with mocks; native compile/grounding still required.'\n}\n[1028/182713.352:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\n  assertions: 21,\n  note: 'Editor invalidation reproduced with mocks; native compile/grounding still required.'\n}\n[1028/184226.628:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     },
     {
       "name": "Test-CampaignFlagEditor.js",
       "passed": true,
       "assertions": 14,
-      "elapsedMs": 76,
+      "elapsedMs": 50,
       "exitCode": 0,
-      "output": "{\"assertions\":14,\"note\":\"Mocked editor API; native plugin compile, terrain collision and actual mesh placement still need Workbench.\"}\n[1028/182713.430:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
+      "output": "{\"assertions\":14,\"note\":\"Mocked editor API; native plugin compile, terrain collision and actual mesh placement still need Workbench.\"}\n[1028/184226.680:ERROR:third_party\\crashpad\\crashpad\\util\\win\\registration_protocol_win.cc:108] CreateFile: Access is denied. (0x5)\r\n"
     }
   ],
   "sourceHashes": {
@@ -285,14 +285,24 @@
     "AROpenResistance/Open Resistance/Scripts/Game/Factions/Presets/AROR_FactionPresetRegistry.c": "127b87e765a9d790be47f17a23caf2690af552dfcdf7a192dca05f29b62ba483",
     "AROpenResistance/Open Resistance/Scripts/Game/Factions/Presets/AROR_FactionPresetsComponent.c": "b4cacd376f0b2038f5712b2785f296279ccc89d371baffa4650ee046d589528a",
     "AROpenResistance/Open Resistance/Scripts/Game/Factions/Presets/AROR_FactionPresetsComponentSerializer.c": "b2d03ddf5f186172676f425abc34edd5dc21eeea3231605b30065ec0a65e9141",
-    "AROpenResistance/Open Resistance/Scripts/Game/GameFlow/AROR_GameFlowComponent.c": "a379a428dc227898654909528b31560a17b3dcaed2c3d0e74f2fab0be6d7dd4a",
+    "AROpenResistance/Open Resistance/Scripts/Game/GameFlow/AROR_GameFlowComponent.c": "2e3c35189b33b22887741bf68df85667f4857d44da8ca83f9347d64c19fe6765",
     "AROpenResistance/Open Resistance/Scripts/Game/GameFlow/AROR_MarsPlayerController.c": "84c4db691363ad129629ac227a610bbd8977eae8745d2ee196ebb10825b872f2",
-    "AROpenResistance/Open Resistance/Scripts/Game/GameFlow/AROR_ModdedPlayerController.c": "a6e5dcec50846ac7604aaadd3c1b29fd4a3ceb13ccce058f4f4ee7bc4a43c52a",
+    "AROpenResistance/Open Resistance/Scripts/Game/GameFlow/AROR_ModdedPlayerController.c": "8c47b2245afde57d540d34f76e86a8aceff1f42ce1daa127ffc54cf5d8e43e4f",
     "AROpenResistance/Open Resistance/Scripts/Game/GameFlow/AROR_StagingSpawnComponent.c": "9d8e228f117f0db8f65aee6e72fcaac89e9a352752161af8de115ced6864a762",
     "AROpenResistance/Open Resistance/Scripts/Game/GameFlow/UI/AROR_SetupDialogs.c": "59d12aa3f42dcfc59bbc101a62ccefaf192db7ce8386357fa4a4100c9f4d3398",
     "AROpenResistance/Open Resistance/Scripts/Game/GameFlow/UI/AROR_SetupMenu.c": "e2fd3b196e498b096288f8113939b2b1adf2ae28c79b0967ab0908a9ab4b02f9",
     "AROpenResistance/Open Resistance/Scripts/Game/GameFlow/UI/AROR_SetupMenuPreset.c": "4f4bbb37987ef9783f9a148675cec9783551699379e034cdb1de270bf6ffa141",
     "AROpenResistance/Open Resistance/Scripts/Game/GameFlow/UI/AROR_SetupUIComponent.c": "0634e00905183224bb39d2a75e52d40917a41c504ffd01c4ae5703f29df6b7ed",
+    "AROpenResistance/Open Resistance/Scripts/Game/Garage/AROR_GarageRetrieveAction.c": "a03e32544293e384ff491accc8bd5244d9b1a6daf4a974659902ce70e396a5c0",
+    "AROpenResistance/Open Resistance/Scripts/Game/Garage/AROR_GarageSnapshotHelper.c": "4857efb31bb22ba78d40ab05f0ecf413960f6f4c22197099eaf76f400f089982",
+    "AROpenResistance/Open Resistance/Scripts/Game/Garage/AROR_GarageStoreAction.c": "4a1c4eaef713d0e355f1959059ba929284c6119f5f50cb7f63fc176f4f4a7579",
+    "AROpenResistance/Open Resistance/Scripts/Game/Garage/AROR_GarageVehicleEntry.c": "d78eadd011d65e32c98c64aebac88c17fbddd93de4aa9a8e85951875819ae015",
+    "AROpenResistance/Open Resistance/Scripts/Game/Garage/AROR_ResistanceGarageComponent.c": "6cf46fcc3d77600c5a3502a8752e5ea787637c7e7477b4f1076432f551a459cf",
+    "AROpenResistance/Open Resistance/Scripts/Game/Garage/AROR_ResistanceGarageComponentSerializer.c": "233bc4d1b6ed924f2234141a48872962649bee44d072186b5c7f1f5aea325816",
+    "AROpenResistance/Open Resistance/Scripts/Game/Garage/UI/AROR_GaragePlacementController.c": "49690f249ee5a70f6b88d7fc50529de066d51d44e404d12b9390bfc5cbb7ed6c",
+    "AROpenResistance/Open Resistance/Scripts/Game/Garage/UI/AROR_GarageRetrieveDialogs.c": "12875edea30b65e2033f95816cb426372e86c295c2de4bbd6c07e50247f4839a",
+    "AROpenResistance/Open Resistance/Scripts/Game/Garage/UI/AROR_GarageRetrieveUI.c": "6c9d588c0ee16d7b8436c2ac83e41d77eb250fbf23e647cc5320fa2aa572852f",
+    "AROpenResistance/Open Resistance/Scripts/Game/Garage/UI/AROR_GarageStoreAPI.c": "bac82364e00daee92d750b68a2934400719fe1989e0632d85b7d552b140231c6",
     "AROpenResistance/Open Resistance/Scripts/Game/Garrisons/AROR_DefenceLayout.c": "59e50a4cc7eb11aec1963f06b32357a866c794f86a304e7b9c00d9aee267615d",
     "AROpenResistance/Open Resistance/Scripts/Game/Garrisons/AROR_DefencePositionComponent.c": "edd8c4b97431c1d394e8f9ff4c0f861f9ea13970c5df78001810a1843d6722a0",
     "AROpenResistance/Open Resistance/Scripts/Game/Garrisons/AROR_DefenceWallComponent.c": "910f01d5bb2638af486619e189ddb20a9abc525c74123001e0ee2b2a76556467",
@@ -415,7 +425,7 @@
     "AROpenResistance/Open Resistance/Scripts/Game/Phone/AROR_OpsApp.c": "91f2b347bf0273b91160c6971243f34043ec5f2e9d04a7f60bbff69024e8d044",
     "AROpenResistance/Open Resistance/Scripts/Game/Phone/AROR_OpsCrest.c": "a7ee6b44deec5b8387a99df94215effcdb2c1426d0fde4d32b5fd1460462e0a5",
     "AROpenResistance/Open Resistance/Scripts/Game/Phone/AROR_PhoneComponent.c": "a1ebbb5cd8b21d8a2db7d6b95f69a56879f1e24d0524293ad3f4e9cfab97e056",
-    "AROpenResistance/Open Resistance/Scripts/Game/Phone/AROR_PhoneMenu.c": "79306711fd39c4c02c06c445f4bfc54dedb3f64307c80236ae12586507630346",
+    "AROpenResistance/Open Resistance/Scripts/Game/Phone/AROR_PhoneMenu.c": "3ed9a98ea6f2288d8e87dd91d53798399ff56dd73ff94b6df15875cc17a76c48",
     "AROpenResistance/Open Resistance/Scripts/Game/Phone/AROR_PhoneMenuPreset.c": "da517b5a15c33a56e24f04c21c6cd72f5dfe74774c7ba705809b6b1559aa57de",
     "AROpenResistance/Open Resistance/Scripts/Game/Phone/AROR_PhonePooledApp.c": "da64b8556a021af549163c4faa562cc3b3ab7c8d26ba38db16eb4e293164be0f",
     "AROpenResistance/Open Resistance/Scripts/Game/Phone/AROR_RebIntelApp.c": "eadb071e5e92c99201d27d357d02eb54882411361d560c2ca6de89edde016cb3",
@@ -512,7 +522,7 @@
     "AROpenResistance/Open Resistance/Prefabs/Compositions/Locations/AROR_Defence_Stronghold_Delaware.et.meta": "9b5ac9868033181bb5de18be2cfbcce6f33af93066481e6e0c40d7f9be7d9367",
     "AROpenResistance/Open Resistance/Prefabs/Gameflow/AROR_StagingSpawn.et": "0e9effd7be32df3bbfa567a66075a627ba77ce555c88cb5981ebb63ec4b7357b",
     "AROpenResistance/Open Resistance/Prefabs/Gameflow/AROR_StagingSpawn.et.meta": "dd0a51b252704f81c382b6d6fbb7b37d3839fb7875319a49ee50a94d4821a5d3",
-    "AROpenResistance/Open Resistance/Prefabs/GameModes/AROR_GameMode_Base.et": "108b0eae96e44098e063c45fbc94bc9e4ac1bafaca87a85c3a5e1639aca2b531",
+    "AROpenResistance/Open Resistance/Prefabs/GameModes/AROR_GameMode_Base.et": "1cc001cd73f1c5c0fa7a9556587c3844004df6c0f3c67e3125977b019eda2ca9",
     "AROpenResistance/Open Resistance/Prefabs/GameModes/AROR_GameMode_Base.et.meta": "122a7256ba18d550b431ba725bef89606c0b93ce532fb9174e02ced87072c97f",
     "AROpenResistance/Open Resistance/Prefabs/Groups/AROR_GarrisonGroup.et": "e198904143d5b9d155b31531aabcd24f16e2216bc15f8ca42e03dbda2861fd3d",
     "AROpenResistance/Open Resistance/Prefabs/Groups/AROR_GarrisonGroup.et.meta": "687c63eefe194f07bb16993ca0f42d1d7566d211b2bdbd631045ed6f9318b4a9",
@@ -544,6 +554,8 @@
     "AROpenResistance/Open Resistance/Prefabs/Props/Locations/AROR_Prop_Arsenal.et.meta": "7324a1fe4337e5497c2627226f416daad17af679a6acae252d2417b3fdc42148",
     "AROpenResistance/Open Resistance/Prefabs/Props/Locations/AROR_Prop_CaptureFlag.et": "f66750a9df2768ee6433374088a66fa809ba06e5114bb79132c4ae9f8281775d",
     "AROpenResistance/Open Resistance/Prefabs/Props/Locations/AROR_Prop_CaptureFlag.et.meta": "1427b34b1b89fa7a84c8d44be6ee2930218ea94dacd330fe7e28c655929bac25",
+    "AROpenResistance/Open Resistance/Prefabs/Props/Locations/AROR_Prop_Garage.et": "f1ee09d52eb3231880baf5c96e9702d6456fbd4328ee4955ca73ebb21805ce39",
+    "AROpenResistance/Open Resistance/Prefabs/Props/Locations/AROR_Prop_Garage.et.meta": "009ff0f7c64d48404930c8a98900df2bf083c1f1acd278e87193c4b0f5a55407",
     "AROpenResistance/Open Resistance/Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/CivilianLocations.layer": "1b33233a11cf67c131658370c7188ffaa0ef28cf2f026901cf0894a68e994d46",
     "AROpenResistance/Open Resistance/Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/Managers.layer": "22757d189d2be7923005b0d95a776ae5768664426320545acb3a16294867acd5",
     "AROpenResistance/Open Resistance/Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/MilitaryInstallations.layer": "67e87eca398a4020b782610994b14d94ff5be5b61086ca69dd859a90d12fe132",
@@ -559,7 +571,7 @@
     "AROpenResistance/Open Resistance/UI/Layouts/Phone/AROR_BlackMarket.layout.meta": "def07d98e4225e14699936b5f189ae5bba84dc25072c440b476214054deebbc3",
     "AROpenResistance/Open Resistance/UI/Layouts/Phone/AROR_Mars.layout": "eca61fbddb31ad6e5596a284ab41c1c0a54e8051c76e747226d499710ab868cb",
     "AROpenResistance/Open Resistance/UI/Layouts/Phone/AROR_Mars.layout.meta": "0dcfea43baefe9ee0812f337bfa50b4015cf013cd5f72addeba9ce89af5384be",
-    "AROpenResistance/Open Resistance/UI/Layouts/Phone/AROR_PhoneMenu.layout": "0faf6e22ca907ad94104401e88d168720fca33584c92a3c191ec6a8eb4b11452",
+    "AROpenResistance/Open Resistance/UI/Layouts/Phone/AROR_PhoneMenu.layout": "a9f23b5935a159a5c032e0f6c5453cb613fe89419b3c537db593881ddad97b57",
     "AROpenResistance/Open Resistance/UI/Layouts/Phone/AROR_PhoneMenu.layout.meta": "022cb481b248f5a6a19ba3dcd0e8bc25d7c6016339ba3878c08cb71e6e1ce84d",
     "AROpenResistance/Open Resistance/UI/Layouts/Setup/AROR_SetupMenu.layout": "3c7718cd9e9f1b1c88c3887afa5920d0de9250b704dbbdb2d786882cbf90e269",
     "AROpenResistance/Open Resistance/UI/Layouts/Setup/AROR_SetupMenu.layout.meta": "5ca24757931aa163aee431f2724c03a818a563d3b78c9ee5f1af29ad9ed667f0",
@@ -603,7 +615,7 @@
     "AROpenResistance/Open Resistance/Configs/System/chimeraInputCommon.conf.meta": "933e431fc7684747364a0b76db4f220fe575fb41f9d12f9ab171faf13018f180",
     "AROpenResistance/Open Resistance/Configs/System/chimeraMenus.conf": "68266753c02f3150a25e924809d729dc37ffc4631c7a318cd6c792640ca4384b",
     "AROpenResistance/Open Resistance/Configs/System/chimeraMenus.conf.meta": "d3bbee55b85cbd877a4cb20dc2bb2a2ae31b8dd5b155ce745b8d5e9cdc376280",
-    "AROpenResistance/Open Resistance/Configs/UI/AROR_SetupDialogs.conf": "c121c0a1fe4832ce1544f94293a58f5cf8494ec9d6cebf838a75ec4d22716d67",
+    "AROpenResistance/Open Resistance/Configs/UI/AROR_SetupDialogs.conf": "0d4740fdd2280183d050290be9ebd019400731b47cc005e6402cfa3cd9b561bb",
     "AROpenResistance/Open Resistance/Configs/UI/AROR_SetupDialogs.conf.meta": "e85f65b8bf7ac250d49a1f1cee4d50018493a9df91f660da68c67dbb38a1f091",
     "tools/CampaignGroundingData.ps1": "2e543e1e6c4435e20cee75d478d32e1672de393db4736eb4a25ede7a45fbb7dc",
     "tools/Export-ChickenOperationRoutes.ps1": "bd803e3647f91c5a609f2a723f5cb67e3efefe73544dd3f4db790fabc4630fc9",

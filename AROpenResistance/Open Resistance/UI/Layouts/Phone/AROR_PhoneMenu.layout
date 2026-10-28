@@ -175,6 +175,63 @@ FrameWidgetClass {
       Anchor 0 0 0 0
      }
     }
+    ImageWidgetClass "{6AB676BC70EE0001}" {
+     Name "QuickSlot0"
+     Slot FrameWidgetSlot "{6AB676BC70EE1001}" {
+      Anchor 0 0 0 0
+     }
+    }
+    RichTextWidgetClass "{6AB676BC70EE0002}" {
+     Name "QuickSlot0Glyph"
+     Slot FrameWidgetSlot "{6AB676BC70EE1002}" {
+      Anchor 0 0 0 0
+     }
+     FontProperties FontProperties "{6AB676BC70EE2002}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+    ButtonWidgetClass "{6AB676BC70EE0003}" {
+     Name "QuickSlot0Button"
+     Slot FrameWidgetSlot "{6AB676BC70EE1003}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB676BC70EE0004}" {
+     Name "QuickSlot1"
+     Slot FrameWidgetSlot "{6AB676BC70EE1004}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB676BC70EE0005}" {
+     Name "QuickSlot1Button"
+     Slot FrameWidgetSlot "{6AB676BC70EE1005}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB676BC70EE0006}" {
+     Name "QuickSlot2"
+     Slot FrameWidgetSlot "{6AB676BC70EE1006}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB676BC70EE0007}" {
+     Name "QuickSlot2Button"
+     Slot FrameWidgetSlot "{6AB676BC70EE1007}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ImageWidgetClass "{6AB676BC70EE0008}" {
+     Name "QuickSlot3"
+     Slot FrameWidgetSlot "{6AB676BC70EE1008}" {
+      Anchor 0 0 0 0
+     }
+    }
+    ButtonWidgetClass "{6AB676BC70EE0009}" {
+     Name "QuickSlot3Button"
+     Slot FrameWidgetSlot "{6AB676BC70EE1009}" {
+      Anchor 0 0 0 0
+     }
+    }
    }
   }
   FrameWidgetClass "{6AB4E0F1A2B53001}" {

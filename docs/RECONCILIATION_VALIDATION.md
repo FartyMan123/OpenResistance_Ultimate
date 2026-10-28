@@ -2,6 +2,8 @@
 
 Reconciled the pending Claude changes with the QRF review fixes already committed at `1d53820` on `chicken-dev`. No contributor changes were discarded. There were no textual Git conflicts; the work addressed behavior and validation dependencies across the combined source.
 
+PR #31 integration follow-up: merged `master-dev` at `27c0876` into `chicken-dev`. The only textual conflict was the saved-state list in `ARCHITECTURE.md`; it now retains both Resistance Garage vehicle snapshots and stronghold state. Rowan's Garage code and phone dock changes are preserved. Added the existing Roboto Condensed resource binding to the new quick-store glyph after the combined UI test caught its missing font. All 29 regression suites still pass; lexical checks now cover 207 addon scripts. Garage native store/retrieve/placement and save/load remain separate acceptance work.
+
 ## Preserved content
 
 - Fortress Vostok and Stronghold Delaware, their compositions/generators and stronghold state serializer.
