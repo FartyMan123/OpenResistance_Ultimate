@@ -11,7 +11,7 @@ class AROR_JointResponseSmokeTests
 
 	protected static AROR_ForceProfile Profile(string id, AROR_EForceType type)
 	{
-		AROR_ForceProfile profile = new AROR_ForceProfile();
+		AROR_ForceProfile profile = AROR_ForceProfile.CreateForScript();
 		profile.m_sId = id;
 		profile.m_bEnabled = true;
 		profile.m_eRole = AROR_EFactionRole.OCCUPIERS;
@@ -39,7 +39,7 @@ class AROR_JointResponseSmokeTests
 		AROR_ForceProfile air = Profile("joint_test_air", AROR_EForceType.AIRBORNE);
 		AROR_ForceProfile ground = Profile("joint_test_ground", AROR_EForceType.MOTORIZED);
 		array<ref AROR_ForceProfile> profiles = {air, ground};
-		AROR_GroundQRFRecipe recipe = new AROR_GroundQRFRecipe();
+		AROR_GroundQRFRecipe recipe = AROR_GroundQRFRecipe.CreateForScript();
 		recipe.m_sId = "joint_test_recipe";
 		recipe.m_eResponseType = AROR_EResponseType.AIR_GROUND;
 		recipe.m_iLevel = 2;

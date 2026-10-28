@@ -1,12 +1,13 @@
 [BaseContainerProps()]
 class AROR_ForceProfile
 {
+	//! Attribute defaults belong to the resource container, not declaration initializers (which overwrite authored values).
 	[Attribute("", desc: "Unique stable profile ID")]
 	string m_sId;
 	[Attribute("1", desc: "Enable this profile for selection")]
 	bool m_bEnabled;
 	[Attribute("1", desc: "Minimum campaign readiness permitting this profile in a QRF recipe", params: "1 5 1")]
-	int m_iMinimumReadinessLevel = 1;
+	int m_iMinimumReadinessLevel;
 	[Attribute("0", desc: "Classify a mounted support vehicle as light armed transport in map intelligence. Uses the existing crew-only ground execution policy.")]
 	bool m_bLightVehicle;
 	[Attribute("1", UIWidgets.ComboBox, desc: "Campaign role", enums: AROR_FactionRoles.MilitaryRoleParams())]
@@ -38,11 +39,22 @@ class AROR_ForceProfile
 	[Attribute("150", desc: "Ground dismount distance from objective centre, metres")]
 	float m_fDismountDistance;
 	[Attribute("25", desc: "Replacement value per confirmed lost soldier/crew member", params: "0 100000 1")]
-	int m_iPersonnelLossValue = 25;
+	int m_iPersonnelLossValue;
 	[Attribute("-1", desc: "Replacement value of the main vehicle; -1 uses the shared type price", params: "-1 100000 1")]
-	int m_iVehicleLossValue = -1;
+	int m_iVehicleLossValue;
 	[Attribute("2000", desc: "Replacement value of each airborne gunship", params: "0 100000 1")]
-	int m_iEscortLossValue = 2000;
+	int m_iEscortLossValue;
+
+	//! Preserve explicit Readiness/pricing defaults for script-created fixtures; caller fills required identity/assets.
+	static AROR_ForceProfile CreateForScript()
+	{
+		AROR_ForceProfile profile = new AROR_ForceProfile();
+		profile.m_iMinimumReadinessLevel = 1;
+		profile.m_iPersonnelLossValue = 25;
+		profile.m_iVehicleLossValue = -1;
+		profile.m_iEscortLossValue = 2000;
+		return profile;
+	}
 
 	int VehicleLossValue()
 	{

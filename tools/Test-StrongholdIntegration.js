@@ -97,13 +97,21 @@ for(let count=1;count<=8;count++){
 {
  const update=compile('stronghold','UpdateResponse');
  for(const deployed of [false,true])for(const final of [false,true]){
-  operations={GetOperation:()=>({IsTerminal:()=>true,m_TacticalCommander:{m_iFirstDispatch:deployed?10:-1}})};
-  const ctx={m_sResponseId:'op',m_bResponseDeployed:false,m_bFinalDefenceActive:final,m_iClock:100,m_iPlayerKills:0,m_iRetaliationKills:4,m_iFinalDefenceRearm:1800,RETRY_SECONDS:30,m_Location:{GetId:()=> 'fort'}};
+  let banners=0;
+  operations={GetOperation:()=>({GetState:()=>4,IsTerminal:()=>true,m_TacticalCommander:{m_iFirstDispatch:deployed?10:-1}})};
+  const ctx={m_sResponseId:'op',m_bResponseDeployed:false,m_bFinalDefenceActive:final,m_iClock:100,m_iPlayerKills:0,m_iRetaliationKills:4,m_iFinalDefenceRearm:1800,RETRY_SECONDS:30,m_Location:{GetId:()=> 'fort'},Announce(){banners++}};
   update.call(ctx);
   check(ctx.m_sResponseId===''&&!ctx.m_bFinalDefenceActive,'terminal response releases its stronghold slot');
   check(deployed?(final?ctx.m_iNextResponseAt===1900:ctx.m_iPlayerKills===0):ctx.m_iNextResponseAt===130,'deployment receipt distinguishes normal cooldown from construction retry');
+  check(banners===(deployed?1:0),'failed preparation cannot announce inbound forces');
   if(!deployed&&!final)check(ctx.m_iPlayerKills===4,'failed retaliation retains its kill threshold for a retry');
  }
+ let banners=0,state=1;
+ const live={GetState:()=>state,IsTerminal:()=>false};
+ operations={GetOperation:()=>live};
+ const ctx={m_sResponseId:'live',m_bResponseDeployed:false,Announce(){banners++}};
+ update.call(ctx);update.call(ctx);check(banners===0,'accepted but unspawned requests remain silent');
+ state=2;update.call(ctx);update.call(ctx);check(banners===1,'confirmed ACTIVE deployment announces once across repeated polls');
 }
 // Deleted living defenders are not fabricated kills, and stale subscriptions are detached.
 {

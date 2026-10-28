@@ -50,6 +50,7 @@ For the first **hour of campaign time** (counted only while players are online),
 - A kill counts when a player hit the defender in the 30 seconds before it died. Kills by AI, including High Command squads, do not count.
 - Infantry and weapon/vehicle crews count; destroying an empty vehicle or helicopter does not.
 - Everyone gets a headline, e.g. `FORTRESS VOSTOK RETALIATION`.
+- The headline waits for confirmed deployment. A request still preparing or retrying after failure does not repeatedly announce inbound forces.
 
 ## Final defence
 

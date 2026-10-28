@@ -8,6 +8,8 @@ Reconcile the QRF lifecycle fixes with Fortress Vostok, Stronghold Delaware, exp
 
 ## Changes
 
+- **Native retaliation fix:** remove seven attributed script initializers that Workbench reported were overwriting authored recipe/profile values and disabling the executor. Preserve defaults in Attribute metadata and explicit script factories. Announce stronghold responses after confirmed deployment, keeping failed preparation retries silent. See [observed Vostok/Crow Hill failure](QRF_RETALIATION_FAILURE.md).
+
 - **Integration:** merge current `master-dev`, preserving Rowan's Resistance Garage and phone quick dock alongside the stronghold/QRF work. Resolve the architecture saved-state list by retaining both Garage snapshots and stronghold state; bind the quick-store glyph to the existing Roboto Condensed font. Native Garage workflows remain unverified by this audit.
 
 - **Strongholds / campaign:** add Vostok as the Invader foothold and Delaware as the Occupier airport stronghold, with saved early protection progress, player-raid retaliation and final-defence responses. Preserve the relocated Morton port's legacy stable ID. Initial ownership changes apply to fresh campaigns; existing saved holdings/rosters require migration acceptance.
@@ -31,8 +33,8 @@ Reconcile the QRF lifecycle fixes with Fortress Vostok, Stronghold Delaware, exp
 
 ## Testing
 
-- Passed **29 suites / 97,348 mocked assertions** through the actual separate-process runner using VS Code's bundled Node v24.21.0 in Electron Node mode. The Node `vm` mutation adapter also passed. The original V8-host checks remain historical evidence; native services are still mocked and repeated lifecycle/soak invariants account for most assertions.
-- Coverage includes all **350** army/family/Readiness/Crackdown cells, including 280 available and 70 intentionally locked cells; light/escorted preparation, confirmed seating, attack timing, reentrant events, funding, reserves, retention, permissions and save policy. All **40** representative source mutations were detected.
+- Passed **29 suites / 97,366 mocked assertions** through the actual separate-process runner using VS Code's bundled Node v24.21.0 in Electron Node mode. The Node `vm` mutation adapter also passed. The original V8-host checks remain historical evidence; native services are still mocked and repeated lifecycle/soak invariants account for most assertions.
+- Coverage includes all **350** army/family/Readiness/Crackdown cells, including 280 available and 70 intentionally locked cells; light/escorted preparation, confirmed seating, attack timing, reentrant events, funding, reserves, retention, permissions and save policy. All **43** representative source mutations were detected.
 - A 10,000-tick simulated scheduler soak passed. Previously failing REBINTEL, progression, strategy and town-hold harnesses are repaired and passing.
 - Stronghold integration passed 89 actual-source assertions. Both stronghold generators and gun-embrasure checks pass; stronghold references match two local resources and ten installed base-game GUIDs. The two new composition GUIDs are hand-authored and still need Workbench discovery/loading.
 - Installed-resource/configuration checks passed 27 base-game GUIDs, 12 profiles, 62 recipes, 50 army/Readiness/Crackdown budget combinations and five REAPER references. Three UI bindings match metadata and the local Workbench database; rendering is unverified. Lexical structure passed for 207 addon scripts, including Workbench plugins.

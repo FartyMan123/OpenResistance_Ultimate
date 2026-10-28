@@ -83,7 +83,7 @@ class AROR_QRFSelectionSmokeTests
 	}
 	protected static AROR_GroundQRFRecipe Recipe(string id, int tier, array<string> elements)
 	{
-		AROR_GroundQRFRecipe recipe = new AROR_GroundQRFRecipe();
+		AROR_GroundQRFRecipe recipe = AROR_GroundQRFRecipe.CreateForScript();
 		recipe.m_sId = id;
 		recipe.m_iLevel = tier;
 		recipe.m_eRole = AROR_EFactionRole.INVADERS;
@@ -94,7 +94,7 @@ class AROR_QRFSelectionSmokeTests
 	}
 	protected static AROR_ForceProfile Profile(string id, AROR_EForceType type, int budget)
 	{
-		AROR_ForceProfile profile = new AROR_ForceProfile();
+		AROR_ForceProfile profile = AROR_ForceProfile.CreateForScript();
 		profile.m_sId = id;
 		profile.m_eType = type;
 		profile.m_eRole = AROR_EFactionRole.INVADERS;

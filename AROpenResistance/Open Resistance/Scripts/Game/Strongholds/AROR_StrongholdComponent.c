@@ -48,6 +48,7 @@ class AROR_StrongholdComponent : ScriptComponent
 	protected string m_sResponseId;
 	protected bool m_bFinalDefenceActive;
 	protected bool m_bResponseDeployed;	//!< The outstanding response reached ACTIVE (its forces exist)
+	protected bool m_bResponseFromBase;	//!< Remembered for the announcement after actual deployment, not request acceptance
 	protected int m_iNextResponseAt;
 
 	//------------------------------------------------------------------------------------------------
@@ -130,14 +131,21 @@ class AROR_StrongholdComponent : ScriptComponent
 		if (operations)
 			operation = operations.GetOperation(m_sResponseId);
 		// A deployed operation can end between polls. The tactical dispatch receipt survives its terminal state.
-		if (operation && operation.m_TacticalCommander && operation.m_TacticalCommander.m_iFirstDispatch >= 0)
-			m_bResponseDeployed = true;
-		if (operation && !operation.IsTerminal())
+		bool deployed;
+		if (operation)
 		{
 			if (operation.GetState() == AROR_EOperationState.ACTIVE)
-				m_bResponseDeployed = true;
-			return;
+				deployed = true;
+			if (operation.m_TacticalCommander && operation.m_TacticalCommander.m_iFirstDispatch >= 0)
+				deployed = true;
 		}
+		if (deployed && !m_bResponseDeployed)
+		{
+			m_bResponseDeployed = true;
+			Announce(m_bFinalDefenceActive, m_bResponseFromBase);
+		}
+		if (operation && !operation.IsTerminal())
+			return;
 		if (!m_bResponseDeployed)
 		{
 			// Never deployed (capacity, no route or launch site): retry soon, and keep the raid's kill count
@@ -181,13 +189,13 @@ class AROR_StrongholdComponent : ScriptComponent
 		m_sResponseId = id;
 		m_bFinalDefenceActive = finalDefence;
 		m_bResponseDeployed = false;
+		m_bResponseFromBase = fromBase;
 		if (!finalDefence)
 			m_iPlayerKills = 0;
-		Announce(finalDefence, fromBase);
 		string from = "friendly base";
 		if (!fromBase)
 			from = landing.ToString();
-		Print(string.Format("[AROR STRONGHOLD] %1 %2 launched: %3 recipe=%4 from=%5", m_Location.GetId(), FinalOrRetaliation(finalDefence), id, recipe, from), LogLevel.NORMAL);
+		Print(string.Format("[AROR STRONGHOLD] %1 %2 requested: %3 recipe=%4 from=%5; announcement waits for deployment", m_Location.GetId(), FinalOrRetaliation(finalDefence), id, recipe, from), LogLevel.NORMAL);
 	}
 
 	//------------------------------------------------------------------------------------------------

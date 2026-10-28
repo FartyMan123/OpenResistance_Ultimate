@@ -75,11 +75,17 @@ const cases=[
  {name:'scripted admission overlaps an ordinary target operation',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_ScriptedResponses.c',suite:'Test-StrongholdIntegration.js',
   mutate:s=>s.replace('!existing.IsTerminal() && existing.GetRole()','!existing.IsTerminal() && existing.m_bFundingWaived && existing.GetRole()')},
  {name:'stronghold loses dispatch receipt between polls',file:'AROpenResistance/Open Resistance/Scripts/Game/Strongholds/AROR_StrongholdComponent.c',suite:'Test-StrongholdIntegration.js',
-  mutate:s=>s.replace('if (operation && operation.m_TacticalCommander && operation.m_TacticalCommander.m_iFirstDispatch >= 0)','if (false)')},
+  mutate:s=>s.replace('if (operation.m_TacticalCommander && operation.m_TacticalCommander.m_iFirstDispatch >= 0)','if (false)')},
  {name:'retired garrison defender fabricates a retaliation kill',file:'AROpenResistance/Open Resistance/Scripts/Game/Strongholds/AROR_StrongholdComponent.c',suite:'Test-StrongholdIntegration.js',
   mutate:s=>s.replace('if (!watch.m_Entity)','if (false)')},
  {name:'forced scripted waves disconnected from construction',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_ScriptedResponses.c',suite:'Test-StrongholdIntegration.js',
-  mutate:s=>s.replace('operation.m_TacticalCommander.ForceTwoWaves();','operation.m_TacticalCommander.m_bWithdraw = true;')}
+  mutate:s=>s.replace('operation.m_TacticalCommander.ForceTwoWaves();','operation.m_TacticalCommander.m_bWithdraw = true;')},
+ {name:'recipe script default overwrites authored response family',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_GroundQRFRecipe.c',suite:'Test-QRFInterruptions.js',
+  mutate:s=>s.replace('AROR_EResponseType m_eResponseType;','AROR_EResponseType m_eResponseType = AROR_EResponseType.COMBINED_ARMS;')},
+ {name:'profile script default overwrites authored vehicle price',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_ForceProfile.c',suite:'Test-QRFInterruptions.js',
+  mutate:s=>s.replace('int m_iVehicleLossValue;','int m_iVehicleLossValue = -1;')},
+ {name:'retaliation banner announced before deployment',file:'AROpenResistance/Open Resistance/Scripts/Game/Strongholds/AROR_StrongholdComponent.c',suite:'Test-StrongholdIntegration.js',
+  mutate:s=>s.replace('if (deployed && !m_bResponseDeployed)','if (!m_bResponseDeployed)')}
 ];
 function runQRFMutationTests(read,execute){
  const results=[];

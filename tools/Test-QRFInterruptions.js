@@ -2,7 +2,7 @@
 // Native factories, compartments, geometry and Economy are mocked.
 const fs=require('fs'),path=require('path');
 const root=path.join(__dirname,'../AROpenResistance/Open Resistance/Scripts/Game/Operations');
-const src=Object.fromEntries(['AROR_OperationExecutorComponent','AROR_ReaperQRFExecutor','AROR_ReaperAirForce','AROR_ReaperRetirement','AROR_QRFFinance','AROR_QRFFunding','AROR_QRFAssetAccount','AROR_ForceProfile','AROR_QRFTacticalCommander','AROR_OperationForce','AROR_GroundOperationForce'].map(n=>[n,fs.readFileSync(path.join(root,n+'.c'),'utf8')]));
+const src=Object.fromEntries(['AROR_OperationExecutorComponent','AROR_ReaperQRFExecutor','AROR_ReaperAirForce','AROR_ReaperRetirement','AROR_QRFFinance','AROR_QRFFunding','AROR_QRFAssetAccount','AROR_ForceProfile','AROR_GroundQRFRecipe','AROR_QRFTacticalCommander','AROR_OperationForce','AROR_GroundOperationForce'].map(n=>[n,fs.readFileSync(path.join(root,n+'.c'),'utf8')]));
 let assertions=0,server=true;
 const settingsEvidence=[];
 const check=(ok,label)=>{assertions++;if(!ok)throw Error(label)};
@@ -35,6 +35,22 @@ function compile(file,name){
  return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')(...Object.values(env));
 }
 const executor='AROR_OperationExecutorComponent',reaper='AROR_ReaperQRFExecutor',air='AROR_ReaperAirForce';
+// Native Workbench diagnosed declaration initializers overwriting loaded resource values.
+// Keep defaults in Attribute metadata; only explicit script factories may assign them.
+{
+ env.AROR_ForceProfile=class {};
+ env.AROR_GroundQRFRecipe=class {};
+ env.AROR_EResponseType={COMBINED_ARMS:5};
+ for(const [file,fields]of [['AROR_ForceProfile',['m_iMinimumReadinessLevel','m_iPersonnelLossValue','m_iVehicleLossValue','m_iEscortLossValue']],['AROR_GroundQRFRecipe',['m_eResponseType','m_iMinimumReadinessLevel','m_iMaximumReadinessLevel']]]){
+  const declarations=[...src[file].matchAll(/\[Attribute\([^\r\n]*\)\]\s*\w+\s+(m_\w+)([^;]*);/g)];
+  check(declarations.length>0&&declarations.every(m=>!m[2].includes('=')),'attributed '+file+' fields cannot overwrite authored values with script initializers');
+  const instance=compile(file,'CreateForScript')();
+  for(const field of fields){
+   const attribute=src[file].match(new RegExp('\\[Attribute\\("(-?[\\d.]+)"[^\\r\\n]*\\)\\]\\s*\\w+\\s+'+field+';'));
+   check(attribute&&instance[field]===Number(attribute[1]),'script factory preserves the attribute default for '+file+'.'+field);
+  }
+ }
+}
 // Execute both validators against source defaults and every serialized executor in shipped resources.
 {
  const defaults=Object.fromEntries([src[executor],src[reaper]].flatMap(s=>[...s.matchAll(/\[Attribute\("([-\d.]+)"[^\r\n]*\)\]\s*(?:protected )?(?:int|float|bool) (m_\w+)/g)].map(m=>[m[2],Number(m[1])])));
