@@ -76,17 +76,20 @@ class AROR_DefenceLayout
 		return ordinal * 45;
 	}
 	//! A point check is insufficient: sample the complete prospective wall/defence footprint.
-	static bool TerrainFits(BaseWorld world, vector center, float halfExtent, float maxRelief, out float relief, float yaw = 0)
+	//! A positive halfDepth makes the footprint rectangular (local front-to-back), otherwise it is square.
+	static bool TerrainFits(BaseWorld world, vector center, float halfExtent, float maxRelief, out float relief, float yaw = 0, float halfDepth = 0)
 	{
 		float low = float.MAX;
 		float high = -float.MAX;
 		float angle = yaw * Math.DEG2RAD;
+		if (halfDepth <= 0)
+			halfDepth = halfExtent;
 		for (int x = -3; x <= 3; x++)
 		{
 			for (int z = -3; z <= 3; z++)
 			{
 				float dx = x * halfExtent / 3;
-				float dz = z * halfExtent / 3;
+				float dz = z * halfDepth / 3;
 				float px = center[0] + dx * Math.Cos(angle) + dz * Math.Sin(angle);
 				float pz = center[2] - dx * Math.Sin(angle) + dz * Math.Cos(angle);
 				float height = world.GetSurfaceY(px, pz);

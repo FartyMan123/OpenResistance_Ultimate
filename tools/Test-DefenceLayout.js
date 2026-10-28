@@ -71,6 +71,11 @@ function runDefenceLayoutTests(source,presets={}) {
  oneHill=true;check(!terrain(world,[0,10,0],18,2,0,0).ok,'isolated high corner rejected');oneHill=false;
  water=true;check(!terrain(world,[0,10,0],18,2,0,0).ok,'shoreline/water intrusion rejected');water=false;
  samples=0;check(terrain(world,[0,10,0],32,2,0,45).ok&&samples===49,'rotated compound samples bounded footprint');
+ // A narrow quay: water from 26 m south of the centre
+ const quay={GetSurfaceY:()=>10,GetOceanHeight:(x,z)=>z<-26?10:0};
+ check(!terrain(quay,[0,10,0],42,2,0,0).ok,'square footprint reaching over the harbour is rejected');
+ check(terrain(quay,[0,10,0],42,2,0,0,25).ok,'rectangular footprint along the quay stays on land');
+ check(!terrain(quay,[0,10,0],42,2,0,90,25).ok,'rectangle turned across the quay reaches the water');
  let traces=[],blocked=0;
  const visibility={TraceMove:trace=>{traces.push(trace);return traces.length===blocked?0.2:1;}};
  check(arc(visibility,[0,10,0],0)&&traces.length===6,'centre and flank firing lanes require both standing and tripod clearance');
