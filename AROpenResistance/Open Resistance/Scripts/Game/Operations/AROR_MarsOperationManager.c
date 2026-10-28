@@ -44,6 +44,19 @@ modded class AROR_OperationManagerComponent
 		}
 		if (!IsEnemyRole(role) || tier < 1 || tier > 5 || selection.Length() > 128)
 			return;
+		// "attack:<type>" launches the same response as a territory attack (staging, then assault), skipping the
+		// campaign timers. Workbench builds only; real attacks keep their normal admission rules.
+		bool asAttack;
+		if (selection.IndexOf("attack:") == 0)
+		{
+#ifdef WORKBENCH
+			asAttack = true;
+			selection = "type:" + selection.Substring(7, selection.Length() - 7);
+#else
+			MarsReply(playerId, "Test attacks are only available in Workbench");
+			return;
+#endif
+		}
 		IEntity player = GetGame().GetPlayerManager().GetPlayerControlledEntity(playerId);
 		if (!AROR_QRFSpotting.IsResistance(player))
 		{
@@ -107,11 +120,17 @@ modded class AROR_OperationManagerComponent
 				return;
 			}
 		}
-		string id = RequestOperation_S(role, AROR_EOperationType.QRF, target.GetId(), 0, true);
+		AROR_EOperationType operationType = AROR_EOperationType.QRF;
+		if (asAttack)
+			operationType = AROR_EOperationType.ATTACK;
+		string id = RequestOperation_S(role, operationType, target.GetId(), 0, true);
 		AROR_Operation operation = GetOperation(id);
 		if (!operation)
 		{
-			MarsReply(playerId, "Scheduler capacity or army availability blocks this request");
+			if (asAttack)
+				MarsReply(playerId, "Another attack is still running, or the scheduler is at capacity");
+			else
+				MarsReply(playerId, "Scheduler capacity or army availability blocks this request");
 			return;
 		}
 		operation.m_sRequestedProfileId = selected.m_sProfileId;
@@ -120,7 +139,14 @@ modded class AROR_OperationManagerComponent
 		operation.m_bUseResponseMetrics = useMetrics;
 		if (useMetrics)
 			operation.m_iPoolReadinessLevel = readinessLevel;
-		MarsReply(playerId, selected.m_sLabel + " queued for " + target.GetName() + " (" + id + ")");
+		string kind = " queued for ";
+		if (asAttack)
+			kind = " attack launched on ";
+		string note;
+		// A fresh Resistance capture cannot be taken back for five minutes, however strong the attack
+		if (asAttack && target.IsFlipLocked())
+			note = "; recently captured, so it cannot be retaken until its flip lock ends";
+		MarsReply(playerId, selected.m_sLabel + kind + target.GetName() + " (" + id + ")" + note);
 	}
 
 	protected void MarsReply(int playerId, string message)

@@ -730,7 +730,8 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 		AROR_Operation created = new AROR_Operation(id, role, type, targetId, m_iClock, delaySeconds);
 		created.m_bDebugRequest = debugRequest;
 		m_aOperations.Insert(created);
-		if (type == AROR_EOperationType.ATTACK)
+		// Test requests (MARS) never move the real campaign timers
+		if (!debugRequest && type == AROR_EOperationType.ATTACK)
 		{
 			if (role == AROR_EFactionRole.OCCUPIERS)
 				m_iOccupiersNextAttack = m_iClock + m_iAttackInterval;
