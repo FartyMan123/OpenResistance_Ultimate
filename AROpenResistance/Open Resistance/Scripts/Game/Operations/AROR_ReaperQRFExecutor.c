@@ -8,6 +8,8 @@ modded class AROR_OperationExecutorComponent
 	protected vector m_vReaperLZOffset;
 	[Attribute("180", desc: "Maximum seconds per flight/unload stage", params: "30 600 1")]
 	protected int m_iReaperFlightTimeout;
+	[Attribute("120", desc: "Maximum seconds from airborne package construction to verified boarding and dispatch, including active reserves", params: "30 600 1")]
+	protected int m_iReaperPreparationTimeout;
 	[Attribute("120", desc: "Initial occupied aircraft height above terrain", params: "60 300 1")]
 	protected float m_fReaperInsertionHeight;
 	[Attribute("160", desc: "Transport ingress/landing waypoint maximum speed, km/h; REAPER controls final braking", params: "100 200 1")]
@@ -500,6 +502,7 @@ modded class AROR_OperationExecutorComponent
 
 	protected bool SpawnReaperPackage(AROR_Operation operation, AROR_ReaperAirForce force, ResourceName pilot)
 	{
+		force.m_iPreparationDeadline = m_iExecutorClock + m_iReaperPreparationTimeout;
 		// Reservations can wait for later waves; player clearance and insertion volumes may have changed.
 		if (!IsLaunchPositionSafe(force.m_vLaunch, force.m_vTown) || !AROR_ReaperFlightGeometry.IsAirspaceClear(force.m_vLaunch, m_fReaperInsertionHeight + force.m_iPackageIndex * 15, 14))
 			return false;
@@ -820,6 +823,8 @@ modded class AROR_OperationExecutorComponent
 	protected bool ReaperSettingsValid()
 	{
 		// Enforce has a low formula-complexity limit; keep each range independent.
+		if (m_iReaperPreparationTimeout < 30 || m_iReaperPreparationTimeout > 600)
+			return false;
 		if (m_iReaperFlightTimeout < 30 || m_iReaperFlightTimeout > 600)
 			return false;
 		if (m_fReaperInsertionHeight < 60 || m_fReaperInsertionHeight > 300)
@@ -1279,6 +1284,13 @@ modded class AROR_OperationExecutorComponent
 			force.m_bConstructionPending = false;
 			if (!SpawnReaperPackage(operation, force, force.m_sPilotPrefab))
 				FailReaperPackage(force, operation, "REAPER staged wave construction failed");
+			return;
+		}
+		// The manager bounds initial SPAWNING, but an ACTIVE operation can still be preparing reserves.
+		// Do not refresh this deadline for dormant groups, pending seats, or a ready package at the lead barrier.
+		if (!force.m_bOrdersIssued && force.m_iPreparationDeadline > 0 && m_iExecutorClock >= force.m_iPreparationDeadline)
+		{
+			FailReaperPackage(force, operation, "Airborne package preparation/boarding timed out");
 			return;
 		}
 		if (!force.m_Group)

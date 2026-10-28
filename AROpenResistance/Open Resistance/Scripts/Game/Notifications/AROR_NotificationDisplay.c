@@ -433,6 +433,13 @@ class AROR_NotificationDisplay : Managed
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! One UTF-8-aware conservative estimate for both width and wrapping. This is not a font metric.
+	//! Never read GetScreenSize here: after Place(), it is our assigned frame, not natural text width.
+	protected static float EstimateHeadlineLineWidth(string line, int fontSize)
+	{
+		return AROR_TextUtils.CharCount(line) * fontSize * 0.75;
+	}
+
 	//! Natural text width independent of the previous frame's constrained widget size.
 	protected static float HeadlineTextWidth(TextWidget text, int fontSize)
 	{
@@ -442,7 +449,7 @@ class AROR_NotificationDisplay : Managed
 		text.GetText().Split("\n", lines, false);
 		float width;
 		foreach (string line : lines)
-			width = Math.Max(width, AROR_TextUtils.CharCount(line) * fontSize * 0.65);
+			width = Math.Max(width, EstimateHeadlineLineWidth(line, fontSize));
 		return width;
 	}
 
@@ -455,7 +462,7 @@ class AROR_NotificationDisplay : Managed
 		text.GetText().Split("\n", lines, false);
 		int rows;
 		foreach (string line : lines)
-			rows += Math.Max(1, Math.Ceil(AROR_TextUtils.CharCount(line) * fontSize * 0.75 / width));
+			rows += Math.Max(1, Math.Ceil(EstimateHeadlineLineWidth(line, fontSize) / Math.Max(1, width)));
 		float height = Math.Max(1, rows) * fontSize * 1.3;
 		FrameSlot.SetSizeToContent(text, false);
 		text.SetTextWrapping(true);

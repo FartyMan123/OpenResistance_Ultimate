@@ -61,7 +61,15 @@ const cases=[
  {name:'escort player queue not propagated to package owner',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_ReaperAirForce.c',suite:'Test-QRFInterruptions.js',
   mutate:s=>s.replace('if (m_Escort.m_bPackageQueuesPreserved)','if (false)')},
  {name:'retirement orders unissued escort to fly',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_ReaperRetirement.c',suite:'Test-QRFInterruptions.js',
-  mutate:s=>s.replace('if (force.m_bOrdersIssued && !force.m_bEscortLost','if (!force.m_bEscortLost')}
+  mutate:s=>s.replace('if (force.m_bOrdersIssued && !force.m_bEscortLost','if (!force.m_bEscortLost')},
+ {name:'active dispatch failure terminates healthy packages',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_OperationExecutorComponent.c',suite:'Test-QRFInterruptions.js',
+  mutate:s=>s.replace('FailPackage(ready, operation, "Ready package could not receive deployment orders");','FailOperation(operation, "Ready package could not receive deployment orders");')},
+ {name:'active reserve boarding loses its preparation deadline',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_ReaperQRFExecutor.c',suite:'Test-QRFInterruptions.js',
+  mutate:s=>s.replace('m_iExecutorClock >= force.m_iPreparationDeadline','false')},
+ {name:'unobserved removal is labelled recovered',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_QRFFunding.c',suite:'Test-QRFInterruptions.js',
+  mutate:s=>s.replace('m_iQuote = Math.Max(0, m_iQuote - asset.m_iValue);','m_iRecovered += asset.m_iValue;')},
+ {name:'headline width and row estimates diverge',file:'AROpenResistance/Open Resistance/Scripts/Game/Notifications/AROR_NotificationDisplay.c',suite:'Test-QRFSupportAndHeadlines.js',
+  mutate:s=>s.replace('Math.Max(width, EstimateHeadlineLineWidth(line, fontSize))','Math.Max(width, EstimateHeadlineLineWidth(line, fontSize) * 0.5)')}
 ];
 function runQRFMutationTests(read,execute){
  const results=[];

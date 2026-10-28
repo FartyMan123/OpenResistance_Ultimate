@@ -465,7 +465,8 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 				continue;
 			if (!DispatchReadyPackage(ready, operation))
 			{
-				FailOperation(operation, "Ready package could not receive deployment orders");
+				// Active reinforcement losses degrade one package; required lead losses still abort SPAWNING.
+				FailPackage(ready, operation, "Ready package could not receive deployment orders");
 				return;
 			}
 		}

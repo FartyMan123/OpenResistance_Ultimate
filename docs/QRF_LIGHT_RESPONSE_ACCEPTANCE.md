@@ -49,6 +49,8 @@ For attacks, use the existing trusted server attack interface or a genuinely eli
 4. Move a player's body into the launch clearance area after planning but before construction. Repeat with a newly obstructed air insertion volume. Refusal must occur before creating that package's actors.
 5. Cancel while only the transport, only a ground hull, or some groups have materialized. Surviving actors remain owned and consume capacity until safe removal; pure virtual reservations release once.
 6. Check late group members during retention and native queue cancellation during final cleanup. Mocked tests do not establish native queue behavior.
+7. Block pilot/passenger boarding during an ACTIVE reserve. At 120 executor seconds from package construction, it must fail that package and preserve healthy peers. Dormant wakeups and repeated seat requests must not refresh the deadline. Initial preparation can hit the manager deadline sooner.
+8. Invalidate a ready ACTIVE reserve's crew or waypoint immediately before dispatch. Verify healthy earlier/later packages continue and receive orders once. A required composite lead failure during SPAWNING must still abort preparation.
 
 ## Retention, takeover and finances
 
@@ -66,6 +68,7 @@ For paid responses, record balances and reserved amounts before admission, after
 - Fail a partially built reserve while a healthy lead package continues. After its final cleanup, only its unused margin releases; the future wave's full quote and any player-preserved physical assets remain reserved. A player-owned group that cannot be removed keeps its pending margin until operation closure.
 - External spending can create debt; balances must not become negative.
 - Closed, fully settled accounts are removed; retained physical assets remain accounted for.
+- External deletion before loss observation must log an unobserved removal, not recovery. This cannot reconstruct erased death evidence. Separately verify a tracked destruction charges once before owned deletion.
 - No funds must still produce the configured ground-only minimum capture response or a finite refusal/wait, never an unsecured airborne/joint response.
 
 ## Bounded route and exit recovery

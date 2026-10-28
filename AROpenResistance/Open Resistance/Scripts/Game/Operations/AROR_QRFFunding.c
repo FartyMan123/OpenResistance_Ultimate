@@ -59,12 +59,14 @@ class AROR_QRFFunding
 			if (asset.m_iPackageIndex == packageIndex)
 			{
 				registered += asset.m_iValue;
-				// Final owned cleanup also retires a missing/virtualized member after its group queue is cancelled.
-				// This is administrative recovery, never evidence of a combat death.
+				// Owned cleanup observes losses before deletion. External deletion/virtualization can erase
+				// that evidence: a null reference proves neither survival nor death. Release its collateral
+				// as an unobserved removal, not a recovery or a fabricated combat bill.
 				if (!asset.m_bSettled && !asset.m_Entity)
 				{
 					asset.m_bSettled = true;
-					m_iRecovered += asset.m_iValue;
+					m_iQuote = Math.Max(0, m_iQuote - asset.m_iValue);
+					Print(string.Format("[AROR FINANCE] %1 package=%2 unobserved asset removal value=%3; collateral released, loss unknown", m_sOperationId, packageIndex, asset.m_iValue), LogLevel.WARNING);
 				}
 			}
 		}

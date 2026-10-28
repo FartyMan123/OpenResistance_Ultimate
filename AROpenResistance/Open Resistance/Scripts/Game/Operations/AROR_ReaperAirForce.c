@@ -2,6 +2,7 @@
 class AROR_ReaperAirForce : AROR_GroundOperationForce
 {
 	ref AROR_GroundOperationForce m_Escort;
+	int m_iPreparationDeadline;
 	bool m_bUnescorted;
 	int m_iPackageCount = 1;
 	vector m_vLaunch;
@@ -224,6 +225,9 @@ class AROR_ReaperAirForce : AROR_GroundOperationForce
 		{
 			if (slot && PilotCompartmentSlot.Cast(slot) && slot.IsCompartmentAccessible() && !slot.IsOccupied() && !slot.GetOccupant() && (!slot.IsReserved() || slot.IsReservedBy(pilot)))
 			{
+				// Final argument is performWhenPaused (installed CompartmentAccessComponent API).
+				// Initial aircraft stay in collision-only simulation while boarding; allow this teleport then.
+				// The return value acknowledges a request, so readiness still checks actual seat occupancy.
 				access.GetInVehicle(vehicle, slot, true, -1, ECloseDoorAfterActions.CLOSE_DOOR, true);
 				break;
 			}

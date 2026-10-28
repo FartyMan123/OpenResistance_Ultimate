@@ -1,4 +1,4 @@
-﻿# Add MARS, territory attacks and campaign UI updates
+# Add MARS, territory attacks and campaign UI updates
 
 ## Summary
 
@@ -22,8 +22,8 @@ Add a role-separated MARS response debugger and delayed Occupier counterattacks,
 
 ## Testing
 
-- Passed **28 suites / 97,206 mocked assertions** through the actual separate-process runner using VS Code's bundled Node v24.21.0 in Electron Node mode. The Node `vm` mutation adapter also passed. The original V8-host checks remain historical evidence; native services are still mocked and repeated lifecycle/soak invariants account for most assertions.
-- Coverage includes all **350** army/family/Readiness/Crackdown cells, including 280 available and 70 intentionally locked cells; light/escorted preparation, confirmed seating, attack timing, reentrant events, funding, reserves, retention, permissions and save policy. All **31** representative source mutations were detected.
+- Passed **28 suites / 97,342 mocked assertions** through the actual separate-process runner using VS Code's bundled Node v24.21.0 in Electron Node mode. The Node `vm` mutation adapter also passed. The original V8-host checks remain historical evidence; native services are still mocked and repeated lifecycle/soak invariants account for most assertions.
+- Coverage includes all **350** army/family/Readiness/Crackdown cells, including 280 available and 70 intentionally locked cells; light/escorted preparation, confirmed seating, attack timing, reentrant events, funding, reserves, retention, permissions and save policy. All **35** representative source mutations were detected.
 - A 10,000-tick simulated scheduler soak passed. Previously failing REBINTEL, progression, strategy and town-hold harnesses are repaired and passing.
 - Installed-resource/configuration checks passed 27 base-game GUIDs, 12 profiles, 62 recipes, 50 army/Readiness/Crackdown budget combinations and five REAPER references. Three UI bindings match metadata and the local Workbench database; rendering is unverified. Lexical structure passed for 69 operation/admin scripts.
 - Exported all **860** eligible Chicken origin/target pairs and a Workbench-only production-planner sweep with separate ground, escorted-air and transport-only-air results. Native evidence remains `NOT_RUN`; endpoint inventories do not prove travel or reconstruct the road graph. Six synthetic importer checks passed.
@@ -32,6 +32,8 @@ Add a role-separated MARS response debugger and delayed Occupier counterattacks,
 - **The preceding version compiled successfully, as reported by the user on 28 October 2026. Current light-response and follow-up fixes need a fresh compile and Play test.** Test both armies, full convoys, Lamentin/North Ridge, joint attacks, retained aborted aircraft/player takeover, dedicated-server authorization/JIP, old saves, actual capture and cleanup. See [light-response acceptance](QRF_LIGHT_RESPONSE_ACCEPTANCE.md).
 
 ## Notes
+
+- **Review follow-up:** active dispatch failures degrade one package; required lead failure still aborts SPAWNING. Air packages have a construction-to-dispatch deadline (`m_iReaperPreparationTimeout`, default 120 seconds), including ACTIVE reserves. Missing references are reported as unobserved removals rather than recovered assets. Both validators pass defaults and shipped executor overrides. Banner sizing shares one estimate; visual acceptance remains open. See [review dispositions](QRF_REVIEW_FOLLOWUP.md).
 
 - **Extender changes:** update renamed Readiness/Crackdown APIs and attributes, including `GetWarLevel`, `GetAggression*`, `SetWarLevel_S`, `m_iMinimumWarLevel`, `m_iMaximumWarLevel` and `m_iStartingAggression`. The resource seam is now `AROR_QRFAvailabilityProvider` / `AROR_QRFAvailabilitySnapshot`, `CaptureAvailability_S` and `RegisterQRFAvailabilityProvider_S`. Recipes expose `m_eResponseType`; response families can extend the shared selector and catalogue.
 - The server owns dispatch, orders, funding, capture and attack admission. New player-controller RPCs support MARS and Black Market requests; the latest MARS debug status is replicated. Matching server/client scripts and layouts are required. REBINTEL remains read-only, with a client HUD timer.

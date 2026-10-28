@@ -18,11 +18,11 @@ const env={Math:math,Vector:(...v)=>v,vector:{DistanceXZ:distance},
 let viewport=1920;
 env.GetGame=()=>({GetWorkspace:()=>({DPIUnscale:x=>x}),GetWorld:()=>({GetSurfaceY:()=>100})});
 env.AROR_ReaperFlightGeometry={Direction:()=>[1,0,0]};
-const names=['HeadlineTextWidth','PlaceHeadlineText','Place','ReaperGunshipHeight','ReaperGunshipRunHeight','ReaperMovePrefab','ReaperOrder','FindTacticalApproach','ReplaceTacticalWaypoint','GunshipTrafficConflict','RetireReaperEscort'];
+const names=['EstimateHeadlineLineWidth','HeadlineTextWidth','PlaceHeadlineText','Place','ReaperGunshipHeight','ReaperGunshipRunHeight','ReaperMovePrefab','ReaperOrder','FindTacticalApproach','ReplaceTacticalWaypoint','GunshipTrafficConflict','RetireReaperEscort'];
 function compile(src,name){
   const m=src.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
   if(!m)throw Error('Missing '+name);
-  const args=m[1].replace(/\b(?:TextWidget|int|float|bool|AROR_\w+)\s+/g,'');
+  const args=m[1].replace(/\b(?:string|TextWidget|int|float|bool|AROR_\w+)\s+/g,'');
   let body=m[2].replace(/array<string> (\w+) = \{\};/g,'let $1=[];')
     .replace(/foreach \(string (\w+) : ([^)]+)\)/g,'for(const $1 of $2)')
     .replace(/float screenWidth, screenHeight;/g,'let screenWidth=0,screenHeight=0;')
@@ -36,6 +36,12 @@ function compile(src,name){
   for(const n of names)body=body.replace(new RegExp('(?<![.\\w])'+n+'\\(','g'),'this.'+n+'(');
   return new Function(...Object.keys(env),'viewport','return function('+args+'){'+body+'}')( ...Object.values(env),viewport);
 }
+// Exercise the real helper against UTF-8 byte adapters, including signed native-byte representations.
+const countCharacters=compile(read('Common/AROR_TextUtils.c'),'CharCount');
+const utf8=(text,signed)=>{const bytes=require('buffer').Buffer.from(text,'utf8');return {Length:()=>bytes.length,Get:i=>({ToAscii:()=>signed&&bytes[i]>=128?bytes[i]-256:bytes[i]})}};
+for(const signed of [false,true])for(const [text,count]of [['HQ',2],['ГОТОВНОСТЬ',10],['A😀Я',3]])
+ check(countCharacters(utf8(text,signed))===count,'actual CharCount counts UTF-8 code points for signed='+signed);
+env.AROR_TextUtils.CharCount=text=>countCharacters(utf8(text,false));
 const widget=text=>({text,GetText(){return this.text;},SetTextWrapping(v){this.wrap=v;}});
 function banner(screen,title,extras={}){
   viewport=screen;
@@ -44,7 +50,7 @@ function banner(screen,title,extras={}){
   for(const [,key,value]of ui.matchAll(/const (?:float|int) (HEADLINE_\w+) = (\d+);/g))b[key]=Number(value);
   for(const n of ['Headline','HeadlineBand','HeadlineHeader','HeadlineIcon','HeadlineLineTop','HeadlineLineBottom','HeadlineLineLeft','HeadlineLineRight','HeadlineTimer'])b['m_w'+n]={};
   for(const [n,text]of Object.entries({Text:title,Detail:extras.detail||'',Intercept:extras.intercept||'',Effect:extras.effect||'',Source:extras.source||'HQ',Time:'12:09'}))b['m_wHeadline'+n]=widget(text);
-  for(const n of ['HeadlineTextWidth','PlaceHeadlineText'])b[n]=compile(ui,n);
+  for(const n of ['EstimateHeadlineLineWidth','HeadlineTextWidth','PlaceHeadlineText'])b[n]=compile(ui,n);
   b.layout=compile(ui,'LayoutHeadline');b.layout(.5);return b;
 }
 for(const screen of [480,711,1280,1920]){
@@ -64,6 +70,13 @@ check(long.m_wHeadlineText.height>26*1.3,'long title reserves multiple rows');
 check(long.m_wHeadlineDetail.y>=long.m_wHeadlineText.y+long.m_wHeadlineText.height,'detail follows the entire wrapped title');
 check(long.m_wHeadlineDetail.height>=2*15*1.3,'explicit newlines retain separate rows');
 const short=banner(1920,'MISSION COMPLETE');check(short.m_wHeadline.width===520,'short banner retains default width');
+const cyrillic=banner(480,'ТЕРРИТОРИЯ ПОД АТАКОЙ / '+'СЕВЕРНЫЙ ХРЕБЕТ '.repeat(10),{source:'ГОТОВНОСТЬ / СОВЕТСКАЯ АРМИЯ'});
+const sample='ГОТОВНОСТЬ';
+const estimated=cyrillic.EstimateHeadlineLineWidth(sample,26);
+check(cyrillic.HeadlineTextWidth(widget(sample),26)===estimated,'natural width uses the same estimate as wrapping');
+const sampleWidget=widget(sample);
+check(cyrillic.PlaceHeadlineText(sampleWidget,26,0,0,estimated)===26*1.3,'exact estimated line width fits one row');
+check(cyrillic.m_wHeadlineSource.y+cyrillic.m_wHeadlineSource.height<=cyrillic.m_wHeadlineText.y,'long Cyrillic source reserves header space');
 const oldHeight=short.m_wHeadline.height;
 short.m_wHeadlineText.text='TERRITORY UNDER ATTACK / '+'NORTH RIDGE '.repeat(12);short.m_bHeadlineLayoutDirty=true;short.layout(.4);
 check(short.m_wHeadline.height>oldHeight,'new headline invalidates cached geometry');

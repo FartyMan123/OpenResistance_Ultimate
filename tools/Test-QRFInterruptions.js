@@ -4,6 +4,7 @@ const fs=require('fs'),path=require('path');
 const root=path.join(__dirname,'../AROpenResistance/Open Resistance/Scripts/Game/Operations');
 const src=Object.fromEntries(['AROR_OperationExecutorComponent','AROR_ReaperQRFExecutor','AROR_ReaperAirForce','AROR_ReaperRetirement','AROR_QRFFinance','AROR_QRFFunding','AROR_QRFAssetAccount','AROR_ForceProfile','AROR_QRFTacticalCommander','AROR_OperationForce','AROR_GroundOperationForce'].map(n=>[n,fs.readFileSync(path.join(root,n+'.c'),'utf8')]));
 let assertions=0,server=true;
+const settingsEvidence=[];
 const check=(ok,label)=>{assertions++;if(!ok)throw Error(label)};
 for(const[n,fn]of Object.entries({Count(){return this.length},Contains(x){return this.includes(x)},IsEmpty(){return !this.length},Clear(){this.length=0},Insert(x){this.push(x)},Remove(i){this.splice(i,1)},RemoveItem(x){const i=this.indexOf(x);if(i>=0)this.splice(i,1)},Copy(x){this.splice(0,this.length,...x)}}))
  Object.defineProperty(Array.prototype,n,{value:fn,configurable:true});
@@ -34,6 +35,43 @@ function compile(file,name){
  return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')(...Object.values(env));
 }
 const executor='AROR_OperationExecutorComponent',reaper='AROR_ReaperQRFExecutor',air='AROR_ReaperAirForce';
+// Execute both validators against source defaults and every serialized executor in shipped resources.
+{
+ const defaults=Object.fromEntries([src[executor],src[reaper]].flatMap(s=>[...s.matchAll(/\[Attribute\("([-\d.]+)"[^\r\n]*\)\]\s*(?:protected )?(?:int|float|bool) (m_\w+)/g)].map(m=>[m[2],Number(m[1])])));
+ const makeVector=value=>Object.defineProperty(value.trim().split(/\s+/).map(Number),'Length',{value(){return Math.hypot(...this)}});
+ for(const s of [src[executor],src[reaper]])for(const m of s.matchAll(/\[Attribute\("([-\d. ]+)"[^\r\n]*\)\]\s*(?:protected )?vector (m_\w+)/g))defaults[m[2]]=makeVector(m[1]);
+ const methods={TacticalSettingsValid:compile(executor,'TacticalSettingsValid'),ReaperSettingsValid:compile(reaper,'ReaperSettingsValid')};
+ const fields=[...new Set(Object.keys(methods).flatMap(n=>{
+  const source=n==='TacticalSettingsValid'?src[executor]:src[reaper];
+  return [...source.match(new RegExp('\\b'+n+'\\(\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}','m'))[1].matchAll(/\bm_\w+/g)].map(m=>m[0]);
+ }))];
+ for(const name of fields)check(Number.isFinite(defaults[name])||Array.isArray(defaults[name]),'every validated field has an explicit parsed default: '+name);
+ const fixtures=[{file:'source defaults',settings:defaults}];
+ const addon=path.resolve(root,'../../..');
+ function visit(dir){for(const entry of fs.readdirSync(dir,{withFileTypes:true})){
+  const file=path.join(dir,entry.name);
+  if(entry.isDirectory())visit(file);
+  else if(/\.(et|ent|layer)$/.test(file)){
+   const source=fs.readFileSync(file,'utf8');
+   for(const match of source.matchAll(/\bAROR_OperationExecutorComponent\b[^{}\r\n]*\{/g)){
+    let end=match.index+match[0].length,depth=1;
+    for(;end<source.length&&depth;end++){if(source[end]==='{')depth++;if(source[end]==='}')depth--}
+    const body=source.slice(match.index,end),settings={...defaults};
+    for(const m of body.matchAll(/^\s*(m_\w+)\s+(-?\d+(?:\.\d+)?)\s*$/gm))if(fields.includes(m[1]))settings[m[1]]=Number(m[2]);
+    for(const m of body.matchAll(/^\s*(m_v\w+)\s+"?([-\d.]+ [-\d.]+ [-\d.]+)"?\s*$/gm))if(fields.includes(m[1]))settings[m[1]]=makeVector(m[2]);
+    fixtures.push({file:path.relative(addon,file).split(path.sep).join('/'),settings});
+   }
+  }
+ }}
+ visit(addon);check(fixtures.length>1,'shipped executor instances are included, not just class defaults');
+ for(const fixture of fixtures){
+  for(const [name,valid]of Object.entries(methods))check(valid.call(fixture.settings),name+' accepts '+fixture.file);
+  settingsEvidence.push({fixture:fixture.file,values:Object.fromEntries(fields.map(n=>[n,fixture.settings[n]]))});
+ }
+ for(const [field,value]of Object.entries({m_fAttackStagingDistance:199,m_iAttackStagingTimeout:601,m_iOriginLaunchCooldown:3601,m_fMinOriginDistance:3001,m_fOriginWaterPenalty:0.99}))
+  check(!methods.TacticalSettingsValid.call({...defaults,[field]:value}),'invalid tactical bound still rejects '+field);
+ check(!methods.ReaperSettingsValid.call({...defaults,m_iReaperPreparationTimeout:0}),'air preparation timeout cannot be disabled accidentally');
+}
 // Optional escorts: execute actual construction, with native creation and resource failure injection.
 {
  let missing='',spawned=[],groups=[],loaded=[];
@@ -45,7 +83,7 @@ const executor='AROR_OperationExecutorComponent',reaper='AROR_ReaperQRFExecutor'
   const profile={m_sVehicle:'transport',m_sEscortVehicle:'gunship',m_sInfantryGroup:'infantry',m_iEscortCount:escorted?1:0,m_iEscortLossValue:2000};
   const force={ground:true,air:true,m_Profile:profile,m_bUnescorted:!escorted,m_iPackageIndex:0,m_iPackageCount:1,m_iReservedMembers:8,
    InitializeSpawnFaction_S:entity=>entity?.allowFaction!==false,TrackDamage_S(){},HoldAircraft_S(){this.held=(this.held||0)+1}};
-  const ctx={m_fReaperInsertionHeight:100,IsLaunchPositionSafe:()=>failure!=='clearance',ReaperGunshipHeight:()=>200,
+  const ctx={m_iExecutorClock:10,m_iReaperPreparationTimeout:120,m_fReaperInsertionHeight:100,IsLaunchPositionSafe:()=>failure!=='clearance',ReaperGunshipHeight:()=>200,
    ConfigureForceFunding(f){f.m_bOwnsPackageQuote=true},SpawnWaypoint:()=>failure==='waypoint'?null:{},
    SpawnReaperAircraft(resource){const v={name:resource.name,allowFaction:failure!==(resource.name==='gunship'?'escortFaction':'transportFaction'),GetPhysics:()=>failure!==(resource.name==='gunship'?'escortPhysics':'transportPhysics')};spawned.push(v);return v},
    ReaperGroup(owner,prefab,pilot){
@@ -55,6 +93,7 @@ const executor='AROR_OperationExecutorComponent',reaper='AROR_ReaperQRFExecutor'
     if(pilot)owner.m_CrewGroup=g;else owner.m_Group=g;groups.push(g);return g;
    }};
   const ok=spawn.call(ctx,{GetId:()=> 'test'},force,'pilot');
+  check(force.m_iPreparationDeadline===130,'construction freezes a finite per-package preparation deadline');
   const irrelevant=!escorted&&['gunship','escortPhysics','escortFaction','escortCrew'].includes(failure);
   check(ok===(failure==='none'||irrelevant),'optional-escort construction/failure outcome '+[escorted,failure]);
   check(spawned.every(v=>v===force.m_Vehicle||v===force.m_Escort?.m_Vehicle),'every partially spawned hull remains owned on failure');
@@ -192,6 +231,47 @@ for(const state of ['empty','ordered','vehicle','group','crew','casualties','res
    CountCrew:()=>1,IsMountComplete:()=>failure!=='driver'};
   const ok=dispatch.call({m_iExecutorClock:0,m_iQRFIngressTimeout:100},f,{});
   check(ok===(failure==='none')&&orders===(failure==='none'?1:0),'ground dispatch checks before ordering '+failure);
+ }
+}
+// A withdrawal cannot dispatch newly ready reserves.
+{
+ const activate=compile(executor,'TryActivateOperation'),fail=compile(executor,'FailPackage');
+ for(const failedIndex of [0,1,2]){
+  let terminal=0,lost=[],orders=[];
+  const forces=Array.from({length:3},(_,i)=>({m_sOperationId:'active',m_iPackageIndex:i,m_bReady:true}));
+  const op={IsTerminal:()=>false,GetState:()=>2,GetId:()=> 'active',GetPackageCount:()=>3,
+   m_TacticalCommander:{IsReserve:()=>false,MarkLost:i=>lost.push(i)}};
+  const ctx={m_aForces:forces,TryActivateOperation:activate,FailPackage:fail,
+   ShouldRetainTacticalForce:()=>true,RetainTacticalForce:f=>{f.m_bTacticalRetained=true},
+   FailOperation(){terminal++},DispatchReadyPackage(f){if(f.m_iPackageIndex===failedIndex)return false;f.m_bOrdersIssued=true;orders.push(f.m_iPackageIndex);return true}};
+  activate.call(ctx,op);
+  check(terminal===0&&lost.length===1&&lost[0]===failedIndex,'one active dispatch failure degrades only its package');
+  check(orders.length===2&&new Set(orders).size===2,'earlier and later healthy packages receive exactly one order despite nested activation');
+ }
+ let failed=0;
+ const lead={m_bReady:true,m_sOperationId:'lead',m_iPackageIndex:0};
+ const op={IsTerminal:()=>false,GetState:()=>1,GetId:()=> 'lead',GetRecipeId:()=> 'joint',GetPackageCount:()=>1,
+  m_TacticalCommander:{m_iFirstWaveCount:1,IsReserve:()=>false}};
+ activate.call({m_aForces:[lead],DispatchReadyPackage:()=>false,FailPackage:fail,FailOperation(){failed++}},op);
+ check(failed===1,'a required composite lead element still aborts preparation instead of fabricating activation');
+}
+// Boarding waits during ACTIVE reserve construction have their own deadline, not just the parent timeout.
+{
+ const monitor=compile(reaper,'MonitorReaperQRF');
+ for(const state of [1,2])for(const unescorted of [false,true]){
+  let failed=0,waits=0;
+  const group={IsDormant:()=>false,IsExpandComplete:()=>true};
+  const force={m_sOperationId:'boarding',m_iPreparationDeadline:130,m_bUnescorted:unescorted,
+   m_Group:group,m_CrewGroup:group,m_Vehicle:{alive:true},m_iWakeRetryTicks:0,
+   m_Escort:unescorted?null:{m_Vehicle:{alive:true},m_CrewGroup:group,CountLivingMembers:()=>1},
+   CountInfantry:()=>4,CountCrew:()=>1,HoldAircraft_S(){},BoardPackage_S:()=>false};
+  const op={IsTerminal:()=>false,GetState:()=>state};
+  const ctx={m_iExecutorClock:10,m_Operations:{GetOperation:()=>op},ReaperFactionsValid:()=>true,ReaperGroupFaction:()=>true,
+   FailReaperPackage(f,o,reason){check(reason.includes('timed out'),'timeout gives an explicit boarding diagnostic');failed++},ReportSpawnWait(){waits++}};
+  monitor.call(ctx,force);ctx.m_iExecutorClock=129;monitor.call(ctx,force);
+  check(waits===2&&failed===0&&force.m_iPreparationDeadline===130,'seat requests cannot refresh the frozen deadline');
+  ctx.m_iExecutorClock=130;monitor.call(ctx,force);
+  check(failed===1&&waits===2,'initial or reserve boarding expires exactly at its own deadline');
  }
 }
 // A withdrawal cannot dispatch newly ready reserves.
@@ -385,6 +465,8 @@ for(const state of ['empty','ordered','vehicle','group','crew','casualties','res
    const unbuilt=state==='playerGroup'?175:0;
    check(account.Reserved()===1800+physical+unbuilt,'partial cleanup preserves later waves and player-owned spawn queues: '+state);
    check(funds===9940-(state==='lostPilot'?25:0),'cleanup charges only the confirmed pilot death and initial overhead');
+   if(state==='missingPilot')check(account.m_iRecovered===1600,'an unobserved missing pilot is not labelled recovered');
+   if(state==='missingHull')check(account.m_iRecovered===25,'an unobserved missing hull is not labelled recovered');
    const quote=account.m_iQuote,recovered=account.m_iRecovered;
    cleanup.call(force);if(!force.m_bPackageQueuesPreserved)account.ReleaseUnusedPackageQuote_S(0,1800);
    check(account.m_iQuote===quote&&account.m_iRecovered===recovered,'duplicate finalization cannot release a package margin twice');
@@ -423,4 +505,4 @@ for(const state of ['empty','ordered','vehicle','group','crew','casualties','res
  check(!manager.Reserve_S({GetRole:()=>1},100,10),'clients cannot create funding allocations');
  server=true;
 }
-console.log(JSON.stringify({assertions,note:'Actual-source interruption, optional-escort, retention and Economy checks; native physics, spawn queues and multiplayer still require Workbench.'}));
+console.log(JSON.stringify({assertions,settingsEvidence,note:'Actual-source interruption, optional-escort, retention and Economy checks; native physics, spawn queues and multiplayer still require Workbench.'}));
