@@ -45,7 +45,10 @@ function Read-CampaignLayerLocations([string]$text,[switch]$RootsOnly) {
    if($p.Success){$position=@(1..3 | ForEach-Object {[double]$p.Groups[$_].Value})}
    $children[$childId]=$position
   }}
-  $result[$id]=[pscustomobject]@{Origin=$origin;Yaw=$yaw;Children=$children;Text=$block;EntityName=$entityName}
+  # Workbench saves instances sharing a prefab as named children of one $grp header, which carries the prefab reference
+  $prefab=[regex]::Match($match.Value,'"(\{[0-9A-F]{16}\}[^"]+)"').Groups[1].Value
+  if(!$prefab){$group=[regex]::Matches($text.Substring(0,$match.Index),'(?m)^\$grp GenericEntity : "(\{[0-9A-F]{16}\}[^"]+)"');if($group.Count){$prefab=$group[$group.Count-1].Groups[1].Value}}
+  $result[$id]=[pscustomobject]@{Origin=$origin;Yaw=$yaw;Children=$children;Text=$block;EntityName=$entityName;Prefab=$prefab}
  }
  return $result
 }

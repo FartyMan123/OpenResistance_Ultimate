@@ -2,7 +2,7 @@
 param([switch]$Apply)
 # Generates the Stronghold Delaware composition (Prefabs/Compositions/Locations/AROR_Defence_Stronghold_Delaware.et): the
 # Occupiers' home base at Everon International Airport. It inherits the 88 m airbase compound and adds an outer 128 m ring
-# of high sandbags, two corner gun bastions, three revetted helicopter pads with unmanned UH1Hs, four extra infantry teams,
+# of high sandbags, two corner gun bastions, three revetted US helipads with unmanned UH1Hs, four extra infantry teams,
 # an outer hedgehog/wire belt and the stronghold component. Without -Apply it only checks that the files on disk match.
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -30,6 +30,7 @@ $low = '{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap
 $hedgehog = '{AE28D47CF26E91EA}Prefabs/Props/Military/Fortification/CzechHedgehog_01_rusty.et'
 $wire = '{BE7B5BAFE1A16A50}Prefabs/Props/Military/Fortification/BarbedTape_Coil.et'
 $helicopter = '{70BAEEFC2D3FEE64}Prefabs/Vehicles/Helicopters/UH1H/UH1H.et'
+$helipad = '{A13F6A7F82DF031C}Prefabs/Compositions/Slotted/SlotFlatLarge/Helipad_L_Conflict_US_01.et'
 # Corner bastions in the outer band (the airbase's inherited inner wall cannot be opened from here); the inherited
 # airbase guns 0-3 face out from each side, and every gun needs an embrasure through the outer ring
 $guns = @(@(4,-56,56,315),@(5,56,56,45))
@@ -47,8 +48,11 @@ function Child([string]$entity, [string]$prefab, $x, $z, $yaw, [string[]]$compon
  $lines.Add($header + ' {')
  $lines.Add(('   ID "{0}"' -f (EntityId $entity)))
  $lines.Add('   components {')
- $lines.Add('    Hierarchy {')
- $lines.Add('    }')
+ # Composite prefabs (slotted compositions, the sandbag bunker) bring their own Hierarchy; a second one is rejected
+ if ($prefab -notmatch 'Compositions/Slotted|_bunker_') {
+  $lines.Add('    Hierarchy {')
+  $lines.Add('    }')
+ }
  foreach ($component in $components) { $lines.Add($component) }
  $lines.Add('   }')
  $lines.Add(('   coords {0} 0 {1}' -f (Number ($x + $centerX)),(Number ($z + $centerZ))))
@@ -106,6 +110,10 @@ foreach ($gun in $guns) {
   Child ("AROR_Stronghold_Delaware_Gun_{0}_Traverse_{1}" -f $gun[0],$label) $low ($gun[1] + $rightX * 3.5 * $side) ($gun[2] + $rightZ * 3.5 * $side) ($gun[3] + 90) $wall
  }
 }
+
+# Helipads under the parked helicopters: tagged so their deck and lights do not count against the helicopter
+$padComponents = @('    AROR_DefenceWallComponent {','    }','    AROR_LandingPadComponent {','     m_fRotorRadius 7.4','     m_fLength 17.6','    }')
+foreach ($pad in $pads) { Child ("AROR_Stronghold_Delaware_Helipad_{0}" -f $pad[0]) $helipad $pad[1] $pad[2] 0 $padComponents }
 
 # Helicopter revetments: low sandbag runs either side of each pad, along the helicopter's length
 foreach ($pad in $pads) {

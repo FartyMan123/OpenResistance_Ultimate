@@ -35,7 +35,8 @@ function compile(file,name){
 env.Math.trunc=Math.trunc;
 const request=compile('script','RequestScriptedQRF_S');
 const chickenLayer=fs.readFileSync(path.join(root,'../../Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/MilitaryInstallations.layer'),'utf8');
-check(chickenLayer.includes('GenericEntity AROR_Location_everon_saint_pierre_port')&&chickenLayer.includes('m_sId "everon_saint_pierre_port"'),'relocated port preserves its stable ID and entity name');
+// Workbench may save the port flat or as a named child of a $grp block sharing its prefab
+check(/^\s*(?:GenericEntity\s+)?AROR_Location_everon_saint_pierre_port\b/m.test(chickenLayer)&&chickenLayer.includes('m_sId "everon_saint_pierre_port"'),'relocated port preserves its stable ID and entity name');
 check(chickenLayer.includes('m_sName "Morton Port"')&&!chickenLayer.includes('m_sId "everon_morton_port"'),'display relocation does not introduce a replacement persistence identity');
 for(const role of [1,2]){
  const ctx={m_aOperations:[],m_iNextId:0,m_iClock:42,m_bInvaderOperationsEnabled:true,IsReady:()=>server,IsEnemyRole:r=>r===1||r===2,HasLocation:id=>id==='fort',NotifyChanged(){}};

@@ -1,6 +1,9 @@
-[WorkbenchPluginAttribute(name: "Audit military defence sites", description: "Read-only audit of all 23 military sites. Dense 25m-grid clearing search within each configured radius, eight orientations, with per-site progress. Does not move entities.", wbModules: {"WorldEditor"}, category: "Open Resistance")]
+[WorkbenchPluginAttribute(name: "Audit military defence sites", description: "Read-only audit of all 27 military sites. Dense 25m-grid clearing search within each configured radius, eight orientations, with per-site progress. Does not move entities.", wbModules: {"WorldEditor"}, category: "Open Resistance")]
 class AROR_AuditDefenceSitesPlugin : AROR_GroundCampaignFlagsPlugin
 {
+	//! Capturable Chicken sites: 23 garrisoned installations, three seaports and Fortress Vostok
+	protected static const int MILITARY_SITE_COUNT = 27;
+
 	protected void CollectChildren(IEntity root, array<IEntity> entities)
 	{
 		entities.Insert(root);
@@ -73,23 +76,29 @@ class AROR_AuditDefenceSitesPlugin : AROR_GroundCampaignFlagsPlugin
 		AROR_GarrisonComponent garrison = AROR_GarrisonComponent.Cast(root.FindComponent(AROR_GarrisonComponent));
 		float maxRelief = 2;
 		if (garrison) maxRelief = garrison.GetMaxDefenceRelief();
-		if (!AROR_DefenceLayout.TerrainFits(world, center, half + 2, maxRelief, relief, yaw))
+		// Rectangular compounds (narrow sites) keep their own front-to-back depth
+		float depth = half;
+		if (garrison && garrison.GetDefenceHalfDepth() < garrison.GetDefenceHalfExtent())
+			depth = garrison.GetDefenceHalfDepth();
+		if (!AROR_DefenceLayout.TerrainFits(world, center, half + 2, maxRelief, relief, yaw, depth + 2))
 			return false;
 		array<IEntity> ownEntities = {};
 		CollectChildren(root, ownEntities);
 		array<IEntity> flagOnly = {flag};
 		// Check space for the wall run at the same spacing as the authored presets.
-		int segments = Math.Ceil(2 * half / 2.5);
 		for (int side = 0; side < 4; side++)
 		{
+			float length = half;
+			if (side == 1 || side == 3) length = depth;
+			int segments = Math.Ceil(2 * length / 2.5);
 			for (int segment = 0; segment < segments; segment++)
 			{
-				float along = -half + (segment + 0.5) * 2 * half / segments;
+				float along = -length + (segment + 0.5) * 2 * length / segments;
 				if (side == 2 && Math.AbsFloat(along) < 6.25)
 					continue;
-				vector local = Vector(along, 0, half);
+				vector local = Vector(along, 0, depth);
 				if (side == 1) local = Vector(half, 0, along);
-				if (side == 2) local = Vector(along, 0, -half);
+				if (side == 2) local = Vector(along, 0, -depth);
 				if (side == 3) local = Vector(-half, 0, along);
 				vector point = WorldOffset(center, local, yaw);
 				point[1] = world.GetSurfaceY(point[0], point[2]);
@@ -176,9 +185,9 @@ class AROR_AuditDefenceSitesPlugin : AROR_GroundCampaignFlagsPlugin
 			AROR_LocationComponent location = AROR_LocationComponent.Cast(entity.FindComponent(AROR_LocationComponent));
 			if (location && AROR_CaptureLocationAction.IsCapturableType(location.GetLocationType())) locations.Insert(location);
 		}
-		if (locations.Count() != 23)
+		if (locations.Count() != MILITARY_SITE_COUNT)
 		{
-			Print(string.Format("[AROR DEFENCE AUDIT] Expected 23 military sites, found %1; reload Chicken before auditing.", locations.Count()), LogLevel.ERROR);
+			Print(string.Format("[AROR DEFENCE AUDIT] Expected %1 military sites, found %2; reload Chicken before auditing.", MILITARY_SITE_COUNT, locations.Count()), LogLevel.ERROR);
 			return;
 		}
 		int accepted;
@@ -187,7 +196,7 @@ class AROR_AuditDefenceSitesPlugin : AROR_GroundCampaignFlagsPlugin
 		array<vector> chosenCenters = {};
 		array<float> chosenHalves = {};
 		array<float> chosenYaws = {};
-		int expected = 23;
+		int expected = MILITARY_SITE_COUNT;
 		if (!targetId.IsEmpty()) expected = 1;
 		if (searchAlternatives)
 			Print(string.Format("[AROR DEFENCE AUDIT] begin reviewed=%1 grid=25 radius=per-site orientations=8; read-only, this may take several minutes", expected), LogLevel.NORMAL);

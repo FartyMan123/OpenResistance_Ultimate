@@ -1999,6 +1999,42 @@ GenericEntity : "{37786477B1914A61}Prefabs/Compositions/Locations/AROR_Defence_A
    coords 8.478874 0 118.530126
    angles 0 135 0
   }
+  GenericEntity AROR_Stronghold_Delaware_Helipad_1 : "{A13F6A7F82DF031C}Prefabs/Compositions/Slotted/SlotFlatLarge/Helipad_L_Conflict_US_01.et" {
+   ID "94AB0E53D0901176"
+   components {
+    AROR_DefenceWallComponent {
+    }
+    AROR_LandingPadComponent {
+     m_fRotorRadius 7.4
+     m_fLength 17.6
+    }
+   }
+   coords -91.996 0 11.005
+  }
+  GenericEntity AROR_Stronghold_Delaware_Helipad_2 : "{A13F6A7F82DF031C}Prefabs/Compositions/Slotted/SlotFlatLarge/Helipad_L_Conflict_US_01.et" {
+   ID "42181C2658B06DCE"
+   components {
+    AROR_DefenceWallComponent {
+    }
+    AROR_LandingPadComponent {
+     m_fRotorRadius 7.4
+     m_fLength 17.6
+    }
+   }
+   coords -69.996 0 11.005
+  }
+  GenericEntity AROR_Stronghold_Delaware_Helipad_3 : "{A13F6A7F82DF031C}Prefabs/Compositions/Slotted/SlotFlatLarge/Helipad_L_Conflict_US_01.et" {
+   ID "795461C3C4AD3AC6"
+   components {
+    AROR_DefenceWallComponent {
+    }
+    AROR_LandingPadComponent {
+     m_fRotorRadius 7.4
+     m_fLength 17.6
+    }
+   }
+   coords -17.996 0 11.005
+  }
   GenericEntity AROR_Stronghold_Delaware_Pad_1_Revetment_W_0 : "{21D83950DF36F250}Prefabs/Props/Military/Sandbags/Sandbag_01_long_burlap.et" {
    ID "FD3702904C77555B"
    components {

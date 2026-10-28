@@ -15,17 +15,17 @@ if($saved.Count -ne 27){throw 'Expected 23 catalogued military roots, three plac
 $strongholdId='everon_fortress_vostok'
 if(!$saved.ContainsKey($strongholdId)){throw 'Invader stronghold root missing'}
 if($saved[$strongholdId].Text -notmatch 'm_eType\s+MILITARY_BASE\b' -or $saved[$strongholdId].Text -notmatch 'm_eInitialControllingRole\s+INVADERS\b'){throw 'Stronghold must be an Invader-held military base'}
-if(!$saved[$strongholdId].Text.Contains('Prefabs/Compositions/Locations/AROR_Defence_Fortress_Vostok.et')){throw 'Stronghold does not use the fortress composition'}
+if(!$saved[$strongholdId].Prefab.Contains('Prefabs/Compositions/Locations/AROR_Defence_Fortress_Vostok.et')){throw 'Stronghold does not use the fortress composition'}
 $fortress=[IO.File]::ReadAllText((Join-Path $addonRoot 'Prefabs/Compositions/Locations/AROR_Defence_Fortress_Vostok.et'))
 if(!$fortress.Contains('AROR_StrongholdComponent') -or $fortress -notmatch 'm_iDefenceLevel 4'){throw 'Fortress composition lacks its stronghold component or level-4 garrison'}
-if(!$saved['everon_airport'].Text.Contains('Prefabs/Compositions/Locations/AROR_Defence_Stronghold_Delaware.et')){throw 'Airport does not use the Stronghold Delaware composition'}
+if(!$saved['everon_airport'].Prefab.Contains('Prefabs/Compositions/Locations/AROR_Defence_Stronghold_Delaware.et')){throw 'Airport does not use the Stronghold Delaware composition'}
 $delaware=[IO.File]::ReadAllText((Join-Path $addonRoot 'Prefabs/Compositions/Locations/AROR_Defence_Stronghold_Delaware.et'))
 if(!$delaware.Contains('m_eHomeRole OCCUPIERS') -or ([regex]::Matches($delaware,'UH1H\.et').Count -ne 3)){throw 'Delaware must be an Occupier stronghold with three parked helicopters'}
 $placedPorts=@($saved.Keys | Where-Object {$_ -notin $sites.Id -and $_ -ne $strongholdId})
 if($placedPorts.Count -ne 3){throw 'Unexpected non-catalogue military roots'}
 foreach($portId in $placedPorts){
  if($saved[$portId].Text -notmatch 'm_eType\s+PORT\b'){throw "Unexpected non-catalogue location: $portId"}
- if(!$saved[$portId].Text.Contains('Prefabs/Locations/AROR_Location_Port.et')){throw "Placed port does not inherit the expected template: $portId"}
+ if(!$saved[$portId].Prefab.Contains('Prefabs/Locations/AROR_Location_Port.et')){throw "Placed port does not inherit the expected template: $portId"}
 }
 $portTemplate=[IO.File]::ReadAllText((Join-Path $addonRoot 'Prefabs/Locations/AROR_Location_Port.et'))
 if(!$portTemplate.Contains('AROR_GarrisonComponent') -or !$portTemplate.Contains('AROR_Prop_CaptureFlag.et')){throw 'Port template lacks garrison/capture flag'}
