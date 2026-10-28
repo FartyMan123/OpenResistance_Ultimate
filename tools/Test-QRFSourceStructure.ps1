@@ -1,9 +1,9 @@
 # Lexical guard only. This is not an Enforce parser or Workbench compiler.
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$scriptRoot = Join-Path $repoRoot 'AROpenResistance/Open Resistance/Scripts/Game'
+$scriptRoot = Join-Path $repoRoot 'AROpenResistance/Open Resistance/Scripts'
 $checked = 0
-$files = foreach ($folder in @('Operations','Admin')) { Get-ChildItem -LiteralPath (Join-Path $scriptRoot $folder) -Filter '*.c' }
+$files = Get-ChildItem -LiteralPath $scriptRoot -Recurse -Filter '*.c'
 foreach ($file in $files) {
  $source = [IO.File]::ReadAllText($file.FullName)
  $stack = New-Object 'Collections.Generic.Stack[char]'
@@ -36,4 +36,4 @@ foreach ($file in $files) {
  if ($depth -ne 0) { throw "Unclosed preprocessor conditional in $($file.Name)" }
  $checked++
 }
-Write-Output "Checked balanced delimiters, strings, comments and preprocessor nesting in $checked operation/admin scripts. Not an Enforce compilation."
+Write-Output "Checked balanced delimiters, strings, comments and preprocessor nesting in $checked addon scripts, including Workbench plugins. Not an Enforce compilation."

@@ -85,6 +85,6 @@ For R5 C5 standalone airborne, observe the fifth heavy package under the six-liv
 
 On a separate idle run, invoke `AROR_QRFRouteAudit.Start_S()` and import the native log with `tools/Import-QRFRouteAudit.ps1`.
 
-Each of the 860 pairs now records ground planning, escorted-air planning and light-air planning separately. An unsafe gunship corridor can fail the escorted mode while the transport-only mode passes. Older logs leave the new light-air field `NOT_RUN`. Missing safe pads block both air modes.
+Each of the 924 pairs now records ground planning, escorted-air planning and light-air planning separately. An unsafe gunship corridor can fail the escorted mode while the transport-only mode passes. Older logs leave the new light-air field `NOT_RUN`. Missing safe pads block both air modes.
 
 Planning results do not establish actual driving, landing, full-convoy space or native infantry navigation. Preserve every unrun gameplay/dedicated-server field as `NOT_RUN`.

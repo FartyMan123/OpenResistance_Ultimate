@@ -38,7 +38,7 @@ $preferredDistance = [double]$preferredMatch.Groups[1].Value
 $managerLayer = [IO.File]::ReadAllText((Join-Path $layerRoot 'Managers.layer'))
 $preferredOverride = [regex]::Match($managerLayer, '(?m)^\s+m_fMinOriginDistance\s+([\d.]+)\s*$')
 if ($preferredOverride.Success) { $preferredDistance=[double]$preferredOverride.Groups[1].Value }
-if ($allSites.Count -ne 44 -or $origins.Count -ne 20) { throw "Unexpected Chicken topology: $($allSites.Count) locations, $($origins.Count) launch sites" }
+if ($allSites.Count -ne 45 -or $origins.Count -ne 21) { throw "Unexpected Chicken topology: $($allSites.Count) locations, $($origins.Count) launch sites" }
 $rows = foreach ($origin in $origins) { foreach ($target in $allSites) {
  if ($origin.Id -eq $target.Id) { continue }
  $distance = [Math]::Sqrt([Math]::Pow($target.X-$origin.X,2) + [Math]::Pow($target.Z-$origin.Z,2))
@@ -59,7 +59,7 @@ $rows = foreach ($origin in $origins) { foreach ($target in $allSites) {
   NativeRoadConnectivity='NOT_RUN'; NativeDriving='NOT_RUN'; NativeLanding='NOT_RUN'; DedicatedServer='NOT_RUN'
  }
 }}
-if ($rows.Count -ne 860) { throw 'Missing or duplicated directed origin/target pairs' }
+if ($rows.Count -ne 924) { throw 'Missing or duplicated directed origin/target pairs' }
 New-Item -ItemType Directory -Path $outputRoot -Force | Out-Null
 $allSites | Export-Csv -LiteralPath (Join-Path $outputRoot 'CHICKEN_OPERATION_LOCATIONS.csv') -NoTypeInformation -Encoding UTF8
 $rows | Export-Csv -LiteralPath (Join-Path $outputRoot 'CHICKEN_OPERATION_ROUTES.csv') -NoTypeInformation -Encoding UTF8

@@ -4,6 +4,8 @@ Status: source implementation and offline checks; **current Workbench compilatio
 
 ## What happens after a capture
 
+Stronghold defence is a separate trusted scenario policy using the same executor. It can waive faction funding, freeze a named recipe and use a coastal launch point, while preserving actor capacity, launch safety and existing operations on the same role/target. Its requests do not establish capture-QRF attack eligibility. See [strongholds](STRONGHOLDS.md) and [reconciliation validation](RECONCILIATION_VALIDATION.md).
+
 1. A canonical enabled settlement/military capture supplies a trusted role/location threat. Chicken keeps combat-triggered QRFs off: validated damage can update recent contacts and bounded crackdown but cannot request a response. No player RPC can create a threat or change readiness.
 2. The manager coalesces reports into at most 32 pending threats. Repeated reports for one role/location contribute evidence at most every 30 seconds. A live QRF for the same target is reused.
 3. Every five seconds, each role considers its highest-scoring eligible threat. Importance, sustained fighting, capture and bounded waiting age affect priority. An unaffordable threat waits; after its retry is deferred, another candidate can be considered on a subsequent tick. Existing per-role cooldown, outstanding-operation limits and conflicting-target checks still govern admission.

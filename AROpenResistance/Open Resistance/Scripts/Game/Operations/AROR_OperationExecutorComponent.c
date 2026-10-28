@@ -749,7 +749,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		AROR_Commander commander = commanders.GetCommander(operation.GetRole());
 		if (!commander || commander.IsPlayerDirected())
 			return;
-		if (!HasFriendlyQRFOrigin(operation.GetRole(), operation.GetTargetLocationId()))
+		if (!operation.m_bHasOriginOverride && !HasFriendlyQRFOrigin(operation.GetRole(), operation.GetTargetLocationId()))
 		{
 			FailGroundPlanning(operation, "No safe friendly military origin remains for this capture response");
 			return;
@@ -1672,9 +1672,19 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 				m_aResponseLevels.Insert(response);
 			}
 		}
-		if (m_iMaxGroups < 1 || m_iMaxMembers < 1 || m_iMaxVehicles < 0 || m_iWakeRetryInterval < 1 || m_fPackageSpacing < 10 || m_iWorkbenchResponseLevel < 0 || m_iWorkbenchResponseLevel > 5 || m_fMinTargetDistance < 0 || m_fMinPlayerDistance < 0 || m_fArrivalRadius <= 0 || owner.FindComponent(AROR_OperationExecutorComponent) != this || !ValidatePool())
+		if (owner.FindComponent(AROR_OperationExecutorComponent) != this)
 		{
-			Print("[AROR] Invalid or duplicate operation executor; disabled", LogLevel.ERROR);
+			Print("[AROR] Duplicate operation executor on the game mode; this one is disabled", LogLevel.ERROR);
+			return;
+		}
+		if (m_iMaxGroups < 1 || m_iMaxMembers < 1 || m_iMaxVehicles < 0 || m_iWakeRetryInterval < 1 || m_fPackageSpacing < 10 || m_iWorkbenchResponseLevel < 0 || m_iWorkbenchResponseLevel > 5 || m_fMinTargetDistance < 0 || m_fMinPlayerDistance < 0 || m_fArrivalRadius <= 0)
+		{
+			Print("[AROR] Invalid operation executor budgets, distances or Workbench level; executor disabled", LogLevel.ERROR);
+			return;
+		}
+		if (!ValidatePool())
+		{
+			Print("[AROR] Invalid operation executor force pool (see the reason above); executor disabled, no QRFs or attacks can spawn", LogLevel.ERROR);
 			return;
 		}
 		GetGame().GetCallqueue().CallLater(Tick, 1000, true);
@@ -1684,32 +1694,35 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		Print(string.Format("[AROR] Executor configuration: profiles=%1 levels=%2 budgets groups=%3 members=%4 vehicles=%5", m_aForceProfiles.Count(), m_aResponseLevels.Count(), m_iMaxGroups, m_iMaxMembers, m_iMaxVehicles), LogLevel.NORMAL);
 	}
 
+	//! Every rejection names its reason: one failure disables all QRFs, so the log must say which
 	protected bool ValidatePool()
 	{
 		if (m_aGroundQRFRecipes.Count() > 64)
-			return false;
+			return PoolError(string.Format("%1 ground recipes; the limit is 64", m_aGroundQRFRecipes.Count()));
 		array<string> recipeKeys = {};
 		foreach (AROR_GroundQRFRecipe recipe : m_aGroundQRFRecipes)
 		{
-			if (!recipe || !recipe.IsValid())
-				return false;
+			if (!recipe)
+				return PoolError("empty ground recipe entry");
+			if (!recipe.IsValid())
+				return PoolError(string.Format("recipe '%1' is invalid (ID, faction, level 1-5, readiness range or 1-8 profile IDs)", recipe.m_sId));
 			string recipeKey = string.Format("%1:%2", recipe.m_sId, recipe.m_eRole);
 			if (recipeKeys.Contains(recipeKey))
-				return false;
+				return PoolError(string.Format("recipe '%1' is defined twice for role %2", recipe.m_sId, recipe.m_eRole));
 			recipeKeys.Insert(recipeKey);
 			array<AROR_ForceProfile> resolved = {};
 			if (!recipe.Resolve(m_aForceProfiles, recipe.m_eRole, recipe.m_sFactionKey, resolved, recipe.m_iMinimumReadinessLevel))
-				return false;
+				return PoolError(string.Format("recipe '%1' does not resolve at readiness %2: %3", recipe.m_sId, recipe.m_iMinimumReadinessLevel, DescribeRecipeProfiles(recipe)));
 		}
 		if (m_aForceProfiles.Count() > 64)
-			return false;
+			return PoolError(string.Format("%1 force profiles; the limit is 64", m_aForceProfiles.Count()));
 		if (m_aResponseLevels.Count() > 5)
-			return false;
+			return PoolError(string.Format("%1 response levels; the limit is 5", m_aResponseLevels.Count()));
 		array<int> levels = {};
 		foreach (AROR_ResponseLevel response : m_aResponseLevels)
 		{
 			if (!response || !response.IsValid() || levels.Contains(response.m_iLevel))
-				return false;
+				return PoolError("response levels must be valid, 1-5 and unique");
 			levels.Insert(response.m_iLevel);
 		}
 		array<string> ids = {};
@@ -1717,8 +1730,10 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		{
 			if (!profile || !profile.IsValid() || ids.Contains(profile.m_sId))
 			{
-				Print("[AROR] Force profiles must be valid and have globally unique IDs", LogLevel.ERROR);
-				return false;
+				string profileId = "<empty>";
+				if (profile)
+					profileId = profile.m_sId;
+				return PoolError(string.Format("force profile '%1' is invalid or its ID is not unique", profileId));
 			}
 			ids.Insert(profile.m_sId);
 			if (!profile.HasNativeExecutor())
@@ -1726,12 +1741,47 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		}
 #ifdef WORKBENCH
 		if ((!m_sWorkbenchForceProfileId.IsEmpty() && !ids.Contains(m_sWorkbenchForceProfileId)) || (m_iWorkbenchResponseLevel > 0 && !levels.Contains(m_iWorkbenchResponseLevel)))
-		{
-			Print("[AROR] Workbench forced profile/level is absent from configuration", LogLevel.ERROR);
-			return false;
-		}
+			return PoolError("Workbench forced profile/level is absent from configuration");
 #endif
 		return true;
+	}
+
+	protected bool PoolError(string reason)
+	{
+		Print("[AROR] Executor force pool rejected: " + reason, LogLevel.ERROR);
+		return false;
+	}
+
+	//! Why each of a recipe's profiles can or cannot be used, for the pool error
+	protected string DescribeRecipeProfiles(AROR_GroundQRFRecipe recipe)
+	{
+		string result;
+		foreach (string id : recipe.m_aProfileIds)
+		{
+			AROR_ForceProfile found;
+			foreach (AROR_ForceProfile profile : m_aForceProfiles)
+			{
+				if (profile && profile.m_sId == id)
+					found = profile;
+			}
+			string state = "ok";
+			if (!found)
+				state = "missing";
+			else if (!found.IsValid())
+				state = "invalid profile";
+			else if (!found.m_bEnabled)
+				state = "disabled";
+			else if (found.m_iMinimumReadinessLevel > recipe.m_iMinimumReadinessLevel)
+				state = string.Format("unlocks at readiness %1", found.m_iMinimumReadinessLevel);
+			else if (found.m_eRole != recipe.m_eRole || found.m_sFactionKey != recipe.m_sFactionKey)
+				state = string.Format("role/faction %1/%2", found.m_eRole, found.m_sFactionKey);
+			else if (found.GetWeight(AROR_EOperationType.QRF) <= 0)
+				state = "zero QRF weight";
+			else if (found.m_eType == AROR_EForceType.AIRBORNE && recipe.m_eResponseType != AROR_EResponseType.AIR_GROUND)
+				state = "airborne in a non-joint recipe";
+			result += string.Format("%1=%2 ", id, state);
+		}
+		return result;
 	}
 
 	override void OnDelete(IEntity owner)

@@ -11,6 +11,10 @@ class AROR_GarrisonComponent : ScriptComponent
 	protected int m_iStaticWeaponCountOverride;
 	[Attribute("0", desc: "Omit the spare uncrewed armour hull in a compact compound. The manned vehicle recipe and all static crews remain unchanged.")]
 	protected bool m_bOmitParkedArmour;
+	[Attribute("0", desc: "Infantry teams added to the defence-level recipe (strongholds). Each needs an authored position.", params: "0 8 1")]
+	protected int m_iExtraInfantryTeams;
+	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Extra unmanned vehicles parked after the spare armour hull, e.g. helicopters on pads. Not for outposts. Each needs an authored parked position.", params: "et")]
+	protected ref array<ResourceName> m_aExtraParkedVehicles;
 	[Attribute("", desc: "Optional authored world-space positions for statics/vehicles. Otherwise use bounded clear terrain search.")]
 	protected ref array<vector> m_aDefencePositions;
 	[Attribute("0", desc: "Perimeter half-width in metres; zero uses the standard location-type preset. Independent of capture radius.", params: "0 64 1")]
@@ -92,6 +96,13 @@ class AROR_GarrisonComponent : ScriptComponent
 	//! Designer recipe override, available to read-only editor audits before a roster exists.
 	int GetDefenceLevelOverride() { return m_iDefenceLevel; }
 	bool AllowsParkedArmour() { return !m_bOmitParkedArmour; }
+	int GetExtraInfantryTeams() { return Math.Clamp(m_iExtraInfantryTeams, 0, 8); }
+	int GetExtraParkedCount()
+	{
+		if (!m_aExtraParkedVehicles)
+			return 0;
+		return m_aExtraParkedVehicles.Count();
+	}
 	int GetStaticWeaponCount(int level)
 	{
 		if (m_iStaticWeaponCountOverride > 0)
@@ -477,7 +488,7 @@ class AROR_GarrisonComponent : ScriptComponent
 			m_iLevel = 4;
 		// An outpost override may strengthen infantry/statics, never add armour.
 		int group;
-		for (int team = 0; team < AROR_GarrisonPolicy.InfantryTeams(m_iLevel); team++)
+		for (int team = 0; team < AROR_GarrisonPolicy.InfantryTeams(m_iLevel) + GetExtraInfantryTeams(); team++)
 		{
 			for (int member = 0; member < 4; member++)
 			{
@@ -499,6 +510,12 @@ class AROR_GarrisonComponent : ScriptComponent
 		{
 			if (m_iLevel >= 3 && !m_bOmitParkedArmour)
 				AddSlot(faction.m_sParkedArmour, 2);
+			// Variant k identifies extra vehicle k-1, so a reload re-binds the same vehicle rather than armour
+			for (int extra = 0; extra < GetExtraParkedCount(); extra++)
+			{
+				int parked = AddSlot(m_aExtraParkedVehicles[extra], 2);
+				m_aSlots[parked].m_iVariant = extra + 1;
+			}
 			for (int hull = 0; hull < AROR_GarrisonPolicy.MannedCount(m_iLevel); hull++)
 			{
 				if (!faction.m_aMannedVehicles || faction.m_aMannedVehicles.IsEmpty())
@@ -522,6 +539,13 @@ class AROR_GarrisonComponent : ScriptComponent
 				return weapon;
 		}
 		return faction.m_sStaticMG;
+	}
+	//! Variant 0 is the role's spare armour; higher variants are this site's extra parked vehicles
+	protected ResourceName ParkedPrefab(AROR_GarrisonFaction faction, int variant)
+	{
+		if (variant > 0 && variant <= GetExtraParkedCount())
+			return m_aExtraParkedVehicles[variant - 1];
+		return faction.m_sParkedArmour;
 	}
 	protected ResourceName InfantryPrefab(AROR_GarrisonFaction faction, int variant)
 	{
@@ -1483,7 +1507,7 @@ class AROR_GarrisonComponent : ScriptComponent
 			{
 				case 0: slot.m_sPrefab = InfantryPrefab(faction, slot.m_iVariant); break;
 				case 1: slot.m_sPrefab = StaticPrefab(faction, slot.m_iVariant); break;
-				case 2: slot.m_sPrefab = faction.m_sParkedArmour; break;
+				case 2: slot.m_sPrefab = ParkedPrefab(faction, slot.m_iVariant); break;
 				case 4: slot.m_sPrefab = faction.m_sCrew; break;
 				case 3:
 				{

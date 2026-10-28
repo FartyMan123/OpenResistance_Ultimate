@@ -14,7 +14,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	[Attribute("40", UIWidgets.Slider, desc: "Icon size in reference pixels", params: "8 128 1")]
 	protected float m_fIconSize;
 
-	[Attribute("14", desc: "Font size of the name beside military, port and industrial site icons, in reference pixels", params: "8 32 1")]
+	[Attribute("16", desc: "Font size of the name beside military, port and industrial site icons, in reference pixels", params: "8 32 1")]
 	protected int m_iLabelFontSize;
 
 	[Attribute("1", desc: "Draw locations as military-frame symbols (rectangle ours, diamond enemy) instead of the icon textures")]
@@ -45,6 +45,10 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	protected static const string LABEL_WIDGET_NAME = "QRFLabel";	//!< Shared with QRF intel markers, which caption it themselves
 	protected static const string FRAME_WIDGET_NAME = "Frame";
 	protected static const float LABEL_MAX_WIDTH = 360;	//!< Room for the longest site name beside its icon
+	protected static const float LABEL_GAP = 5;			//!< Space between an icon's right edge and its name
+	protected static const int LABEL_GLOW_SIZE = 3;		//!< Soft halo behind location names, in pixels
+	protected static const int LABEL_GLOW_COLOR = 0xFFFFFFFF;
+	protected static const float LABEL_GLOW_OPACITY = 0.75;
 
 	//! Extra clickable margin around an icon, in reference pixels
 	protected static const float CLICK_MARGIN = 4;
@@ -59,6 +63,9 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	protected ref AROR_MissionMapMarkers m_MissionMarkers = new AROR_MissionMapMarkers();
 	protected ref array<AROR_LocationComponent> m_aIconLocations = {};
 	protected ref array<Widget> m_aIconWidgets = {};
+	//! Name label per icon (null for unnamed types), parallel to m_aIconWidgets. A sibling rather than a child of
+	//! the icon, so the icon's small frame never clips it.
+	protected ref array<Widget> m_aLabelWidgets = {};
 	//! Draw commands per frame canvas: the canvas does not keep its own copy, so they live as long as the icon
 	protected ref map<Widget, ref array<ref CanvasWidgetCommand>> m_mFrameCommands = new map<Widget, ref array<ref CanvasWidgetCommand>>();
 	protected ref AROR_LocationInfoPopup m_Popup;
@@ -260,7 +267,10 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		image.LoadImageTexture(0, icon);
 		FrameSlot.SetSize(root, m_fIconSize, m_fIconSize);
 		FrameSlot.SetAlignment(root, 0.5, 0.5);
-		ApplyNameLabel(root, location);
+		Widget ownLabel = root.FindAnyWidget(LABEL_WIDGET_NAME);
+		if (ownLabel)
+			ownLabel.SetVisible(false);
+		m_aLabelWidgets.Insert(CreateNameLabel(location));
 		ApplyControlColor(image, location);
 	}
 
@@ -279,9 +289,12 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 			m_mFrameCommands.Remove(m_aIconWidgets[index].FindAnyWidget(FRAME_WIDGET_NAME));
 			m_aIconWidgets[index].RemoveFromHierarchy();
 		}
+		if (m_aLabelWidgets[index])
+			m_aLabelWidgets[index].RemoveFromHierarchy();
 
 		m_aIconLocations.Remove(index);
 		m_aIconWidgets.Remove(index);
+		m_aLabelWidgets.Remove(index);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -294,9 +307,15 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 			if (widget)
 				widget.RemoveFromHierarchy();
 		}
+		foreach (Widget label : m_aLabelWidgets)
+		{
+			if (label)
+				label.RemoveFromHierarchy();
+		}
 
 		m_aIconLocations.Clear();
 		m_aIconWidgets.Clear();
+		m_aLabelWidgets.Clear();
 		m_mFrameCommands.Clear();
 		m_wIconParent = null;
 	}
@@ -308,29 +327,65 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Every location but cities gets its name beside the icon (vanilla already prints city names large). Dark ink with a light outline, like vanilla map text, so it reads over land and sea.
-	protected void ApplyNameLabel(notnull Widget root, notnull AROR_LocationComponent location)
+	//! Every location but cities gets its name to the right of the icon, vertically centred on it (vanilla already
+	//! prints city names large). Dark ink with a light outline, like vanilla map text, so it reads over land and sea.
+	//! Built from the icon layout with the icon and frame hidden, and positioned with the icon every frame.
+	protected Widget CreateNameLabel(notnull AROR_LocationComponent location)
 	{
+		if (location.GetLocationType() == AROR_ELocationType.CITY)
+			return null;
+
+		Widget root = GetGame().GetWorkspace().CreateWidgets(m_sIconLayout, m_wIconParent);
+		if (!root)
+			return null;
 		RichTextWidget label = RichTextWidget.Cast(root.FindAnyWidget(LABEL_WIDGET_NAME));
 		if (!label)
-			return;
-
-		AROR_ELocationType type = location.GetLocationType();
-		bool named = type != AROR_ELocationType.CITY;
-		label.SetVisible(named);
-		if (!named)
-			return;
+		{
+			root.RemoveFromHierarchy();
+			return null;
+		}
+		Widget icon = root.FindAnyWidget(ICON_WIDGET_NAME);
+		if (icon)
+			icon.SetVisible(false);
+		Widget frame = root.FindAnyWidget(FRAME_WIDGET_NAME);
+		if (frame)
+			frame.SetVisible(false);
 
 		string name = location.GetName();
 		name.ToUpper();
+		label.SetVisible(true);
 		label.SetText(name);
 		label.SetExactFontSize(m_iLabelFontSize);
 		label.SetBold(true);
-		label.SetColor(AROR_UIColors.Get(AROR_UIColors.SURFACE));
-		label.SetShadow(2, 0xE6FFFFFF, 0.9, 0, 0);
-		// Explicit size, as for QRF captions: size-to-content leaves it empty inside the map widget
-		FrameSlot.SetPos(label, m_fIconSize + 5, (m_fIconSize - m_iLabelFontSize * 1.4) * 0.5);
-		FrameSlot.SetSize(label, LABEL_MAX_WIDTH, m_iLabelFontSize * 1.6);
+		ApplyLabelColor(label, location);
+		// Explicit sizes, as for QRF captions: size-to-content leaves it empty inside the map widget
+		FrameSlot.SetAlignment(root, 0, 0.5);
+		FrameSlot.SetSize(root, LABEL_MAX_WIDTH, LabelHeight());
+		FrameSlot.SetPos(label, 0, 0);
+		FrameSlot.SetSize(label, LABEL_MAX_WIDTH, LabelHeight());
+		return root;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Name in the owner's colour (the icon's stroke colour) with a soft light glow, so it reads over land and sea
+	protected void ApplyLabelColor(notnull RichTextWidget label, notnull AROR_LocationComponent location)
+	{
+		Color color;
+		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.GetInstance();
+		if (roles)
+		{
+			Faction faction = roles.GetFaction(location.GetControllingRole());
+			if (faction)
+				color = faction.GetFactionColor();
+		}
+		label.SetColor(AROR_MapFrameIcon.StrokeColor(color));
+		label.SetShadow(LABEL_GLOW_SIZE, LABEL_GLOW_COLOR, LABEL_GLOW_OPACITY, 0, 0);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected float LabelHeight()
+	{
+		return m_iLabelFontSize * 1.6;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -369,10 +424,28 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 			commands = new array<ref CanvasWidgetCommand>();
 			m_mFrameCommands.Set(frame, commands);
 		}
-		AROR_MapFrameIcon.Draw(frame, commands, workspace.DPIScale(m_fIconSize), workspace.DPIScale(1), location.GetLocationType(), location.GetControllingRole(), color);
+		if (location.GetOwner().FindComponent(AROR_StrongholdComponent))
+			DrawStrongholdFlag(frame, commands, location, color);
+		else
+			AROR_MapFrameIcon.Draw(frame, commands, workspace.DPIScale(m_fIconSize), workspace.DPIScale(1), location.GetLocationType(), location.GetControllingRole(), color);
 
 		// Only once the frame has drawn: if drawing fails, the texture icon stays visible
 		image.SetVisible(false);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Strongholds are the campaign's objectives: they show the national flag of the army holding them, centred in
+	//! the icon square, instead of a military frame
+	protected void DrawStrongholdFlag(notnull CanvasWidget canvas, notnull array<ref CanvasWidgetCommand> commands, notnull AROR_LocationComponent location, Color color)
+	{
+		string presetId;
+		AROR_FactionPresetsComponent presets = AROR_FactionPresetsComponent.GetInstance();
+		if (presets)
+			presetId = presets.GetPresetId(location.GetControllingRole());
+		WorkspaceWidget workspace = GetGame().GetWorkspace();
+		float width = workspace.DPIScale(m_fIconSize);
+		float height = width * 2 / 3;
+		AROR_ArmyFlag.DrawAt(canvas, commands, 0, (width - height) * 0.5, width, height, presetId, color, workspace.DPIScale(AROR_MapFrameIcon.KEYLINE_WIDTH));
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -385,6 +458,12 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		ImageWidget image = ImageWidget.Cast(m_aIconWidgets[index].FindAnyWidget(ICON_WIDGET_NAME));
 		if (image)
 			ApplyControlColor(image, location);
+		if (m_aLabelWidgets[index])
+		{
+			RichTextWidget label = RichTextWidget.Cast(m_aLabelWidgets[index].FindAnyWidget(LABEL_WIDGET_NAME));
+			if (label)
+				ApplyLabelColor(label, location);
+		}
 
 		if (m_Popup && m_Popup.GetLocation() == location)
 			m_Popup.Refresh();
@@ -411,6 +490,9 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 			float x = workspace.DPIUnscale(screenX);
 			float y = workspace.DPIUnscale(screenY);
 			FrameSlot.SetPos(widget, x, y);
+			Widget label = m_aLabelWidgets[i];
+			if (label)
+				FrameSlot.SetPos(label, x + m_fIconSize * 0.5 + LABEL_GAP, y);
 
 			// Popup sits to the right of its icon (clear of the selector), top-aligned with it
 			if (m_Popup && m_Popup.GetLocation() == location)

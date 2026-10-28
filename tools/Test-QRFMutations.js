@@ -69,10 +69,25 @@ const cases=[
  {name:'unobserved removal is labelled recovered',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_QRFFunding.c',suite:'Test-QRFInterruptions.js',
   mutate:s=>s.replace('m_iQuote = Math.Max(0, m_iQuote - asset.m_iValue);','m_iRecovered += asset.m_iValue;')},
  {name:'headline width and row estimates diverge',file:'AROpenResistance/Open Resistance/Scripts/Game/Notifications/AROR_NotificationDisplay.c',suite:'Test-QRFSupportAndHeadlines.js',
-  mutate:s=>s.replace('Math.Max(width, EstimateHeadlineLineWidth(line, fontSize))','Math.Max(width, EstimateHeadlineLineWidth(line, fontSize) * 0.5)')}
+  mutate:s=>s.replace('Math.Max(width, EstimateHeadlineLineWidth(line, fontSize))','Math.Max(width, EstimateHeadlineLineWidth(line, fontSize) * 0.5)')},
+ {name:'scripted coast is treated as safe friendly recovery',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_ScriptedResponses.c',suite:'Test-StrongholdIntegration.js',
+  mutate:s=>s.replace('operation.m_TacticalCommander.m_bSafeWithdrawalOrigin = false;','operation.m_TacticalCommander.m_bSafeWithdrawalOrigin = true;')},
+ {name:'scripted admission overlaps an ordinary target operation',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_ScriptedResponses.c',suite:'Test-StrongholdIntegration.js',
+  mutate:s=>s.replace('!existing.IsTerminal() && existing.GetRole()','!existing.IsTerminal() && existing.m_bFundingWaived && existing.GetRole()')},
+ {name:'stronghold loses dispatch receipt between polls',file:'AROpenResistance/Open Resistance/Scripts/Game/Strongholds/AROR_StrongholdComponent.c',suite:'Test-StrongholdIntegration.js',
+  mutate:s=>s.replace('if (operation && operation.m_TacticalCommander && operation.m_TacticalCommander.m_iFirstDispatch >= 0)','if (false)')},
+ {name:'retired garrison defender fabricates a retaliation kill',file:'AROpenResistance/Open Resistance/Scripts/Game/Strongholds/AROR_StrongholdComponent.c',suite:'Test-StrongholdIntegration.js',
+  mutate:s=>s.replace('if (!watch.m_Entity)','if (false)')},
+ {name:'forced scripted waves disconnected from construction',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_ScriptedResponses.c',suite:'Test-StrongholdIntegration.js',
+  mutate:s=>s.replace('operation.m_TacticalCommander.ForceTwoWaves();','operation.m_TacticalCommander.m_bWithdraw = true;')}
 ];
 function runQRFMutationTests(read,execute){
  const results=[];
+ // A broken harness must never count as successful detection of a source mutation.
+ for(const suite of new Set(cases.map(test=>test.suite))){
+  const baseline=execute(suite,{});
+  if(!baseline.passed)throw Error('Mutation baseline failed: '+suite+'\n'+baseline.error);
+ }
  for(const test of cases){
   const original=read(test.file),mutated=test.mutate(original);
   if(original===mutated)throw Error('Mutation did not match current source: '+test.name);

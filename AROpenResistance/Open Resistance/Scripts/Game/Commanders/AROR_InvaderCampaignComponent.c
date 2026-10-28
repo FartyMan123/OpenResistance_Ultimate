@@ -7,7 +7,7 @@ class AROR_InvaderCampaignComponent : SCR_BaseGameModeComponent
 	protected bool m_bInvaderCampaign;
 	[Attribute("everon_ussr_support_corridor", desc: "Stable ID of the fixed Invader support corridor marker.")]
 	protected string m_sCorridorId;
-	[Attribute("everon_outpost_durras_hill", desc: "Stable ID of the initial land base. If lost, re-establish this foothold before expanding.")]
+	[Attribute("everon_fortress_vostok", desc: "Stable ID of the initial land base (the Invader stronghold). If lost, re-establish this foothold before expanding.")]
 	protected string m_sForwardBaseId;
 	[Attribute("20000", desc: "One-time opening grant into the existing Invader faction bank; saved to prevent repeat grants.", params: "0 1000000 100")]
 	protected int m_iOpeningGrant;

@@ -6,6 +6,7 @@ function runDefenceLayoutTests(source,presets={}) {
  const env={AROR_ELocationType:types,Math:{AbsFloat:Math.abs,Sin:Math.sin,Cos:Math.cos,Floor:Math.floor,Mod:(a,b)=>a%b,Min:Math.min,Max:Math.max,DEG2RAD:Math.PI/180},
    vector:{Zero:[0,0,0]},Vector:(...v)=>v,TraceParam:class{},TraceFlags:{WORLD:1,ENTS:2,VISIBILITY:4},
    vadd:(a,b)=>a.map((v,i)=>v+b[i]),vmul:(a,b)=>a.map(v=>v*b)};
+ for(const m of source.matchAll(/static const float (TRIPOD_\w+) = ([\d.]+);/g))env[m[1]]=Number(m[2]);
  function compile(name){
   const m=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
   if(!m)throw Error('Missing '+name);
@@ -16,7 +17,10 @@ function runDefenceLayoutTests(source,presets={}) {
    .replace(/\b(?:float|int|vector|TraceParam) (\w+) =/g,'let $1 =')
    .replace('directions[side] * (halfExtent - 4)','vmul(directions[side],halfExtent-4)')
    .replace('point + Vector(0, 1.4, 0)','vadd(point,Vector(0,1.4,0))')
-   .replace('trace.Start + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * 20','vadd(trace.Start,vmul(Vector(Math.Sin(angle),0,Math.Cos(angle)),20))');
+   .replace('trace.Start + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * 20','vadd(trace.Start,vmul(Vector(Math.Sin(angle),0,Math.Cos(angle)),20))')
+   .replace('trace.Start + direction * 20','vadd(trace.Start,vmul(direction,20))')
+   .replace('point + Vector(0, TRIPOD_HEIGHT, 0)','vadd(point,Vector(0,TRIPOD_HEIGHT,0))')
+   .replace('low.Start + direction * TRIPOD_CHECK_DISTANCE','vadd(low.Start,vmul(direction,TRIPOD_CHECK_DISTANCE))');
   if(name==='TerrainFits')body=body.replace(/return false;/g,'return {ok:false,relief};').replace('return relief <= maxRelief;','return {ok:relief<=maxRelief,relief};');
   if(name==='SiteSearchOffset')body=body.replace('(candidate - 1) / 8','Math.Floor((candidate - 1) / 8)');
   if(name==='DenseSiteSearchOffset')body=body.replace('remaining / (ring * 2)','Math.Floor(remaining / (ring * 2))');
@@ -69,9 +73,10 @@ function runDefenceLayoutTests(source,presets={}) {
  samples=0;check(terrain(world,[0,10,0],32,2,0,45).ok&&samples===49,'rotated compound samples bounded footprint');
  let traces=[],blocked=0;
  const visibility={TraceMove:trace=>{traces.push(trace);return traces.length===blocked?0.2:1;}};
- check(arc(visibility,[0,10,0],0)&&traces.length===3,'clear centre and flank firing rays required');
- check(traces.every(t=>t.Flags===7&&Math.abs(Math.hypot(t.End[0]-t.Start[0],t.End[2]-t.Start[2])-20)<1e-8),'MG rays include visibility geometry and use 20m reach');
- for(const ray of [1,2,3]){traces=[];blocked=ray;check(!arc(visibility,[0,10,0],90),'bush/obstacle on any firing ray rejects gun position');}
+ check(arc(visibility,[0,10,0],0)&&traces.length===6,'centre and flank firing lanes require both standing and tripod clearance');
+ check(traces.filter((_,i)=>i%2===0).every(t=>t.Flags===7&&Math.abs(Math.hypot(t.End[0]-t.Start[0],t.End[2]-t.Start[2])-20)<1e-8),'high MG rays include terrain and visibility geometry over 20m');
+ check(traces.filter((_,i)=>i%2===1).every(t=>t.Flags===6&&Math.abs(t.Start[1]-10.6)<1e-8&&Math.abs(Math.hypot(t.End[0]-t.Start[0],t.End[2]-t.Start[2])-8)<1e-8),'tripod rays check nearby props at muzzle height without rejecting distant rising terrain');
+ for(const ray of [1,2,3,4,5,6]){traces=[];blocked=ray;check(!arc(visibility,[0,10,0],90),'bush/obstacle on any firing ray rejects gun position');}
  for(const [name,text] of Object.entries(presets)){
   const h=Number(text.match(/m_fDefenceHalfExtent ([\d.]+)/)[1]);let count=0,aligned=true;
   for(const marker of text.matchAll(/^([ \t]*)(?:GenericEntity[ \t]+)?AROR_\w+_Defence_(\d+)_(\d+) \{\r?\n([\s\S]*?)^\1\}/gm)){

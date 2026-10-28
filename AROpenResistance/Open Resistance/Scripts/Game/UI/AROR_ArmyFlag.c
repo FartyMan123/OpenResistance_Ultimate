@@ -8,6 +8,21 @@ class AROR_ArmyFlag
 	//! does not keep its own copy)
 	static void Draw(notnull CanvasWidget canvas, notnull array<ref CanvasWidgetCommand> commands, float width, float height, string presetId, Color fallback)
 	{
+		DrawAt(canvas, commands, 0, 0, width, height, presetId, fallback, 1);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! As Draw, with the flag's top-left corner at left/top on the canvas and a chosen keyline width
+	static void DrawAt(notnull CanvasWidget canvas, notnull array<ref CanvasWidgetCommand> commands, float left, float top, float width, float height, string presetId, Color fallback, float keyline)
+	{
+		Build(commands, left, top, width, height, presetId, fallback, keyline);
+		canvas.SetDrawCommands(commands);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! The flag's polygons and keyline without a canvas, for maps that draw with their own helpers (HICOMM)
+	static void Build(notnull array<ref CanvasWidgetCommand> commands, float left, float top, float width, float height, string presetId, Color fallback, float keyline)
+	{
 		commands.Clear();
 		DrawFlag(commands, width, height, presetId, fallback);
 
@@ -15,12 +30,35 @@ class AROR_ArmyFlag
 		array<float> outline = {0, 0, width, 0, width, height, 0, height};
 		LineDrawCommand edge = new LineDrawCommand();
 		edge.m_iColor = Color.FromRGBA(0, 0, 0, 200).PackToInt();
-		edge.m_fWidth = 1;
+		edge.m_fWidth = keyline;
 		edge.m_Vertices = outline;
 		edge.m_bShouldEnclose = true;
 		commands.Insert(edge);
 
-		canvas.SetDrawCommands(commands);
+		if (left != 0 || top != 0)
+		{
+			foreach (CanvasWidgetCommand command : commands)
+			{
+				PolygonDrawCommand polygon = PolygonDrawCommand.Cast(command);
+				if (polygon)
+					Offset(polygon.m_Vertices, left, top);
+				LineDrawCommand line = LineDrawCommand.Cast(command);
+				if (line)
+					Offset(line.m_Vertices, left, top);
+			}
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static void Offset(array<float> vertices, float left, float top)
+	{
+		if (!vertices)
+			return;
+		for (int i = 0; i + 1 < vertices.Count(); i += 2)
+		{
+			vertices[i] = vertices[i] + left;
+			vertices[i + 1] = vertices[i + 1] + top;
+		}
 	}
 
 	//------------------------------------------------------------------------------------------------

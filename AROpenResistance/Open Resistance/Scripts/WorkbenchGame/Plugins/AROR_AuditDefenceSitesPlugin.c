@@ -106,10 +106,12 @@ class AROR_AuditDefenceSitesPlugin : AROR_GroundCampaignFlagsPlugin
 		{
 			int count = 0;
 			if (kind == 0) count = AROR_GarrisonPolicy.InfantryTeams(level);
+			if (kind == 0 && garrison) count += garrison.GetExtraInfantryTeams();
 			if (kind == 1) count = AROR_GarrisonPolicy.StaticCount(level);
 			if (kind == 1 && garrison) count = garrison.GetStaticWeaponCount(level);
 			if (kind == 2 && level >= 3 && location.GetLocationType() != AROR_ELocationType.OUTPOST) count = 1;
 			if (kind == 2 && garrison && !garrison.AllowsParkedArmour()) count = 0;
+			if (kind == 2 && garrison && location.GetLocationType() != AROR_ELocationType.OUTPOST) count += garrison.GetExtraParkedCount();
 			if (kind == 3 && location.GetLocationType() != AROR_ELocationType.OUTPOST) count = AROR_GarrisonPolicy.MannedCount(level);
 			for (int ordinal = 0; ordinal < count; ordinal++)
 			{

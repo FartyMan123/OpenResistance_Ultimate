@@ -108,8 +108,9 @@ function runGarrisonsAndSupportTests(sources) {
   check([0,1,2].map(r=>env.AROR_GarrisonPolicy.DefenceLevel(types.RESOURCES,r)).join(',')==='1,2,3','resources roll three stored defence levels');
   const faction={m_eRole:1,m_sFactionKey:'AROR_OCCUPIERS',m_sAssetFactionKey:'US',m_sInfantry:'rifle',m_sStaticMG:'mg',m_sCrew:'crew',m_sParkedArmour:'lav',m_aMannedVehicles:['lav','humvee']};
   const add=compile(sources.garrison,'AddSlot'),reserve=compile(sources.garrison,'ReservedPersonnel'),generate=compile(sources.garrison,'Generate_S');
-  function roster(type,override=0,staticOverride=0,omitParked=false){
+  function roster(type,override=0,staticOverride=0,omitParked=false,extraTeams=0,parked=[]){
     const state={m_aSlots:[],m_bGenerated:false,m_iDefenceLevel:override,m_iStaticWeaponCountOverride:staticOverride,m_bOmitParkedArmour:omitParked,IsEligible:()=>true,
+      m_aExtraParkedVehicles:parked,GetExtraInfantryTeams:()=>extraTeams,GetExtraParkedCount:()=>parked.length,
       m_Location:{GetControllingRole:()=>1,GetLocationType:()=>type,GetId:()=>'site'},AddSlot:add,ReservedPersonnel:reserve,InfantryPrefab:compile(sources.garrison,'InfantryPrefab'),StaticPrefab:compile(sources.garrison,'StaticPrefab'),GetStaticWeaponCount:compile(sources.garrison,'GetStaticWeaponCount')};
     generate.call(state,faction);return state;
   }
@@ -125,6 +126,12 @@ function runGarrisonsAndSupportTests(sources) {
   const airport=roster(types.AIRPORT,1);
   check(airport.m_iLevel===4&&airport.m_aSlots.filter(s=>s.m_iKind===3).length===3,'airbase stays large under low override');
   check(reserve.call(airport)===48,'airbase reserves all infantry, static and possible hull crew before spawning');
+  const stronghold=roster(types.AIRPORT,4,6,false,4,['heli','heli','heli']);
+  check(stronghold.m_aSlots.filter(s=>s.m_iKind===0).length===48,'stronghold adds four infantry teams to the airport roster');
+  const extraHulls=stronghold.m_aSlots.filter(s=>s.m_iKind===2&&s.m_iVariant>0);
+  check(extraHulls.length===3&&extraHulls.map(s=>s.m_iVariant).join(',')==='1,2,3','extra parked hulls retain distinct saved variants');
+  const parkedPrefab=compile(sources.garrison,'ParkedPrefab');
+  for(const hull of extraHulls)check(parkedPrefab.call(stronghold,faction,hull.m_iVariant)==='heli','saved helicopter variant restores as helicopter');
   const before=airport.m_aSlots.length;check(!generate.call(airport,faction)&&airport.m_aSlots.length===before,'active recipe cannot reroll');
   server=false;check(!generate.call({...military,m_bGenerated:false},faction),'client cannot generate roster');server=true;
 
@@ -274,10 +281,10 @@ function runGarrisonsAndSupportTests(sources) {
   const playerIds=new Map();
   env.GetGame=()=>({GetWorld:()=>({GetWorldTime:()=>worldTime}),GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:e=>playerIds.get(e)||0})});
   env.AROR_QRFDefenseComponent={Cast:x=>x};env.SCR_EntityHelper={};
-  const lifecycleNames=['BeginDeployment_S','UpdateDeployment_S','CloseDeployment_S','HasUnresolvedQueue','CancelQueuedGroup_S','DetachOrphanedCrew_S','QuarantineRoster_S','BindAssets_S','InfantryPrefab','StaticPrefab','GetStaticWeaponCount'];
+  const lifecycleNames=['BeginDeployment_S','UpdateDeployment_S','CloseDeployment_S','HasUnresolvedQueue','CancelQueuedGroup_S','DetachOrphanedCrew_S','QuarantineRoster_S','BindAssets_S','InfantryPrefab','StaticPrefab','ParkedPrefab','GetStaticWeaponCount'];
   const lifecycle=Object.fromEntries(lifecycleNames.map(n=>[n,compile(sources.garrison,n)]));
   function newDeployment(slots=[]){
-    return {...lifecycle,m_aSlots:slots,m_aGroups:[],m_iDeploymentStartedAt:-1,m_iDeploymentGraceSeconds:60,m_iSpawnQueueTimeoutSeconds:30,
+    return {...lifecycle,m_aSlots:slots,m_aGroups:[],GetExtraParkedCount:()=>0,m_iDeploymentStartedAt:-1,m_iDeploymentGraceSeconds:60,m_iSpawnQueueTimeoutSeconds:30,
       m_iCapacityWaitSeconds:180,m_iCapacityWaitSince:-1,m_iCapacityWaited:0,m_iNextCapacityLog:0,m_bCapacityLimited:false,m_bHadDeployedPersonnel:false,
       m_bDeploymentClosed:false,m_bRestoreQuarantined:false,m_eRosterRole:1,m_bGenerated:true,
       m_Location:{GetControllingRole:()=>1,GetId:()=>'failure-site'},IsEligible:()=>true,AssignMembers:()=>{},IsPlayerOrForeignAsset:e=>!!e.foreign};

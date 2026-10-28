@@ -45,9 +45,9 @@
     },
     {
       "Id": "everon_outpost_durras_hill",
-      "Preset": "Outpost_CompactFortified_Equipped_USSR",
+      "Preset": "Outpost_CompactFortified_Equipped_US",
       "NativeStatus": "Compact revision pending native grounding, current-placement audit and Play",
-      "Supplies": "USSR",
+      "Supplies": "US",
       "PreviousAuditStatus": "Initial audit rejected: terrain exceeds limit; equipment changes need re-audit",
       "HalfExtent": 18
     },

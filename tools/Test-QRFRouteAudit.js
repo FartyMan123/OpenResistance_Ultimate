@@ -6,7 +6,7 @@ let assertions=0,server=true,scheduled=0,removed=0,busy=false,queries=[];
 const check=(ok,msg)=>{assertions++;if(!ok)throw Error(msg)};
 for(const [n,fn]of Object.entries({Clear(){this.length=0},Insert(x){this.push(x)},Count(){return this.length},IsEmpty(){return !this.length}}))
  Object.defineProperty(Array.prototype,n,{value:fn,configurable:true});
-const sites=Array.from({length:44},(_,i)=>({GetId:()=>String(i),GetLocationType:()=>i<20?8:0,IsControlFixed:()=>false}));
+const sites=Array.from({length:45},(_,i)=>({GetId:()=>String(i),GetLocationType:()=>i<21?8:0,IsControlFixed:()=>false}));
 sites.push({GetId:()=> 'hq',GetLocationType:()=>1,IsControlFixed:()=>true});
 let airQueries=0,landingTargets=0;
 const executor={ProbeGroundRoute_S(o,t){queries.push([o.GetId(),t.GetId()]);return (+o.GetId()+ +t.GetId())%2===0},
@@ -34,11 +34,11 @@ busy=true;check(!audit.Start_S()&&scheduled===0,'active operations block the pla
 check(audit.Start_S()&&scheduled===1,'idle server starts one incremental sweep');
 check(!audit.Start_S()&&scheduled===1,'duplicate start cannot duplicate timers');
 for(let i=0;i<4000&&audit.s_Executor;i++)audit.Tick_S();
-check(queries.length===860&&airQueries===1720,'all 20 by 44 non-self pairs receive ground, escorted-air and light-air probes exactly once');
-check(landingTargets===44&&audit.s_iAirTarget===44,'every target receives one bounded five-pad landing search');
-check(new Set(queries.map(p=>p.join('/'))).size===860,'no duplicate directed pair');
+check(queries.length===924&&airQueries===1848,'all 21 by 45 non-self pairs receive ground, escorted-air and light-air probes exactly once');
+check(landingTargets===45&&audit.s_iAirTarget===45,'every target receives one bounded five-pad landing search');
+check(new Set(queries.map(p=>p.join('/'))).size===924,'no duplicate directed pair');
 check(queries.every(([a,b])=>a!==b&&b!=='hq'),'HQ and self-target routes excluded');
-check(audit.s_iChecked===860&&audit.s_iPassed===420,'native planning outcomes counted without converting them into driving results');
+check(audit.s_iChecked===924&&audit.s_iPassed===452,'native planning outcomes counted without converting them into driving results');
 check(audit.s_Executor===null&&audit.s_aOrigins.length===0&&removed===1,'completion releases references and cancels the timer');
 check(audit.Start_S()&&scheduled===2,'another disposable run can start after completion');
 busy=true;audit.Tick_S();check(audit.s_Executor===null&&removed===2,'new gameplay operations stop the audit cleanly');

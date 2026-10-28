@@ -109,7 +109,8 @@ class AROR_LocationComponent : ScriptComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! False while control is fixed, already held by the role, or the flip cooldown blocks the role
+	//! False while control is fixed, already held by the role, the flip cooldown blocks the role, or a stronghold
+	//! belongs to another AI role
 	bool CanBeTakenBy(AROR_EFactionRole role)
 	{
 		if (m_bControlFixed || role == m_eControllingRole)
@@ -118,7 +119,8 @@ class AROR_LocationComponent : ScriptComponent
 		if (m_bFlipLocked && role != AROR_EFactionRole.RESISTANCE)
 			return false;
 
-		return true;
+		AROR_StrongholdComponent stronghold = AROR_StrongholdComponent.Cast(GetOwner().FindComponent(AROR_StrongholdComponent));
+		return !stronghold || stronghold.AllowsCaptureBy(role);
 	}
 
 	//------------------------------------------------------------------------------------------------

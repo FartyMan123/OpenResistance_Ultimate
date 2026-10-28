@@ -87,6 +87,21 @@ class AROR_QRFTacticalCommander
 		}
 	}
 
+	//! Scripted responses that must arrive in two waves regardless of tier and scenario wave settings.
+	void ForceTwoWaves()
+	{
+		if (m_iPackages < 2 || m_iFirstWaveCount < m_iPackages)
+			return;
+		m_iFirstWaveCount = (m_iPackages + 1) / 2;
+		for (int index = 0; index < m_iPackages; index++)
+		{
+			if (index < m_iFirstWaveCount)
+				m_aWave[index] = 0;
+			else
+				m_aWave[index] = 1;
+		}
+	}
+
 	bool IsReserve(int index)
 	{
 		if (index < 0 || index >= m_aWave.Count())

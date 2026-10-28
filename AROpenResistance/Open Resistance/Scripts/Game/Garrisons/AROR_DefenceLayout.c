@@ -116,15 +116,26 @@ class AROR_DefenceLayout
 		for (int ray = 0; ray < 3; ray++)
 		{
 			float angle = (yaw + (ray - 1) * 15) * Math.DEG2RAD;
+			vector direction = Vector(Math.Sin(angle), 0, Math.Cos(angle));
 			TraceParam trace = new TraceParam();
 			trace.Start = point + Vector(0, 1.4, 0);
-			trace.End = trace.Start + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * 20;
+			trace.End = trace.Start + direction * 20;
 			trace.Flags = TraceFlags.WORLD | TraceFlags.ENTS | TraceFlags.VISIBILITY;
 			if (world.TraceMove(trace, null) < 1)
+				return false;
+			// Tripod guns fire from about half a metre: even low sandbags right in front block them. Props only,
+			// so rising terrain further out does not reject an otherwise usable pit.
+			TraceParam low = new TraceParam();
+			low.Start = point + Vector(0, TRIPOD_HEIGHT, 0);
+			low.End = low.Start + direction * TRIPOD_CHECK_DISTANCE;
+			low.Flags = TraceFlags.ENTS | TraceFlags.VISIBILITY;
+			if (world.TraceMove(low, null) < 1)
 				return false;
 		}
 		return true;
 	}
+	static const float TRIPOD_HEIGHT = 0.6;			//!< Approximate muzzle height of a tripod static gun
+	static const float TRIPOD_CHECK_DISTANCE = 8;	//!< Covers the gun pit and its perimeter wall
 	//! Read-only editor relocation search: sixteen 25m rings, eight bearings per ring.
 	static vector SiteSearchOffset(int candidate)
 	{

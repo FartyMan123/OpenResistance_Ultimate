@@ -6,6 +6,9 @@ FrameWidgetClass {
    Slot FrameWidgetSlot {
     Anchor 0 0 0 0
    }
+   FontProperties FontProperties "{6AB5C0E000000040}" {
+    Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+   }
   }
   ImageWidgetClass "{6AAC8BB98839396A}" {
    Name "Icon"

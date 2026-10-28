@@ -61,7 +61,8 @@ function runFortifiedLayoutChecks(files) {
    for(const g of markers.filter(p=>p.kind===1))for(const delta of[-15,0,15]){
     const angle=(g.yaw+delta)*Math.PI/180;
     let clear=true;
-    for(let t=.25;t<=20;t+=.25)for(const p of props.filter(p=>/high_burlap|bunker_burlap/.test(p.ref))){
+    // Tripod guns fire from about 0.6 m: low perimeter sandbags in the first 8 m block them too (ClearMGArc)
+    for(let t=.25;t<=20;t+=.25)for(const p of props.filter(p=>/high_burlap|bunker_burlap/.test(p.ref)||(t<=8&&/long_burlap/.test(p.ref)&&/_(Perimeter|Wall)_/.test(p.name)))){
      const[a,b]=envelope(p);
      if(Math.abs(g.x+Math.sin(angle)*t-p.x)<a+.15&&Math.abs(g.z+Math.cos(angle)*t-p.z)<b+.15)clear=false;
     }

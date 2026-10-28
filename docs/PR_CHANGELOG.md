@@ -1,10 +1,17 @@
-# Add MARS, territory attacks and campaign UI updates
+# Add strongholds, QRF responses and campaign UI updates
 
 ## Summary
 
 Add a role-separated MARS response debugger and delayed Occupier counterattacks, sharing QRF force selection and execution. Adopt Readiness and Crackdown throughout the campaign and rebuild REBINTEL, notifications, map markers and setup around the UI design system. Introduce the port-gated Black Market foundation.
 
+Reconcile the QRF lifecycle fixes with Fortress Vostok, Stronghold Delaware, expanded garrison rosters, opened gun embrasures and map flags/labels. Stronghold responses use trusted scenario-funded dispatch through the same bounded executor.
+
 ## Changes
+
+- **Strongholds / campaign:** add Vostok as the Invader foothold and Delaware as the Occupier airport stronghold, with saved early protection progress, player-raid retaliation and final-defence responses. Preserve the relocated Morton port's legacy stable ID. Initial ownership changes apply to fresh campaigns; existing saved holdings/rosters require migration acceptance.
+- **Garrisons / geometry:** support extra infantry teams and parked-vehicle variants, retain helicopter variants through asset rebinding, open sandbag gun lanes and check nearby tripod-height obstructions. Stronghold generators and resource metadata are checked without claiming terrain suitability.
+- **Map UI:** separate name labels from icon frames, apply owner colours and glow, and share national flags between stronghold map icons and HICOMM. Rendering remains unverified.
+- **Reconciliation:** preserve normal target conflicts for scripted responses, prevent coastal launch points from qualifying as friendly recovery bases, retain dispatch evidence between stronghold polls and exclude retired living defenders from player-kill credit. See [combined validation](RECONCILIATION_VALIDATION.md).
 
 - **MARS / response scaling:** red landscape app with a response-type grid, separate US/USSR catalogues, simulated Readiness and Crackdown sliders, and live force previews. A shared modular policy resolves equipment and intensity without changing campaign metrics or balances. Requests target the nearest Resistance-owned territory and require a safe military launch origin owned by the selected army. Explicit airborne responses use REAPER; ground selections retain ground execution.
 - **Territory attacks:** optional Occupier attacks on Resistance-held military sites require a capture QRF to activate and finish, at least 15 minutes since capture, and five minutes after that QRF ends. One attack is outstanding globally, with a 15-minute rest after completion. Attacks reuse QRF funding, actor budgets, tactical coordination and cleanup; normal capture authority determines success. Debug responses do not unlock attacks.
@@ -22,14 +29,15 @@ Add a role-separated MARS response debugger and delayed Occupier counterattacks,
 
 ## Testing
 
-- Passed **28 suites / 97,342 mocked assertions** through the actual separate-process runner using VS Code's bundled Node v24.21.0 in Electron Node mode. The Node `vm` mutation adapter also passed. The original V8-host checks remain historical evidence; native services are still mocked and repeated lifecycle/soak invariants account for most assertions.
-- Coverage includes all **350** army/family/Readiness/Crackdown cells, including 280 available and 70 intentionally locked cells; light/escorted preparation, confirmed seating, attack timing, reentrant events, funding, reserves, retention, permissions and save policy. All **35** representative source mutations were detected.
+- Passed **29 suites / 97,348 mocked assertions** through the actual separate-process runner using VS Code's bundled Node v24.21.0 in Electron Node mode. The Node `vm` mutation adapter also passed. The original V8-host checks remain historical evidence; native services are still mocked and repeated lifecycle/soak invariants account for most assertions.
+- Coverage includes all **350** army/family/Readiness/Crackdown cells, including 280 available and 70 intentionally locked cells; light/escorted preparation, confirmed seating, attack timing, reentrant events, funding, reserves, retention, permissions and save policy. All **40** representative source mutations were detected.
 - A 10,000-tick simulated scheduler soak passed. Previously failing REBINTEL, progression, strategy and town-hold harnesses are repaired and passing.
-- Installed-resource/configuration checks passed 27 base-game GUIDs, 12 profiles, 62 recipes, 50 army/Readiness/Crackdown budget combinations and five REAPER references. Three UI bindings match metadata and the local Workbench database; rendering is unverified. Lexical structure passed for 69 operation/admin scripts.
-- Exported all **860** eligible Chicken origin/target pairs and a Workbench-only production-planner sweep with separate ground, escorted-air and transport-only-air results. Native evidence remains `NOT_RUN`; endpoint inventories do not prove travel or reconstruct the road graph. Six synthetic importer checks passed.
-- The site audit includes all 26 military roots and reports four catalogue/world transform differences; world geometry was preserved. Estimated overlapping garrisons reach 102 personnel and require native performance checks.
+- Stronghold integration passed 89 actual-source assertions. Both stronghold generators and gun-embrasure checks pass; stronghold references match two local resources and ten installed base-game GUIDs. The two new composition GUIDs are hand-authored and still need Workbench discovery/loading.
+- Installed-resource/configuration checks passed 27 base-game GUIDs, 12 profiles, 62 recipes, 50 army/Readiness/Crackdown budget combinations and five REAPER references. Three UI bindings match metadata and the local Workbench database; rendering is unverified. Lexical structure passed for 197 addon scripts, including Workbench plugins.
+- Exported all **924** eligible Chicken origin/target pairs and a Workbench-only production-planner sweep with separate ground, escorted-air and transport-only-air results. Native evidence remains `NOT_RUN`; endpoint inventories do not prove travel or reconstruct the road graph. Six synthetic importer checks passed.
+- The site audit includes all 27 military roots and reports four catalogue/world transform differences; world geometry was preserved. Estimated overlapping garrisons reach 112 personnel and require native performance checks.
 - `git diff --check` passed. Detailed evidence, source hashes, reproduction commands and prioritized native gates: [QRF release validation](QRF_RELEASE_VALIDATION.md).
-- **The preceding version compiled successfully, as reported by the user on 28 October 2026. Current light-response and follow-up fixes need a fresh compile and Play test.** Test both armies, full convoys, Lamentin/North Ridge, joint attacks, retained aborted aircraft/player takeover, dedicated-server authorization/JIP, old saves, actual capture and cleanup. See [light-response acceptance](QRF_LIGHT_RESPONSE_ACCEPTANCE.md).
+- **The preceding version compiled successfully, as reported by the user on 28 October 2026. The combined stronghold/garrison/UI and QRF changes need a fresh compile and Play test.** Test stronghold placement and responses, new garrison rosters, map labels/flags, both armies, full convoys, Lamentin/North Ridge, joint attacks, retained aborted aircraft/player takeover, dedicated-server authorization/JIP, old saves, actual capture and cleanup. See [combined validation](RECONCILIATION_VALIDATION.md).
 
 ## Notes
 

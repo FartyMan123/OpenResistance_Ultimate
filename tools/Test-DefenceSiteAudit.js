@@ -131,9 +131,10 @@ function runDefenceSiteAuditTests(sources) {
   {type:5,override:3,teams:6,statics:3,hulls:2},
   {type:5,override:3,staticOverride:4,teams:6,statics:4,hulls:2},
   {type:5,override:3,staticOverride:4,omitParked:true,teams:6,statics:4,hulls:1},
-  {type:2,override:2,teams:8,statics:4,hulls:4}
+  {type:2,override:2,teams:8,statics:4,hulls:4},
+  {type:2,override:4,extraTeams:4,extraParked:3,staticOverride:6,teams:12,statics:6,hulls:7}
  ]){
-  const garrison={GetDefenceLevelOverride:()=>fixture.override,GetMaxDefenceRelief:()=>2,GetStaticWeaponCount:level=>fixture.staticOverride||nativePolicy.StaticCount(level),AllowsParkedArmour:()=>!fixture.omitParked};
+  const garrison={GetExtraInfantryTeams:()=>fixture.extraTeams||0,GetExtraParkedCount:()=>fixture.extraParked||0,GetDefenceLevelOverride:()=>fixture.override,GetMaxDefenceRelief:()=>2,GetStaticWeaponCount:level=>fixture.staticOverride||nativePolicy.StaticCount(level),AllowsParkedArmour:()=>!fixture.omitParked};
   const root={FindComponent:()=>garrison},flag={};
   const location={GetLocationType:()=>fixture.type,GetOwner:()=>root,GetId:()=>'fixture'};
   const pads=[];

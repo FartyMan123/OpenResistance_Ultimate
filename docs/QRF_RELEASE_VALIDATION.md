@@ -6,15 +6,17 @@ Scope: Chicken only, both enemy roles, ordinary capture QRFs, trusted attacks, a
 
 ## Evidence and repeatable checks
 
+The [combined reconciliation](RECONCILIATION_VALIDATION.md) includes the new stronghold/garrison/map content. Its five additional mutations cover scripted target conflicts, coastal recovery, dispatch receipts, retirement kill attribution and forced-wave integration. New stronghold resource metadata is hand-authored and needs native discovery.
+
 The six review issues and their dispositions, shipped settings and native reproductions are recorded in [Rowan review follow-up](QRF_REVIEW_FOLLOWUP.md). Four additional mutations cover active dispatch failure, reserve boarding deadlines, unknown-removal classification and banner estimate consistency. Long Cyrillic/proportional-font rendering remains visually unverified.
 
-Current combined result: **28 suites / 97,342 mocked assertions**, including **35 detected source mutations** and the 10,000-tick simulated scheduler soak. The original 27-suite / 95,936-assertion evidence remains in Git history.
+Current combined result: **29 suites / 97,348 mocked assertions**, including **40 detected source mutations** and the 10,000-tick simulated scheduler soak. The original 27-suite / 95,936-assertion evidence remains in Git history.
 
 - [Automated results and source hashes](validation/QRF_AUTOMATED_RESULTS.json).
 - [All 350 configured response cells](validation/CHICKEN_RESPONSE_COVERAGE.csv): two armies × seven families × five Readiness levels × five Crackdown levels. 280 cells resolve an available response; the remaining 70 are intentionally locked. Availability does not establish affordability, current origin ownership, free live capacity or successful native deployment.
-- [All 860 directed origin/target pairs](validation/CHICKEN_OPERATION_ROUTES.csv), [placed locations](validation/CHICKEN_OPERATION_LOCATIONS.csv) and [generation metadata](validation/CHICKEN_OPERATION_ROUTES.json). These are authored endpoints, not a reconstruction of Everon's complete road graph.
+- [All 924 directed origin/target pairs](validation/CHICKEN_OPERATION_ROUTES.csv), [placed locations](validation/CHICKEN_OPERATION_LOCATIONS.csv) and [generation metadata](validation/CHICKEN_OPERATION_ROUTES.json). These are authored endpoints, not a reconstruction of Everon's complete road graph.
 
-A standalone `node` command is not on PATH. The first audit used the tool V8 host with source snapshots and `fs`/`path` adapters. This follow-up also executed the actual separate-process Node runner using VS Code's installed runtime: **Node v24.21.0 / Electron 43.7.7 in Node mode**. All 28 suites, including the Node `vm` mutation adapter, passed against filesystem sources. Enfusion services remain mocked. Electron emitted a nonfatal Crashpad-registration access-denied diagnostic; the runner exited 0 and every child suite passed.
+A standalone `node` command is not on PATH. The first audit used the tool V8 host with source snapshots and `fs`/`path` adapters. This follow-up also executed the actual separate-process Node runner using VS Code's installed runtime: **Node v24.21.0 / Electron 43.7.7 in Node mode**. All 29 suites, including the Node `vm` mutation adapter, passed against filesystem sources. Enfusion services remain mocked. Electron emitted a nonfatal Crashpad-registration access-denied diagnostic; the runner exited 0 and every child suite passed.
 
 ```powershell
 node tools/Validate-QRFRelease.js
@@ -58,9 +60,9 @@ The three MARS, Black Market and setup layout GUIDs match their metadata, script
 
 The scheduler soak uses 10,000 **simulated** ticks, 2,935 admitted/deduplicated requests, 27,065 rejected requests and 9,349 notifications. It checks global attack capacity, per-role QRF capacity, conflicting targets, bounded terminal history and nonrecursive notification delivery. It is not a real-time server performance or network soak. Many assertions in the lifecycle suite are repeated state invariants; the total is not a count of distinct gameplay scenarios.
 
-**35 intentional source mutations** are detected against isolated snapshots without editing game sources. The original ten cover paused boarding, unready reserves, staging, support, eligibility ordering, debug escalation, authorization, collateral release, group budgets and operation admission. Twenty-one follow-up mutations cover withdrawal dispatch, foreign drivers, pre-dispatch retention, origin/clearance rechecks, funding waits, player occupancy, duplicate overhead, closed-account collateral, unbounded exit retries, nested finance reconciliation, reinforcement timing, partial-hull holds, empty construction, unused package margin, virtual ownership handoff, escort ownership, preserved player-group queues and unissued retirement orders. The follow-up also replaced a coupled budget expectation with an independent physical-group/vehicle expectation. The actual Node `vm` adapter detected all 35; earlier V8-host results remain historical evidence.
+**40 intentional source mutations** are detected against isolated snapshots without editing game sources. The original ten cover paused boarding, unready reserves, staging, support, eligibility ordering, debug escalation, authorization, collateral release, group budgets and operation admission. Twenty-one follow-up mutations cover withdrawal dispatch, foreign drivers, pre-dispatch retention, origin/clearance rechecks, funding waits, player occupancy, duplicate overhead, closed-account collateral, unbounded exit retries, nested finance reconciliation, reinforcement timing, partial-hull holds, empty construction, unused package margin, virtual ownership handoff, escort ownership, preserved player-group queues and unissued retirement orders. The follow-up also replaced a coupled budget expectation with an independent physical-group/vehicle expectation. The actual Node `vm` adapter detected all 40; earlier V8-host results remain historical evidence.
 
-The [site-readiness audit](validation/CHICKEN_SITE_READINESS.csv) includes all 26 military locations in activation-overlap estimates and reports four legacy-catalogue transform differences: Pinewood Lake, Chotain Industrial, Old Wood and Andres Beacon. The world geometry was preserved. Resolve catalogue/generator drift before regenerating location layers. Several overlaps estimate 102 garrison personnel, so capacity pacing and populated-server performance need particular attention. The Invader policy model now reads actual placed military transforms and all three ports, rather than the older 23-site subset.
+The [site-readiness audit](validation/CHICKEN_SITE_READINESS.csv) includes all 27 military locations in activation-overlap estimates and reports four legacy-catalogue transform differences: Pinewood Lake, Chotain Industrial, Old Wood and Andres Beacon. The world geometry was preserved. Resolve catalogue/generator drift before regenerating location layers. Peak overlaps now estimate 112 garrison personnel, so capacity pacing and populated-server performance need particular attention. The Invader policy model now reads actual placed military transforms and all three ports, rather than the older 23-site subset.
 
 ## Follow-up interruption and route audit
 
@@ -153,7 +155,7 @@ Town security applies the configured support policy, whose default is six percen
 
 ## Native route sweep
 
-Chicken has 44 placed locations and 20 possible military launch sites: **860 directed non-self pairs**, including **500 military attack pairs** and **60 port-target pairs**. Both responding armies can acquire different origins during a campaign, so the matrix includes prospective ownership states. Its preferred-origin-distance flags derive from the actual source/layer configuration, currently 600 m. Endpoint height differences cannot reveal intermediate slopes, bridges, water crossings or obstacles.
+Chicken has 45 placed locations and 21 possible military launch sites: **924 directed non-self pairs**, including **546 military attack pairs** and **63 port-target pairs**. Both responding armies can acquire different origins during a campaign, so the matrix includes prospective ownership states. Its preferred-origin-distance flags derive from the actual source/layer configuration, currently 600 m. Endpoint height differences cannot reveal intermediate slopes, bridges, water crossings or obstacles.
 
 After Script Editor compilation, run an idle disposable Chicken campaign and invoke:
 
@@ -184,7 +186,7 @@ A planning PASS is a snapshot for one ground package and the configured air laun
 | Compilation | Compile current light-response/interruption changes; verify packaged and Workbench variants. | NOT_RUN for current changes; preceding version passed, user-reported |
 | Resource loading | Discover layouts and metadata; reload Chicken and check widget loading. | NOT_RUN |
 | Memory-only native smoke tests | Existing operation/pool/strategy/tactical helpers plus `AROR_JointResponseSmokeTests.Run_S()`. | NOT_RUN |
-| Route planning | Sweep all 860 pairs and 44 landing targets; triage failures, especially ports. | NOT_RUN |
+| Route planning | Sweep all 924 pairs and 45 landing targets; triage failures, especially ports. | NOT_RUN |
 | Ground travel | Both armies, every authored recipe tier, driver/passenger seating, full lead wave, convoy spacing, dismount, infantry arrival and return. | NOT_RUN |
 | Air travel | Both armies, package counts 1–5, touchdown/normal exits, gunship support, alternate LZs, egress, retention and live-aircraft cap. | NOT_RUN |
 | Joint responses | Both armies and tiers 1–5 as capture QRFs and attacks; shared lead barrier, ground rally/air hold, reserve loss, and canonical capture. | NOT_RUN |
