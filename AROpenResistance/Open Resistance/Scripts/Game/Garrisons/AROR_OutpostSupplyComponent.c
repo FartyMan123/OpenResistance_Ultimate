@@ -27,14 +27,33 @@ class AROR_OutpostSupplyComponent : ScriptComponent
 			}
 			parent = parent.GetParent();
 		}
-		InventoryStorageManagerComponent inventory = InventoryStorageManagerComponent.Cast(owner.FindComponent(InventoryStorageManagerComponent));
-		if (!inventory)
+		// Standalone boxes carry storage components only (the inventory manager lives on the character opening them),
+		// on the box itself or on a child entity
+		array<Managed> storages = {};
+		owner.FindComponents(BaseInventoryStorageComponent, storages);
+		IEntity part = owner.GetChildren();
+		while (part)
 		{
-			Print(string.Format("[AROR OUTPOST STORE] site=%1 category=%2 missing native inventory manager; container access/content requires correction", locationId, m_sCategory), LogLevel.ERROR);
+			array<Managed> partStorages = {};
+			part.FindComponents(BaseInventoryStorageComponent, partStorages);
+			storages.InsertAll(partStorages);
+			part = part.GetSibling();
+		}
+		if (storages.IsEmpty())
+		{
+			Print(string.Format("[AROR OUTPOST STORE] site=%1 category=%2 has no native storage; container access/content requires correction", locationId, m_sCategory), LogLevel.ERROR);
 			return;
 		}
 		array<IEntity> items = {};
-		inventory.GetItems(items);
+		foreach (Managed managed : storages)
+		{
+			BaseInventoryStorageComponent storage = BaseInventoryStorageComponent.Cast(managed);
+			if (!storage)
+				continue;
+			array<IEntity> stored = {};
+			storage.GetAll(stored, false);
+			items.InsertAll(stored);
+		}
 		if (items.IsEmpty())
 			Print(string.Format("[AROR OUTPOST STORE] site=%1 category=%2 observedItems=0; inspect native contents or prior looting/save restoration; no refill performed", locationId, m_sCategory), LogLevel.WARNING);
 		else
