@@ -10,7 +10,7 @@ for(const[n,fn]of Object.entries({Count(){return this.length},Contains(x){return
  Object.defineProperty(Array.prototype,n,{value:fn,configurable:true});
 Object.defineProperty(String.prototype,'IsEmpty',{value(){return !this.length},configurable:true});
 const env={Replication:{IsServer:()=>server},AROR_EOperationType:{ATTACK:0,QRF:1},AROR_EOperationState:{SPAWNING:1,ACTIVE:2,FAILED:4},AROR_EFactionRole:{RESISTANCE:0,OCCUPIERS:1,INVADERS:2},
- AROR_EForceType:{MOTORIZED:0,MECHANIZED:1,ARMOUR:2,AIRBORNE:3,INFANTRY:4},Print(){},LogLevel:{NORMAL:0,WARNING:1},Math:{Max:Math.max,Min:Math.min,Clamp:(n,a,b)=>Math.max(a,Math.min(b,n))},string:{Format:()=>''},Vector:(...x)=>x,
+ AROR_EForceType:{MOTORIZED:0,MECHANIZED:1,ARMOUR:2,AIRBORNE:3,INFANTRY:4},Print(){},LogLevel:{NORMAL:0,WARNING:1},Math:{Max:Math.max,Min:Math.min,Mod:(a,b)=>a%b,Clamp:(n,a,b)=>Math.max(a,Math.min(b,n))},string:{Format:()=>''},Vector:(...x)=>x,
  GetGame:()=>({GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:e=>e?.player?7:0}),GetCallqueue:()=>({Remove(){},CallLater(){}})})};
 for(const n of ['DamageManagerComponent','BaseCompartmentManagerComponent','ChimeraCharacter','FactionAffiliationComponent'])env[n]={Cast:x=>x};
 env.AROR_GroundOperationForce=class {static Cast(x){return x?.ground?x:null} InitializeSpawnFaction_S(entity){return entity?.allowFaction!==false}TrackDamage_S(){}};
@@ -35,6 +35,20 @@ function compile(file,name){
  return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')(...Object.values(env));
 }
 const executor='AROR_OperationExecutorComponent',reaper='AROR_ReaperQRFExecutor',air='AROR_ReaperAirForce';
+// Initial admission must leave enough time after finite pad search for the same frozen
+// per-package preparation deadline enforced on active reserves.
+{
+ const previousSearch=env.AROR_ReaperLandingSearch;
+ env.AROR_ReaperLandingSearch=class {Initialize(){}GetCandidateLimit(){return 121}GetDiagnostics(){return 'mock'}Advance(){}IsComplete(){return false}};
+ const prepare=compile(reaper,'PrepareReaperLanding');
+ const op={GetId:()=> 'air-planning'},ctx={m_sReaperPlanningOperation:'',m_Operations:{GetOperation:()=>null},m_iReaperPreparationTimeout:120,m_iExecutorClock:0,
+  m_vReaperLZOffset:0,ReaperLandingRadius:()=>100,ReportSpawnWait(){}};
+ check(!prepare.call(ctx,op,{GetCenter:()=>0,GetRadius:()=>100},5),'unfinished landing search cannot dispatch');
+ check(op.m_iSpawnPreparationTimeout>=186,'landing search and five paced constructions retain the full 120-second boarding allowance');
+ const deadline=op.m_iSpawnPreparationTimeout;ctx.m_iExecutorClock=20;prepare.call(ctx,op,{GetCenter:()=>0,GetRadius:()=>100},5);
+ check(op.m_iSpawnPreparationTimeout===deadline,'repeated planning ticks cannot slide the initial timeout indefinitely');
+ env.AROR_ReaperLandingSearch=previousSearch;
+}
 // Native Workbench diagnosed declaration initializers overwriting loaded resource values.
 // Keep defaults in Attribute metadata; only explicit script factories may assign them.
 {
@@ -98,7 +112,7 @@ const executor='AROR_OperationExecutorComponent',reaper='AROR_ReaperQRFExecutor'
   missing=failure;spawned=[];groups=[];loaded=[];
   const profile={m_sVehicle:'transport',m_sEscortVehicle:'gunship',m_sInfantryGroup:'infantry',m_iEscortCount:escorted?1:0,m_iEscortLossValue:2000};
   const force={ground:true,air:true,m_Profile:profile,m_bUnescorted:!escorted,m_iPackageIndex:0,m_iPackageCount:1,m_iReservedMembers:8,
-   InitializeSpawnFaction_S:entity=>entity?.allowFaction!==false,TrackDamage_S(){},HoldAircraft_S(){this.held=(this.held||0)+1}};
+   PreparePassengerRoster_S:()=>true,InitializeSpawnFaction_S:entity=>entity?.allowFaction!==false,TrackDamage_S(){},HoldAircraft_S(){this.held=(this.held||0)+1}};
   const ctx={m_iExecutorClock:10,m_iReaperPreparationTimeout:120,m_fReaperInsertionHeight:100,IsLaunchPositionSafe:()=>failure!=='clearance',ReaperGunshipHeight:()=>200,
    ConfigureForceFunding(f){f.m_bOwnsPackageQuote=true},SpawnWaypoint:()=>failure==='waypoint'?null:{},
    SpawnReaperAircraft(resource){const v={name:resource.name,allowFaction:failure!==(resource.name==='gunship'?'escortFaction':'transportFaction'),GetPhysics:()=>failure!==(resource.name==='gunship'?'escortPhysics':'transportPhysics')};spawned.push(v);return v},

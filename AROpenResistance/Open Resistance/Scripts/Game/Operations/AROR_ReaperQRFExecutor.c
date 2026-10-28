@@ -472,9 +472,9 @@ modded class AROR_OperationExecutorComponent
 			}
 			m_ReaperLandingSearch = new AROR_ReaperLandingSearch();
 			m_ReaperLandingSearch.Initialize(target.GetCenter() + m_vReaperLZOffset, ReaperLandingRadius(target.GetRadius()), m_fReaperPadClearance, level, m_fReaperLandingSeparation, m_fReaperLZFallbackRadius, m_fReaperLZAdjustmentRadius);
-			// Two candidates per tick, then allow a minute for pair construction and
-			// boarding. Ground requests retain the normal configured spawn timeout.
-			operation.m_iSpawnPreparationTimeout = m_ReaperLandingSearch.GetCandidateLimit() / 2 + 61;
+			// Finite planning allowance plus paced construction and the full per-package
+			// preparation window. Initial admission must not undercut the frozen boarding deadlines.
+			operation.m_iSpawnPreparationTimeout = m_ReaperLandingSearch.GetCandidateLimit() / 2 + 1 + level + m_iReaperPreparationTimeout;
 			m_sReaperPlanningOperation = operation.GetId();
 			ReportSpawnWait(operation, "Selecting landing pads, near target first then bounded outer fallback: " + m_ReaperLandingSearch.GetDiagnostics());
 		}
@@ -553,6 +553,8 @@ modded class AROR_OperationExecutorComponent
 				return false;
 		}
 		if (!infantry.m_aUnitPrefabSlots || infantry.m_aUnitPrefabSlots.Count() < 1)
+			return false;
+		if (!force.PreparePassengerRoster_S())
 			return false;
 		if (infantry.m_aUnitPrefabSlots.Count() + 1 + force.m_Profile.m_iEscortCount > force.m_iReservedMembers)
 			return false;
@@ -1362,6 +1364,9 @@ modded class AROR_OperationExecutorComponent
 			if (!force.m_bMounted && !force.BoardPackage_S())
 			{
 				ReportSpawnWait(operation, "Waiting for verified transport/escort pilot and passenger occupancy");
+				force.m_iMountWaitTicks++;
+				if (Math.Mod(force.m_iMountWaitTicks, m_iWakeRetryInterval) == 0)
+					Print(string.Format("[AROR REAPER] %1 package=%2/%3 boarding wait=%4s living infantry=%5 planned infantry=%6 transport pilots=%7; native occupancy not yet verified", operation.GetId(), force.m_iPackageIndex + 1, force.m_iPackageCount, force.m_iMountWaitTicks, infantry, force.m_Group.m_aUnitPrefabSlots.Count(), crew), LogLevel.WARNING);
 				return;
 			}
 			REAPER_AiHelicopterControllerComponent transportController = AROR_ReaperAirForce.Controller(force.m_Vehicle);

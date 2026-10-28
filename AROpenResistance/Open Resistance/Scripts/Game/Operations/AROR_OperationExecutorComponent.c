@@ -69,6 +69,41 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 	{
 		return Replication.IsServer() && m_bExecuteOperations && HasFriendlyQRFOrigin(role, targetId, true);
 	}
+
+	//! Explain the existing origin gates without changing campaign ownership or safety rules.
+	string MarsOriginFailure_S(AROR_EFactionRole role, string targetId)
+	{
+		if (!Replication.IsServer())
+			return "Server origin check required";
+		if (!m_bExecuteOperations)
+			return "Operation execution is disabled; check server configuration/validation logs";
+		AROR_LocationManagerComponent locations = AROR_LocationManagerComponent.GetInstance();
+		if (!locations || !locations.GetLocationById(targetId))
+			return "Target location is unavailable";
+		AROR_LocationComponent target = locations.GetLocationById(targetId);
+		array<AROR_LocationComponent> sites = {};
+		locations.GetLocations(sites);
+		string details = "";
+		foreach (AROR_LocationComponent site : sites)
+		{
+			if (!site || site == target || site.GetControllingRole() != role || !AROR_QRFOriginPolicy.IsOriginType(site.GetLocationType()))
+				continue;
+			string reason = "unavailable";
+			if (!IsLaunchPositionSafe(site.GetCenter(), target.GetCenter()))
+				reason = "launch safety/player clearance";
+			else if (AROR_RecaptureComponent.IsContested(site.GetId()))
+				reason = "contested";
+			else if (m_mOriginLaunchedAt.Contains(site.GetId()) && m_iExecutorClock - m_mOriginLaunchedAt.Get(site.GetId()) < m_iOriginLaunchCooldown)
+				reason = "launch cooldown";
+			else if (IsGarrisonDepleted(site))
+				reason = "garrison depleted";
+			details += site.GetName() + ": " + reason + "; ";
+		}
+		if (details.IsEmpty())
+			return "That army owns no eligible military launch territory";
+		Print("[AROR MARS] Origin rejection: " + details, LogLevel.WARNING);
+		return "No safe launch origin. " + details;
+	}
 	// Shared tactical state belongs to this class: base methods cannot see later modded layers.
 	[Attribute("0", desc: "Enable shared QRF tactical coordination and finite staged waves for both enemy roles")]
 	protected bool m_bQRFTacticalCommander;
@@ -969,7 +1004,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			launchPosition = ResolveQRFOrigin(operation, target, launchPosition, packageIndex == 0);
 			launchPosition[0] = launchPosition[0] + packageIndex * m_fPackageSpacing;
 		}
-		if (!target || !IsLaunchPositionSafe(launchPosition, target.GetCenter()))
+		if (!target || (!operation.m_TacticalCommander && !IsLaunchPositionSafe(launchPosition, target.GetCenter())))
 		{
 			FailGroundPlanning(operation, "Ground-force target or launch position invalid");
 			return;

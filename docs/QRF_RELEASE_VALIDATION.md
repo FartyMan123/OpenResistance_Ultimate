@@ -1,6 +1,6 @@
 # Chicken QRF and attack release validation
 
-**Decision: current changes require a fresh compile and native gameplay acceptance.** The user reported successful compilation of the preceding version on 28 October 2026. The subsequent light-air/joint-response and interruption fixes have not been compiled or played by this audit. Driving, flight, actual landings and packaged dedicated-server replication remain unverified. No route is labelled as driven or flown.
+**Decision: current source compiled successfully; native release approval remains pending gameplay acceptance.** The user reported successful compilation of the current full-cabin, boarding and USSR origin changes on 28 October 2026. Current driving, flight, actual landings and packaged dedicated-server replication remain unverified. No route is labelled as driven or flown.
 
 Scope: Chicken only, both enemy roles, ordinary capture QRFs, trusted attacks, automatic Occupier attacks and MARS. The first audit started from `6c03716ff3cdc573f56b8f428f436c249afc1d52`; this follow-up starts from `3614c1b` on `chicken-dev`. Historical evidence is retained in Git. The requested work budget was two hours; simulated ticks and assertion counts are not elapsed native gameplay time.
 
@@ -12,11 +12,11 @@ The [combined reconciliation](RECONCILIATION_VALIDATION.md) includes the new str
 
 The six review issues and their dispositions, shipped settings and native reproductions are recorded in [Rowan review follow-up](QRF_REVIEW_FOLLOWUP.md). Four additional mutations cover active dispatch failure, reserve boarding deadlines, unknown-removal classification and banner estimate consistency. Long Cyrillic/proportional-font rendering remains visually unverified.
 
-Current combined result: **29 suites / 97,289 mocked assertions**, including **47 detected source mutations** and the 10,000-tick simulated scheduler soak. The original 27-suite / 95,936-assertion evidence remains in Git history.
+Current combined result: **29 suites / 97,305 mocked assertions**, including **51 detected source mutations** and the 10,000-tick simulated scheduler soak. The original 27-suite / 95,936-assertion evidence remains in Git history.
 
-The [full-load follow-up](QRF_REVIEW_FOLLOWUP.md#full-ground-transport-loads) fills native ground passenger capacity within updated reserved ceilings and routes passenger-carrying light/armoured profiles through delivery and infantry unloading. Driver/gunner crews remain separate. Prices and response coverage reflect the larger reservations. Physical occupancy counts remain unverified; `EstimatedPersonnel` in the price CSV is `NOT_RUN`. Fewer affordability-loop assertions execute because larger full-load quotes exceed more sampled balances; all 50 funded army/Readiness/Crackdown combinations still pass.
+The [full-load follow-up](QRF_REVIEW_FOLLOWUP.md#full-ground-transport-loads) fills native ground passenger capacity within updated reserved ceilings and routes passenger-carrying light/armoured profiles through delivery and infantry unloading. Driver/gunner crews remain separate. Prices and response coverage reflect the larger reservations. Later native logs confirm ground boarding with 15 occupants per truck and five per Humvee; delivery remains unverified. Other physical occupancy counts remain unverified; `EstimatedPersonnel` in the price CSV is `NOT_RUN`. Fewer affordability-loop assertions execute because larger full-load quotes exceed more sampled balances; all 50 funded army/Readiness/Crackdown combinations still pass.
 
-The [armed-vehicle crew follow-up](QRF_REVIEW_FOLLOWUP.md#armed-vehicle-crew-follow-up) addresses the reported empty M2 Humvee gunner seat: every ground turret/attached-weapon seat now requires assigned living AI before dispatch. The observed gunner-only version compiled successfully, then a truck and Humvee failed native boarding and timed out. The full-load revision adds native entry-state diagnostics to existing paced retry logs; the rejection cause remains unresolved. Fresh compile/Play acceptance is required for this revision.
+The [armed-vehicle crew follow-up](QRF_REVIEW_FOLLOWUP.md#armed-vehicle-crew-follow-up) addresses the reported empty M2 Humvee gunner seat: every ground turret/attached-weapon seat now requires assigned living AI before dispatch. The observed gunner-only version compiled successfully, then a truck and Humvee failed native boarding and timed out. Later full-load ground boarding succeeded; the reported airborne run still timed out before dispatch. The current revision fills helicopter cargo seats, gives asynchronous requests distinct destinations, and budgets the full preparation window. Compilation passed, user-reported; native Play acceptance is required. See the airborne/USSR follow-up for log evidence and remaining uncertainty.
 
 - [Automated results and source hashes](validation/QRF_AUTOMATED_RESULTS.json).
 - [All 350 configured response cells](validation/CHICKEN_RESPONSE_COVERAGE.csv): two armies × seven families × five Readiness levels × five Crackdown levels. 280 cells resolve an available response; the remaining 70 are intentionally locked. Availability does not establish affordability, current origin ownership, free live capacity or successful native deployment.
@@ -108,7 +108,7 @@ Native reproduction steps are in [light-response acceptance](QRF_LIGHT_RESPONSE_
 | 3–4 | Unescorted transport packages | One unescorted air package plus truck/APC/IFV/light-support combinations |
 | 5 | Escorted transport/fireteam/gunship packages | Existing escorted air package plus heavier ground combinations, including armour |
 
-`us_airborne_light` and `ussr_airborne_light` unlock at Readiness 1. Each reserves two groups (infantry and pilot), eight personnel slots and one aircraft. The eight-slot reservation is a conservative limit, not a claim that eight people spawn. The existing fireteam and transport resources are reused; no new asset GUIDs are introduced. At Crackdown 1 the light package requires 1,860 US or 2,060 USSR funds including overhead. Crackdown 1–5 controls the number of complete standalone packages.
+`us_airborne_light` and `ussr_airborne_light` unlock at Readiness 1. Each reserves two groups (infantry and pilot), 32 personnel slots and one aircraft. The 32-slot reservation is a conservative limit; usable native cargo capacity determines the infantry queue. The existing fireteam and transport resources are reused; no new asset GUIDs are introduced. At Crackdown 1 the light package requires 2,460 US or 2,660 USSR funds including overhead. Crackdown 1–5 controls the number of complete standalone packages.
 
 The shared preview chooses the strongest unlocked profile. Automatic airborne execution also checks funding and can fall back to a light profile; if none can be funded, it retains the bounded spawn-wait path. It does not stop at an earlier locked profile in the catalogue. Legacy explicit-profile MARS requests retain their existing behavior without a simulated equipment axis.
 
@@ -122,16 +122,16 @@ All rows below include one unescorted transport/fireteam package.
 
 | Readiness | Tier | Ground elements | Lead / reserve packages | US / USSR funds required |
 |---|---|---|---:|---:|
-| 2 | 1 | truck | 2 / 0 | 2,610 / 2,810 |
-| 2 | 2 | truck + light support | 3 / 0 | 3,120 / 3,220 |
-| 2 | 3 | truck + truck + light support | 2 / 2 | 3,880 / 3,980 |
-| 2 | 4 | truck + truck + truck + light support | 3 / 2 | 4,640 / 4,740 |
-| 2 | 5 | truck + truck + truck + light support + light support | 3 / 3 | 5,150 / 5,150 |
-| 3–4 | 1 | truck | 2 / 0 | 2,610 / 2,810 |
-| 3–4 | 2 | truck + APC/IFV | 3 / 0 | 3,720 / 3,820 |
-| 3–4 | 3 | truck + APC/IFV + light support | 2 / 2 | 4,230 / 4,230 |
-| 3–4 | 4 | truck + APC/IFV + APC/IFV + light support | 3 / 2 | 5,340 / 5,240 |
-| 3–4 | 5 | truck + truck + APC/IFV + APC/IFV + light support | 3 / 3 | 6,100 / 6,000 |
+| 2 | 1 | truck | 2 / 0 | 3,210 / 3,410 |
+| 2 | 2 | truck + light support | 3 / 0 | 3,720 / 3,820 |
+| 2 | 3 | truck + truck + light support | 2 / 2 | 4,480 / 4,580 |
+| 2 | 4 | truck + truck + truck + light support | 3 / 2 | 5,240 / 5,340 |
+| 2 | 5 | truck + truck + truck + light support + light support | 3 / 3 | 5,750 / 5,750 |
+| 3–4 | 1 | truck | 2 / 0 | 3,210 / 3,410 |
+| 3–4 | 2 | truck + APC/IFV | 3 / 0 | 4,320 / 4,420 |
+| 3–4 | 3 | truck + APC/IFV + light support | 2 / 2 | 4,830 / 4,830 |
+| 3–4 | 4 | truck + APC/IFV + APC/IFV + light support | 3 / 2 | 5,940 / 5,840 |
+| 3–4 | 5 | truck + truck + APC/IFV + APC/IFV + light support | 3 / 3 | 6,700 / 6,600 |
 
 The early IDs are `occupier_joint_r2_l1`–`l5`, `invader_joint_r2_l1`–`l5`, and the corresponding `*_joint_r3_l1`–`l5` bands. Readiness 3–4 permits mechanized elements; their presence still depends on the authored Crackdown tier. Genuine armour and gunships remain gated to Readiness 5.
 
@@ -141,11 +141,11 @@ Every row includes one transport/fireteam/gunship package.
 
 | Tier | Ground elements | Lead / reserve packages | US / USSR funds required |
 |---|---|---:|---:|
-| 1 | Truck | 2 / 0 | 4,910 / 5,110 |
-| 2 | Truck + APC/IFV | 3 / 0 | 6,020 / 6,120 |
-| 3 | Truck + APC/IFV + armour | 2 / 2 | 7,130 / 6,780 |
-| 4 | Truck + 2 APCs/IFVs + armour | 3 / 2 | 8,240 / 7,790 |
-| 5 | 2 trucks + 2 APCs/IFVs + armour + light support | 4 / 3 | 9,500 / 8,950 |
+| 1 | Truck | 2 / 0 | 5,210 / 5,410 |
+| 2 | Truck + APC/IFV | 3 / 0 | 6,320 / 6,420 |
+| 3 | Truck + APC/IFV + armour | 2 / 2 | 7,430 / 7,080 |
+| 4 | Truck + 2 APCs/IFVs + armour | 3 / 2 | 8,540 / 8,090 |
+| 5 | 2 trucks + 2 APCs/IFVs + armour + light support | 4 / 3 | 9,800 / 9,250 |
 
 ### Shared execution and compatibility
 
@@ -189,7 +189,7 @@ A planning PASS is a snapshot for one ground package and the configured air laun
 
 | Gate | Required evidence | Current result |
 |---|---|---|
-| Compilation | Compile current light-response/interruption changes; verify packaged and Workbench variants. | NOT_RUN for current changes; preceding version passed, user-reported |
+| Compilation | Compile current full-cabin/boarding/origin changes; verify packaged and Workbench variants. | PASS, user-reported on 28 October 2026; packaged variant not separately verified |
 | Resource loading | Discover layouts and metadata; reload Chicken and check widget loading. | NOT_RUN |
 | Memory-only native smoke tests | Existing operation/pool/strategy/tactical helpers plus `AROR_JointResponseSmokeTests.Run_S()`. | NOT_RUN |
 | Route planning | Sweep all 924 pairs and 45 landing targets; triage failures, especially ports. | NOT_RUN |

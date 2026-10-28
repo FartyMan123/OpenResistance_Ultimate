@@ -995,7 +995,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
    m_vOccupiersSpawnPosition 5100 0 6080
    m_vInvadersSpawnPosition 5950 0 6080
    m_iMaxGroups 20
-   m_iMaxMembers 128
+   m_iMaxMembers 160
    m_iMaxVehicles 10
    m_sWorkbenchForceProfileId ""
    m_iWorkbenchResponseLevel 1
@@ -1102,6 +1102,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     }
     AROR_ForceProfile {
      m_sId "us_airborne"
+     m_bFillPassengerSeats 1
      m_iMinimumReadinessLevel 5
      m_iPersonnelLossValue 25
      m_iVehicleLossValue 1600
@@ -1119,7 +1120,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_sVehicle "{70BAEEFC2D3FEE64}Prefabs/Vehicles/Helicopters/UH1H/UH1H.et"
      m_sEscortVehicle "{21E9A875C0A3C409}Prefabs/Vehicles/Helicopters/UH1H/UH1H_armed_gunship_HE.et"
      m_iEscortCount 1
-     m_iPersonnelBudget 20
+     m_iPersonnelBudget 32
      m_fDismountDistance 150
     }
     AROR_ForceProfile {
@@ -1187,6 +1188,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     }
     AROR_ForceProfile {
      m_sId "ussr_airborne"
+     m_bFillPassengerSeats 1
      m_iMinimumReadinessLevel 5
      m_iPersonnelLossValue 25
      m_iVehicleLossValue 1800
@@ -1204,7 +1206,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_sVehicle "{DF5CCB7C0FF049F4}Prefabs/Vehicles/Helicopters/Mi8MT/Mi8MT_unarmed_transport.et"
      m_sEscortVehicle "{3C6B3ED0C3AC30D5}Prefabs/Vehicles/Helicopters/Mi8MT/Mi8MT_armed_gunship_HE.et"
      m_iEscortCount 1
-     m_iPersonnelBudget 20
+     m_iPersonnelBudget 32
      m_fDismountDistance 150
     }
     AROR_ForceProfile {
@@ -1253,6 +1255,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
     }
     AROR_ForceProfile {
      m_sId "us_airborne_light"
+     m_bFillPassengerSeats 1
      m_iMinimumReadinessLevel 1
      m_iPersonnelLossValue 25
      m_iVehicleLossValue 1600
@@ -1269,11 +1272,12 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_iCrewCount 1
      m_sVehicle "{70BAEEFC2D3FEE64}Prefabs/Vehicles/Helicopters/UH1H/UH1H.et"
      m_iEscortCount 0
-     m_iPersonnelBudget 8
+     m_iPersonnelBudget 32
      m_fDismountDistance 150
     }
     AROR_ForceProfile {
      m_sId "ussr_airborne_light"
+     m_bFillPassengerSeats 1
      m_iMinimumReadinessLevel 1
      m_iPersonnelLossValue 25
      m_iVehicleLossValue 1800
@@ -1290,7 +1294,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_iCrewCount 1
      m_sVehicle "{DF5CCB7C0FF049F4}Prefabs/Vehicles/Helicopters/Mi8MT/Mi8MT_unarmed_transport.et"
      m_iEscortCount 0
-     m_iPersonnelBudget 8
+     m_iPersonnelBudget 32
      m_fDismountDistance 150
     }
    }

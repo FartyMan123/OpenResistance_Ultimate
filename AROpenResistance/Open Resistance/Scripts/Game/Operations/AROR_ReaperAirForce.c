@@ -253,9 +253,18 @@ class AROR_ReaperAirForce : AROR_GroundOperationForce
 		m_Group.GetAgents(agents);
 		if (agents.Count() < 1)
 			return false;
-		bool passengersReady = true;
-		foreach (AIAgent agent : agents)
+		array<BaseCompartmentSlot> passengerSeats = {};
+		foreach (BaseCompartmentSlot candidate : slots)
 		{
+			if (candidate && CargoCompartmentSlot.Cast(candidate) && candidate.IsCompartmentAccessible() && !candidate.GetAttachedTurret())
+				passengerSeats.Insert(candidate);
+		}
+		if (agents.Count() > passengerSeats.Count())
+			return false;
+		bool passengersReady = true;
+		for (int passengerIndex = 0; passengerIndex < agents.Count(); passengerIndex++)
+		{
+			AIAgent agent = agents[passengerIndex];
 			if (!agent || !agent.GetControlledEntity())
 				return false;
 			IEntity passenger = agent.GetControlledEntity();
@@ -267,14 +276,9 @@ class AROR_ReaperAirForce : AROR_GroundOperationForce
 			CompartmentAccessComponent access = CompartmentAccessComponent.Cast(passenger.FindComponent(CompartmentAccessComponent));
 			if (!access || access.IsGettingIn() || access.IsGettingOut() || access.IsInCompartment())
 				continue;
-			foreach (BaseCompartmentSlot slot : slots)
-			{
-				if (slot && CargoCompartmentSlot.Cast(slot) && slot.IsCompartmentAccessible() && !slot.IsOccupied() && !slot.GetOccupant() && (!slot.IsReserved() || slot.IsReservedBy(passenger)))
-				{
-					Seat(passenger, slot);
-					break;
-				}
-			}
+			// Each asynchronous request has a distinct destination even when native
+			// occupancy/reservation updates are delayed until a later engine tick.
+			Seat(passenger, passengerSeats[passengerIndex]);
 		}
 		m_bMounted = transportReady && escortReady && passengersReady;
 		return m_bMounted;

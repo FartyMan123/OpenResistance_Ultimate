@@ -5,7 +5,7 @@ let assertions=0,server=true;
 const check=(ok,message)=>{assertions++;if(!ok)throw Error(message);};
 Object.defineProperty(String.prototype,'IsEmpty',{value(){return !this.length;},configurable:true});
 for(const [name,fn]of Object.entries({Count(){return this.length;},Insert(x){this.push(x);},Contains(x){return this.includes(x);},IsEmpty(){return !this.length;},Clear(){this.length=0;},Copy(x){this.splice(0,this.length,...x);}}))Object.defineProperty(Array.prototype,name,{value:fn,configurable:true});
-const env={Replication:{IsServer:()=>server},GetGame:()=>({GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:x=>x?.player?1:0})}),
+const env={Math:{Max:Math.max},Replication:{IsServer:()=>server},GetGame:()=>({GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:x=>x?.player?1:0})}),
   AROR_EForceType:{AIRBORNE:3,MOTORIZED:0},ECloseDoorAfterActions:{CLOSE_DOOR:1},
   string:{Format:(s,...a)=>s.replace(/%(\d+)/g,(_,i)=>a[i-1])}};
 for(const name of ['BaseCompartmentManagerComponent','SCR_AIVehicleUsageComponent','CompartmentAccessComponent'])env[name]={Cast:x=>x};
@@ -144,4 +144,13 @@ f=fixture(2,3);Object.assign(f.force.m_Profile,{m_bFillPassengerSeats:true,m_iCr
 check(!f.force.PreparePassengerRoster_S(),'missing turret crew cannot be replaced by dismount infantry');
 f=fixture(2,3);Object.assign(f.force.m_Profile,{m_bFillPassengerSeats:true,m_iCrewCount:2});f.force.m_iReservedMembers=22;f.slots[1].kind='cargo';f.slots[1].attachedTurret={};
 check(f.force.PreparePassengerRoster_S()&&f.force.m_Group.m_aUnitPrefabSlots.length===3,'mounted weapon is excluded from passenger capacity');
+for(const escorts of [0,1]){
+ f=fixture(1,24);Object.assign(f.force.m_Profile,{m_eType:3,m_bFillPassengerSeats:true,m_iCrewCount:1+escorts,m_iEscortCount:escorts});f.force.m_iReservedMembers=32;
+ check(f.force.PreparePassengerRoster_S()&&f.force.m_Group.m_aUnitPrefabSlots.length===24,'helicopter fills cabin independently of the separate escort pilot');
+ f.force.m_iReservedMembers=24+escorts;
+ check(!f.force.PreparePassengerRoster_S(),'helicopter cabin must leave reserved room for transport and escort pilots');
+}
+f=fixture(2,4);f.slots.forEach(s=>s.reserved=null);f.all.forEach(a=>{a.access.entering=false;a.access.GetInVehicle=(v,s)=>{f.calls.push({actor:a,slot:s});return true;}});
+f.force.ReseatMissing_S();
+check(f.calls.length===6&&new Set(f.calls.map(c=>c.slot)).size===6,'ground retry assigns distinct destinations without synchronous native reservation updates');
 console.log(JSON.stringify({assertions,note:'Native paused simulation/queue cancellation must be verified in Workbench Play.'}));

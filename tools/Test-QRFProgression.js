@@ -127,7 +127,7 @@ function runQRFProgressionTests(sources) {
   check(profiles.filter(p=>/_light_support$/.test(p.m_sId)).every(p=>p.GetSpottingKind()===5)&&profiles.find(p=>p.m_sId==='us_armour').GetSpottingKind()===2,'light escorts report their own intelligence class while genuine armour keeps its class');
   check(profiles.filter(p=>/_light_support$/.test(p.m_sId)).every(p=>p.GetWeight(0)===0&&p.GetWeight(1)>0),'new QRF escorts do not change the separate scheduled-attack pool');
   let funds=100000,debt=0;
-  const context={m_aGroundQRFRecipes:recipes,m_aForceProfiles:profiles,m_iMaxGroups:20,m_iMaxMembers:128,m_iMaxVehicles:10,
+  const context={m_aGroundQRFRecipes:recipes,m_aForceProfiles:profiles,m_iMaxGroups:20,m_iMaxMembers:Number(sources.layer.match(/m_iMaxMembers (\d+)/)[1]),m_iMaxVehicles:10,
     m_Operations:{GetReadinessLevel:()=>1,GetCrackdownLevel:()=>5,GetQRFFinance:()=>({Available:()=>funds,Debt:()=>debt}),QRFOverhead:t=>50+t*10,AllowsMinimumCaptureQRF:()=>true},
     GetReservedGroups:()=>0,GetReservedMembers:()=>0,GetReservedVehicles:()=>0};
   context.FindStrategicGroundRecipe=compile(sources.executor,'FindStrategicGroundRecipe');context.QRFPoolReadinessLevel=compile(sources.executor,'QRFPoolReadinessLevel');
@@ -160,7 +160,7 @@ function runQRFProgressionTests(sources) {
   }
   funds=100000;const emptyCapacity={...context,GetReservedGroups:()=>20};
   check(!context.FindStrategicGroundRecipe.call(emptyCapacity,1,'AROR_OCCUPIERS',1,true,1),'unsecured early baseline cannot exceed an exhausted group budget');
-  emptyCapacity.GetReservedGroups=()=>0;emptyCapacity.GetReservedMembers=()=>121;
+  emptyCapacity.GetReservedGroups=()=>0;emptyCapacity.GetReservedMembers=()=>context.m_iMaxMembers-7;
   check(!context.FindStrategicGroundRecipe.call(emptyCapacity,1,'AROR_OCCUPIERS',1,true,1),'unsecured baseline still needs the complete truck personnel reservation');
   const captured={m_iPoolReadinessLevel:0,m_iRequestedTier:5,m_bCaptureThreatRecorded:true,GetRole:()=>1};
   const chosen=select.call(context,captured,{GetFactionKey:()=> 'AROR_OCCUPIERS'});

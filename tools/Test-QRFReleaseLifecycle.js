@@ -245,7 +245,7 @@ server=false;check(!boardPilot(group,vehicle)&&seatRequests===1,'clients cannot 
 {
  env.AROR_ReaperAirForce.BoardPilot_S=boardPilot;
  const makeSeat=(pilot,cargo)=>({pilot,cargo,occupant:null,reserved:null,vehicle:null,
-  IsCompartmentAccessible:()=>true,IsOccupied(){return !!this.occupant},GetOccupant(){return this.occupant},
+  GetAttachedTurret:()=>null,IsCompartmentAccessible:()=>true,IsOccupied(){return !!this.occupant},GetOccupant(){return this.occupant},
   IsReserved(){return !!this.reserved},IsReservedBy(who){return this.reserved===who},GetVehicle(){return this.vehicle}});
  const transportSeats=[makeSeat(true,false),makeSeat(false,true),makeSeat(false,true)],escortSeats=[makeSeat(true,false)];
  const makeVehicle=seats=>{const v={FindComponent:()=>({GetCompartments:out=>out.push(...seats)})};seats.forEach(s=>s.vehicle=v);return v};
@@ -253,7 +253,7 @@ server=false;check(!boardPilot(group,vehicle)&&seatRequests===1,'clients cannot 
  const requests=[];
  const actor=()=>{const a={seat:null,busy:false,GetCompartment(){return this.seat},IsInCompartment(){return !!this.seat},
   IsGettingIn(){return this.busy},IsGettingOut:()=>false,
-  GetInVehicle(v,s,t,d,c,paused){check(paused,'every aircraft boarding teleport permits paused simulation');s.reserved=e;requests.push([e,s]);return true}};
+  GetInVehicle(v,s,t,d,c,paused){check(paused,'every aircraft boarding teleport permits paused simulation');requests.push([e,s]);return true}};
   const e={access:a,FindComponent:()=>a};return e};
  const tp=actor(),ep=actor(),p1=actor(),p2=actor();
  const makeGroup=actors=>({GetPlayerCount:()=>0,GetAgents:out=>out.push(...actors.map(a=>({GetControlledEntity:()=>a})))});
@@ -262,6 +262,7 @@ server=false;check(!boardPilot(group,vehicle)&&seatRequests===1,'clients cannot 
   BoardPilot_S:boardPilot,IsSeatedInOwnVehicle:compile(src.ground,'IsSeatedInOwnVehicle'),Seat:compile(src.ground,'Seat')};
  const board=compile(src.air,'BoardPackage_S');
  check(!board.call(ctx)&&requests.length===4,'accepted requests for two pilots and two passengers cannot activate the aircraft');
+ check(new Set(requests.map(r=>r[1])).size===4,'asynchronous boarding assigns distinct seats even before native reservations update');
  for(const [entity,seat]of requests){entity.access.seat=seat;seat.occupant=entity}
  check(board.call(ctx)&&ctx.m_bMounted,'full physical occupancy completes boarding');
  check(board.call(ctx)&&ctx.m_aPassengers.length===2&&requests.length===4,'repeated acknowledgement neither duplicates passenger identities nor reseats them');

@@ -131,6 +131,11 @@ function runQRFIngressTests(sources) {
   const failedProfile={m_eType:0,m_fDismountDistance:60,GetGroupBudget:()=>2,m_iPersonnelBudget:8,m_sAssetFactionKey:'US'};
   compile(sources.executor,'StartGroundForce').call(preflight,failedRequest,{GetFactionKey:()=>'OWN'},failedProfile,0,{});
   check(planningFailures===1&&createdVehicles===0&&converted===0&&preflight.m_aForces.length===0,'delivery failure leaves no empty hull, personnel queue or converted actor reservation');
+  let plannedRoadPads=0;
+  preflight.IsLaunchPositionSafe=p=>p[0]===520;
+  preflight.FindGroundRoadLaunch=(c,i,out)=>{plannedRoadPads++;out.splice(0,3,520,10,0);return true;};
+  compile(sources.executor,'StartGroundForce').call(preflight,failedRequest,{GetFactionKey:()=>'OWN'},failedProfile,0,{});
+  check(plannedRoadPads===1&&planningFailures===2,'unsafe coastal formation seed still reaches the bounded safe-road planner before delivery preflight');
   env.AROR_GarrisonComponent={Cast:x=>x};
   const strategicCentre=[0,0,0],flagPosition=[80,1,0];let flagInside=true,flagGarrison={IsEligible:()=>true,GetDefenceCenter:()=>flagPosition};
   const flagTarget={GetOwner:()=>({FindComponent:()=>flagGarrison}),GetCenter:()=>strategicCentre,IsPositionInside:()=>flagInside};

@@ -10,7 +10,7 @@ class AROR_ForceProfile
 	int m_iMinimumReadinessLevel;
 	[Attribute("0", desc: "Classify a mounted support vehicle as light armed transport in map intelligence. Passenger delivery can be enabled independently.")]
 	bool m_bLightVehicle;
-	[Attribute("0", desc: "Fill every usable ground passenger seat with infantry, within the reserved personnel budget. Driver and turret crew remain a separate group.")]
+	[Attribute("0", desc: "Fill usable ground or transport-helicopter passenger seats with infantry, within the reserved personnel budget. Vehicle crew remain a separate group.")]
 	bool m_bFillPassengerSeats;
 	[Attribute("1", UIWidgets.ComboBox, desc: "Campaign role", enums: AROR_FactionRoles.MilitaryRoleParams())]
 	AROR_EFactionRole m_eRole;
@@ -113,7 +113,7 @@ class AROR_ForceProfile
 
 	bool IsValid()
 	{
-		if (m_bFillPassengerSeats && (m_eType == AROR_EForceType.INFANTRY || m_eType == AROR_EForceType.AIRBORNE))
+		if (m_bFillPassengerSeats && m_eType == AROR_EForceType.INFANTRY)
 			return false;
 		if (m_bLightVehicle && m_eType != AROR_EForceType.ARMOUR)
 			return false;

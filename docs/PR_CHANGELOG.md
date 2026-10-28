@@ -8,6 +8,8 @@ Reconcile the QRF lifecycle fixes with Fortress Vostok, Stronghold Delaware, exp
 
 ## Changes
 
+- **Airborne cabins / native follow-up:** fill transport cargo seats within updated aircraft reservations; give asynchronous air boarding and ground retries distinct seat destinations. Include the full finite preparation window after landing search/construction. Raise Chicken's personnel cap to 160 for five full air packages. Fix Vostok tactical launch seeds bypassing the road-pad planner; log MARS replies and detailed origin refusal reasons. Native flight, full-cabin deployment and the original USSR MARS refusal still require acceptance.
+
 - **Full ground loads:** fill native passenger seats with the authored infantry mix for all eight Chicken ground profiles, including armed light vehicles. Keep infantry separate from vehicle crews, deliver passenger-carrying armour through the road-stop/unload path, and retain driver/gunners during infantry exit requests. Raise reserved personnel/collateral ceilings within existing executor caps; update prices and response coverage. Add bounded boarding-rejection diagnostics. Native boarding rejection remains unresolved pending a fresh Play run.
 
 - **Armed vehicle crews:** require living assigned AI in every ground turret/attached-weapon seat before dispatch, including joint waves. Recognise mounted weapons on cargo-style seats, preserve required seats during assignment, and respect accessibility/reservations. Add gunner-occupancy regressions and two mutation checks. Native Humvee/UAZ and armoured-vehicle acceptance remains required.
@@ -45,7 +47,7 @@ Reconcile the QRF lifecycle fixes with Fortress Vostok, Stronghold Delaware, exp
 - Exported all **924** eligible Chicken origin/target pairs and a Workbench-only production-planner sweep with separate ground, escorted-air and transport-only-air results. Native evidence remains `NOT_RUN`; endpoint inventories do not prove travel or reconstruct the road graph. Six synthetic importer checks passed.
 - The site audit includes all 27 military roots and reports four catalogue/world transform differences; world geometry was preserved. Estimated overlapping garrisons reach 112 personnel and require native performance checks.
 - `git diff --check` passed. Detailed evidence, source hashes, reproduction commands and prioritized native gates: [QRF release validation](QRF_RELEASE_VALIDATION.md).
-- **The preceding version compiled successfully, as reported by the user on 28 October 2026. The combined stronghold/garrison/UI and QRF changes need a fresh compile and Play test.** Test stronghold placement and responses, new garrison rosters, map labels/flags, both armies, full convoys, Lamentin/North Ridge, joint attacks, retained aborted aircraft/player takeover, dedicated-server authorization/JIP, old saves, actual capture and cleanup. See [combined validation](RECONCILIATION_VALIDATION.md).
+- **Current full-cabin, boarding and USSR origin changes compiled successfully, as reported by the user on 28 October 2026. Native gameplay acceptance remains pending.** Test stronghold placement and responses, new garrison rosters, map labels/flags, both armies, full convoys and helicopter cabins, Lamentin/North Ridge, joint attacks, retained aborted aircraft/player takeover, dedicated-server authorization/JIP, old saves, actual capture and cleanup. See [combined validation](RECONCILIATION_VALIDATION.md).
 
 ## Notes
 

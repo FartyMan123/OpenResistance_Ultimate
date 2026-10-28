@@ -144,6 +144,14 @@ check(executor.HasMarsOrigin_S(1,'target')&&!executor.HasMarsOrigin_S(2,'target'
 executor.m_bQRFRequireFriendlyOrigin=false;
 check(!executor.HasMarsOrigin_S(2,'target'),'debug origin check cannot fall back to coordinates');
 executor.m_bQRFRequireFriendlyOrigin=true;
+executor.MarsOriginFailure_S=compile('AROR_OperationExecutorComponent','MarsOriginFailure_S');
+check(executor.MarsOriginFailure_S(2,'target').includes('owns no eligible'),'origin diagnostic distinguishes missing USSR holdings from a missing Rebel target');
+currentLocations=[site('target',0,100),site('vostok',2,2000)];
+const originalClearance=executor.IsLaunchPositionSafe;
+executor.IsLaunchPositionSafe=()=>false;
+check(executor.MarsOriginFailure_S(2,'target').includes('clearance'),'owned USSR origin reports its failed safety gate');
+executor.IsLaunchPositionSafe=originalClearance;
+currentLocations=[site('target',0,100),site('origin',1,2000)];
 // The old ground-only fixture and legacy blanket air override cannot change an explicit selection.
 const route=compile('AROR_ReaperQRFExecutor','StartForce');
 let airDispatch=0,groundDispatch=0,rejectedDispatch=0;

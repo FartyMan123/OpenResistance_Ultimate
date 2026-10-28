@@ -176,6 +176,14 @@ class AROR_GroundOperationForce : AROR_OperationForce
 			return false;
 		array<BaseCompartmentSlot> slots = {};
 		compartments.GetCompartments(slots);
+		bool airborne = m_Profile.m_eType == AROR_EForceType.AIRBORNE;
+		int transportCrew = m_Profile.m_iCrewCount;
+		int escortCrew;
+		if (airborne)
+		{
+			transportCrew = 1;
+			escortCrew = m_Profile.m_iEscortCount;
+		}
 		int crewSeats = 1;
 		int cargoSeats;
 		foreach (BaseCompartmentSlot slot : slots)
@@ -183,14 +191,17 @@ class AROR_GroundOperationForce : AROR_OperationForce
 			if (!slot || slot == usage.GetPilotCompartmentSlot())
 				continue;
 			if (IsRequiredGunnerSeat(slot))
-				crewSeats++;
+			{
+				if (!airborne)
+					crewSeats++;
+			}
 			else if (slot.IsCompartmentAccessible() && CargoCompartmentSlot.Cast(slot))
 				cargoSeats++;
 		}
-		if (m_Profile.m_iCrewCount < crewSeats)
+		if (transportCrew < crewSeats)
 			return false;
-		int passengers = cargoSeats - (m_Profile.m_iCrewCount - crewSeats);
-		if (passengers < 1 || passengers + m_Profile.m_iCrewCount > m_iReservedMembers)
+		int passengers = cargoSeats - (transportCrew - crewSeats);
+		if (passengers < 1 || passengers + transportCrew + escortCrew > m_iReservedMembers)
 			return false;
 		array<ResourceName> infantryMix = {};
 		infantryMix.Copy(m_Group.m_aUnitPrefabSlots);
@@ -360,23 +371,37 @@ class AROR_GroundOperationForce : AROR_OperationForce
 		int missingCrew, missingPassengers, boarding;
 		array<AIAgent> crew = {};
 		m_CrewGroup.GetAgents(crew);
+		int crewIndex;
 		foreach (AIAgent agent : crew)
 		{
 			if (!agent)
 				continue;
 			IEntity member = agent.GetControlledEntity();
+			BaseCompartmentSlot assigned;
+			if (crewIndex < crewSeats.Count())
+				assigned = crewSeats[crewIndex];
+			else if (crewIndex - crewSeats.Count() < cargoSeats.Count())
+				assigned = cargoSeats[crewIndex - crewSeats.Count()];
+			crewIndex++;
 			if (IsSeatedInOwnVehicle(member))
 				continue;
 			missingCrew++;
-			if (ReseatMember(member, crewSeats, cargoSeats, recoverStale))
+			array<BaseCompartmentSlot> assignedSeats = {assigned};
+			if (ReseatMember(member, assignedSeats, null, recoverStale))
 				boarding++;
 		}
+		int passengerIndex = Math.Max(0, crew.Count() - crewSeats.Count());
 		foreach (IEntity passenger : m_aPassengers)
 		{
+			BaseCompartmentSlot passengerSeat;
+			if (passengerIndex < cargoSeats.Count())
+				passengerSeat = cargoSeats[passengerIndex];
+			passengerIndex++;
 			if (IsSeatedInOwnVehicle(passenger))
 				continue;
 			missingPassengers++;
-			if (ReseatMember(passenger, cargoSeats, null, recoverStale))
+			array<BaseCompartmentSlot> passengerSeats = {passengerSeat};
+			if (ReseatMember(passenger, passengerSeats, null, recoverStale))
 				boarding++;
 		}
 		int requiredGunners, seatedGunners;

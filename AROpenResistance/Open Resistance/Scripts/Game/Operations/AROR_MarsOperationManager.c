@@ -96,7 +96,7 @@ modded class AROR_OperationManagerComponent
 		}
 		if (!executor.HasMarsOrigin_S(role, target.GetId()))
 		{
-			MarsReply(playerId, "No safe military launch territory is owned by that army");
+			MarsReply(playerId, executor.MarsOriginFailure_S(role, target.GetId()));
 			return;
 		}
 		foreach (AROR_Operation existing : m_aOperations)
@@ -125,6 +125,7 @@ modded class AROR_OperationManagerComponent
 
 	protected void MarsReply(int playerId, string message)
 	{
+		Print("[AROR MARS] " + message, LogLevel.NORMAL);
 		AROR_NotificationManagerComponent.SendHint_S(playerId, "MARS: " + message);
 	}
 }
