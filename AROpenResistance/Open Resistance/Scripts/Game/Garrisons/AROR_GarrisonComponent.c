@@ -536,6 +536,8 @@ class AROR_GarrisonComponent : ScriptComponent
 		}
 		// Crew slots are added from each actual hull's seat list on first activation.
 		m_bGenerated = true;
+		// Stores are stocked with the roster, once: a saved roster is never regenerated, so looted stores stay looted
+		StockStores_S(GetOwner(), 0);
 		Print(string.Format("[AROR GARRISON] %1 roster role=%2 level=%3 personnel reservation=%4", m_Location.GetId(), m_eRosterRole, m_iLevel, ReservedPersonnel()), LogLevel.NORMAL);
 		return true;
 	}
@@ -556,6 +558,23 @@ class AROR_GarrisonComponent : ScriptComponent
 			return m_aExtraParkedVehicles[variant - 1];
 		return faction.m_sParkedArmour;
 	}
+	//! Stock every store (AROR_OutpostSupplyComponent) in the composition from the roster army's faction preset
+	protected void StockStores_S(IEntity entity, int depth)
+	{
+		if (!entity || depth > 4)
+			return;
+		IEntity child = entity.GetChildren();
+		while (child)
+		{
+			AROR_OutpostSupplyComponent store = AROR_OutpostSupplyComponent.Cast(child.FindComponent(AROR_OutpostSupplyComponent));
+			if (store)
+				store.Stock_S(m_eRosterRole);
+			else
+				StockStores_S(child, depth + 1);
+			child = child.GetSibling();
+		}
+	}
+
 	static const int SENTRY_VARIANT = 1000;	//!< Infantry variants from here are tower marksmen; variant - SENTRY_VARIANT is the post
 
 	//! Guard towers (AROR_SentryPostComponent) among the composition's direct children, in order

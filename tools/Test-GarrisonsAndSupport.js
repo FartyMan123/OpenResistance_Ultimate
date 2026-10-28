@@ -110,11 +110,13 @@ function runGarrisonsAndSupportTests(sources) {
   const add=compile(sources.garrison,'AddSlot'),reserve=compile(sources.garrison,'ReservedPersonnel'),generate=compile(sources.garrison,'Generate_S');
   function roster(type,override=0,staticOverride=0,omitParked=false,extraTeams=0,parked=[],posts=0){
     const state={m_aSlots:[],m_bGenerated:false,m_iDefenceLevel:override,m_iStaticWeaponCountOverride:staticOverride,m_bOmitParkedArmour:omitParked,IsEligible:()=>true,
-      m_aExtraParkedVehicles:parked,GetExtraInfantryTeams:()=>extraTeams,SentryPosts:()=>Array.from({length:posts},()=>({})),GetExtraParkedCount:()=>parked.length,
+      m_aExtraParkedVehicles:parked,GetExtraInfantryTeams:()=>extraTeams,SentryPosts:()=>Array.from({length:posts},()=>({})),GetOwner:()=>({}),stocked:0,StockStores_S(entity,depth){this.stocked++;},GetExtraParkedCount:()=>parked.length,
       m_Location:{GetControllingRole:()=>1,GetLocationType:()=>type,GetId:()=>'site'},AddSlot:add,ReservedPersonnel:reserve,InfantryPrefab:compile(sources.garrison,'InfantryPrefab'),StaticPrefab:compile(sources.garrison,'StaticPrefab'),GetStaticWeaponCount:compile(sources.garrison,'GetStaticWeaponCount')};
     generate.call(state,faction);return state;
   }
   const towered=roster(types.OUTPOST,1,0,false,0,[],2),plain=roster(types.OUTPOST,1);
+  check(towered.stocked===1&&plain.stocked===1,'stores are stocked once, when the roster is generated');
+  generate.call(plain,faction);check(plain.stocked===1,'an existing roster never restocks its stores');
   const sentries=towered.m_aSlots.filter(s=>s.m_iKind===0&&s.m_iVariant>=1000);
   check(sentries.length===2&&sentries.map(s=>s.m_iVariant).join(',')==='1000,1001','one marksman per guard tower, recording its post');
   check(new Set(sentries.map(s=>s.m_iGroup)).size===2&&sentries.every(s=>s.m_iGroup>Math.max(...plain.m_aSlots.map(p=>p.m_iGroup))),'each sentry is its own group after every authored group');
