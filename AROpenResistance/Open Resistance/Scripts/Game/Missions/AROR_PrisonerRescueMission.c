@@ -4,7 +4,7 @@
 //! each prisoner who arrives.
 class AROR_PrisonerRescueMission : AROR_Mission
 {
-	protected static const ref array<AROR_ELocationType> SITE_TYPES = {AROR_ELocationType.TOWN, AROR_ELocationType.CITY, AROR_ELocationType.OUTPOST, AROR_ELocationType.MILITARY_BASE, AROR_ELocationType.FACTORY, AROR_ELocationType.RESOURCES, AROR_ELocationType.PORT};
+	protected static const ref array<AROR_ELocationType> SITE_TYPES = {AROR_ELocationType.TOWN, AROR_ELocationType.CITY, AROR_ELocationType.OUTPOST, AROR_ELocationType.MILITARY_BASE, AROR_ELocationType.FACTORY, AROR_ELocationType.RESOURCES, AROR_ELocationType.PORT, AROR_ELocationType.HELIPORT};
 
 	protected static const int PRISONERS = 3;
 	protected static const float FREE_DISTANCE = 10;	//!< A Resistance player this close frees them...

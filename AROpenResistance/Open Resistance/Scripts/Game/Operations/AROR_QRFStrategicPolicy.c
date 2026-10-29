@@ -30,6 +30,7 @@ class AROR_QRFStrategicPolicy
 			case AROR_ELocationType.AIRPORT: return 180;
 			case AROR_ELocationType.MILITARY_BASE: return 160;
 			case AROR_ELocationType.PORT: return 160;
+			case AROR_ELocationType.HELIPORT: return 160;
 			case AROR_ELocationType.OUTPOST: return 130;
 			case AROR_ELocationType.RESOURCES: return 120;
 		}

@@ -146,6 +146,12 @@ class AROR_MapFrameIcon
 				strokes.Insert(Points("2 14 12 9 22 14"));
 				strokes.Insert(Points("8 21 12 19 16 21"));
 				return;
+			case AROR_ELocationType.HELIPORT:
+				strokes.Insert(Arc(12, 12, 10, 0, 360, 16));
+				strokes.Insert(Points("8 7 8 17"));
+				strokes.Insert(Points("16 7 16 17"));
+				strokes.Insert(Points("8 12 16 12"));
+				return;
 			case AROR_ELocationType.FACTORY:
 				strokes.Insert(Points("2 22 2 10 8 14 8 10 14 14 14 3 20 3 20 22 2 22"));
 				return;

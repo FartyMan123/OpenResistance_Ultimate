@@ -33,6 +33,7 @@ class AROR_InvaderCampaignPolicy
 			case AROR_ELocationType.RESOURCES: return Math.Round(baseline * 0.9);
 			case AROR_ELocationType.FACTORY: return Math.Round(baseline * 1.6);
 			case AROR_ELocationType.PORT: return Math.Round(baseline * 1.5);
+			case AROR_ELocationType.HELIPORT: return Math.Round(baseline * 1.5);
 			case AROR_ELocationType.AIRPORT: return Math.Round(baseline * 2.5);
 		}
 		return 0;

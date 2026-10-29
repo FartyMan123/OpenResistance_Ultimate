@@ -1,7 +1,7 @@
 //! Supply Sabotage: two loaded enemy supply trucks parked under guard at a military site. Destroy both.
 class AROR_SabotageMission : AROR_Mission
 {
-	protected static const ref array<AROR_ELocationType> SITE_TYPES = {AROR_ELocationType.OUTPOST, AROR_ELocationType.MILITARY_BASE, AROR_ELocationType.FACTORY, AROR_ELocationType.RESOURCES, AROR_ELocationType.PORT, AROR_ELocationType.AIRPORT};
+	protected static const ref array<AROR_ELocationType> SITE_TYPES = {AROR_ELocationType.OUTPOST, AROR_ELocationType.MILITARY_BASE, AROR_ELocationType.FACTORY, AROR_ELocationType.RESOURCES, AROR_ELocationType.PORT, AROR_ELocationType.HELIPORT, AROR_ELocationType.AIRPORT};
 
 	protected static const int TARGETS = 2;
 
