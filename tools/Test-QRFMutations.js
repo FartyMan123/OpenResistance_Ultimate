@@ -1,5 +1,11 @@
 // Mutation checks prove selected regressions are caught; source files are never edited.
 const cases=[
+ {name:'airborne share ignores running history',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_QRFResponseMix.c',suite:'Test-QRFResponseMix.js',
+  mutate:s=>s.replace('return airborne < Math.Round((dispatched + 1) * (percent / 100.0));','return false;')},
+ {name:'dispatch history counts duplicate ACTIVE callbacks',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_OperationManagerComponent.c',suite:'Test-QRFResponseMix.js',
+  mutate:s=>s.replace(' || operation.m_bResponseMixCounted','')},
+ {name:'airborne construction loses its mix classification',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_ReaperQRFExecutor.c',suite:'Test-QRFInterruptions.js',
+  mutate:s=>s.replace('operation.m_bResponseMixAirborne = true;','operation.m_bResponseMixAirborne = false;')},
  {name:'new campaigns start above tier one',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_OperationManagerComponent.c',suite:'Test-QRFProgression.js',
   mutate:s=>s.replace('[Attribute("0", desc: "Initial crackdown percentage','[Attribute("20", desc: "Initial crackdown percentage')},
  {name:'capture escalation returns to early maximum intensity',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_OperationManagerComponent.c',suite:'Test-QRFProgression.js',

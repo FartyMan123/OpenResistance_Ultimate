@@ -6,6 +6,8 @@ Scope: Chicken only, both enemy roles, ordinary capture QRFs, trusted attacks, a
 
 ## Evidence and repeatable checks
 
+Current source also targets a saved 30% running airborne/joint share of ordinary dispatched QRFs per army. It excludes failed preparation and explicit/debug/scripted requests, and falls back to ground when aviation is not feasible before funding/construction. Policy serializer version 4 retains versions 1-3 with empty historical mix counters. The new actual-source suite covers routing, exact running quotas, duplicate/reentrant accounting and save migration. Native compilation and Play acceptance of this change remain pending.
+
 The [tier-one/linear-balance follow-up](QRF_REVIEW_FOLLOWUP.md#tier-one-start-and-linear-response-balance--29-october-2026) starts new campaigns at 0% Crackdown, adds five percentage points per recorded capture loss, and adds one complete package per tier within every ground/joint band. Prices, personnel budgets, lead/reserve counts and response previews reflect the smaller upper-tier recipes. Equipment Readiness, full native passenger loads and all boarding/exit safety checks are retained. Existing saved escalation is preserved.
 [Native Vostok/Crow Hill failure](QRF_RETALIATION_FAILURE.md): Workbench confirmed that attributed script initializers overwrote recipe/profile resource values and disabled the executor. Those initializers are removed; script-created fixtures use explicit factories. Retaliation banners now require actual deployment rather than request acceptance. The fix needs a fresh compile and full Chicken reload; native deployment success is not yet verified.
 
@@ -13,7 +15,7 @@ The [combined reconciliation](RECONCILIATION_VALIDATION.md) includes the new str
 
 The six review issues and their dispositions, shipped settings and native reproductions are recorded in [Rowan review follow-up](QRF_REVIEW_FOLLOWUP.md). Four additional mutations cover active dispatch failure, reserve boarding deadlines, unknown-removal classification and banner estimate consistency. Long Cyrillic/proportional-font rendering remains visually unverified.
 
-Current combined result: **32 suites / 97,854 mocked assertions**, including **54 detected source mutations** and the 10,000-tick simulated scheduler soak. The original 27-suite / 95,936-assertion evidence remains in Git history. The current lexical check covers 215 addon scripts and is not an Enforce compilation.
+Current combined result: **33 suites / 99,749 mocked assertions**, including **57 detected source mutations** and the 10,000-tick simulated scheduler soak. The original 27-suite / 95,936-assertion evidence remains in Git history. The current lexical check covers 216 addon scripts and is not an Enforce compilation.
 
 The [full-load follow-up](QRF_REVIEW_FOLLOWUP.md#full-ground-transport-loads) fills native ground passenger capacity within updated reserved ceilings and routes passenger-carrying light/armoured profiles through delivery and infantry unloading. Driver/gunner crews remain separate. Prices and response coverage reflect the larger reservations. Later native logs confirm ground boarding with 15 occupants per truck and five per Humvee; delivery remains unverified. Other physical occupancy counts remain unverified; `EstimatedPersonnel` in the price CSV is `NOT_RUN`. Fewer affordability-loop assertions execute because larger full-load quotes exceed more sampled balances; all 50 funded army/Readiness/Crackdown combinations still pass.
 

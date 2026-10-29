@@ -1,7 +1,7 @@
 //! QRF policy persists independently of Economy. Physical deployments/contacts remain session-local.
 class AROR_OperationManagerComponentSerializer : ScriptedComponentSerializer
 {
-	protected static const int VERSION = 3;
+	protected static const int VERSION = 4;
 	override static typename GetTargetType()
 	{
 		return AROR_OperationManagerComponent;
@@ -18,6 +18,10 @@ class AROR_OperationManagerComponentSerializer : ScriptedComponentSerializer
 		// Do not debit another component while serializing. Carry pending confirmed losses as debt.
 		context.WriteValue("occupierDebt", finance.Debt(AROR_EFactionRole.OCCUPIERS) + finance.PendingLossValue(AROR_EFactionRole.OCCUPIERS));
 		context.WriteValue("invaderDebt", finance.Debt(AROR_EFactionRole.INVADERS) + finance.PendingLossValue(AROR_EFactionRole.INVADERS));
+		context.WriteValue("occupierQRFDispatches", manager.GetQRFDispatchCount(AROR_EFactionRole.OCCUPIERS));
+		context.WriteValue("occupierAirDispatches", manager.GetQRFDispatchCount(AROR_EFactionRole.OCCUPIERS, true));
+		context.WriteValue("invaderQRFDispatches", manager.GetQRFDispatchCount(AROR_EFactionRole.INVADERS));
+		context.WriteValue("invaderAirDispatches", manager.GetQRFDispatchCount(AROR_EFactionRole.INVADERS, true));
 		return ESerializeResult.OK;
 	}
 	override protected bool Deserialize(notnull IEntity owner, notnull GenericComponent component, notnull LoadContext context)
@@ -48,7 +52,19 @@ class AROR_OperationManagerComponentSerializer : ScriptedComponentSerializer
 			if (occupierCrackdown < 0 || occupierCrackdown > 1000 || invaderCrackdown < 0 || invaderCrackdown > 1000)
 				return false;
 		}
+		int occupierDispatches;
+		int occupierAir;
+		int invaderDispatches;
+		int invaderAir;
+		if (version >= 4)
+		{
+			if (!context.ReadValue("occupierQRFDispatches", occupierDispatches) || !context.ReadValue("occupierAirDispatches", occupierAir) || !context.ReadValue("invaderQRFDispatches", invaderDispatches) || !context.ReadValue("invaderAirDispatches", invaderAir))
+				return false;
+			if (!AROR_QRFResponseMix.CountsValid(occupierDispatches, occupierAir) || !AROR_QRFResponseMix.CountsValid(invaderDispatches, invaderAir))
+				return false;
+		}
 		manager.RestoreQRFStrategy_S(occupierPressure, invaderPressure, occupierDebt, invaderDebt, occupierCrackdown, invaderCrackdown);
+		manager.RestoreQRFResponseMix_S(occupierDispatches, occupierAir, invaderDispatches, invaderAir);
 		return true;
 	}
 }

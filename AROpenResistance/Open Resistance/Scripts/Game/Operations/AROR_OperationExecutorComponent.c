@@ -1921,7 +1921,10 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			operation.m_iRequestedTier = desired;
 		}
 		int readinessLevel = QRFPoolReadinessLevel(operation);
-		AROR_GroundQRFRecipe paid = FindStrategicGroundRecipe(operation.GetRole(), commander.GetFactionKey(), desired, false, readinessLevel);
+		int airBucket = -1;
+		if (operation.m_bResponseMixTracked)
+			airBucket = operation.m_iResponseMixBucket;
+		AROR_GroundQRFRecipe paid = FindStrategicGroundRecipe(operation.GetRole(), commander.GetFactionKey(), desired, false, readinessLevel, airBucket);
 		if (paid)
 			return paid;
 		if (operation.m_bCaptureThreatRecorded && m_Operations.AllowsMinimumCaptureQRF())
@@ -2104,7 +2107,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 	[Attribute("0", desc: "Allow authored joint airborne/ground responses in campaign selection and MARS. Requires airborne execution and tactical coordination.")]
 	protected bool m_bAllowJointResponses;
 
-	protected AROR_GroundQRFRecipe FindStrategicGroundRecipe(AROR_EFactionRole role, string faction, int desired, bool minimumCapture = false, int readinessLevel = 0)
+	protected AROR_GroundQRFRecipe FindStrategicGroundRecipe(AROR_EFactionRole role, string faction, int desired, bool minimumCapture = false, int readinessLevel = 0, int airBucket = -1)
 	{
 		AROR_GroundQRFRecipe best;
 		if (readinessLevel == 0)
@@ -2115,6 +2118,8 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		foreach (AROR_GroundQRFRecipe recipe : m_aGroundQRFRecipes)
 		{
 			bool joint = recipe && recipe.m_eResponseType == AROR_EResponseType.AIR_GROUND;
+			if ((airBucket == 0 && joint) || (airBucket == 1 && !joint))
+				continue;
 			if (joint && (!m_bAllowJointResponses || !m_bAllowAirborneResponses || !m_bQRFTacticalCommander || minimumCapture))
 				continue;
 			if (!AROR_ResponsePolicy.IsRecipeEligible(recipe, readinessLevel, desired) || (best && (recipe.m_iLevel < best.m_iLevel || (recipe.m_iLevel == best.m_iLevel && (!joint || best.m_eResponseType == AROR_EResponseType.AIR_GROUND)))))

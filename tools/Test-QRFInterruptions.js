@@ -186,6 +186,7 @@ const executor='AROR_OperationExecutorComponent',reaper='AROR_ReaperQRFExecutor'
   check(selected===(available?expected:''),'strongest unlocked affordable air profile selected with heavy profile first');
   check(ctx.m_aForces.length===(available?2:0)&&quoted===(available?1:0),'no unfunded air construction can leak reservations');
   if(available)check(ctx.m_aForces.every(f=>f.m_bUnescorted===(selected==='light')),'light/escorted execution flag follows the frozen profile');
+  if(available)check(op.m_bResponseMixAirborne===true,'both standalone air profiles mark the operation for actual-dispatch mix accounting');
   else check(waiting===1,'missing collateral uses bounded scheduler spawn wait');
  }
  env.AROR_LocationManagerComponent=savedLocations;

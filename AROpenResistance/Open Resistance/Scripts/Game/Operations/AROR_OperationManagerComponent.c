@@ -32,6 +32,75 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 	protected ref AROR_QRFSpotting m_QRFSpotting = new AROR_QRFSpotting();
 	[Attribute("1", desc: "Initial equipment-pool readiness for each AI role; saved capture progress drives levels 1-5", params: "1 5 1")]
 	protected int m_iStartingReadinessLevel;
+	[Attribute("30", desc: "Target percentage of ordinary dispatched QRFs containing airborne forces, separately per army. Counts standalone air and joint responses; funding and launch safety still apply.", params: "0 100 1")]
+	protected int m_iAirborneQRFShare;
+	protected int m_iOccupierQRFDispatches;
+	protected int m_iOccupierAirDispatches;
+	protected int m_iInvaderQRFDispatches;
+	protected int m_iInvaderAirDispatches;
+
+	int GetQRFDispatchCount(AROR_EFactionRole role, bool airborne = false)
+	{
+		if (role == AROR_EFactionRole.OCCUPIERS)
+		{
+			if (airborne)
+				return m_iOccupierAirDispatches;
+			return m_iOccupierQRFDispatches;
+		}
+		if (role == AROR_EFactionRole.INVADERS)
+		{
+			if (airborne)
+				return m_iInvaderAirDispatches;
+			return m_iInvaderQRFDispatches;
+		}
+		return 0;
+	}
+
+	bool PreferAirQRF(AROR_EFactionRole role)
+	{
+		return AROR_QRFResponseMix.PreferAir(GetQRFDispatchCount(role), GetQRFDispatchCount(role, true), m_iAirborneQRFShare);
+	}
+
+	void RestoreQRFResponseMix_S(int occupierTotal, int occupierAir, int invaderTotal, int invaderAir)
+	{
+		if (!Replication.IsServer() || !AROR_QRFResponseMix.CountsValid(occupierTotal, occupierAir) || !AROR_QRFResponseMix.CountsValid(invaderTotal, invaderAir))
+			return;
+		m_iOccupierQRFDispatches = occupierTotal;
+		m_iOccupierAirDispatches = occupierAir;
+		m_iInvaderQRFDispatches = invaderTotal;
+		m_iInvaderAirDispatches = invaderAir;
+	}
+
+	protected void RecordQRFDispatchMix_S(AROR_Operation operation)
+	{
+		if (!Replication.IsServer() || !operation || !operation.m_bResponseMixTracked || operation.m_bResponseMixCounted || !AROR_QRFResponseMix.IsCampaignQRF(operation))
+			return;
+		if (operation.GetState() != AROR_EOperationState.ACTIVE || !IsEnemyRole(operation.GetRole()))
+			return;
+		operation.m_bResponseMixCounted = true;
+		int total = GetQRFDispatchCount(operation.GetRole());
+		int air = GetQRFDispatchCount(operation.GetRole(), true);
+		// Preserve the ratio without overflowing bounded save counters in very long campaigns.
+		if (total >= 1000000000)
+		{
+			total = total / 2;
+			air = air / 2;
+		}
+		total++;
+		if (operation.m_bResponseMixAirborne)
+			air++;
+		if (operation.GetRole() == AROR_EFactionRole.OCCUPIERS)
+		{
+			m_iOccupierQRFDispatches = total;
+			m_iOccupierAirDispatches = air;
+		}
+		else
+		{
+			m_iInvaderQRFDispatches = total;
+			m_iInvaderAirDispatches = air;
+		}
+		Print(string.Format("[AROR MIX] role=%1 dispatched=%2 airborneOrJoint=%3 targetPercent=%4", operation.GetRole(), total, air, m_iAirborneQRFShare), LogLevel.NORMAL);
+	}
 	[Attribute("0", desc: "Initial crackdown percentage for each AI role; start new campaigns at response tier 1", params: "0 100 1")]
 	protected int m_iStartingCrackdown;
 	[Attribute("25", desc: "Long-term readiness progress per newly recorded capture loss. Combat and quiet time do not change this progress.", params: "0 100 1")]
@@ -761,6 +830,8 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 			m_QRFFinance.Observe_S(operation.m_Funding);
 			operation.m_Funding.m_bClosed = true;
 		}
+		if (state == AROR_EOperationState.ACTIVE && operation.m_bResponseMixTracked)
+			RecordQRFDispatchMix_S(operation);
 		NotifyChanged(operation);
 		return true;
 	}
@@ -927,7 +998,7 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 			return;
 		}
 		s_Instance = this;
-		bool strategyValid = m_iStartingReadinessLevel >= 1 && m_iStartingReadinessLevel <= 5;
+		bool strategyValid = m_iStartingReadinessLevel >= 1 && m_iStartingReadinessLevel <= 5 && m_iAirborneQRFShare >= 0 && m_iAirborneQRFShare <= 100;
 		if (m_iStartingCrackdown < 0 || m_iStartingCrackdown > 100)
 			strategyValid = false;
 		if (m_iCaptureReadinessPressure < 0 || m_iCaptureReadinessPressure > 100 || m_iCaptureCrackdown < 0 || m_iCaptureCrackdown > 1000)

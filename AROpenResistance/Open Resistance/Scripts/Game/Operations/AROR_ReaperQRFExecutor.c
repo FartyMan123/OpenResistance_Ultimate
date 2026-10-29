@@ -178,12 +178,90 @@ modded class AROR_OperationExecutorComponent
 				}
 			}
 		}
+		if (m_Operations && m_Operations.IsQRFStrategyEnabled() && !m_bReaperQRFTest && AROR_QRFResponseMix.IsCampaignQRF(operation))
+		{
+			StartMixedCampaignQRF(operation);
+			return;
+		}
 		if (!operation.m_sRequestedRecipeId.IsEmpty() || !operation.m_sRequestedProfileId.IsEmpty() || !GetGroundQRFRecipeId(operation.GetRole()).IsEmpty() || !m_bReaperQRFTest || !operation.UsesTacticalResponse())
 		{
 			super.StartForce(operation);
 			return;
 		}
 		StartReaperQRF(operation);
+	}
+
+	//! Freeze one running-share decision. Ordinary requests never inherit the old unconditional joint preference.
+	protected void StartMixedCampaignQRF(AROR_Operation operation)
+	{
+		if (FindForce(operation.GetId()))
+			return;
+		if (operation.m_Funding)
+		{
+			ReportSpawnWait(operation, "Committed QRF funding retains its selected backend");
+			return;
+		}
+		operation.m_bResponseMixTracked = true;
+		if (operation.m_iResponseMixBucket < 0)
+		{
+			operation.m_iResponseMixBucket = 0;
+			if (m_Operations.PreferAirQRF(operation.GetRole()))
+				operation.m_iResponseMixBucket = 1;
+		}
+		if (operation.m_iResponseMixBucket == 1 && m_bAllowAirborneResponses && ReaperSettingsValid())
+		{
+			bool airspaceFree = true;
+			foreach (AROR_OperationForce existing : m_aForces)
+			{
+				if (AROR_ReaperAirForce.Cast(existing))
+					airspaceFree = false;
+			}
+			AROR_CommanderManagerComponent commanders = AROR_CommanderManagerComponent.GetInstance();
+			AROR_Commander commander;
+			if (commanders)
+				commander = commanders.GetCommander(operation.GetRole());
+			if (airspaceFree && commander && HasMarsOrigin_S(operation.GetRole(), operation.GetTargetLocationId()))
+			{
+				if (operation.m_iRequestedTier < 1)
+					operation.m_iRequestedTier = m_Operations.GetCrackdownLevel(operation.GetRole());
+				int readiness = QRFPoolReadinessLevel(operation);
+				AROR_GroundQRFRecipe joint = FindStrategicGroundRecipe(operation.GetRole(), commander.GetFactionKey(), operation.m_iRequestedTier, false, readiness, 1);
+				if (joint)
+				{
+					StartGroundQRFRecipe(operation);
+					return;
+				}
+				foreach (AROR_ForceProfile profile : m_aForceProfiles)
+				{
+					if (!profile || !profile.m_bEnabled || !profile.IsValid() || profile.m_eType != AROR_EForceType.AIRBORNE || profile.m_eRole != operation.GetRole() || profile.m_sFactionKey != commander.GetFactionKey())
+						continue;
+					if (profile.GetWeight(AROR_EOperationType.QRF) > 0 && AffordableReaperTier(profile, operation.m_iRequestedTier, readiness) > 0)
+					{
+						StartReaperQRF(operation);
+						return;
+					}
+				}
+			}
+		}
+		if (operation.m_iResponseMixBucket == 1)
+			FallbackMixedQRFToGround(operation, "Air bucket currently unavailable or unaffordable");
+		super.StartForce(operation);
+	}
+
+	//! Only pre-construction mixed selections can change backend; no funded or materialized package is abandoned.
+	protected bool FallbackMixedQRFToGround(AROR_Operation operation, string reason)
+	{
+		if (!operation || !operation.m_bResponseMixTracked || operation.m_iResponseMixBucket != 1 || operation.m_Funding || FindForce(operation.GetId()))
+			return false;
+		operation.m_iResponseMixBucket = 0;
+		operation.m_bResponseMixAirborne = false;
+		if (m_sReaperPlanningOperation == operation.GetId())
+		{
+			m_sReaperPlanningOperation = "";
+			m_ReaperLandingSearch = null;
+		}
+		ReportSpawnWait(operation, reason + "; falling back to a ground QRF without spending airborne funds");
+		return true;
 	}
 
 	override protected void StartJointResponse(AROR_Operation operation, AROR_GroundQRFRecipe recipe, array<AROR_ForceProfile> elements)
@@ -340,17 +418,23 @@ modded class AROR_OperationExecutorComponent
 			vector escortLaunch = AROR_ReaperFlightGeometry.FormationPoint(launch, heading, m_fReaperFormationSpacing);
 			if (!IsLaunchPositionSafe(launch, target.GetCenter()) || (profile.m_iEscortCount > 0 && !IsLaunchPositionSafe(escortLaunch, target.GetCenter())))
 			{
+				if (FallbackMixedQRFToGround(operation, "Air insertion lane fails clearance"))
+					return;
 				FailOperation(operation, "An airborne insertion lane fails target/player distance checks; adjust role launch origin");
 				return;
 			}
 			float height = m_fReaperInsertionHeight + index * 15;
 			if (!AROR_ReaperFlightGeometry.IsAirspaceClear(launch, height, 14))
 			{
+				if (FallbackMixedQRFToGround(operation, "Transport insertion volume is obstructed"))
+					return;
 				FailOperation(operation, "Transport air insertion volume obstructed; adjust role launch origin");
 				return;
 			}
 			if (profile.m_iEscortCount > 0 && !AROR_ReaperFlightGeometry.IsAirspaceClear(escortLaunch, m_fReaperGunshipHeight + index * m_fReaperGunshipBand, 14))
 			{
+				if (FallbackMixedQRFToGround(operation, "Escort insertion volume is obstructed"))
+					return;
 				FailOperation(operation, "Escort air insertion volume obstructed; adjust role launch origin");
 				return;
 			}
@@ -402,6 +486,7 @@ modded class AROR_OperationExecutorComponent
 		}
 		else if (!operation.BindForceProfile_S(profile.m_sId, level))
 			return;
+		operation.m_bResponseMixAirborne = true;
 		CreateQRFTacticalCommander(operation, totalPackages, home);
 		if (jointRecipe && operation.m_TacticalCommander)
 			operation.m_TacticalCommander.m_bJointResponse = true;
@@ -483,6 +568,8 @@ modded class AROR_OperationExecutorComponent
 			return false;
 		if (!m_ReaperLandingSearch.HasResult())
 		{
+			if (FallbackMixedQRFToGround(operation, "No safe landing pad"))
+				return false;
 			FailOperation(operation, "No safe landing pad; " + m_ReaperLandingSearch.GetDiagnostics());
 			return false;
 		}

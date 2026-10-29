@@ -1296,6 +1296,7 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
    m_bMinimumCaptureQRF 1
    m_bQRFStrategicEconomy 1
    m_iStartingReadinessLevel 1
+   m_iAirborneQRFShare 30
    m_iStartingCrackdown 0
    m_iCaptureReadinessPressure 25
    m_iCaptureCrackdown 50

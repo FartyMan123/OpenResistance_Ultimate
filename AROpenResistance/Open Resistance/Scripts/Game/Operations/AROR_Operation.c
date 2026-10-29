@@ -16,6 +16,11 @@ class AROR_Operation
 	ref AROR_QRFTacticalCommander m_TacticalCommander;
 	ref AROR_QRFFunding m_Funding;
 	int m_iRequestedTier;
+	//! Ordinary campaign selection only; debug/scripted requests retain their explicit family.
+	int m_iResponseMixBucket = -1;
+	bool m_bResponseMixTracked;
+	bool m_bResponseMixAirborne;
+	bool m_bResponseMixCounted;
 	//! Equipment availability is frozen alongside requested intensity before recipe selection.
 	int m_iPoolReadinessLevel;
 	int m_iThreatPriority;
