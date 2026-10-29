@@ -1,4 +1,4 @@
-[ComponentEditorProps(category: "OpenResistance/Commanders", description: "Optional resource-funded, distant US/USSR territorial simulation. No physical battles or second bank.")]
+[ComponentEditorProps(category: "OpenResistance/Commanders", description: "Optional resource-funded Invader push north from the support corridor: distant US/USSR battles are simulated, Resistance-held sites get a physical attack. No second bank.")]
 class AROR_InvaderCampaignComponentClass : SCR_BaseGameModeComponentClass {}
 
 class AROR_InvaderCampaignComponent : SCR_BaseGameModeComponent
@@ -11,7 +11,7 @@ class AROR_InvaderCampaignComponent : SCR_BaseGameModeComponent
 	protected string m_sForwardBaseId;
 	[Attribute("20000", desc: "One-time opening grant into the existing Invader faction bank; saved to prevent repeat grants.", params: "0 1000000 100")]
 	protected int m_iOpeningGrant;
-	[Attribute("300", desc: "Seconds between simulated engagements; checked on enemy commander evaluations.", params: "30 3600 1")]
+	[Attribute("900", desc: "Seconds between Invader pushes on the southernmost site they do not hold (simulated against the Occupiers, a physical attack against the Resistance); checked on enemy commander evaluations.", params: "30 3600 1")]
 	protected int m_iBattleInterval;
 	[Attribute("120", desc: "Initial preparation seconds after the first grant, before the first engagement.", params: "30 3600 1")]
 	protected int m_iInitialDelay;
@@ -44,6 +44,9 @@ class AROR_InvaderCampaignComponent : SCR_BaseGameModeComponent
 	protected ref array<AROR_LocationComponent> m_aSites = {};
 	protected ref array<vector> m_aPlayers = {};
 	protected ref array<AROR_Operation> m_aOperations = {};
+	protected string m_sAdvanceHold;	//!< Last logged reason the push is waiting; logged again only when it changes
+
+	protected static const int ADVANCE_RETRY_SECONDS = 30;	//!< A held push checks its target again this soon
 
 	static AROR_InvaderCampaignComponent GetInstance() { return s_Instance; }
 	bool IsAdvanceActive() { return m_bInvaderCampaign && m_bSeeded && !m_bQuarantined; }
@@ -141,8 +144,65 @@ class AROR_InvaderCampaignComponent : SCR_BaseGameModeComponent
 		}
 		if (now < m_iNextBattleAt)
 			return;
-		m_iNextBattleAt = now + m_iBattleInterval * 1000;
 		Survey_S();
+		string hold = Advance_S(corridor, foothold);
+		if (!hold.IsEmpty())
+		{
+			// The push waits for its target rather than skipping to another one
+			m_iNextBattleAt = now + ADVANCE_RETRY_SECONDS * 1000;
+			if (hold != m_sAdvanceHold)
+				Print("[AROR INVADER] push held: " + hold, LogLevel.NORMAL);
+			m_sAdvanceHold = hold;
+			return;
+		}
+		m_sAdvanceHold = string.Empty;
+		m_iNextBattleAt = now + m_iBattleInterval * 1000;
+		Counter_S(corridor, foothold);
+	}
+
+	//! The fixed-period push: the southernmost military site the Invaders do not hold, on their connected front.
+	//! An Occupier site is fought out in the simulation; a Resistance site gets a physical attack.
+	//! Returns why the push must wait, or empty when it went ahead (or there is nothing left to take).
+	protected string Advance_S(AROR_LocationComponent corridor, AROR_LocationComponent foothold)
+	{
+		AROR_LocationComponent target = SelectTarget(AROR_EFactionRole.INVADERS, corridor.GetCenter(), foothold);
+		if (!target)
+			return string.Empty;
+		if (target.GetControllingRole() == AROR_EFactionRole.RESISTANCE)
+		{
+			string id = m_Operations.LaunchTerritoryAttack_S(AROR_EFactionRole.INVADERS, target.GetId());
+			if (id.IsEmpty())
+				return "attack on " + target.GetId() + ": " + m_Operations.GetAttackFailure();
+			Print(string.Format("[AROR INVADER] push: physical attack %1 on Resistance-held %2", id, target.GetId()), LogLevel.NORMAL);
+			return string.Empty;
+		}
+		// Balance: at their goal share the Invaders consolidate instead of taking more Occupier ground
+		if (ShareOverGoal() >= 0)
+		{
+			Print(string.Format("[AROR INVADER] push: at goal share, %1 left to the Occupiers this period", target.GetId()), LogLevel.NORMAL);
+			return string.Empty;
+		}
+		if (!IsDistant(target))
+			return target.GetId() + " has players, a garrison or an operation nearby";
+		ResolveBattle_S(AROR_EFactionRole.INVADERS, target);
+		return string.Empty;
+	}
+
+	//! Balance: while the Invaders hold more than their goal share of military sites (after losses elsewhere or a
+	//! raised goal falling back), the Occupiers win back the Invaders' outermost site in the simulation, so the front
+	//! settles around the goal instead of overrunning the island.
+	protected void Counter_S(AROR_LocationComponent corridor, AROR_LocationComponent foothold)
+	{
+		if (ShareOverGoal() <= 0)
+			return;
+		AROR_LocationComponent target = SelectTarget(AROR_EFactionRole.OCCUPIERS, corridor.GetCenter(), foothold);
+		if (target)
+			ResolveBattle_S(AROR_EFactionRole.OCCUPIERS, target);
+	}
+
+	//! Invader-held share of the surveyed military sites against their goal share: positive above it, 0 at it
+	protected int ShareOverGoal()
+	{
 		int invaders;
 		foreach (AROR_LocationComponent site : m_aSites)
 		{
@@ -150,17 +210,7 @@ class AROR_InvaderCampaignComponent : SCR_BaseGameModeComponent
 				invaders++;
 		}
 		int goal = AROR_InvaderCampaignPolicy.TargetShare(m_iBaselineShare, m_Operations.GetReadinessLevel(AROR_EFactionRole.INVADERS), m_Operations.GetCrackdownPercent(AROR_EFactionRole.INVADERS));
-		int invaderIndustry = Industry(AROR_EFactionRole.INVADERS);
-		int occupierIndustry = Industry(AROR_EFactionRole.OCCUPIERS);
-		int invaderWin = AROR_InvaderCampaignPolicy.BattleChance(1, 1, invaderIndustry, occupierIndustry);
-		int occupierWin = AROR_InvaderCampaignPolicy.BattleChance(1, 1, occupierIndustry, invaderIndustry);
-		int chance = AROR_InvaderCampaignPolicy.InvaderAttackChance(invaders, m_aSites.Count(), goal, invaderWin, occupierWin);
-		AROR_EFactionRole attacker = AROR_EFactionRole.INVADERS;
-		if (Math.RandomInt(0, 100) >= chance)
-			attacker = AROR_EFactionRole.OCCUPIERS;
-		AROR_LocationComponent target = SelectTarget(attacker, corridor.GetCenter(), foothold);
-		if (target)
-			ResolveBattle_S(attacker, target);
+		return invaders * 100 - goal * m_aSites.Count();
 	}
 
 	protected void Survey_S()
@@ -201,16 +251,19 @@ class AROR_InvaderCampaignComponent : SCR_BaseGameModeComponent
 		}
 		return !m_Operations.HasPendingQRFThreat(AROR_EFactionRole.OCCUPIERS, site.GetId()) && !m_Operations.HasPendingQRFThreat(AROR_EFactionRole.INVADERS, site.GetId());
 	}
+	//! Invaders: the southernmost site they do not hold, whoever holds it (the Resistance included), within reach of
+	//! one of their sites. Occupiers: the Invader site furthest from the corridor that is clear of players.
 	protected AROR_LocationComponent SelectTarget(AROR_EFactionRole attacker, vector corridor, AROR_LocationComponent foothold)
 	{
-		AROR_EFactionRole defender = AROR_EFactionRole.OCCUPIERS;
-		if (attacker == AROR_EFactionRole.OCCUPIERS)
-			defender = AROR_EFactionRole.INVADERS;
 		AROR_LocationComponent best;
 		float score = float.MAX;
 		foreach (AROR_LocationComponent candidate : m_aSites)
 		{
-			if (candidate.GetControllingRole() != defender || !candidate.CanBeTakenBy(attacker) || !IsDistant(candidate))
+			AROR_EFactionRole holder = candidate.GetControllingRole();
+			if (holder == attacker || !candidate.CanBeTakenBy(attacker))
+				continue;
+			// The Occupiers only win back Invader sites, and only out of sight; the push waits on its target instead
+			if (attacker == AROR_EFactionRole.OCCUPIERS && (holder != AROR_EFactionRole.INVADERS || !IsDistant(candidate)))
 				continue;
 			float nearest = float.MAX;
 			foreach (AROR_LocationComponent origin : m_aSites)
@@ -223,9 +276,11 @@ class AROR_InvaderCampaignComponent : SCR_BaseGameModeComponent
 				continue;
 			if (nearest > m_fFrontierReach && !restoreFoothold)
 				continue;
-			float rank = vector.DistanceXZ(corridor, candidate.GetCenter());
+			// Invaders: lowest north coordinate first. Occupiers: reclaim the exposed outer front first.
+			vector position = candidate.GetCenter();
+			float rank = position[2];
 			if (attacker == AROR_EFactionRole.OCCUPIERS)
-				rank = -rank; // Reclaim the exposed outer front first.
+				rank = -vector.DistanceXZ(corridor, position);
 			if (!best || rank < score || (rank == score && candidate.GetId().Compare(best.GetId()) < 0))
 			{
 				best = candidate;

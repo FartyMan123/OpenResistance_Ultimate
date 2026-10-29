@@ -25,6 +25,7 @@ extension(String.prototype,'IndexOf',function(x){return this.indexOf(x);});
 extension(String.prototype,'Substring',function(start,len){return this.substring(start,start+len);});
 extension(String.prototype,'ToInt',function(){return parseInt(this,10)||0;});
 extension(String.prototype,'Contains',function(x){return this.includes(x);});
+extension(String.prototype,'Compare',function(x){return this<x?-1:this>x?1:0;});
 extension(Number.prototype,'ToString',function(){return this.toString();});
 const roles={RESISTANCE:0,OCCUPIERS:1,INVADERS:2,CIVILIANS:3};
 const types={MOTORIZED:0,MECHANIZED:1,ARMOUR:2,AIRBORNE:3,INFANTRY:4};
@@ -40,7 +41,7 @@ const env={
   AROR_EFactionRole:roles,AROR_EForceType:types,AROR_EOperationType:opTypes,AROR_EOperationState:states,
   AROR_ELocationType:{HQ:1,OUTPOST:8}, AROR_MarsEntry:class {},
   Replication:{IsServer:()=>server},
-  Math:Object.assign(Object.create(Math),{Max:Math.max,Min:Math.min,Clamp:(v,a,b)=>Math.max(a,Math.min(b,v))}),
+  Math:Object.assign(Object.create(Math),{Max:Math.max,Min:Math.min,Round:Math.round,Clamp:(v,a,b)=>Math.max(a,Math.min(b,v))}),
   string:{Empty:'',Format:(s,...args)=>s.replace(/%(\d+)/g,(_,i)=>args[i-1])},
   Print:message=>printed.push(message),LogLevel:{NORMAL:0,WARNING:1},
   GetGame:()=>({GetPlayerManager:()=>({GetPlayerControlledEntity:()=>player})}),
@@ -103,7 +104,7 @@ const recipes=[...layer.matchAll(/^ {4}AROR_GroundQRFRecipe \{([\s\S]*?)^ {4}\}/
 });
 const executor={m_aForceProfiles:profiles,m_aGroundQRFRecipes:recipes,m_bAllowAirborneResponses:true,m_bAllowJointResponses:true,m_bQRFTacticalCommander:true,m_bExecuteOperations:true,m_bQRFRequireFriendlyOrigin:true,
   BestOrigin:compile('AROR_OperationExecutorComponent','BestOrigin'),IsUsableOrigin:compile('AROR_OperationExecutorComponent','IsUsableOrigin'),
-  OriginCost:(a,b)=>env.vector.DistanceXZ(a,b),IsGarrisonDepleted:()=>false,m_mOriginLaunchedAt:{Contains:()=>false},m_fMinOriginDistance:1500,
+  OriginCost:(a,b)=>env.vector.DistanceXZ(a,b),IsGarrisonDepleted:()=>false,m_mOriginLaunchedAt:{Contains:()=>false},m_aRoadlessOrigins:[],m_fMinOriginDistance:1500,
   GetResponsePreview:compile('AROR_OperationExecutorComponent','GetResponsePreview'),
   IsLaunchPositionSafe:()=>true,GetMarsEntries:compile('AROR_OperationExecutorComponent','GetMarsEntries'),
   HasFriendlyQRFOrigin:compile('AROR_OperationExecutorComponent','HasFriendlyQRFOrigin'),HasMarsOrigin_S:compile('AROR_OperationExecutorComponent','HasMarsOrigin_S')};
@@ -261,56 +262,99 @@ completion.m_iClock=121;processOperations.call(completion,opTypes.QRF);check(out
 attackForCompletion.m_iSpawnPreparationTimeout=0;completion.m_iClock=90;outcome=null;
 processOperations.call(completion,opTypes.QRF);check(outcome.state===states.FAILED,'ordinary ground spawn timeout unchanged');
 
+const TAM='AROR_TerritoryAttackManager';
 env.AROR_TerritoryAttackState=class {constructor(){this.m_iQRFCompletedAt=-1;this.m_sActiveQRF='';} };
 env.AROR_TerritoryAttackState.prototype.IsDue=compile('AROR_TerritoryAttackState','IsDue');
 let state=new env.AROR_TerritoryAttackState();Object.assign(state,{m_sLocationId:'target',m_iCapturedAt:1000,m_iNextAttempt:1000});
-check(!state.IsDue(10000,900,300),'elapsed grace alone cannot replace a physical QRF');
+check(!state.IsDue(1299,300,300)&&state.IsDue(1300,300,300),'a held site is due once its capture grace ends, with no capture QRF required');
+state.m_sActiveQRF='qrf';check(!state.IsDue(5000,300,300),'a capture QRF still deployed on the site holds the attack');state.m_sActiveQRF='';
 state.m_iQRFCompletedAt=1800;
-check(!state.IsDue(1900,900,300)&&state.IsDue(2100,900,300),'post-QRF recovery independently enforced');
-state.m_iQRFCompletedAt=1200;
-check(!state.IsDue(1899,900,300)&&state.IsDue(1900,900,300),'15-minute capture boundary');
-const changed=compile('AROR_TerritoryAttackManager','NotifyChanged');
-m=manager();Object.assign(m,{BaseNotifyChanged:()=>{},RecordTerritoryOperationChange:compile('AROR_TerritoryAttackManager','RecordTerritoryOperationChange'),m_aAttackTerritories:[state],m_iTerritoryAttackRest:900});
+check(!state.IsDue(2099,300,300)&&state.IsDue(2100,300,300),'post-QRF recovery independently enforced');
 state.m_iQRFCompletedAt=-1;
+const changed=compile(TAM,'NotifyChanged');
+function attackPolicy(target){return Object.assign(target,{BaseTick:()=>{},BaseNotifyChanged:()=>{},m_AttackLocations:locations,m_iNextTerritoryAttackTick:0,m_iAttackRestUntil:0,m_aQRFThreats:[],m_aAttackTerritories:[],
+  m_iTerritoryAttackGrace:300,m_iTerritoryAttackAfterQRF:300,m_iTerritoryAttackRest:900,m_bQRFStrategicEconomy:true,m_sAttackHoldKey:'',m_sAttackFailure:'',
+  OutstandingAttack:compile(TAM,'OutstandingAttack'),QueuedThreats:compile(TAM,'QueuedThreats'),FrontDistance:compile(TAM,'FrontDistance'),
+  LaunchTerritoryAttack_S:compile(TAM,'LaunchTerritoryAttack_S'),GetAttackFailure:compile(TAM,'GetAttackFailure'),HoldAttacks:compile(TAM,'HoldAttacks'),
+  AttackWaitReason:compile(TAM,'AttackWaitReason'),IsAttackTerritory:compile(TAM,'IsAttackTerritory'),
+  OnAttackTerritoryRemoved:compile(TAM,'OnAttackTerritoryRemoved'),OnAttackTerritoryChanged:compile(TAM,'OnAttackTerritoryChanged'),
+  RecordTerritoryOperationChange:compile(TAM,'RecordTerritoryOperationChange'),
+  GetCrackdownLevel:()=>3,GetReadinessLevel:()=>2,ScheduleAttack_S(role,target){return this.RequestOperation_S(role,opTypes.ATTACK,target,60);},GetNextRequestTime:()=>0});}
+m=attackPolicy(manager());m.m_aAttackTerritories=[state];
 let qrf=new env.AROR_Operation('qrf',1,opTypes.QRF,'target');qrf.m_bCaptureThreatRecorded=true;
-qrf.state=states.FAILED;changed.call(m,qrf);check(state.m_iQRFCompletedAt===-1,'failed spawn never satisfies prior-QRF requirement');
-qrf.state=states.ACTIVE;qrf.m_bDebugRequest=true;changed.call(m,qrf);check(!state.m_sActiveQRF,'debug QRF cannot unlock automatic attacks');
+qrf.state=states.FAILED;changed.call(m,qrf);check(state.m_iQRFCompletedAt===-1&&!state.m_sActiveQRF,'a capture QRF that never deployed leaves no recovery wait');
+qrf.state=states.ACTIVE;qrf.m_bDebugRequest=true;changed.call(m,qrf);check(!state.m_sActiveQRF,'debug QRF never holds automatic attacks');
 qrf.m_bDebugRequest=false;changed.call(m,qrf);check(state.m_sActiveQRF==='qrf','physically activated capture QRF tracked');
-qrf.state=states.FAILED;m.m_iClock=1200;changed.call(m,qrf);check(state.m_iQRFCompletedAt===1200,'combat defeat satisfies completed-QRF requirement');
+qrf.state=states.FAILED;m.m_iClock=1200;changed.call(m,qrf);check(state.m_iQRFCompletedAt===1200&&!state.m_sActiveQRF,'its end starts the recovery wait');
 
-const tick=compile('AROR_TerritoryAttackManager','Tick');
-Object.assign(m,{BaseTick:()=>{},m_AttackLocations:locations,m_iNextTerritoryAttackTick:0,m_iAttackRestUntil:0,m_aQRFThreats:[],
-  m_iTerritoryAttackGrace:900,m_iTerritoryAttackAfterQRF:300,m_bQRFStrategicEconomy:true,
-  HasOutstandingAttackOrQRF:compile('AROR_TerritoryAttackManager','HasOutstandingAttackOrQRF'),OutstandingOperation:compile('AROR_TerritoryAttackManager','OutstandingOperation'),
-  HoldAttacks:compile('AROR_TerritoryAttackManager','HoldAttacks'),AttackWaitReason:compile('AROR_TerritoryAttackManager','AttackWaitReason'),m_sAttackHoldKey:'',
-  IsAttackTerritory:compile('AROR_TerritoryAttackManager','IsAttackTerritory'),GetCrackdownLevel:()=>3,GetReadinessLevel:()=>2,
-  ScheduleAttack_S(role,target){return this.RequestOperation_S(role,opTypes.ATTACK,target,60);},GetNextRequestTime:()=>0,AnnounceTerritoryAttack:()=>{}});
+// The Occupiers attack as soon as the Resistance holds territory: grace, then the front site nearest their base.
+const tick=compile(TAM,'Tick');
 executor.CanFundQRFThreat_S=()=>true;
-m.m_iClock=1899;tick.call(m);check(!m.m_aOperations.length,'campaign cannot attack before grace');
-m.m_iClock=1914;tick.call(m);check(m.m_aOperations.length===1,'eligible territory schedules one attack');
-check(m.m_aOperations[0].m_iRequestedTier===3&&m.m_aOperations[0].m_iPoolReadinessLevel===2,'attack freezes Crackdown and Readiness separately');
-m.m_iClock+=15;tick.call(m);check(m.m_aOperations.length===1,'campaign never duplicates outstanding attack');
-let attack=m.m_aOperations[0];attack.state=states.FAILED;changed.call(m,attack);
-check(m.m_iAttackRestUntil===m.m_iClock+900,'global rest starts at attack completion');
-m.m_iClock+=30;tick.call(m);check(m.m_aOperations.length===1,'post-attack rest blocks new work');
-m.m_iClock=m.m_iAttackRestUntil;m.m_aQRFThreats.push({});tick.call(m);check(m.m_aOperations.length===1,'queued QRF has priority');
-m.m_aQRFThreats=[];m.m_iClock+=15;executor.CanFundQRFThreat_S=()=>false;tick.call(m);
-check(m.m_aOperations.length===1,'unfunded attack does not consume slot');
-executor.CanFundQRFThreat_S=()=>true;m.m_iClock+=30;currentLocations=[site('target',0,100)];tick.call(m);
-check(m.m_aOperations.length===1,'lost launch territory blocks automatic attack');
-const reset=compile('AROR_TerritoryAttackManager','OnAttackTerritoryChanged');
-m.OnAttackTerritoryRemoved=compile('AROR_TerritoryAttackManager','OnAttackTerritoryRemoved');
-reset.call(m,site('target',0,100));check(m.m_aAttackTerritories.length===1&&m.m_aAttackTerritories[0].m_iQRFCompletedAt===-1,'recapture resets QRF eligibility and grace');
-reset.call(m,site('target',1,100));check(!m.m_aAttackTerritories.length,'enemy recapture removes target eligibility');
-
-// Debug funding is bypassed; paid automatic attacks still reserve through the one finance authority.
-const reserve=compile('AROR_OperationExecutorComponent','ReserveQRFFunding');
-let fundingCalls=0;
-const payer={m_Operations:{IsQRFStrategyEnabled:()=>true,GetQRFFinance:()=>({Reserve_S:()=>{fundingCalls++;return {};}}),QRFOverhead:()=>50},ReportSpawnWait:()=>{}};
-const paid={m_bDebugRequest:false,UsesTacticalResponse:()=>true,GetRole:()=>1};
-check(reserve.call(payer,{m_bDebugRequest:true},[],5)&&fundingCalls===0,'MARS cannot charge campaign finances');
-check(reserve.call(payer,paid,[{ReplacementQuote:()=>100,m_eType:types.MOTORIZED}],2)&&fundingCalls===1,'automatic attack uses shared paid reservation');
-
+{
+ currentLocations=[site('deep',0,100),site('front',0,3000),site('origin',1,5000)];printed=[];
+ const occupiers=attackPolicy(manager());
+ for(const s of currentLocations)occupiers.OnAttackTerritoryChanged(s);
+ check(occupiers.m_aAttackTerritories.length===2,'every Resistance-held military site (captured or loaded) is tracked at once');
+ occupiers.m_iClock=1299;tick.call(occupiers);
+ check(!occupiers.m_aOperations.length&&printed.some(x=>x.includes('capture grace')),'no attack inside the capture grace, and the log says so');
+ occupiers.m_iClock=1315;tick.call(occupiers);
+ const first=occupiers.m_aOperations[0];
+ check(occupiers.m_aOperations.length===1&&first.type===opTypes.ATTACK&&first.role===1,'grace over: the Occupiers attack without waiting for a capture QRF');
+ check(first.target==='front','the front site nearest an Occupier base is attacked first');
+ check(first.m_iRequestedTier===3&&first.m_iPoolReadinessLevel===2,'attack freezes Crackdown and Readiness separately');
+ occupiers.m_iClock+=15;tick.call(occupiers);check(occupiers.m_aOperations.length===1,'campaign never duplicates an outstanding attack');
+ first.state=states.FAILED;changed.call(occupiers,first);
+ check(occupiers.m_iAttackRestUntil===occupiers.m_iClock+900,'Occupier rest starts when their attack ends');
+ occupiers.m_iClock+=30;tick.call(occupiers);check(occupiers.m_aOperations.length===1,'rest blocks the next attack');
+ occupiers.m_iClock=occupiers.m_iAttackRestUntil;
+ const invaderAttack=new env.AROR_Operation('operation_7',2,opTypes.ATTACK,'deep');occupiers.m_aOperations.push(invaderAttack);
+ tick.call(occupiers);check(occupiers.m_aOperations.length===2&&printed.some(x=>x.includes('waiting for attack operation_7')),'an Invader attack holds the single global attack slot, and the log names it');
+ invaderAttack.state=states.SUCCEEDED;const rest=occupiers.m_iAttackRestUntil;changed.call(occupiers,invaderAttack);
+ check(occupiers.m_iAttackRestUntil===rest,'an Invader attack ending never starts the Occupier rest');
+ occupiers.m_aOperations.push(new env.AROR_Operation('operation_8',1,opTypes.QRF,'elsewhere'));
+ occupiers.m_aQRFThreats=[{m_eRole:2}];occupiers.m_iClock+=15;printed=[];tick.call(occupiers);
+ check(occupiers.m_aOperations.filter(op=>op.type===opTypes.ATTACK&&!op.IsTerminal()).length===1,'a QRF elsewhere and Invader threats no longer starve Occupier attacks');
+ const second=occupiers.m_aOperations.find(op=>op.type===opTypes.ATTACK&&!op.IsTerminal());
+ second.state=states.CANCELLED;occupiers.m_iAttackRestUntil=0;occupiers.m_aQRFThreats=[{m_eRole:1}];occupiers.m_iClock+=60;printed=[];tick.call(occupiers);
+ check(!occupiers.m_aOperations.some(op=>op.type===opTypes.ATTACK&&!op.IsTerminal())&&printed.some(x=>x.includes('queued Occupier capture response')),'their own queued capture response takes priority');
+ occupiers.m_aQRFThreats=[];executor.CanFundQRFThreat_S=()=>false;occupiers.m_iClock+=15;printed=[];
+ for(const s of occupiers.m_aAttackTerritories)s.m_iNextAttempt=0;tick.call(occupiers);
+ check(!occupiers.m_aOperations.some(op=>op.type===opTypes.ATTACK&&!op.IsTerminal())&&printed.some(x=>x.includes('cannot fund')),'an unaffordable attack takes no slot and is logged');
+ executor.CanFundQRFThreat_S=()=>true;currentLocations=[site('deep',0,100),site('front',0,3000)];occupiers.m_iClock+=30;printed=[];
+ for(const s of occupiers.m_aAttackTerritories)s.m_iNextAttempt=0;tick.call(occupiers);
+ check(!occupiers.m_aOperations.some(op=>op.type===opTypes.ATTACK&&!op.IsTerminal())&&printed.some(x=>x.includes('no safe Occupier launch site')),'no Occupier base means no attack, and the log says why');
+ occupiers.OnAttackTerritoryChanged(site('front',1,3000));
+ check(occupiers.m_aAttackTerritories.length===1,'a site the enemy retakes leaves the attack list');
+ occupiers.OnAttackTerritoryChanged(site('front',0,3000));
+ check(occupiers.m_aAttackTerritories.find(s=>s.m_sLocationId==='front').m_iCapturedAt===occupiers.m_iClock,'a recapture restarts that site grace');
+}
+// Strongholds and test attacks.
+{
+ const policy=attackPolicy(manager());
+ const vostok=site('vostok',0,100,8,{AllowsCaptureBy:r=>r===2||r===0});
+ const delaware=site('delaware',0,100,8,{AllowsCaptureBy:r=>r===1||r===0});
+ check(!policy.IsAttackTerritory(vostok,1)&&policy.IsAttackTerritory(vostok,2),'a Resistance-held Vostok is only attackable by the Invaders');
+ check(policy.IsAttackTerritory(delaware,1),'their own stronghold remains a valid Occupier target');
+ policy.OnAttackTerritoryChanged(vostok);check(!policy.m_aAttackTerritories.length,'the Occupier list skips a stronghold they cannot take');
+ const debugAttack=new env.AROR_Operation('mars',1,opTypes.ATTACK,'delaware');debugAttack.m_bDebugRequest=true;debugAttack.state=states.FAILED;
+ changed.call(policy,debugAttack);check(policy.m_iAttackRestUntil===0,'a finished test attack never starts the campaign attack rest');
+ const waitingSite=new env.AROR_TerritoryAttackState();Object.assign(waitingSite,{m_sLocationId:'delaware',m_iCapturedAt:0,m_iNextAttempt:0});policy.m_iClock=5000;
+ policy.m_aOperations=[new env.AROR_Operation('operation_9',1,opTypes.QRF,'delaware')];
+ check(policy.AttackWaitReason(waitingSite)==='Occupier QRF operation_9 still responding','an attack waits for their own QRF on the site instead of being refused by the scheduler');
+ policy.m_aOperations[0].state=states.FAILED;check(policy.AttackWaitReason(waitingSite)==='','once that QRF ends the site is due');
+}
+// The shared launch path for both armies.
+{
+ currentLocations=[site('target',0,100),site('origin',1,5000),site('vostok',2,-5000)];
+ const launcher=attackPolicy(manager());
+ const invaderId=launcher.LaunchTerritoryAttack_S(2,'target');
+ check(!!invaderId&&launcher.m_aOperations[0].role===2&&launcher.m_aOperations[0].type===opTypes.ATTACK,'the Invader push launches a real attack through the shared path');
+ check(launcher.LaunchTerritoryAttack_S(2,'target')===invaderId&&launcher.m_aOperations.length===1,'asking again returns the outstanding attack instead of a second one');
+ check(!launcher.LaunchTerritoryAttack_S(1,'target')&&launcher.GetAttackFailure().includes('scheduler refused'),'the other army is refused while that attack runs, with a reason');
+ currentLocations=[site('target',0,100),site('origin',1,5000)];launcher.m_aOperations[0].state=states.FAILED;
+ check(!launcher.LaunchTerritoryAttack_S(2,'target')&&launcher.GetAttackFailure().includes('no safe launch site'),'no Invader base means no Invader attack');
+ currentLocations=[site('target',0,100),site('origin',1,2000)];
+}
 // Workbench MARS test attacks: the territory-attack response without campaign timers, still one attack at a time.
 {
  currentLocations=[site('target',0,100),site('origin',1,2000)];
@@ -333,49 +377,21 @@ check(reserve.call(payer,paid,[{ReplacementQuote:()=>100,m_eType:types.MOTORIZED
  real.RequestOperation_S(1,opTypes.ATTACK,'target',60);
  check(real.m_iOccupiersNextAttack===real.m_iClock+300,'automatic attacks still start the normal attack interval');
 }
-// Territory attack policy: strongholds, loaded campaigns and debug attacks.
+// Hold logging: once per change of reason.
 {
- const policy=manager();
- Object.assign(policy,{m_aAttackTerritories:[],m_iTerritoryAttackRest:900,m_iAttackRestUntil:0,BaseNotifyChanged:()=>{},
-  IsAttackTerritory:compile('AROR_TerritoryAttackManager','IsAttackTerritory'),
-  OnAttackTerritoryRemoved:compile('AROR_TerritoryAttackManager','OnAttackTerritoryRemoved'),
-  RecordTerritoryOperationChange:compile('AROR_TerritoryAttackManager','RecordTerritoryOperationChange')});
- policy.OnAttackTerritoryChanged=compile('AROR_TerritoryAttackManager','OnAttackTerritoryChanged');
- const vostok=site('vostok',0,100,8,{AllowsCaptureBy:r=>r===2||r===0});
- const delaware=site('delaware',0,100,8,{AllowsCaptureBy:r=>r===1||r===0});
- check(!policy.IsAttackTerritory(vostok),'Occupiers never attack a Resistance-held Invader stronghold they cannot capture');
- check(policy.IsAttackTerritory(delaware),'their own stronghold remains a valid attack target');
- policy.OnAttackTerritoryChanged(site('fresh',0,300));
- check(policy.m_aAttackTerritories.find(s=>s.m_sLocationId==='fresh').m_iQRFCompletedAt===-1,'a capture during play still needs its deployed capture QRF');
- const notify=compile('AROR_TerritoryAttackManager','NotifyChanged');
- const debugAttack=new env.AROR_Operation('mars',1,opTypes.ATTACK,'delaware');debugAttack.m_bDebugRequest=true;debugAttack.state=states.FAILED;
- notify.call(policy,debugAttack);check(policy.m_iAttackRestUntil===0,'a finished test attack never starts the campaign attack rest');
-}
-// Attack gating explains itself once per change of reason.
-{
- const quiet=manager();printed=[];
- const waiting=new env.AROR_TerritoryAttackState();Object.assign(waiting,{m_sLocationId:'target',m_iCapturedAt:1000,m_iNextAttempt:1000});
- Object.assign(quiet,{BaseTick:()=>{},m_AttackLocations:locations,m_iNextTerritoryAttackTick:0,m_iAttackRestUntil:0,m_aQRFThreats:[],m_aAttackTerritories:[waiting],
-  m_iTerritoryAttackGrace:900,m_iTerritoryAttackAfterQRF:300,m_bQRFStrategicEconomy:true,m_sAttackHoldKey:'',
-  OutstandingOperation:compile('AROR_TerritoryAttackManager','OutstandingOperation'),HoldAttacks:compile('AROR_TerritoryAttackManager','HoldAttacks'),
-  AttackWaitReason:compile('AROR_TerritoryAttackManager','AttackWaitReason'),IsAttackTerritory:compile('AROR_TerritoryAttackManager','IsAttackTerritory'),
-  GetCrackdownLevel:()=>3,GetReadinessLevel:()=>2,ScheduleAttack_S(role,target){return this.RequestOperation_S(role,opTypes.ATTACK,target,60);},GetNextRequestTime:()=>0,AnnounceTerritoryAttack:()=>{}});
- currentLocations=[site('target',0,100),site('origin',1,2000)];executor.CanFundQRFThreat_S=()=>true;
- tick.call(quiet);
- check(printed.some(x=>x.includes('capture QRF has not deployed')),'log names the missing capture QRF');
+ currentLocations=[site('target',0,100),site('origin',1,2000)];
+ const quiet=attackPolicy(manager());printed=[];
+ const waiting=new env.AROR_TerritoryAttackState();Object.assign(waiting,{m_sLocationId:'target',m_iCapturedAt:1000,m_iNextAttempt:1000,m_sActiveQRF:'operation_3'});
+ quiet.m_aAttackTerritories=[waiting];
+ tick.call(quiet);check(printed.some(x=>x.includes('capture QRF operation_3 still deployed')),'log names the capture QRF holding the site');
  const count=printed.length;quiet.m_iClock+=15;tick.call(quiet);
  check(printed.length===count,'an unchanged reason is not repeated every evaluation');
- waiting.m_iQRFCompletedAt=1000;quiet.m_iClock=1100;tick.call(quiet);
+ waiting.m_sActiveQRF='';waiting.m_iQRFCompletedAt=1030;quiet.m_iClock+=15;tick.call(quiet);
  check(printed.some(x=>x.includes('capture grace')),'log reports the remaining capture grace');
  const grace=printed.length;quiet.m_iClock+=15;tick.call(quiet);
  check(printed.length===grace,'a countdown alone does not repeat the log');
- const blocker=new env.AROR_Operation('operation_9',2,opTypes.QRF,'elsewhere');quiet.m_aOperations.push(blocker);quiet.m_iClock+=15;tick.call(quiet);
- check(printed.some(x=>x.includes('waiting for operation_9')),'log names the operation holding every attack back');
- blocker.state=states.FAILED;quiet.m_aQRFThreats=[{}];quiet.m_iClock+=15;tick.call(quiet);
- check(printed.some(x=>x.includes('queued capture response')),'log reports queued capture responses taking priority');
- quiet.m_aQRFThreats=[];quiet.m_iClock=2500;executor.CanFundQRFThreat_S=()=>false;tick.call(quiet);
- check(printed.some(x=>x.includes('cannot fund')),'log reports an unaffordable attack');
- executor.CanFundQRFThreat_S=()=>true;quiet.m_iClock+=30;tick.call(quiet);
+ quiet.m_iClock=1310;tick.call(quiet);check(printed.some(x=>x.includes('recovery after capture QRF')),'log reports the recovery after a capture QRF');
+ quiet.m_iClock=1345;tick.call(quiet);
  check(quiet.m_aOperations.some(op=>op.type===opTypes.ATTACK)&&quiet.m_sAttackHoldKey==='','a scheduled attack clears the reason');
  currentLocations=[site('target',0,100),site('origin',1,2000)];
 }

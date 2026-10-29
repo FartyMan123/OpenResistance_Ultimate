@@ -2,25 +2,26 @@
  * Run: node tools/Test-InvaderCampaign.js
  */
 function runInvaderCampaignTests(sources, catalogue) {
-  let assertions=0, server=true, now=0, campaignReady=true, rolls=[], reports=0, bumps=0;
+  let printed=[],assertions=0, server=true, now=0, campaignReady=true, rolls=[], reports=0, bumps=0;
   const check=(ok,msg)=>{assertions++;if(!ok)throw Error(msg);};
   for(const [name,fn] of Object.entries({Count(){return this.length;},Insert(x){this.push(x);},Clear(){this.length=0;},Copy(a){this.splice(0,this.length,...a);}}))Object.defineProperty(Array.prototype,name,{value:fn,configurable:true});
   Object.defineProperty(String.prototype,'Compare',{value(other){return this<other?-1:this>other?1:0;},configurable:true});
+  Object.defineProperty(String.prototype,'IsEmpty',{value(){return !this.length;},configurable:true});
   const role={RESISTANCE:0,OCCUPIERS:1,INVADERS:2},type={TOWN:0,HQ:1,AIRPORT:2,CITY:3,FACTORY:4,MILITARY_BASE:5,PORT:6,RESOURCES:7,OUTPOST:8,SUPPORT_CORRIDOR:9};
   let seed=12345;const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};
   const bank={balances:{1:100000,2:10000},payments:[],GetFactionFunds(r){return this.balances[r]??0;},
     AddFactionFunds_S(r,n){if(server)this.balances[r]+=n;},SpendFactionFunds_S(r,n){if(!server||n<0||this.balances[r]<n)return false;this.balances[r]-=n;this.payments.push([r,n]);return true;}};
   const reserves={1:0,2:0},debt={1:0,2:0},finance={Available:r=>debt[r]>0?0:Math.max(0,bank.GetFactionFunds(r)-reserves[r])};
   let readinessLevel=2,crackdown=10,physical=[],pending=false,allSites=[];
-  const operations={GetReadinessLevel:()=>readinessLevel,GetCrackdownPercent:()=>crackdown,GetQRFFinance:()=>finance,GetOperations:a=>a.Copy(physical),HasPendingQRFThreat:()=>pending};
-  const env={AROR_EFactionRole:role,AROR_ELocationType:type,ESerializeResult:{OK:1},float:{MAX:Infinity},
+  const operations={launched:[],launchFailure:'',LaunchTerritoryAttack_S(r,id){if(this.launchFailure)return '';this.launched.push([r,id]);return 'operation_'+this.launched.length;},GetAttackFailure(){return this.launchFailure;},GetReadinessLevel:()=>readinessLevel,GetCrackdownPercent:()=>crackdown,GetQRFFinance:()=>finance,GetOperations:a=>a.Copy(physical),HasPendingQRFThreat:()=>pending};
+  const env={ADVANCE_RETRY_SECONDS:30,AROR_EFactionRole:role,AROR_ELocationType:type,ESerializeResult:{OK:1},float:{MAX:Infinity},
     Replication:{IsServer:()=>server,BumpMe:()=>bumps++},Math:{Min:Math.min,Max:Math.max,Round:Math.round,Floor:Math.floor,Ceil:Math.ceil,Clamp:(x,a,b)=>Math.max(a,Math.min(b,x)),RandomInt:(a,b)=>rolls.length?rolls.shift():Math.floor(a+random()*(b-a))},
-    vector:{DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])},Print(){},LogLevel:{NORMAL:0,ERROR:1},string:{Format:()=>''},
+    vector:{DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])},Print:x=>printed.push(String(x)),LogLevel:{NORMAL:0,ERROR:1},string:{Empty:'',Format:()=>''},
     AROR_GarrisonPolicy:{IsEnemyRole:r=>r===1||r===2},AROR_GarrisonComponent:{Cast:x=>x},AROR_FactionRolesComponent:{GetInstance:()=>({GetFaction:r=>({role:r,IsFactionEnemy:other=>r!==other.role})})},
     AROR_GameFlowComponent:{GetInstance:()=>({IsPlaythroughReady:()=>campaignReady})},AROR_OperationManagerComponent:{GetInstance:()=>operations},AROR_EconomyComponent:{GetInstance:()=>bank},
     GetGame:()=>({GetWorld:()=>({GetWorldTime:()=>now}),GetPlayerManager:()=>({GetPlayers(){},GetPlayerControlledEntity:()=>null})})};
   const names=['TargetShare','Funding','InvaderAttackChance','BattleChance','Cost','IsAdvanceActive','HasOpeningGrant','IsQuarantined','SuppressAICaptureQRF_S','GetExternalSupportBonus','RemainingDelay','RestoreCampaign_S','Quarantine_S',
-    'OnEvaluation','Survey_S','IsDistant','SelectTarget','Industry','ResolveBattle_S'];
+    'OnEvaluation','Advance_S','Counter_S','ShareOverGoal','Survey_S','IsDistant','SelectTarget','Industry','ResolveBattle_S'];
   function compile(src,name){
     const m=src.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\s*\\{([^\\r\\n]*)\\}', 'm'))||src.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
     if(!m)throw Error('Missing '+name);
@@ -37,7 +38,7 @@ function runInvaderCampaignTests(sources, catalogue) {
   for(const n of names.slice(0,5))policy[n]=compile(sources.policy,n);
   const campaign={m_bInvaderCampaign:true,m_bSeeded:false,m_bQuarantined:false,m_iNextBattleAt:0,m_iRestoredDelay:-1,m_iInitialDelay:120,m_iBattleInterval:300,m_iOpeningGrant:20000,
     m_sCorridorId:'corridor',m_sForwardBaseId:'base',m_iBaselineShare:40,m_iBattleCost:1000,m_fFrontierReach:3500,m_fPlayerClearance:3000,m_iExternalSupport:1500,m_iFundingPerReadiness:750,m_iFundingPerCrackdown:30,
-    m_aSites:[],m_aPlayers:[],m_aOperations:[],m_Commanders:{IsCampaignActive:()=>true},m_Operations:operations,m_Economy:bank,Cast:x=>x};
+    m_sAdvanceHold:'',m_aSites:[],m_aPlayers:[],m_aOperations:[],m_Commanders:{IsCampaignActive:()=>true},m_Operations:operations,m_Economy:bank,Cast:x=>x};
   env.AROR_InvaderCampaignComponent=campaign;campaign.s_Instance=campaign;campaign.GetInstance=()=>campaign;
   const registry={GetLocations:a=>a.Copy(allSites),GetLocationById:id=>allSites.find(s=>s.id===id)};env.AROR_LocationManagerComponent={GetInstance:()=>registry};
   for(const n of names.slice(5))campaign[n]=compile(sources.component,n);
@@ -74,8 +75,32 @@ function runInvaderCampaignTests(sources, catalogue) {
   campaign.m_aOperations=[{IsTerminal:()=>false,GetTargetLocationId:()=>near.id}];check(!campaign.IsDistant(near),'active operation target protected');
   campaign.m_aOperations=[{IsTerminal:()=>false,GetTargetLocationId:()=>'',m_TacticalCommander:{m_sOriginLocationId:near.id}}];check(!campaign.IsDistant(near),'active operation origin protected');campaign.m_aOperations=[];
   pending=true;check(!campaign.IsDistant(near),'queued capture QRF protected');pending=false;
-  near.owner=0;check(campaign.SelectTarget(2,corridor.pos,base)!==near,'Resistance sites excluded');const n=bank.payments.length;campaign.ResolveBattle_S(2,near);check(bank.payments.length===n&&near.owner===0,'Resistance capture cannot be overwritten');near.owner=1;
-  base.owner=1;check(campaign.SelectTarget(2,corridor.pos,base)===base,'lost foothold must be re-established before expansion');base.owner=0;check(campaign.SelectTarget(2,corridor.pos,base)===0,'Resistance-held foothold blocks further expansion');base.owner=2;
+  near.owner=0;check(campaign.SelectTarget(2,corridor.pos,base)===near,'the push includes Resistance territory when it is the southernmost');const n=bank.payments.length;campaign.ResolveBattle_S(2,near);check(bank.payments.length===n&&near.owner===0,'Resistance capture cannot be overwritten');near.owner=1;
+  base.owner=1;check(campaign.SelectTarget(2,corridor.pos,base)===base,'lost foothold must be re-established before expansion');base.owner=0;check(campaign.SelectTarget(2,corridor.pos,base)===base,'a Resistance-held foothold is the next target');base.owner=2;
+  // The fixed-period push: southernmost first, physical against the Resistance, simulated against the Occupiers.
+  {
+    const south=makeSite('south',1,[9000,100,2500]);allSites.push(south);campaign.Survey_S();
+    check(campaign.SelectTarget(2,corridor.pos,base)===south,'the Invaders take the southernmost site first, not the one nearest the corridor');
+    campaign.m_aPlayers=[south.pos];
+    check(campaign.SelectTarget(2,corridor.pos,base)===south&&campaign.Advance_S(corridor,base).includes('south'),'players at an Occupier target hold the push instead of skipping it');
+    check(south.owner===1,'a held push fights nothing');campaign.m_aPlayers=[];
+    campaign.m_iBaselineShare=20;const paidBefore=bank.payments.length;
+    check(campaign.Advance_S(corridor,base)===''&&south.owner===1&&bank.payments.length===paidBefore,'at their goal share the Invaders leave Occupier ground alone');campaign.m_iBaselineShare=40;
+    south.owner=0;const before=bank.payments.length;
+    check(campaign.Advance_S(corridor,base)===''&&operations.launched.at(-1).join()==='2,south'&&bank.payments.length===before,'a Resistance site gets a physical Invader attack, never a simulated battle');
+    operations.launchFailure='no safe launch site';
+    check(campaign.Advance_S(corridor,base).includes('no safe launch site'),'a refused attack holds the push with the reason');operations.launchFailure='';
+    now=500000;campaign.m_iNextBattleAt=0;operations.launchFailure='scheduler refused';printed=[];evaluate();
+    check(campaign.m_iNextBattleAt===now+30000&&printed.some(x=>x.includes('push held')),'a held push retries in 30 seconds and logs why');
+    const logged=printed.length;now+=30000;evaluate();check(printed.length===logged,'an unchanged hold is not logged again');
+    operations.launchFailure='';now+=30000;evaluate();
+    check(campaign.m_iNextBattleAt===now+campaign.m_iBattleInterval*1000&&campaign.m_sAdvanceHold==='','a push that goes ahead waits the full period');
+    south.owner=2;readinessLevel=2;crackdown=10;bank.balances[1]=100000;bank.balances[2]=100000;rolls=[0];const share=allSites.filter(s=>s.owner===2).length;
+    campaign.Counter_S(corridor,base);check(allSites.filter(s=>s.owner===2).length===share-1,'above their goal share, the Occupiers win back an outer Invader site');
+    const holding=allSites.filter(s=>s.owner===2).length;campaign.m_iBaselineShare=80;rolls=[0];campaign.Counter_S(corridor,base);
+    check(allSites.filter(s=>s.owner===2).length===holding,'at or below the goal there is no counter-push');campaign.m_iBaselineShare=40;
+    allSites.splice(allSites.indexOf(south),1);for(const s of [near,far])s.owner=1;base.owner=2;campaign.Survey_S();operations.launched=[];
+  }
   near.locked=true;check(campaign.SelectTarget(2,corridor.pos,base)!==near,'canonical flip lock honoured');near.locked=false;
   bank.balances[2]=700;reserves[2]=1;campaign.ResolveBattle_S(2,near);check(near.owner===1&&bank.balances[2]===700,'simulation cannot consume QRF collateral');reserves[2]=0;
   rolls=[0];campaign.ResolveBattle_S(2,near);check(near.owner===2&&bank.balances[2]===0,'affordable successful engagement debits attacker exactly once');
@@ -99,9 +124,12 @@ function runInvaderCampaignTests(sources, catalogue) {
   const foothold=island.find(s=>s.id==='everon_fortress_vostok');
   campaign.m_aSites=island;campaign.m_bInvaderCampaign=true;campaign.m_bQuarantined=false;campaign.m_aPlayers=[];campaign.m_aOperations=[];
   const model=goal=>{for(const s of island)s.owner=s===foothold?2:1;let sum=0,samples=0;
-    for(let step=0;step<5000;step++){const held=island.filter(s=>s.owner===2).length,indI=campaign.Industry(2),indU=campaign.Industry(1),winI=policy.BattleChance(1000,1000,indI,indU),winU=policy.BattleChance(1000,1000,indU,indI);
-      const attacker=random()*100<policy.InvaderAttackChance(held,island.length,goal,winI,winU)?2:1,target=campaign.SelectTarget(attacker,corridor.pos,foothold);
-      if(target&&random()*100<(attacker===2?winI:winU))target.owner=attacker;
+    for(let step=0;step<5000;step++){const indI=campaign.Industry(2),indU=campaign.Industry(1),winI=policy.BattleChance(1000,1000,indI,indU),winU=policy.BattleChance(1000,1000,indU,indI);
+      // Every period: the push on the southernmost site below the goal share, then a counter-push only above it
+      const push=campaign.SelectTarget(2,corridor.pos,foothold);
+      const over=()=>island.filter(s=>s.owner===2).length*100-goal*island.length;
+      if(push&&over()<0&&random()*100<winI)push.owner=2;
+      if(over()>0){const back=campaign.SelectTarget(1,corridor.pos,foothold);if(back&&random()*100<winU)back.owner=1;}
       if(step>=1000){sum+=island.filter(s=>s.owner===2).length/island.length;samples++;}}
     return sum/samples*100;};
   const baselineMean=model(40),escalatedMean=model(policy.TargetShare(40,5,100));
