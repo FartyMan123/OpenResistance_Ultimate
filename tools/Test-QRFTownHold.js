@@ -36,8 +36,10 @@ function runQRFTownHoldTests(sources) {
   check(withdraw.call(c,601,true),'legacy duration restored when disabled');
   c.m_bWithdraw=true;c.m_iTownHoldSeconds=900;check(withdraw.call(c,0,true),'explicit safety withdrawal respected');
   const timeout=compile(sources.manager,'ActiveTimeoutFor');
-  const op={GetType:()=>1,UsesTacticalResponse:()=>true,m_TacticalCommander:{m_iTownHoldSeconds:900}};
+  const op={GetType:()=>1,UsesTacticalResponse:()=>true,m_iEtaSeconds:-1,m_TacticalCommander:{m_iTownHoldSeconds:900}};
   check(timeout.call({m_iActiveTimeout:900},op)===2700,'manager allows ingress plus full hold plus withdrawal');
+  op.m_iEtaSeconds=300;check(timeout.call({m_iActiveTimeout:900},op)===3000,'the allowance starts at the estimated arrival, so a long drive does not eat the hold');
+  op.m_TacticalCommander={m_iTownHoldSeconds:0};check(timeout.call({m_iActiveTimeout:900},op)===1200,'an attack gets its full active time after its estimated arrival');op.m_iEtaSeconds=-1;op.m_TacticalCommander={m_iTownHoldSeconds:900};
   op.GetType=()=>0;check(timeout.call({m_iActiveTimeout:900},op)===2700,'attacks share the full tactical ingress/hold/withdrawal timeout');
   op.m_TacticalCommander=null;check(timeout.call({m_iActiveTimeout:900},op)===900,'non-tactical operations retain their timeout');
   const route=compile(sources.executor,'RecoverStalledQRFRoute');

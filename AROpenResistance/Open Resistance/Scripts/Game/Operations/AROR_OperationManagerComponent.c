@@ -328,7 +328,10 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 				if (m_iClock >= best.m_iNextWaitLog)
 				{
 					best.m_iNextWaitLog = m_iClock + 30;
-					Print(string.Format("[AROR STRATEGY] waiting role=%1 target=%2 desiredTier=%3 available=%4 debt=%5; recipe, actor capacity, safe friendly origin or executor unavailable", role, best.m_sLocationId, best.m_iDesiredTier, m_QRFFinance.Available(role), m_QRFFinance.Debt(role)), LogLevel.NORMAL);
+					string why = "no operation executor";
+					if (executor)
+						why = executor.ThreatWaitReason_S(role, best.m_iDesiredTier, best.m_bCaptured, best.m_sLocationId);
+					Print(string.Format("[AROR STRATEGY] waiting role=%1 target=%2 desiredTier=%3 available=%4 debt=%5: %6", role, best.m_sLocationId, best.m_iDesiredTier, m_QRFFinance.Available(role), m_QRFFinance.Debt(role), why), LogLevel.NORMAL);
 				}
 				continue;
 			}
@@ -795,9 +798,11 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 
 	protected int ActiveTimeoutFor(AROR_Operation operation)
 	{
+		// The allowance runs from the estimated arrival, so a long drive does not eat the fight
+		int travel = Math.Max(0, operation.m_iEtaSeconds);
 		if (operation.UsesTacticalResponse() && operation.m_TacticalCommander && operation.m_TacticalCommander.m_iTownHoldSeconds > 0)
-			return Math.Max(m_iActiveTimeout, operation.m_TacticalCommander.m_iTownHoldSeconds + 1800);
-		return m_iActiveTimeout;
+			return Math.Max(m_iActiveTimeout, operation.m_TacticalCommander.m_iTownHoldSeconds + 1800) + travel;
+		return m_iActiveTimeout + travel;
 	}
 
 	protected void ProcessOperations(AROR_EOperationType type)

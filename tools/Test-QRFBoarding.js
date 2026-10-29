@@ -6,21 +6,23 @@ const check=(ok,message)=>{assertions++;if(!ok)throw Error(message);};
 Object.defineProperty(String.prototype,'IsEmpty',{value(){return !this.length;},configurable:true});
 for(const [name,fn]of Object.entries({Count(){return this.length;},Insert(x){this.push(x);},Contains(x){return this.includes(x);},IsEmpty(){return !this.length;},Clear(){this.length=0;},Copy(x){this.splice(0,this.length,...x);}}))Object.defineProperty(Array.prototype,name,{value:fn,configurable:true});
 const env={Math:{Max:Math.max},Replication:{IsServer:()=>server},GetGame:()=>({GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:x=>x?.player?1:0})}),
-  AROR_EForceType:{AIRBORNE:3,MOTORIZED:0},ECloseDoorAfterActions:{CLOSE_DOOR:1},
+  AROR_EForceType:{AIRBORNE:3,MOTORIZED:0},ECloseDoorAfterActions:{CLOSE_DOOR:1,INVALID:-1},
   string:{Format:(s,...a)=>s.replace(/%(\d+)/g,(_,i)=>a[i-1])}};
 for(const name of ['BaseCompartmentManagerComponent','SCR_AIVehicleUsageComponent','CompartmentAccessComponent'])env[name]={Cast:x=>x};
 env.ChimeraCharacter={Cast:x=>x?.character?x:null};
+let deleted=[];env.AIControlComponent={Cast:x=>x};env.SCR_EntityHelper={DeleteEntityAndChildren:x=>deleted.push(x)};
 env.TurretCompartmentSlot={Cast:x=>x?.kind==='turret'?x:null};env.CargoCompartmentSlot={Cast:x=>x?.kind==='cargo'?x:null};
-const methods=['Seat','PreparePassengerRoster_S','Mount_S','IsRequiredGunnerSeat','IsMountComplete','ReseatMissing_S','ReseatMember','RecoverStaleBoarding_S','IsSeatedInOwnVehicle'];
+const methods=['ReplaceUnseated_S','ReplaceIntoSeat','ReplaceIntoSeatEntity','Seat','PreparePassengerRoster_S','Mount_S','IsRequiredGunnerSeat','IsMountComplete','ReseatMissing_S','ReseatMember','RecoverStaleBoarding_S','IsSeatedInOwnVehicle'];
 function compile(name){
   const m=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
   if(!m)throw Error('Missing '+name);
-  const args=m[1].replace(/array<\w+>\s+|\b(?:IEntity|bool|BaseCompartmentSlot|CompartmentAccessComponent)\s+/g,'');
-  let body=m[2].replace(/foreach \(\w+ (\w+) : ([^)]+)\)/g,'for(const $1 of $2)')
+  const args=m[1].replace(/array<\w+>\s+|\b(?:IEntity|bool|BaseCompartmentSlot|CompartmentAccessComponent|SCR_AIGroup)\s+/g,'');
+  let body=m[2].replace(/foreach \(\w+ (\w+), \w+ (\w+) : ([^)]+)\)/g,'for(const [$1, $2] of $3.entries())')
+    .replace(/foreach \(\w+ (\w+) : ([^)]+)\)/g,'for(const $1 of $2)')
     .replace(/array<\w+> (\w+) = \{([^;]*)\};/g,'let $1 = [$2];')
     .replace(/int (\w+), (\w+), (\w+);/g,'let $1=0,$2=0,$3=0;')
     .replace(/int (\w+), (\w+);/g,'let $1=0,$2=0;')
-    .replace(/\b(?:IEntity|bool|int|float|string|Physics|ChimeraCharacter|AIAgent|SCR_AIGroupUtilityComponent|BaseCompartmentSlot|BaseCompartmentManagerComponent|SCR_AIVehicleUsageComponent|CompartmentAccessComponent)\s+(\w+)/g,'let $1')
+    .replace(/\b(?:IEntity|bool|int|float|string|Physics|ChimeraCharacter|AIAgent|AIGroup|AIControlComponent|SCR_AIGroupUtilityComponent|BaseCompartmentSlot|BaseCompartmentManagerComponent|SCR_AIVehicleUsageComponent|CompartmentAccessComponent)\s+(\w+)/g,'let $1')
     .replace(/let (\w+);/g,'let $1=0;').replace(/(?<![.\w])m_\w+/g,x=>'this.'+x);
   for(const n of methods)body=body.replace(new RegExp('(?<![.\\w])'+n+'\\(','g'),'this.'+n+'(');
   return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
@@ -30,7 +32,7 @@ function fixture(crewCount=1,passengerCount=4){
   const all=[],calls=[],resets=[];
   const vehicle={speed:0,FindComponent(type){return type===env.BaseCompartmentManagerComponent?{GetCompartments:a=>a.push(...slots)}:usage;},GetPhysics(){return {GetVelocity:()=>({Length:()=>this.speed})};}};
   function seat(kind){return {kind,occupant:null,reserved:null,accessible:true,GetOccupant(){return this.occupant;},IsOccupied(){return !!this.occupant;},
-    GetAttachedTurret(){return this.attachedTurret||null;},IsCompartmentAccessible(){return this.accessible;},IsReserved(){return !!this.reserved;},IsReservedBy(x){return this.reserved===x;},SetReserved(x){this.reserved=x;},GetVehicle:()=>vehicle};}
+    GetAttachedTurret(){return this.attachedTurret||null;},GetOwner(){return this.owner||null;},IsCompartmentAccessible(){return this.accessible;},IsReserved(){return !!this.reserved;},IsReservedBy(x){return this.reserved===x;},SetReserved(x){this.reserved=x;},GetVehicle:()=>vehicle};}
   const slots=[seat('driver'),...Array.from({length:crewCount-1},()=>seat('turret')),...Array.from({length:passengerCount},()=>seat('cargo'))];
   const usage={CanBePiloted:()=>true,GetPilotCompartmentSlot:()=>slots[0]};
   function actor(){
@@ -38,7 +40,7 @@ function fixture(crewCount=1,passengerCount=4){
     a.access={entering:true,exiting:false,inside:false,current:null,allow:true,
       CanGetInVehicle(){return this.allow;},IsGettingIn(){return this.entering;},IsGettingOut(){return this.exiting;},IsInCompartment(){return this.inside;},GetCompartment(){return this.current;},
       InterruptVehicleActionQueue(...args){resets.push({actor:a,args});this.entering=false;},
-      GetInVehicle(v,slot,teleport,door,close,paused){calls.push({actor:a,slot,paused});if(!this.allow)return false;
+      GetInVehicle(v,slot,teleport,door,close,paused){calls.push({actor:a,slot,paused,target:v,close});if(!this.allow&&!(this.allowUnpaused&&!paused))return false;
         // Outside the simulation bubble, an ordinary queued action cannot execute.
         if(!paused){this.entering=true;return true;}this.current=slot;this.inside=true;this.entering=false;slot.occupant=a;return true;}};
     all.push(a);return a;
@@ -70,6 +72,10 @@ check(report.includes('canEnter=false')&&report.includes('paused=true'),'paced r
 check(!f.force.IsMountComplete(),'accepted passengers cannot hide an absent driver');
 f=fixture();f.crew[0].access.entering=false;check(f.force.Seat(f.crew[0],f.slots[0])&&f.calls[0].paused,'first placement also uses paused execution');
 f=fixture();f.force.m_bMounted=true;f.force.Seat(f.crew[0],f.slots[0]);check(f.calls[0].paused===false,'live-operation reseating does not force paused execution');
+f=fixture();const turretEntity={turret:true};f.slots[0].owner=turretEntity;f.crew[0].access.entering=false;f.force.Seat(f.crew[0],f.slots[0]);
+check(f.calls[0].target===turretEntity&&f.calls[0].close===env.ECloseDoorAfterActions.INVALID,'first placement targets the seat on its own (child) entity with no door action, as the base game does');
+f=fixture();f.crew[0].access.entering=false;f.crew[0].access.allow=false;f.crew[0].access.allowUnpaused=true;
+check(f.force.Seat(f.crew[0],f.slots[0])&&f.calls.length===2&&f.calls[0].paused&&!f.calls[1].paused,'a refused paused placement retries once the way the base game calls it');
 for(const [label,mutate]of [
   ['client',f=>server=false],['already mounted',f=>f.force.m_bMounted=true],['dismounting',f=>f.force.m_bDismountRequested=true],
   ['already dismounted',f=>f.force.m_bDismounted=true],['no initial request',f=>f.force.m_bMountRequested=false],
@@ -153,4 +159,26 @@ for(const escorts of [0,1]){
 f=fixture(2,4);f.slots.forEach(s=>s.reserved=null);f.all.forEach(a=>{a.access.entering=false;a.access.GetInVehicle=(v,s)=>{f.calls.push({actor:a,slot:s});return true;}});
 f.force.ReseatMissing_S();
 check(f.calls.length===6&&new Set(f.calls.map(c=>c.slot)).size===6,'ground retry assigns distinct destinations without synchronous native reservation updates');
+// Last resort: refused seating is replaced by the seat's default occupant spawned straight into the seat.
+{
+  const r=fixture(2,3);r.all.forEach(a=>{a.access.entering=false;a.access.allow=false;});deleted=[];
+  const given=[],foreign={removed:0,RemoveAgent(){this.removed++;}};
+  for(const g of [r.force.m_CrewGroup,r.force.m_Group]){g.added=[];g.AddAgent=function(a){this.added.push(a);};}
+  r.slots.forEach(s=>{s.GetDefaultOccupantPrefab=()=>'{0000000000000000}US_Soldier.et';
+    s.SpawnDefaultCharacterInCompartment=g=>{given.push(g);const agent={GetParentGroup:()=>foreign};
+      const c={character:true,spawned:true,GetCharacterController:()=>({IsDead:()=>false}),access:{IsInCompartment:()=>true,IsGettingIn:()=>false,IsGettingOut:()=>false,GetCompartment:()=>s},
+        FindComponent(t){return t===env.AIControlComponent?{GetControlAIAgent:()=>agent}:this.access;}};
+      s.occupant=c;return c;};});
+  const originals=[...r.all];
+  check(r.force.ReplaceUnseated_S()===5,'every refused crew member and passenger is replaced in its seat');
+  check(r.slots.every(s=>s.occupant&&s.occupant.spawned),'driver, gunner and cargo seats are all occupied by the spawned replacements');
+  check(given[0]===r.force.m_CrewGroup&&given[1]===r.force.m_CrewGroup&&given.slice(2).every(g=>g===r.force.m_Group),'crew seats spawn into the crew group, cargo seats into the infantry group');
+  check(r.force.m_CrewGroup.added.length===2&&r.force.m_Group.added.length===3&&foreign.removed===5,'replacements spawned into another group are moved into the package groups');
+  check(deleted.length===5&&originals.every(a=>deleted.includes(a)),'the characters left standing are removed');
+  check(r.force.m_aPassengers.every(p=>p.spawned),'the passenger roster follows the replacements for delivery and dismount');
+  check(r.force.ReplaceUnseated_S()===0&&deleted.length===5,'occupied seats are never replaced twice');
+  const none=fixture(1,2);none.all.forEach(a=>{a.access.entering=false;});none.slots.forEach(s=>{s.GetDefaultOccupantPrefab=()=>'';});deleted=[];
+  check(none.force.ReplaceUnseated_S()===0&&!deleted.length,'a seat without a default occupant keeps its member and the normal retries');
+  const moving=fixture(1,2);moving.force.m_bMounted=true;check(moving.force.ReplaceUnseated_S()===0,'never used once the package has mounted');
+}
 console.log(JSON.stringify({assertions,note:'Native paused simulation/queue cancellation must be verified in Workbench Play.'}));

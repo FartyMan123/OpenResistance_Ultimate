@@ -71,8 +71,8 @@ for(const airReady of [false,true])for(const groundReady of [false,true])for(con
  {air:true,m_iPackageIndex:2,m_bReady:reserveReady}].map(f=>({m_sOperationId:'joint',m_bReservation:false,m_bOrdersIssued:false,m_bTacticalRetained:false,...f}));
  const tactical={IsReserve:i=>i===2,m_iFirstWaveCount:2,MarkDispatched(){}};
  const o={m_TacticalCommander:tactical,IsTerminal:()=>false,GetState:()=>active?2:1,GetPackageCount:()=>3,GetRecipeId:()=> 'joint',GetId:()=> 'joint'};
- const ctx={m_aForces:forces,m_iExecutorClock:10,DispatchReadyPackage:f=>{dispatched.push(f);f.m_bOrdersIssued=true;return true},
- m_Operations:{MarkActive_S(){active++}},FailOperation(){throw Error('unexpected dispatch failure')}};
+ const ctx={m_aForces:forces,m_iExecutorClock:10,EstimateArrival:()=>120,DispatchReadyPackage:f=>{dispatched.push(f);f.m_bOrdersIssued=true;return true},
+ m_Operations:{MarkActive_S(){active++},GetClockSeconds:()=>10},FailOperation(){throw Error('unexpected dispatch failure')}};
  activate.call(ctx,o);
  const expected=airReady&&groundReady&&!reserveReady;
  check(active===(expected?1:0),'whole lead wave must be ready; unexpected extra ready reserves cannot skip the barrier');
@@ -228,7 +228,7 @@ const access={in:false,busy:false,out:false,seat:null,GetCompartment(){return th
  IsInCompartment(){return this.in},IsGettingIn(){return this.busy},IsGettingOut(){return this.out},
  GetInVehicle(v,s,teleport,door,close,paused){seatRequests++;check(paused,'pilot boarding works outside player simulation bubble');return true}};
 const pilot={FindComponent:()=>access},group={GetPlayerCount:()=>0,GetAgents:out=>out.push({GetControlledEntity:()=>pilot})};
-function slot(extra={}){return {pilot:true,IsCompartmentAccessible:()=>true,IsOccupied:()=>false,GetOccupant:()=>null,
+function slot(extra={}){return {pilot:true,GetOwner:()=>null,IsCompartmentAccessible:()=>true,IsOccupied:()=>false,GetOccupant:()=>null,
  IsReserved:()=>false,IsReservedBy:()=>false,GetVehicle:()=>vehicle,...extra}}
 slots=[slot()];
 check(!boardPilot(group,vehicle)&&seatRequests===1,'accepted pilot request is not an occupancy acknowledgement');
@@ -245,7 +245,7 @@ server=false;check(!boardPilot(group,vehicle)&&seatRequests===1,'clients cannot 
 {
  env.AROR_ReaperAirForce.BoardPilot_S=boardPilot;
  const makeSeat=(pilot,cargo)=>({pilot,cargo,occupant:null,reserved:null,vehicle:null,
-  GetAttachedTurret:()=>null,IsCompartmentAccessible:()=>true,IsOccupied(){return !!this.occupant},GetOccupant(){return this.occupant},
+  GetAttachedTurret:()=>null,GetOwner:()=>null,IsCompartmentAccessible:()=>true,IsOccupied(){return !!this.occupant},GetOccupant(){return this.occupant},
   IsReserved(){return !!this.reserved},IsReservedBy(who){return this.reserved===who},GetVehicle(){return this.vehicle}});
  const transportSeats=[makeSeat(true,false),makeSeat(false,true),makeSeat(false,true)],escortSeats=[makeSeat(true,false)];
  const makeVehicle=seats=>{const v={FindComponent:()=>({GetCompartments:out=>out.push(...seats)})};seats.forEach(s=>s.vehicle=v);return v};

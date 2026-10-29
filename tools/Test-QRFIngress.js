@@ -5,7 +5,7 @@ function runQRFIngressTests(sources) {
   let assertions=0;
   const check=(ok,msg)=>{assertions++;if(!ok)throw Error(msg);};
   const methods=['GetOwner','IsSeatedInOwnVehicle','TacticalLaunchPoint','TacticalRoadPoint','CanDismountOnFoot','IsLaunchPositionSafe','FailOperation','FailGroundPlanning','ResolveQRFOrigin','FindGroundRoadLaunch','ConfigureForceFunding','FindTacticalApproach','ConvertReservation','SpawnGroundVehicle','SpawnEmptyGroup','SpawnWaypoint','ConfigureGroup'];
-  const env={GetGame:()=>({GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:e=>e?.player?1:0})})};
+  const env={LAST_RESORT_ROAD_RADIUS:600,UNDISPATCHED_CLEANUP_DISTANCE:300,GetGame:()=>({GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:e=>e?.player?1:0})})};
   function compile(source,name) {
     const match=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
     if(!match)throw Error('Missing '+name);
@@ -62,13 +62,20 @@ function runQRFIngressTests(sources) {
     Math:{Atan2:Math.atan2,Sin:Math.sin,Cos:Math.cos,AbsFloat:Math.abs,Min:Math.min,Max:Math.max,Mod:(a,b)=>a%b,floor:Math.floor,sin:Math.sin,cos:Math.cos},float:{MAX:Infinity},vector:{DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])},
     AROR_GroundOperationForce:{Cast:x=>x},Print:message=>launchLogs.push(message),string:{Format:(format,...args)=>format.replace(/%(\d+)/g,(_,n)=>String(args[n-1]))},LogLevel:{NORMAL:0,WARNING:1}});
   const launch=compile(sources.executor,'FindGroundRoadLaunch');
-  const context={m_aForces:[],m_fQRFRoadLaunchRadius:150,IsLaunchPositionSafe:()=>true,TacticalLaunchPoint:()=>[100,10,100],TacticalRoadPoint:(origin,desired,out)=>{queries++;out.splice(0,3,...road);return roadOK;}};
+  Object.defineProperty(String.prototype,'IsEmpty',{value(){return !this.length;},configurable:true});
+  for(const [n,f] of [['Contains',function(x){return this.includes(x);}],['Insert',function(x){this.push(x);}]])Object.defineProperty(Array.prototype,n,{value:f,configurable:true});
+  const context={m_aForces:[],m_aRoadlessOrigins:[],m_fQRFRoadLaunchRadius:150,IsLaunchPositionSafe:()=>true,TacticalLaunchPoint:()=>[100,10,100],TacticalRoadPoint:(origin,desired,out)=>{queries++;out.splice(0,3,...road);return roadOK;}};
   const commander={m_vOrigin:[100,10,100],m_vTown:[1000,10,1000],m_sOriginLocationId:'farm'},point=[0,0,0];
   const run=()=>launch.call(context,commander,0,point);
   check(run()&&point[1]===10&&queries===1,'clear level road pad accepted and grounded');
+  const centreRoad=context.TacticalRoadPoint;context.TacticalRoadPoint=(origin,desired,out)=>{if(origin===commander.m_vOrigin)return false;out.splice(0,3,...road);return true;};
+  check(run()&&!context.m_aRoadlessOrigins.length,'a base centre cut off on the navmesh still launches from a road beside the probe');context.TacticalRoadPoint=centreRoad;
   queries=0;blocked=true;check(!run()&&queries===36,'obstructed pads rejected within expanded finite road-query budget');blocked=false;
   check(launchLogs.some(l=>l.includes('obstruction=36')),'failed launch reports obstruction count');
+  check(!context.m_aRoadlessOrigins.length,'a launch blocked by obstructions never marks the base as roadless');
   roadOK=false;check(!run(),'raw outpost position never substitutes for missing road');roadOK=true;
+  check(context.m_aRoadlessOrigins.join()==='farm'&&launchLogs.some(l=>l.includes('no longer used as a launch site')),'a base with no reachable road at all is remembered and reported');
+  roadOK=false;run();roadOK=true;check(context.m_aRoadlessOrigins.length===1,'the base is recorded only once');context.m_aRoadlessOrigins=[];
   road=[300,10,100];check(!run(),'road outside origin vicinity rejected');road=[100,10,100];
   water=true;check(!run(),'underwater road candidate rejected');water=false;
   slope=true;check(!run(),'steep pad rejected');slope=false;
@@ -82,7 +89,7 @@ function runQRFIngressTests(sources) {
   check(run()&&queries===13&&point[2]===190,'third package finds a clear outer-origin pad after the former search is exhausted');
   check(context.m_aForces.every(f=>env.vector.DistanceXZ(point,f.m_Vehicle.GetOrigin())>=25),'outer search preserves separation from both earlier hulls');
   queries=0;roadOK=false;context.TacticalRoadPoint=nativeLaunchRoad;context.m_aForces=[];launchLogs=[];
-  check(!run()&&queries===36&&launchLogs.some(l=>l.includes('noRoad=36')),'missing connectivity remains bounded and reports its reason');roadOK=true;
+  check(!run()&&queries===72&&launchLogs.some(l=>l.includes('noRoad=36')),'missing connectivity remains bounded (two road queries per probe) and reports its reason');roadOK=true;
   queries=0;context.IsLaunchPositionSafe=p=>p[0]>=120;
   context.TacticalRoadPoint=(origin,desired,out)=>{queries++;out.splice(0,3,...(queries===1?[100,10,100]:[130,10,100]));return true;};
   check(run()&&queries===2&&point[0]===130,'unsafe player/target candidate is skipped instead of rejecting an otherwise usable origin');
@@ -110,9 +117,16 @@ function runQRFIngressTests(sources) {
   check(arrival.call(roadContext,10,160,200,roadForce.m_fTacticalDeliveryRadius),'physical arrival at the planned fallback stop authorises dismount');
   check(!arrival.call(roadContext,21,160,200,180),'fallback still requires proximity to the actual selected stop');
   check(!arrival.call(roadContext,10,301,200,999),'a forged oversized planned radius cannot exceed the configured fallback limit');
-  roadQueries=0;footPad=false;check(!plan()&&roadQueries===24,'road without a usable infantry dismount is rejected within the total query bound');footPad=true;
-  roadQueries=0;nativeRoad=false;check(!plan()&&roadQueries===24,'missing road connectivity does not teleport vehicles or manufacture arrival');nativeRoad=true;
-  roadQueries=0;roadPoint=[400,10,0];check(!plan()&&roadQueries===24,'distant roads cannot expand the fallback beyond its bounded radius');
+  roadQueries=0;footPad=false;check(!plan()&&roadQueries===25,'road without a usable infantry dismount is rejected within the total query bound (24 probes and one last-resort query)');footPad=true;
+  // Walled compound or off-road site: every ring probe fails; the nearest launch-reachable road within the dismount limit is used.
+  const ringRoad=roadContext.TacticalRoadPoint;roadContext.TacticalRoadPoint=function(origin,desired,out,radius){roadQueries++;if(desired!==roadCommander.m_vTown)return false;out.splice(0,3,...roadPoint);return env.vector.DistanceXZ(roadPoint,desired)<=(radius??75);};
+  roadQueries=0;roadPoint=[250,10,0];roadForce.m_fTacticalDeliveryRadius=0;
+  check(plan()&&roadQueries===25&&roadForce.m_fTacticalDeliveryRadius===270,'when every probe fails, the nearest reachable road within the dismount limit becomes a foot-approach stop');
+  check(arrival.call(roadContext,10,250,200,roadForce.m_fTacticalDeliveryRadius),'arrival at that last-resort stop authorises the dismount within the configured limit');
+  roadQueries=0;roadPoint=[350,10,0];check(!plan(),'a road beyond the dismount limit is never used as a last resort');
+  roadContext.TacticalRoadPoint=ringRoad;roadPoint=[160,10,0];
+  roadQueries=0;nativeRoad=false;check(!plan()&&roadQueries===25,'missing road connectivity does not teleport vehicles or manufacture arrival (the last-resort query fails too)');nativeRoad=true;
+  roadQueries=0;roadPoint=[400,10,0];check(!plan()&&roadQueries===25,'distant roads cannot expand the fallback beyond its bounded radius, last resort included');
   roadContext.m_fQRFMaximumRoadDismount=0;roadQueries=0;check(!plan()&&roadQueries===12,'scenario can disable foot approach fallback');roadContext.m_fQRFMaximumRoadDismount=300;
   roadPoint=[60,10,0];roadContext.m_aForces=[{m_sOperationId:'capture',m_vApproachPosition:[78,10,0]}];roadQueries=0;
   check(plan()&&roadQueries===12&&roadStop[0]===60,'compact safe spacing is accepted before considering distant road stops');

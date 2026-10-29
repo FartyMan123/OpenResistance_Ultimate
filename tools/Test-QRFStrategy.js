@@ -186,7 +186,7 @@ function runQRFTests(sources) {
   env.vector={DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])};
   env.AROR_QRFOriginPolicy={IsOriginType:t=>[2,5,8].includes(t)};
   env.AROR_RecaptureComponent={IsContested:()=>false};
-  Object.assign(groundCtx,{m_fMinOriginDistance:1500,m_mOriginLaunchedAt:{Contains:()=>false},
+  Object.assign(groundCtx,{m_fMinOriginDistance:1500,m_mOriginLaunchedAt:{Contains:()=>false},m_aRoadlessOrigins:[],
     OriginCost:env.vector.DistanceXZ,IsGarrisonDepleted:()=>false,
     BestOrigin:compile(sources.AROR_OperationExecutorComponent,'BestOrigin'),
     IsUsableOrigin:compile(sources.AROR_OperationExecutorComponent,'IsUsableOrigin')});
@@ -225,7 +225,7 @@ function runQRFTests(sources) {
   queue.call(manager,2,'town',false);queue.call(manager,1,'missing',false);check(manager.m_aQRFThreats.length===1,'disabled Invader and missing location rejected');
   queue.call(manager,1,'factory',true);check(manager.m_aQRFThreats.length===2,'separate strategic target queued');
   let affordable=false,admitted=[];
-  manager.GetOwner=()=>({FindComponent:()=>({CanFundQRFThreat_S:()=>affordable})});
+  manager.GetOwner=()=>({FindComponent:()=>({CanFundQRFThreat_S:()=>affordable,ThreatWaitReason_S:()=>'no usable launch base: owned=2'})});
   manager.RequestOperation_S=(role,type,target)=>{admitted.push(target);return target;};
   manager.GetOperation=id=>id?{m_iRequestedTier:0}:null;
   methodNames.push('IsCaptureThreatRelevant');
