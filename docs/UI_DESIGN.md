@@ -94,7 +94,7 @@ The where/what line shows a level change in the army's own labels: "ЗАЧИСТ
 
 ## Map
 
-**Our choice (agreed with the team):** locations are drawn as military-frame symbols, Concept B of the map-icon concepts: a rectangle for the Resistance, a diamond for the enemy, a square for others, a pale faction tint inside, a faction border over a dark keyline, and a stroke glyph per type. Military, port and industrial sites show their name beside the icon (dark ink, light outline). Names come from the surroundings ("Wolf Wood Outpost"; see docs/EVERON_CAMPAIGN_LOCATIONS.md). The full system below asks for native markers only; we have departed from it here.
+**Our choice (agreed with the team):** locations are drawn as military-frame symbols, Concept B of the map-icon concepts: a rectangle for the Resistance, a diamond for the enemy, a square for others, a pale faction tint inside, a faction border over a dark keyline, and a stroke glyph per type. Names are not drawn beside the icons; clicking a location opens its info popup (opaque `PLATE_STRONG`, `REBEL` top band, 28 title, 18 values), drawn above every marker. Names come from the surroundings ("Wolf Wood Outpost"; see docs/EVERON_CAMPAIGN_LOCATIONS.md). The full system below asks for native markers only; we have departed from it here.
 
 The design system says the mod draws **no custom map markers**: forces use vanilla NATO military symbols (QRFs, enemy groups, our squads, last known enemy) and places and events use vanilla map-marker icons (towns, ports, HQ, roadblocks, attacks, deliveries), coloured by faction the vanilla way, labelled with our terms plus one detail ("QRF · 3 min"). Markers move by updating position, and are visible to the Resistance only. A P1/P2 alert about a place says "Press M to see it on the map".
 
@@ -160,7 +160,7 @@ Cyrillic labels always carry the English line. Don't abbreviate faction labels o
 | REBINTEL app (tabs per enemy, cards, HUD settings) | Done; intercepts list not yet |
 | HUD status widget, level-change alerts | Done |
 | Banner / toast restyle | Done; P1–P4 field, ×2 merging, game time, glyph imageset not yet |
-| Map popup on `PLATE` | Done; custom map icons still differ from "native markers only" |
+| Map popup on `PLATE_STRONG`, above all markers | Done; custom map icons still differ from "native markers only" |
 | Bank | Baked art (gold/navy, pill buttons) needs replacing |
 | HICOMM app, OPS | Fonts only; palette pass pending |
 | Black Market app (access, tiers, tabs, two-step order) | Done; delivery, saved orders, Attention not yet |
