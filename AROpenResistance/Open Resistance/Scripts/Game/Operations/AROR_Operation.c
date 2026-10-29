@@ -16,6 +16,11 @@ class AROR_Operation
 	ref AROR_QRFTacticalCommander m_TacticalCommander;
 	ref AROR_QRFFunding m_Funding;
 	int m_iRequestedTier;
+	//! Ordinary campaign selection only; debug/scripted requests retain their explicit family.
+	int m_iResponseMixBucket = -1;
+	bool m_bResponseMixTracked;
+	bool m_bResponseMixAirborne;
+	bool m_bResponseMixCounted;
 	//! Equipment availability is frozen alongside requested intensity before recipe selection.
 	int m_iPoolReadinessLevel;
 	int m_iThreatPriority;
@@ -38,6 +43,18 @@ class AROR_Operation
 	vector m_vOriginOverride;
 	//! Always hold half the packages back as a second wave, whatever the scenario's wave settings.
 	bool m_bForceTwoWaves;
+	//! Estimated seconds from dispatch until the first package reaches the objective (-1 unknown), and the
+	//! scheduler clock when it was estimated. Drives the dispatch headline and map marker.
+	int m_iEtaSeconds = -1;
+	int m_iEtaSetAt;
+
+	//! Seconds of the arrival estimate still to run at the given scheduler clock, or -1 when there is none
+	int GetEtaRemaining(int now)
+	{
+		if (m_iEtaSeconds < 0)
+			return -1;
+		return Math.Max(0, m_iEtaSeconds - (now - m_iEtaSetAt));
+	}
 
 	bool UsesTacticalResponse()
 	{

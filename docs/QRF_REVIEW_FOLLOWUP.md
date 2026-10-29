@@ -1,5 +1,15 @@
 # QRF review follow-up
 
+## Tier-one start and linear response balance — 29 October 2026
+
+New campaigns start at Readiness 1 and 0% Crackdown, requesting tier 1. Each newly recorded capture loss adds 50 Crackdown points (five percentage points), replacing 150. With captures alone and no cooling, tiers 2/3/4/5 begin after 4/8/12/16 losses by that army. Readiness thresholds, combat/loss evidence, quiet-time cooling and existing saved progress remain independent and unchanged. Loaded campaigns retain their current tier; new capture increments use the updated rate.
+
+Both armies' light and mechanized recipes grow from one to five complete packages. Heavy ground and joint bands grow from two to six packages. Each tier adds exactly one package and strictly increases reserved personnel and collateral within its band; differences in vehicle capacity/firepower mean this is not a promise of identical combat-strength increments. The upper ground tiers and heavy joint tier 5 are smaller than before. Full native passenger loads, assigned driver/gunners, boarding acknowledgements, landing checks, safe infantry exit and finite preparation/recovery limits remain in force.
+
+Updated prices, force composition, lead/reserve counts and MARS previews are exported in the existing CSV evidence. Regression checks cover both armies, fresh defaults, every capture-only tier boundary, independent Readiness/army state, all six ground/joint bands and preserved full-load profiles. Mutations restore the old tier-2 start, old capture jump and a two-package tier jump to prove those regressions are detected. The installed-resource validator also follows Chicken's existing five-minute attack grace instead of its stale fifteen-minute expectation; this balance change does not alter attack timing.
+
+Native acceptance: compile current source and reload Chicken from disk into a new campaign. Confirm both armies begin at tier 1; test successive captures while separately tracking combat/loss evidence and cooling. Exercise both armies' tiers 1–5 through MARS, including joint waves. Confirm every vehicle still boards its full planned load and retains driver/gunners when infantry unload. Check a saved campaign retains its previous Readiness/Crackdown. Native balance and combat difficulty remain unverified.
+
 ## Airborne cabin loads, preparation and USSR origin follow-up
 
 **Compilation:** the user reports successful compilation of this revision on 28 October 2026. Native gameplay acceptance of the new cabin, boarding and origin behavior remains pending.

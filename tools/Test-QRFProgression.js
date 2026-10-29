@@ -15,7 +15,7 @@ function runQRFProgressionTests(sources) {
     AROR_LocationManagerComponent:{GetInstance:()=>({GetLocationById:()=>({GetLocationType:()=>8})})}};
   env.AROR_EResponseType={AIR_GROUND:7};
   const names=['PressureForLevel','ReadinessLevel','ResponseLevel','Importance','GetReadinessPressure','GetReadinessLevel','GetCrackdown','GetCrackdownLevel','GetCrackdownPercent','HasThreatState',
-    'IsEnemyRole','SetReadinessPressure_S','SetReadinessLevel_S','SetCrackdown_S','RestoreQRFStrategy_S','RecordStrategicEvidence','RecordCaptureEscalation_S','UpdateCrackdown_S','GetCrackdownForSave',
+    'IsEnemyRole','GetQRFDispatchCount','RestoreQRFResponseMix_S','SetReadinessPressure_S','SetReadinessLevel_S','SetCrackdown_S','RestoreQRFStrategy_S','RecordStrategicEvidence','RecordCaptureEscalation_S','UpdateCrackdown_S','GetCrackdownForSave',
     'IsValid','AllowsReadinessLevel','HasNativeExecutor','GetWeight','GetGroupBudget','GetVehicleBudget','VehicleLossValue','ReplacementQuote','IsReady','HasLocation','Resolve',
     'FindStrategicGroundRecipe','QRFPoolReadinessLevel','GetReservedGroups','GetReservedMembers','GetReservedVehicles','GetSpottingKind'];
   function compile(source,name){
@@ -34,17 +34,19 @@ function runQRFProgressionTests(sources) {
     return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')(...Object.values(env));
   }
   const policy={};env.AROR_QRFStrategicPolicy=policy;
+  env.AROR_QRFResponseMix={CountsValid:compile(sources.mix,'CountsValid')};
   env.AROR_ResponsePolicy={};
   for(const name of ['IsRecipeEligible','IsProfileUnlocked'])env.AROR_ResponsePolicy[name]=compile(sources.responsePolicy,name);
   for(const name of ['PressureForLevel','ReadinessLevel','ResponseLevel','Importance','VehicleValue','LossCrackdown'])policy[name]=compile(sources.policy,name);
   const makeManager=()=>{
     const manager={m_iClock:1000,m_bQRFStrategicEconomy:true,m_bInvaderOperationsEnabled:true,m_bThreatStateReady:false,
+      m_iOccupierQRFDispatches:0,m_iOccupierAirDispatches:0,m_iInvaderQRFDispatches:0,m_iInvaderAirDispatches:0,
       m_iOccupierPressure:0,m_iInvaderPressure:0,m_iOccupierCrackdown:200,m_iInvaderCrackdown:200,
       m_iOccupierEvidenceAt:0,m_iInvaderEvidenceAt:0,m_iOccupierLastThreat:1000,m_iInvaderLastThreat:1000,
       m_iCaptureReadinessPressure:25,m_iCaptureCrackdown:150,m_iCrackdownQuietTime:600,m_iCrackdownDecay:20,m_iNextCrackdownDecay:0,
       m_iAppliedOccupierLoss:0,m_iAppliedInvaderLoss:0,m_aOperations:[],m_aQRFThreats:[],
       m_QRFFinance:{m_iOccupierLossValue:0,m_iInvaderLossValue:0,debts:{1:0,2:0},pending:{1:0,2:0},PendingLossValue(r){return this.pending[r]||0;},SetDebt_S(r,n){this.debts[r]=n;}},IsReady:()=>server,HasLocation:()=>true};
-    for(const name of ['IsEnemyRole','GetReadinessPressure','GetReadinessLevel','GetCrackdown','GetCrackdownLevel','GetCrackdownPercent','HasThreatState','SetReadinessPressure_S','SetReadinessLevel_S','SetCrackdown_S',
+    for(const name of ['IsEnemyRole','GetQRFDispatchCount','RestoreQRFResponseMix_S','GetReadinessPressure','GetReadinessLevel','GetCrackdown','GetCrackdownLevel','GetCrackdownPercent','HasThreatState','SetReadinessPressure_S','SetReadinessLevel_S','SetCrackdown_S',
       'RestoreQRFStrategy_S','RecordStrategicEvidence','RecordCaptureEscalation_S','UpdateCrackdown_S','GetCrackdownForSave'])manager[name]=compile(sources.manager,name);
     return manager;
   };
@@ -96,7 +98,7 @@ function runQRFProgressionTests(sources) {
   const migrated=makeManager();check(deserialize(null,migrated,{values:legacy})&&migrated.GetReadinessPressure(1)===450&&migrated.GetCrackdown(1)===450,'version 1 migrates the old shared pressure without resetting campaign progress');
   const partial={...saved};delete partial.invaderCrackdown;const safe=makeManager();
   check(!deserialize(null,safe,{values:partial})&&safe.GetReadinessPressure(1)===0,'partial version 3 cannot apply half a restore');
-  check(!deserialize(null,safe,{values:{...saved,version:4}}),'future save formats are rejected');
+  check(!deserialize(null,safe,{values:{...saved,version:5}}),'future save formats are rejected');
   const aggressionSave={...saved,version:2,occupierAggression:saved.occupierCrackdown,invaderAggression:saved.invaderCrackdown};delete aggressionSave.occupierCrackdown;delete aggressionSave.invaderCrackdown;
   const renamed=makeManager();check(deserialize(null,renamed,{values:aggressionSave})&&renamed.GetCrackdown(1)===10&&renamed.GetReadinessLevel(1)===4,'version 2 saves load their old aggression keys as crackdown');
   check(!deserialize(null,safe,{values:{...saved,occupierCrackdown:-1}}),'malformed new crackdown cannot silently invoke legacy migration');
@@ -104,7 +106,16 @@ function runQRFProgressionTests(sources) {
   const init=compile(sources.manager,'OnPostInit');
   const defaults=()=>Object.fromEntries([...sources.manager.matchAll(/\[Attribute\("([\d.]+)",[^\r\n]*\)\]\s*(?:protected )?(int|float|bool) (m_\w+)/g)].map(m=>[m[3],Number(m[1])]));
   const fresh=Object.assign(makeManager(),defaults());init.call(fresh,{});
-  check(scheduled===1&&fresh.HasThreatState()&&fresh.GetReadinessLevel(1)===1&&fresh.GetCrackdown(1)===200,'real component defaults start the scheduler with separate readiness-one and response-two state');
+  check(scheduled===1&&fresh.HasThreatState()&&fresh.GetReadinessLevel(1)===1&&fresh.GetCrackdown(1)===0&&fresh.GetCrackdownLevel(1)===1,'real component defaults start new campaigns at readiness one and response tier one');
+  for(const role of [1,2]){
+    const paced=Object.assign(makeManager(),defaults());paced.SetCrackdown_S(1,0);paced.SetCrackdown_S(2,0);
+    for(let captures=1;captures<=20;captures++){
+      paced.RecordCaptureEscalation_S(role);
+      check(paced.GetCrackdownLevel(role)===Math.min(5,1+Math.floor(captures/4)),'capture-only intensity advances one tier every four losses: '+[role,captures]);
+      check(paced.GetReadinessPressure(role)===captures*25,'linear intensity retains independent equipment progression');
+      check(paced.GetCrackdown(role===1?2:1)===0,'one army capture escalation cannot raise the other army');
+    }
+  }
   const loaded=Object.assign(makeManager(),defaults());loaded.RestoreQRFStrategy_S(700,250,10,20,50,800);init.call(loaded,{});
   check(scheduled===2&&loaded.GetReadinessLevel(1)===5&&loaded.GetCrackdown(1)===50&&loaded.GetReadinessLevel(2)===3&&loaded.GetCrackdown(2)===800,'startup cannot overwrite restored axes with new scenario defaults');
   const invalid=Object.assign(makeManager(),defaults(),{m_iStartingCrackdown:101});init.call(invalid,{});
@@ -123,6 +134,19 @@ function runQRFProgressionTests(sources) {
     for(const n of ['IsValid','AllowsReadinessLevel','Resolve'])r[n]=compile(sources.recipe,n);return r;
   });
   check(profiles.length===12&&recipes.length===62,'Chicken contains light/escorted air profiles and complete ground/joint readiness bands');
+  check(/m_iStartingCrackdown\s+0\b/.test(sources.layer)&&/m_iCaptureCrackdown\s+50\b/.test(sources.layer),'Chicken overrides agree with the tier-one linear pacing defaults');
+  for(const role of [1,2])for(const band of ['light','mechanized','ground','joint_r2','joint_r3','joint']){
+    const prefix=(role===1?'occupier':'invader')+'_'+band+'_l';let lastPersonnel=0,lastCollateral=0;
+    for(let tier=1;tier<=5;tier++){
+      const recipe=recipes.find(r=>r.m_eRole===role&&r.m_sId===prefix+tier),elements=[];
+      check(recipe&&recipe.Resolve(profiles,role,role===1?'AROR_OCCUPIERS':'AROR_INVADERS',elements,recipe.m_iMinimumReadinessLevel),'each army has a complete linear recipe band');
+      check(elements.length===tier+(['ground','joint_r2','joint_r3','joint'].includes(band)?1:0),'each successive tier adds exactly one complete package: '+[role,band,tier]);
+      const personnel=elements.reduce((sum,p)=>sum+p.m_iPersonnelBudget,0),collateral=elements.reduce((sum,p)=>sum+p.ReplacementQuote(),0);
+      check(personnel>lastPersonnel&&collateral>lastCollateral,'each tier mounts in funded strength rather than shrinking or merely relabelling a force');
+      check(elements.filter(p=>p.m_eType!==3&&p.m_eType!==4).every(p=>p.m_bFillPassengerSeats),'linear tiers keep full-load ground profiles');
+      lastPersonnel=personnel;lastCollateral=collateral;
+    }
+  }
   check(profiles.every(p=>p.IsValid())&&recipes.every(r=>r.IsValid()),'every authored progression profile and recipe passes production configuration validation');
   check(profiles.filter(p=>/_light_support$/.test(p.m_sId)).every(p=>p.GetSpottingKind()===5)&&profiles.find(p=>p.m_sId==='us_armour').GetSpottingKind()===2,'light escorts report their own intelligence class while genuine armour keeps its class');
   check(profiles.filter(p=>/_light_support$/.test(p.m_sId)).every(p=>p.GetWeight(0)===0&&p.GetWeight(1)>0),'new QRF escorts do not change the separate scheduled-attack pool');
@@ -190,7 +214,7 @@ if(typeof module!=='undefined')module.exports={runQRFProgressionTests};
 if(typeof require!=='undefined'&&require.main===module){
   const fs=require('fs'),path=require('path'),root=path.resolve(__dirname,'../AROpenResistance/Open Resistance');
   const read=p=>fs.readFileSync(path.join(root,p),'utf8');
-  console.log(runQRFProgressionTests({policy:read('Scripts/Game/Operations/AROR_QRFStrategicPolicy.c'),manager:read('Scripts/Game/Operations/AROR_OperationManagerComponent.c'),
+  console.log(runQRFProgressionTests({mix:read('Scripts/Game/Operations/AROR_QRFResponseMix.c'),policy:read('Scripts/Game/Operations/AROR_QRFStrategicPolicy.c'),manager:read('Scripts/Game/Operations/AROR_OperationManagerComponent.c'),
     serializer:read('Scripts/Game/Operations/AROR_OperationManagerComponentSerializer.c'),profile:read('Scripts/Game/Operations/AROR_ForceProfile.c'),recipe:read('Scripts/Game/Operations/AROR_GroundQRFRecipe.c'),responsePolicy:read('Scripts/Game/Operations/AROR_ResponsePolicy.c'),
     executor:read('Scripts/Game/Operations/AROR_OperationExecutorComponent.c'),selection:read('Scripts/Game/Operations/AROR_QRFSelectionPolicy.c'),reaper:read('Scripts/Game/Operations/AROR_ReaperQRFExecutor.c'),
     app:read('Scripts/Game/Phone/AROR_RebIntelApp.c'),layer:read('Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/Managers.layer')}));

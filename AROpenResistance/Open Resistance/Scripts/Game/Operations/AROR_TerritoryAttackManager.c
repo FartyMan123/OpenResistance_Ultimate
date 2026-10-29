@@ -1,19 +1,23 @@
 //! Territory policy only. Existing operations/executor/tactical commander own the physical attack.
+//! The Occupiers attack Resistance-held military territory as soon as the Resistance holds any: the front site
+//! nearest an Occupier base first, after a short per-site capture grace, with a rest between their attacks. The
+//! Invaders' southward push (AROR_InvaderCampaignComponent) launches its physical attacks through LaunchTerritoryAttack_S.
 modded class AROR_OperationManagerComponent
 {
-	[Attribute("0", desc: "Schedule Occupier attacks on Resistance-held military territory after its capture QRF finishes. Settlements remain support-only and HQ is excluded.")]
+	[Attribute("0", desc: "Schedule Occupier attacks on Resistance-held military territory. Settlements remain support-only and HQ is excluded.")]
 	protected bool m_bTerritoryAttacksEnabled;
-	[Attribute("900", desc: "Minimum seconds from capture before an automatic attack can be planned", params: "0 7200 30")]
+	[Attribute("300", desc: "Minimum seconds from capture (or campaign load) before a site can be attacked; the 5-minute flip lock blocks a recapture before then anyway", params: "0 7200 30")]
 	protected int m_iTerritoryAttackGrace;
-	[Attribute("300", desc: "Minimum recovery time after a physically activated capture QRF ends", params: "0 3600 30")]
+	[Attribute("300", desc: "Wait after a capture QRF on the site ends before attacking it. A site whose capture QRF is still deployed is not attacked; a site without one does not wait.", params: "0 3600 30")]
 	protected int m_iTerritoryAttackAfterQRF;
-	[Attribute("900", desc: "Global recovery time after any attack ends, before another automatic attack", params: "60 7200 30")]
+	[Attribute("900", desc: "Occupier recovery time after one of their attacks ends, before the next", params: "60 7200 30")]
 	protected int m_iTerritoryAttackRest;
 	protected ref array<ref AROR_TerritoryAttackState> m_aAttackTerritories = {};
 	protected AROR_LocationManagerComponent m_AttackLocations;
 	protected int m_iAttackRestUntil;
 	protected int m_iNextTerritoryAttackTick;
 	protected string m_sAttackHoldKey;	//!< Last logged reason no attack started; logged again only when it changes
+	protected string m_sAttackFailure;	//!< Why the last LaunchTerritoryAttack_S refused, for its caller
 
 	override protected void Tick()
 	{
@@ -41,16 +45,18 @@ modded class AROR_OperationManagerComponent
 			HoldAttacks("rest", string.Format("resting after the last attack for another %1s", m_iAttackRestUntil - m_iClock));
 			return;
 		}
-		AROR_Operation busy = OutstandingOperation();
+		// One attack at a time across the map, whichever army runs it
+		AROR_Operation busy = OutstandingAttack();
 		if (busy)
 		{
-			HoldAttacks("busy:" + busy.GetId(), string.Format("waiting for %1 (type=%2 role=%3 target=%4 state=%5) to end", busy.GetId(), busy.GetType(), busy.GetRole(), busy.GetTargetLocationId(), busy.GetState()));
+			HoldAttacks("busy:" + busy.GetId(), string.Format("waiting for attack %1 (role=%2 target=%3 state=%4) to end", busy.GetId(), busy.GetRole(), busy.GetTargetLocationId(), busy.GetState()));
 			return;
 		}
-		// Pending capture responses also take precedence over attacks.
-		if (!m_aQRFThreats.IsEmpty())
+		// The Occupiers' own pending capture responses take precedence over their attacks
+		int threats = QueuedThreats(AROR_EFactionRole.OCCUPIERS);
+		if (threats > 0)
 		{
-			HoldAttacks("threats", string.Format("%1 queued capture response(s) take priority", m_aQRFThreats.Count()));
+			HoldAttacks("threats", string.Format("%1 queued Occupier capture response(s) take priority", threats));
 			return;
 		}
 		AROR_OperationExecutorComponent executor = AROR_OperationExecutorComponent.Cast(GetOwner().FindComponent(AROR_OperationExecutorComponent));
@@ -60,13 +66,14 @@ modded class AROR_OperationManagerComponent
 			return;
 		}
 		AROR_TerritoryAttackState selected;
+		float selectedFront;
 		string waitKey;
 		string waiting;
 		int reported;
 		foreach (AROR_TerritoryAttackState state : m_aAttackTerritories)
 		{
 			AROR_LocationComponent target = m_AttackLocations.GetLocationById(state.m_sLocationId);
-			if (!IsAttackTerritory(target))
+			if (!IsAttackTerritory(target, AROR_EFactionRole.OCCUPIERS))
 				continue;
 			string reason = AttackWaitReason(state);
 			string category = reason;
@@ -87,8 +94,13 @@ modded class AROR_OperationManagerComponent
 				reported++;
 				continue;
 			}
-			if (!selected || state.m_iNextAttempt < selected.m_iNextAttempt)
+			// The front first: the held site closest to an Occupier base
+			float front = FrontDistance(target, AROR_EFactionRole.OCCUPIERS);
+			if (!selected || front < selectedFront || (front == selectedFront && state.m_sLocationId.Compare(selected.m_sLocationId) < 0))
+			{
 				selected = state;
+				selectedFront = front;
+			}
 		}
 		if (!selected)
 		{
@@ -99,58 +111,117 @@ modded class AROR_OperationManagerComponent
 			return;
 		}
 		selected.m_iNextAttempt = m_iClock + 30;
-		int tier = GetCrackdownLevel(AROR_EFactionRole.OCCUPIERS);
-		if (m_bQRFStrategicEconomy && !executor.CanFundQRFThreat_S(AROR_EFactionRole.OCCUPIERS, tier, false, selected.m_sLocationId))
+		string id = LaunchTerritoryAttack_S(AROR_EFactionRole.OCCUPIERS, selected.m_sLocationId);
+		if (id.IsEmpty())
 		{
-			HoldAttacks("funds:" + selected.m_sLocationId, string.Format("the Occupiers cannot fund a tier %1 attack on %2", tier, selected.m_sLocationId));
-			return;
-		}
-		string id = ScheduleAttack_S(AROR_EFactionRole.OCCUPIERS, selected.m_sLocationId);
-		AROR_Operation attack = GetOperation(id);
-		if (!attack)
-		{
-			HoldAttacks("scheduler:" + selected.m_sLocationId, string.Format("the scheduler refused an attack on %1 (attack interval or capacity)", selected.m_sLocationId));
+			HoldAttacks(m_sAttackFailure, m_sAttackFailure);
 			return;
 		}
 		m_sAttackHoldKey = string.Empty;
-		attack.m_iRequestedTier = tier;
-		attack.m_iPoolReadinessLevel = GetReadinessLevel(AROR_EFactionRole.OCCUPIERS);
 		selected.m_iNextAttempt = m_iClock + Math.Max(60, m_iTerritoryAttackRest);
-		AnnounceTerritoryAttack(selected.m_sLocationId);
-		Print(string.Format("[AROR ATTACK] %1 target=%2 captureAge=%3 QRFEnded=%4 readiness=%5 crackdownTier=%6", id, selected.m_sLocationId, m_iClock - selected.m_iCapturedAt, selected.m_iQRFCompletedAt, attack.m_iPoolReadinessLevel, tier), LogLevel.NORMAL);
+		Print(string.Format("[AROR ATTACK] %1 target=%2 captureAge=%3 front=%4m", id, selected.m_sLocationId, m_iClock - selected.m_iCapturedAt, Math.Round(selectedFront)), LogLevel.NORMAL);
 	}
 
-	protected void AnnounceTerritoryAttack(string locationId)
+	//! Trusted server call shared by both armies' attack policies: check the launch site and funding, schedule the
+	//! attack and freeze its metrics. Returns the operation id (an existing one when the same attack is already
+	//! outstanding), or empty with the reason in GetAttackFailure().
+	string LaunchTerritoryAttack_S(AROR_EFactionRole role, string locationId)
 	{
-		AROR_LocationComponent target = m_AttackLocations.GetLocationById(locationId);
-		if (target)
-			AROR_NotificationManagerComponent.Send_S(new AROR_Notification(AROR_ENotificationType.HEADLINE, "ENEMY ATTACK INBOUND / " + target.GetName(), string.Empty, AROR_UIColors.Get(AROR_UIColors.WARN), "Enemy movement"));
+		m_sAttackFailure = string.Empty;
+		if (!IsReady() || !IsEnemyRole(role))
+		{
+			m_sAttackFailure = "operations are not ready";
+			return string.Empty;
+		}
+		if (role == AROR_EFactionRole.INVADERS && !m_bInvaderOperationsEnabled)
+		{
+			m_sAttackFailure = "physical Invader operations are disabled in this scenario (m_bInvaderOperationsEnabled)";
+			return string.Empty;
+		}
+		foreach (AROR_Operation existing : m_aOperations)
+		{
+			if (!existing.IsTerminal() && existing.GetType() == AROR_EOperationType.ATTACK && existing.GetRole() == role && existing.GetTargetLocationId() == locationId)
+				return existing.GetId();
+		}
+		AROR_OperationExecutorComponent executor = AROR_OperationExecutorComponent.Cast(GetOwner().FindComponent(AROR_OperationExecutorComponent));
+		if (!executor)
+		{
+			m_sAttackFailure = "no operation executor on the game mode";
+			return string.Empty;
+		}
+		if (!executor.HasMarsOrigin_S(role, locationId))
+		{
+			m_sAttackFailure = string.Format("no safe launch site for role %1 against %2", role, locationId);
+			return string.Empty;
+		}
+		int tier = GetCrackdownLevel(role);
+		if (m_bQRFStrategicEconomy && !executor.CanFundQRFThreat_S(role, tier, false, locationId))
+		{
+			m_sAttackFailure = string.Format("role %1 cannot fund a tier %2 attack on %3", role, tier, locationId);
+			return string.Empty;
+		}
+		string id = ScheduleAttack_S(role, locationId);
+		AROR_Operation attack = GetOperation(id);
+		if (!attack)
+		{
+			m_sAttackFailure = string.Format("the scheduler refused an attack on %1 (another attack, interval or capacity)", locationId);
+			return string.Empty;
+		}
+		attack.m_iRequestedTier = tier;
+		attack.m_iPoolReadinessLevel = GetReadinessLevel(role);
+		Print(string.Format("[AROR ATTACK] %1 scheduled role=%2 target=%3 readiness=%4 crackdownTier=%5", id, role, locationId, attack.m_iPoolReadinessLevel, tier), LogLevel.NORMAL);
+		return id;
 	}
 
-	protected bool IsAttackTerritory(AROR_LocationComponent location)
+	string GetAttackFailure()
+	{
+		return m_sAttackFailure;
+	}
+
+	//! A Resistance-held military site the role could take. A stronghold returns only to its own army: an Occupier
+	//! attack on a Resistance-held Vostok could never succeed.
+	bool IsAttackTerritory(AROR_LocationComponent location, AROR_EFactionRole role)
 	{
 		if (!location || location.GetControllingRole() != AROR_EFactionRole.RESISTANCE || location.IsControlFixed() || !AROR_CaptureLocationAction.IsCapturableType(location.GetLocationType()))
 			return false;
-		// A stronghold returns only to its own army: an Occupier attack on a Resistance-held Vostok could never succeed
 		AROR_StrongholdComponent stronghold = AROR_StrongholdComponent.Cast(location.GetOwner().FindComponent(AROR_StrongholdComponent));
-		return !stronghold || stronghold.AllowsCaptureBy(AROR_EFactionRole.OCCUPIERS);
+		return !stronghold || stronghold.AllowsCaptureBy(role);
+	}
+
+	//! Distance from a site to the nearest base the role can launch from
+	protected float FrontDistance(AROR_LocationComponent site, AROR_EFactionRole role)
+	{
+		float nearest = float.MAX;
+		array<AROR_LocationComponent> all = {};
+		m_AttackLocations.GetLocations(all);
+		foreach (AROR_LocationComponent origin : all)
+		{
+			if (origin && origin.GetControllingRole() == role && AROR_QRFOriginPolicy.IsOriginType(origin.GetLocationType()))
+				nearest = Math.Min(nearest, vector.DistanceXZ(site.GetCenter(), origin.GetCenter()));
+		}
+		return nearest;
 	}
 
 	//! Why a held site is not yet due, or empty when it is. Text before any colon names the kind of wait.
 	protected string AttackWaitReason(AROR_TerritoryAttackState state)
 	{
-		if (state.m_iQRFCompletedAt < 0)
+		if (!state.m_sActiveQRF.IsEmpty())
+			return "capture QRF " + state.m_sActiveQRF + " still deployed";
+		// The scheduler allows one request per army and target: wait out their own QRF rather than be refused
+		foreach (AROR_Operation operation : m_aOperations)
 		{
-			if (!state.m_sActiveQRF.IsEmpty())
-				return "capture QRF " + state.m_sActiveQRF + " still deployed";
-			return "capture QRF has not deployed yet (attacks follow a deployed capture QRF)";
+			if (!operation.IsTerminal() && operation.GetRole() == AROR_EFactionRole.OCCUPIERS && operation.GetType() == AROR_EOperationType.QRF && operation.GetTargetLocationId() == state.m_sLocationId)
+				return "Occupier QRF " + operation.GetId() + " still responding";
 		}
 		int captureGrace = state.m_iCapturedAt + Math.Max(0, m_iTerritoryAttackGrace) - m_iClock;
 		if (captureGrace > 0)
 			return string.Format("capture grace: %1s left", captureGrace);
-		int afterQRF = state.m_iQRFCompletedAt + Math.Max(0, m_iTerritoryAttackAfterQRF) - m_iClock;
-		if (afterQRF > 0)
-			return string.Format("recovery after capture QRF: %1s left", afterQRF);
+		if (state.m_iQRFCompletedAt >= 0)
+		{
+			int afterQRF = state.m_iQRFCompletedAt + Math.Max(0, m_iTerritoryAttackAfterQRF) - m_iClock;
+			if (afterQRF > 0)
+				return string.Format("recovery after capture QRF: %1s left", afterQRF);
+		}
 		if (m_iClock < state.m_iNextAttempt)
 			return string.Format("retry: %1s left", state.m_iNextAttempt - m_iClock);
 		return string.Empty;
@@ -169,7 +240,7 @@ modded class AROR_OperationManagerComponent
 		if (!Replication.IsServer() || !location)
 			return;
 		OnAttackTerritoryRemoved(location);
-		if (!IsAttackTerritory(location))
+		if (!IsAttackTerritory(location, AROR_EFactionRole.OCCUPIERS))
 			return;
 		AROR_TerritoryAttackState state = new AROR_TerritoryAttackState();
 		state.m_sLocationId = location.GetId();
@@ -189,20 +260,26 @@ modded class AROR_OperationManagerComponent
 		}
 	}
 
-	protected bool HasOutstandingAttackOrQRF()
-	{
-		return OutstandingOperation() != null;
-	}
-
-	//! The first operation still in progress (any army or type, including scripted and test responses)
-	protected AROR_Operation OutstandingOperation()
+	//! The attack still in progress, if any (either army, including test attacks)
+	protected AROR_Operation OutstandingAttack()
 	{
 		foreach (AROR_Operation operation : m_aOperations)
 		{
-			if (!operation.IsTerminal())
+			if (!operation.IsTerminal() && operation.GetType() == AROR_EOperationType.ATTACK)
 				return operation;
 		}
 		return null;
+	}
+
+	protected int QueuedThreats(AROR_EFactionRole role)
+	{
+		int count;
+		foreach (AROR_QRFThreat threat : m_aQRFThreats)
+		{
+			if (threat.m_eRole == role)
+				count++;
+		}
+		return count;
 	}
 
 	override protected void NotifyChanged(AROR_Operation operation)
@@ -218,7 +295,8 @@ modded class AROR_OperationManagerComponent
 			return;
 		if (operation.GetType() == AROR_EOperationType.ATTACK)
 		{
-			if (operation.IsTerminal())
+			// Only the Occupiers' own attacks start their rest; the Invaders' push keeps its own cadence
+			if (operation.IsTerminal() && operation.GetRole() == AROR_EFactionRole.OCCUPIERS)
 				m_iAttackRestUntil = m_iClock + Math.Max(60, m_iTerritoryAttackRest);
 			return;
 		}

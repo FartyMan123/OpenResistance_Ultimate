@@ -14,7 +14,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	[Attribute("40", UIWidgets.Slider, desc: "Icon size in reference pixels", params: "8 128 1")]
 	protected float m_fIconSize;
 
-	[Attribute("16", desc: "Font size of the name beside military, port and industrial site icons, in reference pixels", params: "8 32 1")]
+	[Attribute("19", desc: "Font size of the name beside military, port and industrial site icons, in reference pixels", params: "8 32 1")]
 	protected int m_iLabelFontSize;
 
 	[Attribute("90", desc: "Map scale, in reference pixels per kilometre, below which site names are hidden to declutter the overview. Stronghold names always show. 0 always shows names.", params: "0 1000 1")]
@@ -49,10 +49,8 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	protected static const string FRAME_WIDGET_NAME = "Frame";
 	protected static const float LABEL_MAX_WIDTH = 360;	//!< Room for the longest site name beside its icon
 	protected static const float LABEL_GAP = 5;			//!< Space between an icon's right edge and its name
-	protected static const int LABEL_GLOW_SIZE = 4;		//!< Light halo behind location names, in pixels
-	protected static const int LABEL_GLOW_COLOR = 0xFFFFFFFF;
-	protected static const float LABEL_GLOW_OPACITY = 1;
-	protected static const float LABEL_INK = 0.5;		//!< Owner colour darkened to this fraction, for contrast against the halo
+	protected static const int LABEL_WEIGHT_SIZE = 1;	//!< Same-colour shadow under the name: thickens the thin condensed strokes (faux bold)
+	protected static const float LABEL_TEXT_DROP = 0.18;	//!< Text offset down the plate, as a fraction of the font size, to centre it
 
 	//! Extra clickable margin around an icon, in reference pixels
 	protected static const float CLICK_MARGIN = 4;
@@ -65,6 +63,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	protected Widget m_wIconParent;
 	protected ref AROR_QRFMapIntel m_QRFIntel = new AROR_QRFMapIntel();
 	protected ref AROR_MissionMapMarkers m_MissionMarkers = new AROR_MissionMapMarkers();
+	protected ref AROR_OperationMapMarkers m_OperationMarkers = new AROR_OperationMapMarkers();
 	protected ref array<AROR_LocationComponent> m_aIconLocations = {};
 	protected ref array<Widget> m_aIconWidgets = {};
 	//! Name label per icon (null for unnamed types), parallel to m_aIconWidgets. A sibling rather than a child of
@@ -72,6 +71,8 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	protected ref array<Widget> m_aLabelWidgets = {};
 	//! Draw commands per frame canvas: the canvas does not keep its own copy, so they live as long as the icon
 	protected ref map<Widget, ref array<ref CanvasWidgetCommand>> m_mFrameCommands = new map<Widget, ref array<ref CanvasWidgetCommand>>();
+	//! Dark plate behind each name label (created before it, so drawn beneath), keyed by the label
+	protected ref map<Widget, Widget> m_mLabelPlates = new map<Widget, Widget>();
 	protected ref AROR_LocationInfoPopup m_Popup;
 	protected ref AROR_MapIconSelector m_Selector;
 
@@ -293,8 +294,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 			m_mFrameCommands.Remove(m_aIconWidgets[index].FindAnyWidget(FRAME_WIDGET_NAME));
 			m_aIconWidgets[index].RemoveFromHierarchy();
 		}
-		if (m_aLabelWidgets[index])
-			m_aLabelWidgets[index].RemoveFromHierarchy();
+		RemoveLabel(m_aLabelWidgets[index]);
 
 		m_aIconLocations.Remove(index);
 		m_aIconWidgets.Remove(index);
@@ -302,10 +302,27 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! A name label and the plate behind it
+	protected void RemoveLabel(Widget label)
+	{
+		if (!label)
+			return;
+		Widget plate = m_mLabelPlates.Get(label);
+		if (plate)
+		{
+			m_mFrameCommands.Remove(plate.FindAnyWidget(FRAME_WIDGET_NAME));
+			plate.RemoveFromHierarchy();
+		}
+		m_mLabelPlates.Remove(label);
+		label.RemoveFromHierarchy();
+	}
+
+	//------------------------------------------------------------------------------------------------
 	protected void ClearIcons()
 	{
 		m_QRFIntel.ClearWidgets();
 		m_MissionMarkers.ClearWidgets();
+		m_OperationMarkers.ClearWidgets();
 		foreach (Widget widget : m_aIconWidgets)
 		{
 			if (widget)
@@ -313,14 +330,14 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		}
 		foreach (Widget label : m_aLabelWidgets)
 		{
-			if (label)
-				label.RemoveFromHierarchy();
+			RemoveLabel(label);
 		}
 
 		m_aIconLocations.Clear();
 		m_aIconWidgets.Clear();
 		m_aLabelWidgets.Clear();
 		m_mFrameCommands.Clear();
+		m_mLabelPlates.Clear();
 		m_wIconParent = null;
 	}
 	protected void SetQRFObserverMapOpen(bool open)
@@ -332,21 +349,37 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 
 	//------------------------------------------------------------------------------------------------
 	//! Every location but cities gets its name to the right of the icon, vertically centred on it (vanilla already
-	//! prints city names large). Dark ink with a light outline, like vanilla map text, so it reads over land and sea.
+	//! prints city names large). Light bold text on a dark plate with an edge in the owner's colour, so it reads over any terrain.
 	//! Built from the icon layout with the icon and frame hidden, and positioned with the icon every frame.
 	protected Widget CreateNameLabel(notnull AROR_LocationComponent location)
 	{
 		if (location.GetLocationType() == AROR_ELocationType.CITY)
 			return null;
 
+		// The plate first, so it is drawn beneath the text
+		Widget plate = GetGame().GetWorkspace().CreateWidgets(m_sIconLayout, m_wIconParent);
 		Widget root = GetGame().GetWorkspace().CreateWidgets(m_sIconLayout, m_wIconParent);
-		if (!root)
-			return null;
-		RichTextWidget label = RichTextWidget.Cast(root.FindAnyWidget(LABEL_WIDGET_NAME));
+		RichTextWidget label;
+		if (root)
+			label = RichTextWidget.Cast(root.FindAnyWidget(LABEL_WIDGET_NAME));
 		if (!label)
 		{
-			root.RemoveFromHierarchy();
+			if (root)
+				root.RemoveFromHierarchy();
+			if (plate)
+				plate.RemoveFromHierarchy();
 			return null;
+		}
+		if (plate)
+		{
+			Widget plateIcon = plate.FindAnyWidget(ICON_WIDGET_NAME);
+			if (plateIcon)
+				plateIcon.SetVisible(false);
+			Widget plateText = plate.FindAnyWidget(LABEL_WIDGET_NAME);
+			if (plateText)
+				plateText.SetVisible(false);
+			FrameSlot.SetAlignment(plate, 0, 0.5);
+			m_mLabelPlates.Set(root, plate);
 		}
 		Widget icon = root.FindAnyWidget(ICON_WIDGET_NAME);
 		if (icon)
@@ -361,18 +394,18 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		label.SetText(name);
 		label.SetExactFontSize(m_iLabelFontSize);
 		label.SetBold(true);
-		ApplyLabelColor(label, location);
 		// Explicit sizes, as for QRF captions: size-to-content leaves it empty inside the map widget
 		FrameSlot.SetAlignment(root, 0, 0.5);
 		FrameSlot.SetSize(root, LABEL_MAX_WIDTH, LabelHeight());
-		FrameSlot.SetPos(label, 0, 0);
+		FrameSlot.SetPos(label, AROR_MapLabelPlate.TextInset(), m_iLabelFontSize * LABEL_TEXT_DROP);
 		FrameSlot.SetSize(label, LABEL_MAX_WIDTH, LabelHeight());
+		ApplyLabelColor(label, location);
 		return root;
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Name in a deep shade of the owner's colour inside a solid light halo: the pale faction tints alone vanish
-	//! over Everon's light terrain and sea
+	//! Light name on a dark plate edged in the owner's colour (AROR_MapLabelPlate): coloured or dark text alone fades
+	//! to grey in the thin condensed font over Everon's light terrain and sea
 	protected void ApplyLabelColor(notnull RichTextWidget label, notnull AROR_LocationComponent location)
 	{
 		Color color;
@@ -384,8 +417,30 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 				color = faction.GetFactionColor();
 		}
 		Color stroke = AROR_MapFrameIcon.StrokeColor(color);
-		label.SetColor(new Color(stroke.R() * LABEL_INK, stroke.G() * LABEL_INK, stroke.B() * LABEL_INK, 1));
-		label.SetShadow(LABEL_GLOW_SIZE, LABEL_GLOW_COLOR, LABEL_GLOW_OPACITY, 0, 0);
+		label.SetColor(AROR_UIColors.Get(AROR_UIColors.TEXT));
+		// A same-colour shadow thickens the thin condensed strokes a little (faux bold)
+		label.SetShadow(LABEL_WEIGHT_SIZE, AROR_UIColors.TEXT, 0.6, 0, 0);
+
+		Widget root = label.GetParent();
+		if (!root)
+			return;
+		Widget plate = m_mLabelPlates.Get(root);
+		if (!plate)
+			return;
+		string name = location.GetName();
+		name.ToUpper();
+		float width = AROR_MapLabelPlate.Width(name, m_iLabelFontSize);
+		FrameSlot.SetSize(plate, width, LabelHeight());
+		CanvasWidget canvas = CanvasWidget.Cast(plate.FindAnyWidget(FRAME_WIDGET_NAME));
+		if (!canvas)
+			return;
+		array<ref CanvasWidgetCommand> commands = m_mFrameCommands.Get(canvas);
+		if (!commands)
+		{
+			commands = new array<ref CanvasWidgetCommand>();
+			m_mFrameCommands.Set(canvas, commands);
+		}
+		AROR_MapLabelPlate.Draw(canvas, commands, width, LabelHeight(), stroke.PackToInt());
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -509,6 +564,13 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 				bool show = showNames || location.GetOwner().FindComponent(AROR_StrongholdComponent) != null;
 				if (label.IsVisible() != show)
 					label.SetVisible(show);
+				Widget plate = m_mLabelPlates.Get(label);
+				if (plate)
+				{
+					FrameSlot.SetPos(plate, x + m_fIconSize * 0.5 + LABEL_GAP, y);
+					if (plate.IsVisible() != show)
+						plate.SetVisible(show);
+				}
 			}
 
 			// Popup sits to the right of its icon (clear of the selector), top-aligned with it
@@ -519,6 +581,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		UpdateSelector(mapEntity, workspace);
 		m_QRFIntel.Update(m_wIconParent, m_sIconLayout, mapEntity);
 		m_MissionMarkers.Update(m_wIconParent, m_sIconLayout, mapEntity);
+		m_OperationMarkers.Update(m_wIconParent, m_sIconLayout, mapEntity);
 	}
 
 	//------------------------------------------------------------------------------------------------

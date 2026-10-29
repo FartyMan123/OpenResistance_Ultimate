@@ -195,7 +195,7 @@ if ($layerText -notmatch 'm_bCombatQRFs\s+0\b' -or $layerText -notmatch 'm_bOutp
 if ($layerText -notmatch 'm_sInvadersAttackTargetId\s+""' -or $layerText -notmatch 'm_sInvadersQRFTestTargetId\s+""') { throw 'Invader automatic/test targets must remain empty' }
 $tacticalFixture = @{
 	m_bMarsEnabled = '1'; m_bAllowAirborneResponses = '1'; m_bAllowJointResponses = '1'; m_bTerritoryAttacksEnabled = '1'
-	m_iTerritoryAttackGrace = '900'; m_iTerritoryAttackAfterQRF = '300'; m_iTerritoryAttackRest = '900'
+	m_iTerritoryAttackGrace = '300'; m_iTerritoryAttackAfterQRF = '300'; m_iTerritoryAttackRest = '900'
 	m_fReaperLZFallbackRadius = '1200'
 	m_fReaperLZAdjustmentRadius = '60'; m_fQRFRoadLaunchRadius = '300'; m_iQRFSeatRecoveryDelay = '10'
 	m_bQRFTacticalCommander = '1'; m_bQRFTwoWaves = '1'; m_iQRFSplitTier = '3'
@@ -204,7 +204,7 @@ $tacticalFixture = @{
 	m_fQRFVehicleArrivalTolerance = '20'; m_fQRFObjectiveDeliveryRadius = '100'; m_iQRFIngressTimeout = '600'; m_iQRFExitTimeout = '30'; m_iQRFExitRetryLimit = '2'; m_bTownCaptureQRFs = '1'
 	m_iQRFInfantryLegTimeout = '180'; m_fQRFInfantryPlanningSpeed = '1.5'
 	m_fQRFRecoveryRadius = '100'; m_fQRFVehicleRecoveryRadius = '125'
-	m_iStartingReadinessLevel = '1'; m_iStartingCrackdown = '20'; m_iCaptureReadinessPressure = '25'; m_iCaptureCrackdown = '150'; m_iCrackdownQuietTime = '600'; m_iCrackdownDecay = '20'
+	m_iStartingReadinessLevel = '1'; m_iStartingCrackdown = '0'; m_iCaptureReadinessPressure = '25'; m_iCaptureCrackdown = '50'; m_iCrackdownQuietTime = '600'; m_iCrackdownDecay = '20'
 	m_iQRFBaseOverhead = '50'; m_iQRFTierOverhead = '10'; m_iQRFThreatLifetime = '180'
 	m_fQRFSpotGroundRange = '800'; m_fQRFSpotAirRange = '1500'; m_fQRFSpotMinimumDot = '0.9'; m_iQRFSpotTraceLimit = '8'; m_iQRFSpotLifetime = '90'
 	m_fQRFWithdrawFraction = '0.4'; m_fQRFLocalWithdrawFraction = '0.5'; m_iQRFGroundRetention = '120'; m_fQRFGroundCleanupDistance = '1200'

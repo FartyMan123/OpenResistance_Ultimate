@@ -1,18 +1,21 @@
 # Chicken QRF and attack release validation
 
-**Decision: current source compiled successfully; native release approval remains pending gameplay acceptance.** The user reported successful compilation of the current full-cabin, boarding and USSR origin changes on 28 October 2026. Current driving, flight, actual landings and packaged dedicated-server replication remain unverified. No route is labelled as driven or flown.
+**Decision: current tier-one/linear-balance changes require compilation and native gameplay acceptance.** The user reported successful compilation of the preceding full-cabin, boarding and USSR origin changes on 28 October 2026. The subsequent balance changes on 29 October 2026 have not been compiled or played by this audit. Current driving, flight, actual landings and packaged dedicated-server replication remain unverified. No route is labelled as driven or flown.
 
 Scope: Chicken only, both enemy roles, ordinary capture QRFs, trusted attacks, automatic Occupier attacks and MARS. The first audit started from `6c03716ff3cdc573f56b8f428f436c249afc1d52`; this follow-up starts from `3614c1b` on `chicken-dev`. Historical evidence is retained in Git. The requested work budget was two hours; simulated ticks and assertion counts are not elapsed native gameplay time.
 
 ## Evidence and repeatable checks
 
+Current source also targets a saved 30% running airborne/joint share of ordinary dispatched QRFs per army. It excludes failed preparation and explicit/debug/scripted requests, and falls back to ground when aviation is not feasible before funding/construction. Policy serializer version 4 retains versions 1-3 with empty historical mix counters. The new actual-source suite covers routing, exact running quotas, duplicate/reentrant accounting and save migration. Native compilation and Play acceptance of this change remain pending.
+
+The [tier-one/linear-balance follow-up](QRF_REVIEW_FOLLOWUP.md#tier-one-start-and-linear-response-balance--29-october-2026) starts new campaigns at 0% Crackdown, adds five percentage points per recorded capture loss, and adds one complete package per tier within every ground/joint band. Prices, personnel budgets, lead/reserve counts and response previews reflect the smaller upper-tier recipes. Equipment Readiness, full native passenger loads and all boarding/exit safety checks are retained. Existing saved escalation is preserved.
 [Native Vostok/Crow Hill failure](QRF_RETALIATION_FAILURE.md): Workbench confirmed that attributed script initializers overwrote recipe/profile resource values and disabled the executor. Those initializers are removed; script-created fixtures use explicit factories. Retaliation banners now require actual deployment rather than request acceptance. The fix needs a fresh compile and full Chicken reload; native deployment success is not yet verified.
 
 The [combined reconciliation](RECONCILIATION_VALIDATION.md) includes the new stronghold/garrison/map content. Its five additional mutations cover scripted target conflicts, coastal recovery, dispatch receipts, retirement kill attribution and forced-wave integration. New stronghold resource metadata is hand-authored and needs native discovery.
 
 The six review issues and their dispositions, shipped settings and native reproductions are recorded in [Rowan review follow-up](QRF_REVIEW_FOLLOWUP.md). Four additional mutations cover active dispatch failure, reserve boarding deadlines, unknown-removal classification and banner estimate consistency. Long Cyrillic/proportional-font rendering remains visually unverified.
 
-Current combined result: **29 suites / 97,305 mocked assertions**, including **51 detected source mutations** and the 10,000-tick simulated scheduler soak. The original 27-suite / 95,936-assertion evidence remains in Git history.
+Current combined result: **33 suites / 99,749 mocked assertions**, including **57 detected source mutations** and the 10,000-tick simulated scheduler soak. The original 27-suite / 95,936-assertion evidence remains in Git history. The current lexical check covers 216 addon scripts and is not an Enforce compilation.
 
 The [full-load follow-up](QRF_REVIEW_FOLLOWUP.md#full-ground-transport-loads) fills native ground passenger capacity within updated reserved ceilings and routes passenger-carrying light/armoured profiles through delivery and infantry unloading. Driver/gunner crews remain separate. Prices and response coverage reflect the larger reservations. Later native logs confirm ground boarding with 15 occupants per truck and five per Humvee; delivery remains unverified. Other physical occupancy counts remain unverified; `EstimatedPersonnel` in the price CSV is `NOT_RUN`. Fewer affordability-loop assertions execute because larger full-load quotes exceed more sampled balances; all 50 funded army/Readiness/Crackdown combinations still pass.
 
@@ -145,7 +148,7 @@ Every row includes one transport/fireteam/gunship package.
 | 2 | Truck + APC/IFV | 3 / 0 | 6,320 / 6,420 |
 | 3 | Truck + APC/IFV + armour | 2 / 2 | 7,430 / 7,080 |
 | 4 | Truck + 2 APCs/IFVs + armour | 3 / 2 | 8,540 / 8,090 |
-| 5 | 2 trucks + 2 APCs/IFVs + armour + light support | 4 / 3 | 9,800 / 9,250 |
+| 5 | 1 truck + 2 APCs/IFVs + armour + light support | 3 / 3 | 9,050 / 8,500 |
 
 ### Shared execution and compatibility
 
@@ -189,7 +192,7 @@ A planning PASS is a snapshot for one ground package and the configured air laun
 
 | Gate | Required evidence | Current result |
 |---|---|---|
-| Compilation | Compile current full-cabin/boarding/origin changes; verify packaged and Workbench variants. | PASS, user-reported on 28 October 2026; packaged variant not separately verified |
+| Compilation | Compile current tier-one/linear-balance changes; verify packaged and Workbench variants. | NOT_RUN for 29 October balance changes; preceding full-cabin version passed, user-reported on 28 October 2026 |
 | Resource loading | Discover layouts and metadata; reload Chicken and check widget loading. | NOT_RUN |
 | Memory-only native smoke tests | Existing operation/pool/strategy/tactical helpers plus `AROR_JointResponseSmokeTests.Run_S()`. | NOT_RUN |
 | Route planning | Sweep all 924 pairs and 45 landing targets; triage failures, especially ports. | NOT_RUN |

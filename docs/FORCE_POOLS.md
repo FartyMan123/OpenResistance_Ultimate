@@ -1,5 +1,9 @@
 # Four-type attack and QRF force pools
 
+Ordinary campaign QRFs target a **30% airborne share per army**, measured over successful dispatches. Standalone airborne and joint air/ground responses count in the same bucket. The remaining share uses ground recipes; an eligible joint recipe no longer automatically wins every ordinary response. Selection follows the nearest attainable running proportion, not an independent random roll. The first response is ground; ten feasible successful dispatches contain three airborne/joint responses.
+
+Readiness, funding, capacity, launch origins, airspace and landing safety still apply. Air requests can fall back to ground before funding or construction; unavailable aircraft do not cause a free deployment or override limits. Failed preparation does not consume a dispatch. MARS, explicit-profile/recipe requests, attacks and scenario-funded stronghold responses are excluded. Aggregate per-army totals survive save/load through operation policy serializer version 4; versions 1–3 load with empty mix history and retain their existing campaign progress. `m_iAirborneQRFShare` exposes the percentage to scenarios/extenders. See [strategy and economy](QRF_STRATEGY_ECONOMY.md#airborne-response-share).
+
 See [QRF tactical commander and staged waves](QRF_TACTICAL_COMMANDER.md) for the new shared BLUFOR/USSR execution policy, finite reserves, live limits, report-driven sectors and withdrawal/retention. It is enabled for Chicken's ground fixture; Chicken now enables capture-driven Invader ground responses; native acceptance is pending. New tactical behavior is not yet verified in Workbench.
 
 The [USSR/Invader framework](INVADER_QRF_FRAMEWORK.md) has levels 1-5 and ground capture-response admission enabled in Chicken; other scenarios default off.

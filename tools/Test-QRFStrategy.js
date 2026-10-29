@@ -186,7 +186,7 @@ function runQRFTests(sources) {
   env.vector={DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])};
   env.AROR_QRFOriginPolicy={IsOriginType:t=>[2,5,8].includes(t)};
   env.AROR_RecaptureComponent={IsContested:()=>false};
-  Object.assign(groundCtx,{m_fMinOriginDistance:1500,m_mOriginLaunchedAt:{Contains:()=>false},
+  Object.assign(groundCtx,{m_fMinOriginDistance:1500,m_mOriginLaunchedAt:{Contains:()=>false},m_aRoadlessOrigins:[],
     OriginCost:env.vector.DistanceXZ,IsGarrisonDepleted:()=>false,
     BestOrigin:compile(sources.AROR_OperationExecutorComponent,'BestOrigin'),
     IsUsableOrigin:compile(sources.AROR_OperationExecutorComponent,'IsUsableOrigin')});
@@ -225,7 +225,7 @@ function runQRFTests(sources) {
   queue.call(manager,2,'town',false);queue.call(manager,1,'missing',false);check(manager.m_aQRFThreats.length===1,'disabled Invader and missing location rejected');
   queue.call(manager,1,'factory',true);check(manager.m_aQRFThreats.length===2,'separate strategic target queued');
   let affordable=false,admitted=[];
-  manager.GetOwner=()=>({FindComponent:()=>({CanFundQRFThreat_S:()=>affordable})});
+  manager.GetOwner=()=>({FindComponent:()=>({CanFundQRFThreat_S:()=>affordable,ThreatWaitReason_S:()=>'no usable launch base: owned=2'})});
   manager.RequestOperation_S=(role,type,target)=>{admitted.push(target);return target;};
   manager.GetOperation=id=>id?{m_iRequestedTier:0}:null;
   methodNames.push('IsCaptureThreatRelevant');
@@ -299,15 +299,16 @@ function runQRFTests(sources) {
   check(!sources.AROR_QRFMapIntel.includes('m_Entity'),'map stores snapshots only');
   // Actual serializer bodies preserve pending bills without mutating another component during save.
   env.AROR_OperationManagerComponent={Cast:x=>x};env.ESerializeResult={OK:1};env.VERSION=Number(sources.AROR_OperationManagerComponentSerializer.match(/VERSION\s*=\s*(\d+)/)[1]);
+  env.AROR_QRFResponseMix={CountsValid:compile(sources.AROR_QRFResponseMix,'CountsValid')};
   const saveFinance=new Finance(),saveAccount=saveFinance.Reserve_S(operation('save',1),500,60),saveSoldier=entity(true);
   saveAccount.Register_S(saveSoldier,25,false,'AROR_OCCUPIERS','US');saveSoldier.dead=true;saveFinance.SetDebt_S(1,100);
-  const saved={},saveManager={GetCrackdownForSave:role=>role===1?350:900,GetReadinessPressure:role=>role===1?100:250,GetQRFFinance:()=>saveFinance};
+  const saved={},saveManager={GetQRFDispatchCount:()=>0,GetCrackdownForSave:role=>role===1?350:900,GetReadinessPressure:role=>role===1?100:250,GetQRFFinance:()=>saveFinance};
   const serialize=compile(sources.AROR_OperationManagerComponentSerializer,'Serialize');
   const beforeSave=bank.balances[1];
   check(serialize(null,saveManager,{WriteValue:(key,value)=>saved[key]=value})===1,'serialize policy state');
   check(saved.occupierDebt===125&&saved.invaderDebt===0,'save includes only unbilled confirmed losses');
   check(bank.balances[1]===beforeSave&&!saveAccount.m_aAssets[0].m_bSettled,'save is read only');
-  let restored=null;const loadManager={RestoreQRFStrategy_S:(...args)=>restored=args};
+  let restored=null;const loadManager={RestoreQRFResponseMix_S(){},RestoreQRFStrategy_S:(...args)=>restored=args};
   const deserialize=compile(sources.AROR_OperationManagerComponentSerializer,'Deserialize');
   check(deserialize(null,loadManager,{values:saved})&&restored.join(',')==='100,250,125,0,350,900','restore independent pressure, crackdown and liabilities');
   check(!deserialize(null,loadManager,{values:{...saved,version:env.VERSION+1}}),'unknown version rejected');

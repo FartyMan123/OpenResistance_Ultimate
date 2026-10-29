@@ -1,6 +1,6 @@
 # QRF strategy, prices and response lifecycle
 
-Status: source implementation and offline checks; **current Workbench compilation, multiplayer and combat acceptance are pending**. Chicken enables both armies' capture responses, light airborne selections from Readiness 1 and joint responses from Readiness 2. Combat-triggered QRF dispatch and the blanket REAPER override remain off. See [release validation](QRF_RELEASE_VALIDATION.md) for current evidence.
+Status: source implementation and offline checks; **the 29 October 2026 tier-one/linear-balance changes need a fresh Workbench compile and Play test**. Chicken enables both armies' capture responses, light airborne selections from Readiness 1 and joint responses from Readiness 2. Combat-triggered QRF dispatch and the blanket REAPER override remain off. See [release validation](QRF_RELEASE_VALIDATION.md) for current evidence.
 
 ## What happens after a capture
 
@@ -30,7 +30,7 @@ The existing `AROR_EconomyComponent` remains the only bank. Income, Resistance m
 | Soldier or crew member | 25 | 25 |
 | Transport truck | 200 | 200 |
 | IFV/APC | 800 (LAV) | 700 (BTR) |
-| Armour support | 800 (crew-only LAV) | 450 (BRDM) |
+| Armour support | 800 (LAV) | 450 (BRDM) |
 | Transport helicopter | 1,600 | 1,800 |
 | Escort gunship | 2,000 | 2,000 |
 
@@ -60,27 +60,45 @@ Explicit launch/approach failures before activation can requeue up to two furthe
 
 ## Readiness-5 combined responses for 3–4 capable players
 
-These are initial tuning values, not a claim of measured difficulty. Infantry/crew counts below assume the current four-person fireteam prefabs and are estimates until each faction's full tier is verified in Play. US armour currently means another LAV; USSR armour uses a BRDM, not a main battle tank.
+These are initial tuning values, not a claim of measured difficulty. Vehicles fill native usable passenger capacity with separate retained crews. The table below records conservative personnel reservations, not measured soldier counts. US armour means another LAV; USSR armour uses a BRDM, not a main battle tank. Heavy ground recipes grow from two to six packages, adding one complete package at each tier.
 
-| Tier | Complete recipe | Estimated US / USSR personnel | Lead + reserve elements | US funds needed | USSR funds needed |
+| Tier | Complete recipe | Reserved US / USSR personnel | Lead + reserve elements | US funds needed | USSR funds needed |
 |---|---|---:|---:|---:|---:|
-| 1 | 1 truck + 1 IFV/APC | 12 / 12 | 2 + 0 | 1,510 | 1,410 |
-| 2 | 1 truck + 2 IFVs/APCs | 19 / 19 | 3 + 0 | 2,570 | 2,370 |
-| 3 | 2 trucks + 2 IFVs/APCs + 1 armour | 27 / 26 | 3 + 2 | 3,880 | 3,330 |
-| 4 | 3 trucks + 2 IFVs/APCs + 2 armour | 35 / 33 | 4 + 3 | 5,190 | 4,290 |
-| 5 | 3 trucks + 3 IFVs/APCs + 2 armour | 42 / 40 | 4 + 4 | 6,250 | 5,250 |
+| 1 | 1 truck + 1 IFV/APC | 34 / 34 | 2 + 0 | 1,910 | 1,810 |
+| 2 | 1 truck + 2 IFVs/APCs | 46 / 46 | 3 + 0 | 3,020 | 2,820 |
+| 3 | 1 truck + 2 IFVs/APCs + 1 armour | 58 / 54 | 2 + 2 | 4,130 | 3,480 |
+| 4 | 2 trucks + 2 IFVs/APCs + 1 armour | 80 / 76 | 3 + 2 | 4,890 | 4,240 |
+| 5 | 2 trucks + 2 IFVs/APCs + 2 armour | 92 / 84 | 3 + 3 | 6,000 | 4,900 |
 
 Machine-readable values: [QRF_PRICES.csv](QRF_PRICES.csv). The needed-funds columns include collateral plus overhead; a loss-free return costs only the overhead. Existing six-live-ground-package limits and finite reserve deadlines remain authoritative, so healthy lead packages can prevent the entire reserve from appearing. Level is a response tier, not an infantry-squad multiplier.
 
 For example, a tier-2 US deployment pays 70. Losing one LAV and two soldiers adds 850, for a total 920 campaign cost; the other surviving assets do not incur replacement charges. Losing a truck with its driver costs 225 in addition to that response's overhead.
 
-## Joint responses
+## Airborne response share
 
-Chicken retains the Readiness-5 `occupier_joint_l1`–`l5` / `invader_joint_l1`–`l5` recipes and adds `*_joint_r2_l1`–`l5` and `*_joint_r3_l1`–`l5`. Early recipes use an unescorted transport/fireteam with trucks/light support at Readiness 2 and mechanized options at 3–4. At equal tier, eligible funded joint recipes are preferred when joint, airborne and tactical execution are enabled. Affordable ground alternatives remain available; the unsecured minimum stays ground-only. See [the roster and native gates](QRF_RELEASE_VALIDATION.md#joint-airborne-and-ground-responses) and [QRF_PRICES.csv](QRF_PRICES.csv).
+Ordinary campaign QRFs target **30% airborne or joint responses per army** over successfully dispatched operations. The selector uses the nearest attainable cumulative proportion; it is not a separate random roll on each capture. The first QRF is ground, and the target is three air/joint responses per ten feasible successful dispatches. Small samples can differ from 30%. Whole operations count once, regardless of aircraft, passenger or reinforcement count.
+
+When the air bucket is due, an eligible funded joint recipe is preferred; standalone airborne can fill it when no joint recipe is available. Otherwise ground recipes are selected. Readiness, funds/debt, actor limits, owned origins and occupied airspace remain authoritative. If no safe landing site or launch volume exists before funding/construction, the request can switch to ground. Already funded/materialized packages cannot be abandoned by a bucket switch. Ground fallbacks count as ground when actually dispatched, so a shortfall can be caught up by later eligible air responses. The target is not a guarantee when aviation is unavailable.
+
+Failures before ACTIVE do not count. Dispatch is recorded once before ACTIVE subscribers can synchronously resolve the operation. MARS, explicit profile/recipe selections, attacks and scenario-funded stronghold responses do not alter these totals. Per-army counts are saved in policy serializer version 4; older saves retain Readiness/Crackdown/debt and start fresh mix history. `m_iAirborneQRFShare` defaults to 30 and accepts 0–100. Full loads, crew separation and finite safety/recovery rules are unchanged.
+
+Chicken retains the Readiness-5 `occupier_joint_l1`–`l5` / `invader_joint_l1`–`l5` recipes and adds `*_joint_r2_l1`–`l5` and `*_joint_r3_l1`–`l5`. Early recipes use an unescorted transport/fireteam with trucks/light support at Readiness 2 and mechanized options at 3–4. Within the selected airborne bucket, eligible funded joint recipes are preferred when joint, airborne and tactical execution are enabled. Affordable ground alternatives remain available; the unsecured minimum stays ground-only. See [the roster and native gates](QRF_RELEASE_VALIDATION.md#joint-airborne-and-ground-responses) and [QRF_PRICES.csv](QRF_PRICES.csv).
 
 ## Readiness and crackdown
 
-Each enemy role has two independent server-owned values on a 0–1,000 scale. New Chicken campaigns start at readiness 1 and 20% crackdown (response level 2). Loaded campaigns retain their saved values.
+Each enemy role has two independent server-owned values on a 0–1,000 scale. New Chicken campaigns start at Readiness 1 and 0% Crackdown (response tier 1). Loaded campaigns retain their saved values; this balance change does not reset them.
+
+Each newly recorded capture loss adds five Crackdown percentage points. Without other combat/loss evidence or cooling, the capture-only ladder is:
+
+| Capture losses by that army | Crackdown | Requested response tier |
+|---|---:|---:|
+| 0–3 | 0–15% | 1 |
+| 4–7 | 20–35% | 2 |
+| 8–11 | 40–55% | 3 |
+| 12–15 | 60–75% | 4 |
+| 16 onward | 80–100% | 5 |
+
+Combat and confirmed losses can accelerate this; quiet periods can slow or reverse Crackdown. Equipment Readiness keeps its existing thresholds and does not decay. Recipe growth is linear in complete package count, not guaranteed equal increments of infantry or firepower: different vehicles have different native capacities and weapons. Every ground/joint band adds one package per tier, with personnel reservations and collateral increasing strictly within that band. Full occupancy, driver/gunner separation, safe unloading and actor/funding limits remain enforced.
 
 | Readiness | Minimum saved readiness progress | Eligible ground pool |
 |---|---:|---|
@@ -90,7 +108,7 @@ Each enemy role has two independent server-owned values on a 0–1,000 scale. Ne
 | 4 | 450 | Mechanized responses with APC/IFV support |
 | 5 | 700 | Larger combined-arms mixes with wheeled armour support |
 
-A newly recorded capture loss adds 25 readiness progress and 150 crackdown by default. Repeated reports for the same queued capture/active response do not repeat that award; planning retries do not award it. Validated combat evidence adds five crackdown at most once per role per 30 seconds. Confirmed QRF losses add bounded crackdown. Combat and losses do not unlock equipment. After ten quiet minutes, crackdown cools by 20 points (two percentage points) per minute; readiness progress does not decay. Starting values, capture increments and cooling are designer attributes. Repeated real recaptures can still advance readiness progress; this is provisional campaign pacing.
+A newly recorded capture loss adds 25 Readiness progress and 50 Crackdown points (five percentage points) by default. Repeated reports for the same queued capture/active response do not repeat that award; planning retries do not award it. Validated combat evidence adds five Crackdown points at most once per role per 30 seconds. Confirmed QRF losses add bounded Crackdown. Combat and losses do not unlock equipment. After ten quiet minutes, Crackdown cools by 20 points (two percentage points) per minute; Readiness progress does not decay. Starting values, capture increments and cooling are designer attributes. Repeated real recaptures can still advance Readiness progress; this is provisional campaign pacing.
 
 Crackdown directly requests response levels 1–5: 0–19% / 20–39% / 40–59% / 60–79% / 80–100%. Threat importance and report count affect queue priority, not response strength. There is no random tier bonus. Money/capacity can downgrade the requested level, and the explicit minimum-capture policy can admit level 1 without collateral. Every selection still respects the readiness pool. Both readiness pool and desired response level freeze at operation admission; its later waves keep the same recipe and allocation.
 
@@ -98,11 +116,11 @@ Crackdown directly requests response levels 1–5: 0–19% / 20–39% / 40–59%
 |---|---|---|
 | 1 | 1 truck | 1 APC/IFV |
 | 2 | 1 truck + 1 light escort | 1 truck + 1 APC/IFV |
-| 3 | 2 trucks + 1 light escort | 1 truck + 2 APCs/IFVs + 1 light escort |
-| 4 | 3 trucks + 2 light escorts | 2 trucks + 2 APCs/IFVs + 1 light escort |
-| 5 | 4 trucks + 2 light escorts | 3 trucks + 3 APCs/IFVs + 1 light escort |
+| 3 | 2 trucks + 1 light escort | 1 truck + 1 APC/IFV + 1 light escort |
+| 4 | 2 trucks + 2 light escorts | 1 truck + 2 APCs/IFVs + 1 light escort |
+| 5 | 3 trucks + 2 light escorts | 2 trucks + 2 APCs/IFVs + 1 light escort |
 
-Readiness-5 mixes/prices are listed above. US light escort is the M2 Humvee; USSR light escort is the PKM UAZ, a functional light-support counterpart with different firepower. The new escort profiles are QRF-only and do not add weight to the separate scheduled-attack pool. Each escort uses mounted crew only and reports a light armed vehicle map contact using ground spotting range. Trucks and APCs carry their configured fireteams. Ground support remains LAV/BRDM rather than a tank. Separate light airborne and joint bands are described above; none of these source changes establishes native flight success. This progression controls QRFs; it does not rewrite saved garrison recipes.
+Readiness-5 mixes/prices are listed above. US light escort is the M2 Humvee; USSR light escort is the PKM UAZ, a functional light-support counterpart with different firepower. These profiles are QRF-only and do not add weight to the separate scheduled-attack pool. All Chicken ground profiles fill usable infantry passenger seats and retain separate vehicle crew during infantry unloading. Transport helicopter cabins also use the full-load policy; native seat count determines the actual load within reserved ceilings. Ground support remains LAV/BRDM rather than a tank. Separate light airborne and joint bands are described above; none of these source changes establishes native flight success. This progression controls QRFs; it does not rewrite saved garrison recipes.
 
 Recipes expose minimum/maximum readiness levels, and profiles independently expose their minimum unlock. A mislabeled early recipe cannot introduce a locked profile. The readiness-provider preview now accepts an explicit readiness too; it still has no automatic dispatch caller. Legacy fixed truck/APC fixtures remain available when strategic selection is disabled.
 
@@ -116,7 +134,7 @@ The damage adapter is separately opt-in for dispatch; Chicken enables settlement
 
 ## Persistence and verification
 
-Economy persists bank debits. `AROR_OperationManagerComponentSerializer` version 2 persists both roles' readiness progress, crackdown and QRF debt. Version 1 saves migrate their old shared pressure into both axes once, preserving readiness and the prior crackdown percentage; subsequent changes are independent. Partial version-2 crackdown records and unsupported versions are rejected before applying state. Read-only snapshots include confirmed losses not yet processed by the finance/policy tick in debt and crackdown without changing live state or bank balances while serializing. The quiet-time grace restarts on restore. Session allocations, actor registrations, threats, cooldowns and contact/spotting reports are not serialized. Save/load does not restore a working deployed QRF or its collateral ledger; that remains a separate lifecycle milestone. Missing entities without confirmed destruction are not retrospectively charged. The native save path must be tested through a save-enabled mission, since the bare Chicken world reports saving disabled.
+Economy persists bank debits. `AROR_OperationManagerComponentSerializer` version 4 persists both roles' readiness progress, crackdown and QRF debt. Version 1 saves migrate their old shared pressure into both axes once, preserving readiness and the prior crackdown percentage; subsequent changes are independent. Partial version-2 crackdown records and unsupported versions are rejected before applying state. Read-only snapshots include confirmed losses not yet processed by the finance/policy tick in debt and crackdown without changing live state or bank balances while serializing. The quiet-time grace restarts on restore. Session allocations, actor registrations, threats, cooldowns and contact/spotting reports are not serialized. Save/load does not restore a working deployed QRF or its collateral ledger; that remains a separate lifecycle milestone. Missing entities without confirmed destruction are not retrospectively charged. The native save path must be tested through a save-enabled mission, since the bare Chicken world reports saving disabled.
 
 `tools/Test-QRFStrategy.js` runs source-adapted policy/account/queue/selection bodies with mocked native services. It covers readiness thresholds, crackdown levels, bounded selection, collateral, payment idempotency, loss/retirement, external-spend debt, queue priority/expiry, role gates, airborne downgrade, returned-package completion and spotting packet rules. Run with Node where installed; the same test body was evaluated in the tool V8 host here. Workbench's optional scheduler smoke-test switch also runs the new pure strategic checks without bank mutations or spawning.
 

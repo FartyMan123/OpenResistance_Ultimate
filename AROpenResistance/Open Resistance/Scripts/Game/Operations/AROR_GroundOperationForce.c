@@ -112,7 +112,24 @@ class AROR_GroundOperationForce : AROR_OperationForce
 		// Spawn origins can be outside the player simulation bubble. Execute the
 		// initial teleport even when the actor is paused, rather than queueing forever.
 		bool initialDeployment = !m_bMounted && !m_bDismounted;
-		bool accepted = access.GetInVehicle(m_Vehicle, slot, true, -1, ECloseDoorAfterActions.CLOSE_DOOR, initialDeployment);
+		bool accepted;
+		if (initialDeployment)
+		{
+			// As the base game's own move-in (SCR_CompartmentAccessComponent.MoveInVehicle): the slot's own entity,
+			// since turret and gunner seats live on child entities, and no door action on a teleport. Placing into the
+			// vehicle with a door close was refused for every seat of vehicles spawned away from players.
+			IEntity seatEntity = slot.GetOwner();
+			if (!seatEntity)
+				seatEntity = m_Vehicle;
+			accepted = access.GetInVehicle(seatEntity, slot, true, -1, ECloseDoorAfterActions.INVALID, true);
+			// Still refused: the base game's own call, which passes performWhenPaused only while game time is paused
+			if (!accepted)
+				accepted = access.GetInVehicle(seatEntity, slot, true, -1, ECloseDoorAfterActions.INVALID, false);
+		}
+		else
+		{
+			accepted = access.GetInVehicle(m_Vehicle, slot, true, -1, ECloseDoorAfterActions.CLOSE_DOOR, false);
+		}
 		// Report the first native rejection through the existing paced retry log,
 		// without resetting actions or relaxing occupancy/clearance requirements.
 		if (!accepted && m_sSeatRejection.IsEmpty())
@@ -417,6 +434,103 @@ class AROR_GroundOperationForce : AROR_OperationForce
 		if (!usage.GetPilotCompartmentSlot().GetOccupant())
 			pilot = "empty";
 		return string.Format("driver %1, unseated crew=%2 passengers=%3, accepted=%4 attempted=%5 queueResets=%6 busy=%7, occupied gunner seats=%8/%9", pilot, missingCrew, missingPassengers, boarding, m_iSeatAttempts, m_iSeatQueueResets, m_iSeatBusy, seatedGunners, requiredGunners) + "; native rejection=" + m_sSeatRejection;
+	}
+
+	//! Last resort for the first seating. Moving a character into a seat is refused for AI the engine has not woken
+	//! (packages spawned about a kilometre or more from every player), so each member still standing beside the
+	//! hull is replaced by the seat's default occupant spawned straight into that seat
+	//! (BaseCompartmentSlot.SpawnDefaultCharacterInCompartment, the base game's "spawn with crew"), in the same
+	//! group so orders, faction and loss tracking carry on. Seats are assigned as in ReseatMissing_S.
+	//! Returns how many were replaced.
+	int ReplaceUnseated_S()
+	{
+		if (!Replication.IsServer() || !m_Vehicle || !m_CrewGroup || m_bMounted || m_bDismounted)
+			return 0;
+		BaseCompartmentManagerComponent compartments = BaseCompartmentManagerComponent.Cast(m_Vehicle.FindComponent(BaseCompartmentManagerComponent));
+		SCR_AIVehicleUsageComponent usage = SCR_AIVehicleUsageComponent.Cast(m_Vehicle.FindComponent(SCR_AIVehicleUsageComponent));
+		if (!compartments || !usage || !usage.GetPilotCompartmentSlot())
+			return 0;
+		array<BaseCompartmentSlot> slots = {};
+		compartments.GetCompartments(slots);
+		array<BaseCompartmentSlot> crewSeats = {usage.GetPilotCompartmentSlot()};
+		array<BaseCompartmentSlot> cargoSeats = {};
+		foreach (BaseCompartmentSlot slot : slots)
+		{
+			if (!slot || !slot.IsCompartmentAccessible() || crewSeats.Contains(slot))
+				continue;
+			if (IsRequiredGunnerSeat(slot))
+				crewSeats.Insert(slot);
+			else if (CargoCompartmentSlot.Cast(slot))
+				cargoSeats.Insert(slot);
+		}
+		int replaced;
+		array<AIAgent> crew = {};
+		m_CrewGroup.GetAgents(crew);
+		foreach (int crewIndex, AIAgent agent : crew)
+		{
+			if (!agent)
+				continue;
+			BaseCompartmentSlot assigned;
+			if (crewIndex < crewSeats.Count())
+				assigned = crewSeats[crewIndex];
+			else if (crewIndex - crewSeats.Count() < cargoSeats.Count())
+				assigned = cargoSeats[crewIndex - crewSeats.Count()];
+			if (ReplaceIntoSeat(agent.GetControlledEntity(), assigned, m_CrewGroup))
+				replaced++;
+		}
+		int passengerIndex = Math.Max(0, crew.Count() - crewSeats.Count());
+		for (int p = 0; p < m_aPassengers.Count(); p++)
+		{
+			BaseCompartmentSlot passengerSeat;
+			if (passengerIndex < cargoSeats.Count())
+				passengerSeat = cargoSeats[passengerIndex];
+			passengerIndex++;
+			IEntity replacement = ReplaceIntoSeatEntity(m_aPassengers[p], passengerSeat, m_Group);
+			if (replacement)
+			{
+				m_aPassengers[p] = replacement;
+				replaced++;
+			}
+		}
+		return replaced;
+	}
+
+	protected bool ReplaceIntoSeat(IEntity member, BaseCompartmentSlot seat, SCR_AIGroup group)
+	{
+		return ReplaceIntoSeatEntity(member, seat, group) != null;
+	}
+
+	//! The seated replacement, or null when the member is already seated or the seat cannot be filled this way
+	protected IEntity ReplaceIntoSeatEntity(IEntity member, BaseCompartmentSlot seat, SCR_AIGroup group)
+	{
+		if (!member || !seat || !group || IsSeatedInOwnVehicle(member))
+			return null;
+		if (GetGame().GetPlayerManager().GetPlayerIdFromControlledEntity(member) > 0)
+			return null;
+		ChimeraCharacter character = ChimeraCharacter.Cast(member);
+		if (!character || !character.GetCharacterController() || character.GetCharacterController().IsDead())
+			return null;
+		if (seat.IsOccupied() || seat.GetOccupant() || !seat.IsCompartmentAccessible() || seat.GetDefaultOccupantPrefab().IsEmpty())
+			return null;
+		AIGroup target = group;
+		IEntity spawned = seat.SpawnDefaultCharacterInCompartment(target);
+		if (!spawned)
+			return null;
+		// Keep the replacement in this package's group whatever group the engine put it in
+		AIControlComponent control = AIControlComponent.Cast(spawned.FindComponent(AIControlComponent));
+		if (control && control.GetControlAIAgent())
+		{
+			AIAgent spawnedAgent = control.GetControlAIAgent();
+			AIGroup parent = spawnedAgent.GetParentGroup();
+			if (parent != group)
+			{
+				if (parent)
+					parent.RemoveAgent(spawnedAgent);
+				group.AddAgent(spawnedAgent);
+			}
+		}
+		SCR_EntityHelper.DeleteEntityAndChildren(member);
+		return spawned;
 	}
 
 	//! Seats a living, idle member in the first free seat of the preferred list, then of the fallback list
