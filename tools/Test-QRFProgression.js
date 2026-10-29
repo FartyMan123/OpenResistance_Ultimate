@@ -104,7 +104,16 @@ function runQRFProgressionTests(sources) {
   const init=compile(sources.manager,'OnPostInit');
   const defaults=()=>Object.fromEntries([...sources.manager.matchAll(/\[Attribute\("([\d.]+)",[^\r\n]*\)\]\s*(?:protected )?(int|float|bool) (m_\w+)/g)].map(m=>[m[3],Number(m[1])]));
   const fresh=Object.assign(makeManager(),defaults());init.call(fresh,{});
-  check(scheduled===1&&fresh.HasThreatState()&&fresh.GetReadinessLevel(1)===1&&fresh.GetCrackdown(1)===200,'real component defaults start the scheduler with separate readiness-one and response-two state');
+  check(scheduled===1&&fresh.HasThreatState()&&fresh.GetReadinessLevel(1)===1&&fresh.GetCrackdown(1)===0&&fresh.GetCrackdownLevel(1)===1,'real component defaults start new campaigns at readiness one and response tier one');
+  for(const role of [1,2]){
+    const paced=Object.assign(makeManager(),defaults());paced.SetCrackdown_S(1,0);paced.SetCrackdown_S(2,0);
+    for(let captures=1;captures<=20;captures++){
+      paced.RecordCaptureEscalation_S(role);
+      check(paced.GetCrackdownLevel(role)===Math.min(5,1+Math.floor(captures/4)),'capture-only intensity advances one tier every four losses: '+[role,captures]);
+      check(paced.GetReadinessPressure(role)===captures*25,'linear intensity retains independent equipment progression');
+      check(paced.GetCrackdown(role===1?2:1)===0,'one army capture escalation cannot raise the other army');
+    }
+  }
   const loaded=Object.assign(makeManager(),defaults());loaded.RestoreQRFStrategy_S(700,250,10,20,50,800);init.call(loaded,{});
   check(scheduled===2&&loaded.GetReadinessLevel(1)===5&&loaded.GetCrackdown(1)===50&&loaded.GetReadinessLevel(2)===3&&loaded.GetCrackdown(2)===800,'startup cannot overwrite restored axes with new scenario defaults');
   const invalid=Object.assign(makeManager(),defaults(),{m_iStartingCrackdown:101});init.call(invalid,{});
@@ -123,6 +132,19 @@ function runQRFProgressionTests(sources) {
     for(const n of ['IsValid','AllowsReadinessLevel','Resolve'])r[n]=compile(sources.recipe,n);return r;
   });
   check(profiles.length===12&&recipes.length===62,'Chicken contains light/escorted air profiles and complete ground/joint readiness bands');
+  check(/m_iStartingCrackdown\s+0\b/.test(sources.layer)&&/m_iCaptureCrackdown\s+50\b/.test(sources.layer),'Chicken overrides agree with the tier-one linear pacing defaults');
+  for(const role of [1,2])for(const band of ['light','mechanized','ground','joint_r2','joint_r3','joint']){
+    const prefix=(role===1?'occupier':'invader')+'_'+band+'_l';let lastPersonnel=0,lastCollateral=0;
+    for(let tier=1;tier<=5;tier++){
+      const recipe=recipes.find(r=>r.m_eRole===role&&r.m_sId===prefix+tier),elements=[];
+      check(recipe&&recipe.Resolve(profiles,role,role===1?'AROR_OCCUPIERS':'AROR_INVADERS',elements,recipe.m_iMinimumReadinessLevel),'each army has a complete linear recipe band');
+      check(elements.length===tier+(['ground','joint_r2','joint_r3','joint'].includes(band)?1:0),'each successive tier adds exactly one complete package: '+[role,band,tier]);
+      const personnel=elements.reduce((sum,p)=>sum+p.m_iPersonnelBudget,0),collateral=elements.reduce((sum,p)=>sum+p.ReplacementQuote(),0);
+      check(personnel>lastPersonnel&&collateral>lastCollateral,'each tier mounts in funded strength rather than shrinking or merely relabelling a force');
+      check(elements.filter(p=>p.m_eType!==3&&p.m_eType!==4).every(p=>p.m_bFillPassengerSeats),'linear tiers keep full-load ground profiles');
+      lastPersonnel=personnel;lastCollateral=collateral;
+    }
+  }
   check(profiles.every(p=>p.IsValid())&&recipes.every(r=>r.IsValid()),'every authored progression profile and recipe passes production configuration validation');
   check(profiles.filter(p=>/_light_support$/.test(p.m_sId)).every(p=>p.GetSpottingKind()===5)&&profiles.find(p=>p.m_sId==='us_armour').GetSpottingKind()===2,'light escorts report their own intelligence class while genuine armour keeps its class');
   check(profiles.filter(p=>/_light_support$/.test(p.m_sId)).every(p=>p.GetWeight(0)===0&&p.GetWeight(1)>0),'new QRF escorts do not change the separate scheduled-attack pool');

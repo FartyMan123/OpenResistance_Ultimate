@@ -32,11 +32,11 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 	protected ref AROR_QRFSpotting m_QRFSpotting = new AROR_QRFSpotting();
 	[Attribute("1", desc: "Initial equipment-pool readiness for each AI role; saved capture progress drives levels 1-5", params: "1 5 1")]
 	protected int m_iStartingReadinessLevel;
-	[Attribute("20", desc: "Initial crackdown percentage for each AI role; controls response intensity independently of equipment", params: "0 100 1")]
+	[Attribute("0", desc: "Initial crackdown percentage for each AI role; start new campaigns at response tier 1", params: "0 100 1")]
 	protected int m_iStartingCrackdown;
 	[Attribute("25", desc: "Long-term readiness progress per newly recorded capture loss. Combat and quiet time do not change this progress.", params: "0 100 1")]
 	protected int m_iCaptureReadinessPressure;
-	[Attribute("150", desc: "Crackdown points added per newly recorded capture loss, on a 0-1000 scale", params: "0 1000 5")]
+	[Attribute("50", desc: "Crackdown points per newly recorded capture loss, on a 0-1000 scale; 50 gives four capture losses per response tier before other evidence/cooling", params: "0 1000 5")]
 	protected int m_iCaptureCrackdown;
 	[Attribute("600", desc: "Seconds without validated evidence or confirmed QRF losses before crackdown starts cooling", params: "60 3600 30")]
 	protected int m_iCrackdownQuietTime;

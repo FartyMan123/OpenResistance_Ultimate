@@ -1,5 +1,11 @@
 // Mutation checks prove selected regressions are caught; source files are never edited.
 const cases=[
+ {name:'new campaigns start above tier one',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_OperationManagerComponent.c',suite:'Test-QRFProgression.js',
+  mutate:s=>s.replace('[Attribute("0", desc: "Initial crackdown percentage','[Attribute("20", desc: "Initial crackdown percentage')},
+ {name:'capture escalation returns to early maximum intensity',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_OperationManagerComponent.c',suite:'Test-QRFProgression.js',
+  mutate:s=>s.replace('[Attribute("50", desc: "Crackdown points per newly recorded capture loss','[Attribute("150", desc: "Crackdown points per newly recorded capture loss')},
+ {name:'linear recipe adds two packages in one tier',file:'AROpenResistance/Open Resistance/Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/Managers.layer',suite:'Test-QRFProgression.js',
+  mutate:s=>s.replace(/(m_sId "occupier_light_l4"[\s\S]*?m_aProfileIds \{)/,'$1\n      "us_motorized"')},
  {name:'air passengers race for one unreserved seat',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_ReaperAirForce.c',suite:'Test-QRFReleaseLifecycle.js',
   mutate:s=>s.replace('Seat(passenger, passengerSeats[passengerIndex]);','Seat(passenger, passengerSeats[0]);')},
  {name:'ground crew retry races for the first free seat',file:'AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_GroundOperationForce.c',suite:'Test-QRFBoarding.js',

@@ -130,7 +130,6 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
       "ussr_motorized"
-      "ussr_motorized"
       "ussr_mechanized"
       "ussr_mechanized"
       "ussr_armour"
@@ -146,10 +145,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_aProfileIds {
       "ussr_motorized"
       "ussr_motorized"
-      "ussr_motorized"
       "ussr_mechanized"
       "ussr_mechanized"
-      "ussr_armour"
       "ussr_armour"
      }
     }
@@ -163,8 +160,6 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_aProfileIds {
       "ussr_motorized"
       "ussr_motorized"
-      "ussr_motorized"
-      "ussr_mechanized"
       "ussr_mechanized"
       "ussr_mechanized"
       "ussr_armour"
@@ -205,7 +200,6 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
       "us_motorized"
-      "us_motorized"
       "us_mechanized"
       "us_mechanized"
       "us_armour"
@@ -221,10 +215,8 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_aProfileIds {
       "us_motorized"
       "us_motorized"
-      "us_motorized"
       "us_mechanized"
       "us_mechanized"
-      "us_armour"
       "us_armour"
      }
     }
@@ -238,8 +230,6 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_aProfileIds {
       "us_motorized"
       "us_motorized"
-      "us_motorized"
-      "us_mechanized"
       "us_mechanized"
       "us_mechanized"
       "us_armour"
@@ -292,7 +282,6 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_aProfileIds {
       "us_motorized"
       "us_motorized"
-      "us_motorized"
       "us_light_support"
       "us_light_support"
      }
@@ -305,7 +294,6 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
-      "us_motorized"
       "us_motorized"
       "us_motorized"
       "us_motorized"
@@ -346,7 +334,6 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_aProfileIds {
       "us_motorized"
       "us_mechanized"
-      "us_mechanized"
       "us_light_support"
      }
     }
@@ -358,7 +345,6 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_eRole 1
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
-      "us_motorized"
       "us_motorized"
       "us_mechanized"
       "us_mechanized"
@@ -375,8 +361,6 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_aProfileIds {
       "us_motorized"
       "us_motorized"
-      "us_motorized"
-      "us_mechanized"
       "us_mechanized"
       "us_mechanized"
       "us_light_support"
@@ -428,7 +412,6 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_aProfileIds {
       "ussr_motorized"
       "ussr_motorized"
-      "ussr_motorized"
       "ussr_light_support"
       "ussr_light_support"
      }
@@ -441,7 +424,6 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
-      "ussr_motorized"
       "ussr_motorized"
       "ussr_motorized"
       "ussr_motorized"
@@ -482,7 +464,6 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_aProfileIds {
       "ussr_motorized"
       "ussr_mechanized"
-      "ussr_mechanized"
       "ussr_light_support"
      }
     }
@@ -494,7 +475,6 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_eRole 2
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
-      "ussr_motorized"
       "ussr_motorized"
       "ussr_mechanized"
       "ussr_mechanized"
@@ -511,8 +491,6 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_aProfileIds {
       "ussr_motorized"
       "ussr_motorized"
-      "ussr_motorized"
-      "ussr_mechanized"
       "ussr_mechanized"
       "ussr_mechanized"
       "ussr_light_support"
@@ -586,7 +564,6 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_sFactionKey "AROR_OCCUPIERS"
      m_aProfileIds {
       "us_airborne"
-      "us_motorized"
       "us_motorized"
       "us_mechanized"
       "us_mechanized"
@@ -662,7 +639,6 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
      m_sFactionKey "AROR_INVADERS"
      m_aProfileIds {
       "ussr_airborne"
-      "ussr_motorized"
       "ussr_motorized"
       "ussr_mechanized"
       "ussr_mechanized"
@@ -1320,9 +1296,9 @@ SCR_BaseGameMode AROR_GameMode_Base1 : "{49BA4199470D70DA}Prefabs/GameModes/AROR
    m_bMinimumCaptureQRF 1
    m_bQRFStrategicEconomy 1
    m_iStartingReadinessLevel 1
-   m_iStartingCrackdown 20
+   m_iStartingCrackdown 0
    m_iCaptureReadinessPressure 25
-   m_iCaptureCrackdown 150
+   m_iCaptureCrackdown 50
    m_iCrackdownQuietTime 600
    m_iCrackdownDecay 20
    m_iQRFBaseOverhead 50
