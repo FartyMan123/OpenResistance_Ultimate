@@ -103,7 +103,9 @@ The design system says the mod draws **no custom map markers**: forces use vanil
 A portrait phone (390×844 screen at 1080p) with a status bar (game time; funds in `REBEL`, signal, battery) and a nav bar (B/Esc back, A/Enter main action, Y/Backspace home). Apps open full screen with their title at the top; no pop-up dialogs, confirmations open inline. Home: big clock, one context line, a REBINTEL glance card, app icons 4 per row with `WARN` unread badges.
 
 - **REBINTEL**: Readiness and Crackdown cards: heading with n/5, the army's label large, English line, 5-segment meter (`REBEL` on `REBEL_DIM`), one sentence on what it means; level 4–5 inverse. Then recent intercepts. Never show raw numbers alone.
-- **Black Market**: port-gated shop with a 4-step access ladder (STREET, DOCKSIDE, CONTRABAND, HEAVY CARGO), item rows, `WARN` attention pips, two-step ordering, Inbound tab.
+- **Black Market**: item shop gated by import facilities held. Category tabs with counts, a search box over every category, rows with a picture, requirement lines (amber "NEEDS ..." when missing) and ADD / quantity controls, a slim scrolling cart, and one IMPORT button (no confirmation). Leaders choose PAY FROM faction or personal funds.
+- **Imports** (Used Imports): vehicle shop with category tabs and a large picture per row. Two buttons per row, BUY FACTION (Leaders only) and BUY PERSONAL; no cart, click again to buy again. A garage-slots read-out sits in the facility strip.
+- **Purchase feedback** (both shops): a popup under the top bar, green "PURCHASE SUCCESSFUL" or red "PURCHASE FAILED" with the reason (not enough funds, garage full), closing itself after a few seconds, with a UI sound. The same purchase again while it is open raises a count.
 - **Units**: platoons and squads; recruit and sell, with inline confirmation.
 - **Feed**: every P1–P4 message, newest first. **Settings**: status widget on/off, compact/full, top right/left, P2 pop-ups, P3 toasts, CRT effect.
 - Controls: square buttons at least `touch-min`; primary is a `REBEL` fill with `REBEL_INK` (one per screen); secondary is a `LINE_STRONG` outline; toggles are full-width rows with a square switch (`REBEL_DIM` track and `REBEL` knob when on).
@@ -136,7 +138,8 @@ One name per thing. Code keeps integer levels 1–5; display labels come from `A
 |---|---|
 | HICOMM | phone, tablet, PDA |
 | REBINTEL | intel app, enemy status |
-| Black Market | shop, store, arsenal |
+| Black Market (items), Imports (vehicles) | shop, store, arsenal |
+| Import facilities | import points, docks |
 | Port / Seaport | harbour; dock (except "Collect at … dock") |
 | QRF | reinforcements, response team |
 | Territory | zone, sector, area |
@@ -163,5 +166,5 @@ Cyrillic labels always carry the English line. Don't abbreviate faction labels o
 | Map popup on `PLATE_STRONG`, above all markers | Done; custom map icons still differ from "native markers only" |
 | Bank | Baked art (gold/navy, pill buttons) needs replacing |
 | HICOMM app, OPS | Fonts only; palette pass pending |
-| Black Market app (access, tiers, tabs, two-step order) | Done; delivery, saved orders, Attention not yet |
+| Black Market and Imports apps (facilities, tabs, search, cart, popups, sounds) | Built; needs a Workbench pass. Attention not yet |
 | String table (`#AROR-` keys), Settings / Feed / Units apps | Not started |
