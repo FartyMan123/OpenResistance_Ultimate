@@ -30,7 +30,7 @@ function compile(source,name){
  let body=m[2].replace(/\barray<[^>]+>\s+(\w+)\s*=\s*\{\s*\};/g,'let $1=[];')
  .replace(/foreach\s*\(\w+\s+(\w+)\s*:\s*([^)]+)\)/g,'for(const $1 of $2)')
  .replace(/\b(?:IEntity|BaseCompartmentSlot|BaseCompartmentManagerComponent|CompartmentAccessComponent|AROR_(?!E[A-Z])\w+)\s+(\w+);/g,'let $1=null;')
- .replace(/\b(?:bool|int|float|string|vector|ResourceName|Resource|PlayerManager|Faction|FactionAffiliationComponent|Color|SCR_\w+|Physics|DamageManagerComponent|IEntity|AIAgent|BaseCompartmentSlot|BaseCompartmentManagerComponent|CompartmentAccessComponent|AROR_\w+)\s+(\w+)/g,'let $1')
+ .replace(/\b(?:bool|int|float|string|vector|ResourceName|Resource|PlayerManager|PlayerController|Faction|FactionAffiliationComponent|Color|SCR_\w+|Physics|DamageManagerComponent|IEntity|AIAgent|BaseCompartmentSlot|BaseCompartmentManagerComponent|CompartmentAccessComponent|AROR_\w+)\s+(\w+)/g,'let $1')
  .replace(/let (\w+);/g,'let $1=0;').replace(/(?<![.\w])m_\w+/g,x=>'this.'+x)
  .replace(/super\.(\w+)\(/g,'this.Base$1(')
  .replace(/(?<![.\w])(\w+)\(/g,(s,n)=>names.has(n)?'this.'+s:s);
@@ -93,6 +93,7 @@ for(const airReady of [false,true])for(const groundReady of [false,true])for(con
 const savedGame=env.GetGame;
 let admin=false,sessionAdmin=false;
 env.EPlayerRole={ADMINISTRATOR:1,SESSION_ADMINISTRATOR:2};
+env.RplMode={Dedicated:0,Listen:1,Client:2};env.RplSession={Mode:()=>env.RplMode.Dedicated};
 env.GetGame=()=>({GetPlayerManager:()=>({HasPlayerRole:(id,role)=>role===1?admin:sessionAdmin})});
 const packagedAccess=src.adminAccess.replace(/#ifdef WORKBENCH[\s\S]*?#else/,'').replace(/#endif/g,'');
 env.AROR_AdminAccess={IsAdministrator:compile(packagedAccess,'IsAdministrator')};

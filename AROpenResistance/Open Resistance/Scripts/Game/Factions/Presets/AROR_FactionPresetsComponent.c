@@ -103,6 +103,18 @@ class AROR_FactionPresetsComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Adds every loaded preset, in registry order (e.g. for shops that sell every faction's equipment)
+	int GetAllPresets(notnull array<AROR_FactionPreset> outPresets)
+	{
+		foreach (AROR_FactionPreset preset : m_aPresets)
+		{
+			outPresets.Insert(preset);
+		}
+
+		return m_aPresets.Count();
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! Adds the presets that can be chosen for the role, in registry order; returns how many were added
 	int GetPresetsForRole(AROR_EFactionRole role, notnull array<AROR_FactionPreset> outPresets)
 	{

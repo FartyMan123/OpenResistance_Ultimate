@@ -2,7 +2,7 @@
 //! detail. Kill him before the time runs out (he then leaves).
 class AROR_AssassinationMission : AROR_Mission
 {
-	protected static const ref array<AROR_ELocationType> SITE_TYPES = {AROR_ELocationType.TOWN, AROR_ELocationType.CITY, AROR_ELocationType.OUTPOST, AROR_ELocationType.MILITARY_BASE, AROR_ELocationType.FACTORY, AROR_ELocationType.PORT, AROR_ELocationType.AIRPORT};
+	protected static const ref array<AROR_ELocationType> SITE_TYPES = {AROR_ELocationType.TOWN, AROR_ELocationType.CITY, AROR_ELocationType.OUTPOST, AROR_ELocationType.MILITARY_BASE, AROR_ELocationType.FACTORY, AROR_ELocationType.PORT, AROR_ELocationType.HELIPORT, AROR_ELocationType.AIRPORT};
 
 	protected SCR_AIGroup m_Officer;
 	protected bool m_bOfficerSeen;

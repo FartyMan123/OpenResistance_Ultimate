@@ -181,6 +181,25 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Admin menu: give a location (picked on the map) to a side
+	void AROR_RequestAdminCapture(string locationId, AROR_EFactionRole role)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_AdminCapture(locationId, role);
+		else
+			Rpc(AROR_RpcAsk_AdminCapture, locationId, role);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_AdminCapture(string locationId, int role)
+	{
+		AROR_AdminMenuComponent adminMenu = AROR_AdminMenuComponent.GetInstance();
+		if (adminMenu)
+			adminMenu.CaptureLocation_S(GetPlayerId(), locationId, role);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
 	protected void AROR_RpcAsk_NewPlaythrough(vector hqPosition, string playthroughName, array<string> presetIds)
 	{
@@ -592,69 +611,67 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
-	// Black Market (see AROR_BlackMarket)
+	// Black Market and Imports (see AROR_BlackMarket, AROR_Imports)
 	//------------------------------------------------------------------------------------------------
-	//! Client: order a catalogue item; the server checks access, tier and money, then replies with a hint and the
-	//! player's updated order list
-	void AROR_RequestBlackMarketOrder(int itemIndex)
+	//! Client: import a cart of items. The server prices it from its own catalogue, takes the payment (faction funds
+	//! only for a Resistance Leader) and fills Resistance Storage. All or nothing; the answer comes back as a shop result.
+	void AROR_RequestBlackMarketImport(array<string> prefabs, array<int> quantities, bool fromFaction)
 	{
 		if (Replication.IsServer())
-			AROR_RpcAsk_BlackMarketOrder(itemIndex);
+			AROR_RpcAsk_BlackMarketImport(prefabs, quantities, fromFaction);
 		else
-			Rpc(AROR_RpcAsk_BlackMarketOrder, itemIndex);
+			Rpc(AROR_RpcAsk_BlackMarketImport, prefabs, quantities, fromFaction);
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Client: ask for this player's order list (when the app opens)
-	void AROR_RequestBlackMarketOrders()
+	//! Client: buy one vehicle into the Garage (Imports); one request per click
+	void AROR_RequestVehicleImport(string prefab, bool fromFaction)
 	{
 		if (Replication.IsServer())
-			AROR_RpcAsk_BlackMarketOrders();
+			AROR_RpcAsk_VehicleImport(prefab, fromFaction);
 		else
-			Rpc(AROR_RpcAsk_BlackMarketOrders);
+			Rpc(AROR_RpcAsk_VehicleImport, prefab, fromFaction);
 	}
 
 	//------------------------------------------------------------------------------------------------
 	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
-	protected void AROR_RpcAsk_BlackMarketOrder(int itemIndex)
+	protected void AROR_RpcAsk_BlackMarketImport(array<string> prefabs, array<int> quantities, bool fromFaction)
 	{
-		bool success;
-		string message = AROR_BlackMarket.Order_S(GetPlayerId(), itemIndex, success);
-		if (!message.IsEmpty())
-		{
-			Color color;
-			if (success)
-				color = AROR_UIColors.Get(AROR_UIColors.REBEL);
-			AROR_NotificationManagerComponent.SendHint_S(GetPlayerId(), message, color);
-		}
-		AROR_SendBlackMarketOrders_S();
+		AROR_ShopResult result = new AROR_ShopResult();
+		AROR_BlackMarket.Import_S(GetPlayerId(), prefabs, quantities, fromFaction, result);
+		AROR_SendShopResult_S(result);
 	}
 
 	//------------------------------------------------------------------------------------------------
 	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
-	protected void AROR_RpcAsk_BlackMarketOrders()
+	protected void AROR_RpcAsk_VehicleImport(string prefab, bool fromFaction)
 	{
-		AROR_SendBlackMarketOrders_S();
+		AROR_ShopResult result = new AROR_ShopResult();
+		AROR_Imports.Buy_S(GetPlayerId(), prefab, fromFaction, result);
+		AROR_SendShopResult_S(result);
 	}
 
 	//------------------------------------------------------------------------------------------------
-	protected void AROR_SendBlackMarketOrders_S()
+	protected void AROR_SendShopResult_S(AROR_ShopResult result)
 	{
-		array<int> items = {};
-		array<int> prices = {};
-		array<string> times = {};
-		AROR_BlackMarket.GetOrderRows_S(GetPlayerId(), items, prices, times);
 		if (AROR_IsLocal())
-			AROR_RpcDo_BlackMarketOrders(items, prices, times);
+			AROR_RpcDo_ShopResult(result.m_bOk, result.m_bVehicle, result.m_sMain, result.m_sSub, result.m_sKey);
 		else
-			Rpc(AROR_RpcDo_BlackMarketOrders, items, prices, times);
+			Rpc(AROR_RpcDo_ShopResult, result.m_bOk, result.m_bVehicle, result.m_sMain, result.m_sSub, result.m_sKey);
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Owner only: tells the open shop app how the purchase went (popup and sound)
 	[RplRpc(RplChannel.Reliable, RplRcver.Owner)]
-	protected void AROR_RpcDo_BlackMarketOrders(array<int> items, array<int> prices, array<string> times)
+	protected void AROR_RpcDo_ShopResult(bool ok, bool vehicle, string main, string sub, string key)
 	{
-		AROR_BlackMarket.SetLocalOrders(items, prices, times);
+		AROR_ShopResult result = new AROR_ShopResult();
+		result.m_bOk = ok;
+		result.m_bVehicle = vehicle;
+		result.m_sMain = main;
+		result.m_sSub = sub;
+		result.m_sKey = key;
+		AROR_ImportShop.GetOnResult().Invoke(result);
 	}
 
 	//------------------------------------------------------------------------------------------------
