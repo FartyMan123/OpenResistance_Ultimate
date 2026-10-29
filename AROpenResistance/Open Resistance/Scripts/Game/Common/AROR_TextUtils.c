@@ -23,4 +23,26 @@ class AROR_TextUtils
 
 		return result;
 	}
+
+	//------------------------------------------------------------------------------------------------
+	//! English text with Latin letters swapped for Cyrillic look-alikes, so it reads as English
+	//! but looks Russian: "Invaders" -> "Иnvаdеяs". Letters without a good look-alike are kept.
+	static string Cyrillicize(string text)
+	{
+		string latin = "ABCEHKMNOPRTXYaceopxy";
+		array<string> cyrillic = {"А", "В", "С", "Е", "Н", "К", "М", "И", "О", "Р", "Я", "Т", "Х", "У", "а", "с", "е", "о", "р", "х", "у"};
+
+		string result;
+		for (int i = 0; i < text.Length(); i++)
+		{
+			string letter = text.Substring(i, 1);
+			int index = latin.IndexOf(letter);
+			if (index >= 0)
+				result += cyrillic[index];
+			else
+				result += letter;
+		}
+
+		return result;
+	}
 }
