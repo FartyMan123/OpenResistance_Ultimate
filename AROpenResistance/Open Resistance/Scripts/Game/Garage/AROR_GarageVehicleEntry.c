@@ -38,6 +38,10 @@ class AROR_GarageVehicleEntry : Managed
 	int m_iId;
 	ResourceName m_sPrefab;
 
+	//! Bought new from Imports: no snapshot was taken, so retrieving it keeps the prefab's own fuel, cargo and
+	//! condition instead of applying the (empty) snapshot below
+	bool m_bFactoryNew;
+
 	//! Default hit-zone health for UI summaries (0..1)
 	float m_fHealthScaled = 1;
 

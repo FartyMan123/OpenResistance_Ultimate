@@ -253,6 +253,30 @@ class AROR_ResistanceGarageComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Server only. Adds a brand-new vehicle (bought through Imports) without a world entity. It is retrieved in
+	//! factory condition. Rejects an empty prefab or a full garage. Returns the new entry id, or -1 on failure.
+	int AddVehicleByPrefab_S(ResourceName prefab)
+	{
+		if (!Replication.IsServer() || prefab.IsEmpty())
+			return -1;
+
+		if (GetCount() >= GetCapacity())
+			return -1;
+
+		AROR_GarageVehicleEntry entry = new AROR_GarageVehicleEntry();
+		entry.m_iId = m_iNextId;
+		entry.m_sPrefab = prefab;
+		entry.m_bFactoryNew = true;
+		entry.m_fHealthScaled = 1;
+		entry.m_fFuelNormalized = 1;
+		m_iNextId++;
+		m_aEntries.Insert(entry);
+
+		Publish_S();
+		return entry.m_iId;
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! Server only. Player-initiated store: near friendly garage site, within look distance of the vehicle.
 	//! outReason is a short hint for the client. Returns entry id or -1.
 	int RequestStoreVehicle_S(int playerId, IEntity vehicle, out string outReason)
@@ -411,7 +435,10 @@ class AROR_ResistanceGarageComponent : SCR_BaseGameModeComponent
 		if (!vehicle)
 			return null;
 
-		AROR_GarageSnapshotHelper.Apply(vehicle, entry);
+		// A factory-new import has no snapshot to restore: it keeps the prefab's own fuel, cargo and condition
+		if (!entry.m_bFactoryNew)
+			AROR_GarageSnapshotHelper.Apply(vehicle, entry);
+
 		RemoveEntryById_S(entryId);
 		ReleaseReservation_S(playerId);
 		return vehicle;

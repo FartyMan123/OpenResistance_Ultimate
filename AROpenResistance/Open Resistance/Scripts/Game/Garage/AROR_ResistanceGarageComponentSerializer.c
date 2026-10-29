@@ -2,7 +2,7 @@
 //! Full cargo trees and weapon ammo are flattened to parallel arrays. Nothing is written while empty.
 class AROR_ResistanceGarageComponentSerializer : ScriptedComponentSerializer
 {
-	protected static const int VERSION = 2;
+	protected static const int VERSION = 3;
 
 	//------------------------------------------------------------------------------------------------
 	override static typename GetTargetType()
@@ -44,6 +44,7 @@ class AROR_ResistanceGarageComponentSerializer : ScriptedComponentSerializer
 		array<ResourceName> itemPrefabs = {};
 		array<int> itemAmmoCounts = {};
 		array<float> itemHealths = {};
+		array<int> factoryNewIds = {};
 
 		foreach (AROR_GarageVehicleEntry entry : entries)
 		{
@@ -51,6 +52,8 @@ class AROR_ResistanceGarageComponentSerializer : ScriptedComponentSerializer
 				continue;
 
 			entryIds.Insert(entry.m_iId);
+			if (entry.m_bFactoryNew)
+				factoryNewIds.Insert(entry.m_iId);
 			prefabs.Insert(entry.m_sPrefab);
 			healths.Insert(entry.m_fHealthScaled);
 			fuelFractions.Insert(entry.m_fFuelNormalized);
@@ -117,6 +120,7 @@ class AROR_ResistanceGarageComponentSerializer : ScriptedComponentSerializer
 		context.WriteValue("itemPrefabs", itemPrefabs);
 		context.WriteValue("itemAmmoCounts", itemAmmoCounts);
 		context.WriteValue("itemHealths", itemHealths);
+		context.WriteValue("factoryNewIds", factoryNewIds);
 		return ESerializeResult.OK;
 	}
 
@@ -246,6 +250,19 @@ class AROR_ResistanceGarageComponentSerializer : ScriptedComponentSerializer
 		}
 
 		RebuildCargo(byId, itemEntryIds, itemNodeIndices, itemParentIndices, itemPrefabs, itemAmmoCounts, itemHealths);
+
+		// Version 2 saves have no imports: every entry there was stored from a world vehicle
+		if (version >= 3)
+		{
+			array<int> factoryNewIds = {};
+			context.ReadValue("factoryNewIds", factoryNewIds);
+			foreach (int factoryNewId : factoryNewIds)
+			{
+				AROR_GarageVehicleEntry factoryNewEntry;
+				if (byId.Find(factoryNewId, factoryNewEntry) && factoryNewEntry)
+					factoryNewEntry.m_bFactoryNew = true;
+			}
+		}
 
 		garage.RestoreEntries_S(entries, nextId);
 		return true;
