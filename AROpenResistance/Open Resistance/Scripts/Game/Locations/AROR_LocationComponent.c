@@ -153,6 +153,24 @@ class AROR_LocationComponent : ScriptComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Server only. Admin tool: gives the location to a role whatever the fixed-control, flip-cooldown and stronghold
+	//! rules say (the caller checks IsControlFixed for locations that must never move), and announces it.
+	//! Returns false if the role already holds it.
+	bool ForceControllingRole_S(AROR_EFactionRole role)
+	{
+		if (!Replication.IsServer() || role == m_eControllingRole)
+			return false;
+
+		m_eControllingRole = role;
+		m_bFlipLocked = false;
+		GetGame().GetCallqueue().Remove(UnlockFlip);
+		Replication.BumpMe();
+		OnControllingRoleReplicated();
+		SendCapturedNotification_S(role);
+		return true;
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! Tell everyone who now controls the location (not used when restoring saves)
 	protected void SendCapturedNotification_S(AROR_EFactionRole role)
 	{

@@ -3,40 +3,35 @@ class AROR_AdminMenuComponentClass : SCR_BaseGameModeComponentClass
 {
 }
 
-//! Admin/testing menu, opened with Ctrl+T by administrators; Workbench permits local testing.
-//! Teleport: opens the base-game map menu; the clicked position teleports the local player there.
+//! Admin/testing tools, opened with Ctrl+T by administrators; Workbench permits local testing.
+//! The interface is the full-screen AROR_AdminMenu (AROR_AdminApp draws it); this component holds the server-side
+//! actions and the two map-picking tools that need the base-game map open:
+//! - Teleport: the clicked position teleports the local player there.
+//! - Capture: the admin chooses a side, then every click on the map gives the nearest location to that side, until
+//!   the map is closed (the admin menu then reopens on its Locations page).
 //! The hotkey is read directly from the keyboard to avoid overriding the base-game input config.
 class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 {
 	[Attribute("1", desc: "Menu Available: administrators can open Ctrl+T and request debug actions. Workbench permits local testing.")]
 	protected bool m_bMenuAvailable;
 
-	[Attribute("{5BB4D0ED53225DDC}Configs/UI/AROR_SetupDialogs.conf", UIWidgets.ResourceNamePicker, desc: "Dialog presets (uses the 'aror_admin' preset)", params: "conf")]
-	protected ResourceName m_sDialogPresets;
-
-	// Dialog presets: a dialog fits about four buttons in a row, so tools are split into sub-menus
-	protected static const string PRESET_ADMIN = "aror_admin";
-	protected static const string PRESET_MORE = "aror_admin_more";
-	protected static const string PRESET_SUPPORT = "aror_admin_support";
-	protected static const string PRESET_ECONOMY = "aror_admin_economy";
-	protected static const string PRESET_ECONOMY_MORE = "aror_admin_economy_more";
-	protected static const string PRESET_FUNDS = "aror_admin_funds";
-
-	//! Money added per admin button press
-	protected static const int MONEY_STEP = 1000;
-
-	//! Reopen a dialog after the server has applied a change, so it shows the new values
-	protected static const int REFRESH_DELAY_MS = 300;
-
-	//! Support change per admin button press (percentage points)
-	protected static const float SUPPORT_STEP = 10;
-
 	//! Wait for the server to grant Game Master before opening the editor locally
 	protected static const int GAME_MASTER_OPEN_DELAY_MS = 1000;
 
+	//! Pause between the map closing and the admin menu reopening (the menu manager is busy closing the map)
+	protected static const int REOPEN_DELAY_MS = 200;
+
+	//! A map click captures the nearest location only if it is this close (metres) or inside the location's radius
+	protected static const float CAPTURE_PICK_DISTANCE = 300;
+
+	protected static const int PICK_NONE = 0;
+	protected static const int PICK_TELEPORT = 1;
+	protected static const int PICK_CAPTURE = 2;
+
 	protected static AROR_AdminMenuComponent s_Instance;
 
-	protected bool m_bPickingTeleport;
+	protected int m_iPickMode;
+	protected AROR_EFactionRole m_eCaptureRole;
 
 	//------------------------------------------------------------------------------------------------
 	//! Local UI policy; server actions independently authorize their requester.
@@ -46,6 +41,13 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 			return false;
 		SCR_PlayerController player = SCR_PlayerController.Cast(GetGame().GetPlayerController());
 		return player && AROR_AdminAccess.IsAdministrator(player.GetPlayerId());
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Client: true when this player may use the admin tools (the menu asks before it draws anything)
+	bool CanOpenMenu()
+	{
+		return CanUseLocalTools();
 	}
 
 	//! Polled every frame on the client while enabled.
@@ -59,86 +61,28 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 
 		Debug.ClearKey(KeyCode.KC_T);
 
-		// Not while another dialog is open or a position is being picked
-		if (m_bPickingTeleport || SCR_ConfigurableDialogUi.GetCurrentDialog())
+		// Ctrl+T again closes the menu
+		AROR_AdminMenu open = AROR_AdminMenu.GetInstance();
+		if (open)
+		{
+			open.Close();
+			return;
+		}
+
+		// Not while another menu is open or a position is being picked
+		if (m_iPickMode != PICK_NONE || GetGame().GetMenuManager().IsAnyMenuOpen())
 			return;
 
-		OpenMainDialog();
+		OpenAdminMenu();
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Opens a preset; an empty message keeps the preset's own
-	protected void OpenDialog(string preset, string message = string.Empty)
+	protected void OpenAdminMenu()
 	{
 		if (!CanUseLocalTools())
 			return;
-		AROR_AdminDialog dialog = new AROR_AdminDialog(this);
-		SCR_ConfigurableDialogUi.CreateFromPreset(m_sDialogPresets, preset, dialog);
-		if (!message.IsEmpty())
-			dialog.SetMessage(message);
-	}
 
-	//------------------------------------------------------------------------------------------------
-	protected void OpenMainDialog()
-	{
-		OpenDialog(PRESET_ADMIN);
-	}
-
-	//------------------------------------------------------------------------------------------------
-	protected void OpenMoreDialog()
-	{
-		OpenDialog(PRESET_MORE);
-	}
-
-	//------------------------------------------------------------------------------------------------
-	protected void OpenSupportDialog()
-	{
-		OpenDialog(PRESET_SUPPORT, GetNearestSupportText());
-	}
-
-	//------------------------------------------------------------------------------------------------
-	protected void OpenEconomyDialog()
-	{
-		OpenDialog(PRESET_ECONOMY, GetEconomyText());
-	}
-
-	//------------------------------------------------------------------------------------------------
-	protected void OpenEconomyMoreDialog()
-	{
-		OpenDialog(PRESET_ECONOMY_MORE, GetEconomyText());
-	}
-
-	//------------------------------------------------------------------------------------------------
-	protected void OpenFundsDialog()
-	{
-		OpenDialog(PRESET_FUNDS, GetEconomyText());
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! Client: faction funds and the local player's money (shown in the economy dialog)
-	protected string GetEconomyText()
-	{
-		AROR_EconomyComponent economy = AROR_EconomyComponent.GetInstance();
-		if (!economy)
-			return "No AROR_EconomyComponent on the game mode.";
-
-		int stockLines;
-		AROR_ResistanceStorageComponent storage = AROR_ResistanceStorageComponent.GetInstance();
-		if (storage)
-		{
-			array<ResourceName> prefabs = {};
-			array<int> quantities = {};
-			storage.GetEntries(prefabs, quantities);
-			stockLines = prefabs.Count();
-		}
-
-		return string.Format("Funds: Resistance %1 | Occupiers %2 | Invaders %3\nResistance manpower: %4\nYour money: %5\nResistance stock lines: %6",
-			economy.GetFactionFunds(AROR_EFactionRole.RESISTANCE),
-			economy.GetFactionFunds(AROR_EFactionRole.OCCUPIERS),
-			economy.GetFactionFunds(AROR_EFactionRole.INVADERS),
-			economy.GetManpower(),
-			economy.GetLocalPlayerMoney(),
-			stockLines);
+		GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.AROR_AdminMenu);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -239,21 +183,6 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 			return "themselves";
 
 		return typename.EnumToString(AROR_EFactionRole, role);
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! Client: support of the town or city nearest to the local player (shown in the dialog)
-	protected string GetNearestSupportText()
-	{
-		AROR_SettlementComponent support = FindNearestSupport(GetGame().GetPlayerController().GetControlledEntity());
-		if (!support)
-			return "No town or city nearby.";
-
-		return string.Format("Nearest: %1\nResistance %2 | Occupiers %3 | Invaders %4",
-			support.GetLocation().GetName(),
-			Math.Round(support.GetSupport(AROR_EFactionRole.RESISTANCE)),
-			Math.Round(support.GetSupport(AROR_EFactionRole.OCCUPIERS)),
-			Math.Round(support.GetSupport(AROR_EFactionRole.INVADERS)));
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -363,20 +292,75 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Called by the dialog once it has closed; handled next frame, outside the menu manager's close sequence
+	//! Server: gives a location to a side. Towns and cities go through support (the side gets 100%), military sites
+	//! change hands directly, ignoring the flip cooldown and strongholds. Locations with fixed control (the Resistance
+	//! HQ, the support corridor) are refused. The requesting player gets a hint with the outcome.
+	void CaptureLocation_S(int playerId, string locationId, AROR_EFactionRole role)
+	{
+		if (!Replication.IsServer() || !m_bMenuAvailable || !AROR_AdminAccess.IsAdministrator(playerId))
+			return;
+
+		if (!AROR_FactionRoles.IsMilitary(role))
+			return;
+
+		AROR_LocationManagerComponent locations = AROR_LocationManagerComponent.GetInstance();
+		AROR_LocationComponent location;
+		if (locations)
+			location = locations.GetLocationById(locationId);
+
+		if (!location)
+		{
+			AROR_NotificationManagerComponent.SendHint_S(playerId, "Capture failed: that location no longer exists.");
+			return;
+		}
+
+		string sideName = AROR_FactionRoles.GetDisplayName(role);
+		if (location.IsControlFixed())
+		{
+			AROR_NotificationManagerComponent.SendHint_S(playerId, string.Format("%1 cannot change hands: its control is fixed.", location.GetName()));
+			return;
+		}
+
+		if (location.GetControllingRole() == role)
+		{
+			AROR_NotificationManagerComponent.SendHint_S(playerId, string.Format("%1 is already held by %2.", location.GetName(), sideName));
+			return;
+		}
+
+		AROR_SettlementComponent settlement = AROR_SettlementComponent.Cast(location.GetOwner().FindComponent(AROR_SettlementComponent));
+		if (settlement)
+			settlement.SetSupport_S(role, 100);
+
+		// Support may already have flipped it; otherwise (military sites, or a blocked flip) force it
+		location.ForceControllingRole_S(role);
+		AROR_NotificationManagerComponent.SendHint_S(playerId, string.Format("%1 is now held by %2.", location.GetName(), sideName), AROR_UIColors.Get(AROR_UIColors.REBEL));
+		Print(string.Format("[AROR] Admin: player %1 gave '%2' to %3", playerId, location.GetName(), typename.EnumToString(AROR_EFactionRole, role)), LogLevel.NORMAL);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Called by the admin menu once it has closed; handled next frame, outside the menu manager's close sequence
 	void QueueAction(string tag)
 	{
 		GetGame().GetCallqueue().CallLater(HandleAction, 0, false, tag);
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Actions that need the admin menu closed first. Everything else the menu requests directly.
 	protected void HandleAction(string tag)
 	{
 		if (!CanUseLocalTools())
 			return;
+
 		if (tag == "teleport")
 		{
-			StartTeleportPicking();
+			StartPicking(PICK_TELEPORT);
+			return;
+		}
+
+		if (tag.IndexOf("capture:") == 0)
+		{
+			m_eCaptureRole = tag.Substring(8, tag.Length() - 8).ToInt();
+			StartPicking(PICK_CAPTURE);
 			return;
 		}
 
@@ -388,141 +372,39 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 
 			// Give the server time to grant access, then open the editor locally
 			GetGame().GetCallqueue().CallLater(OpenGameMaster, GAME_MASTER_OPEN_DELAY_MS);
-			return;
 		}
-
-		if (tag == "notifications")
-		{
-			SCR_PlayerController notificationsController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
-			if (notificationsController)
-				notificationsController.AROR_RequestAdminTestNotifications();
-
-			return;
-		}
-
-		// Navigation between the sub-menus
-		if (tag == "open_main")
-		{
-			OpenMainDialog();
-			return;
-		}
-
-		if (tag == "open_more")
-		{
-			OpenMoreDialog();
-			return;
-		}
-
-		if (tag == "open_support")
-		{
-			OpenSupportDialog();
-			return;
-		}
-
-		if (tag == "open_economy")
-		{
-			OpenEconomyDialog();
-			return;
-		}
-
-		if (tag == "open_economy_more")
-		{
-			OpenEconomyMoreDialog();
-			return;
-		}
-
-		if (tag == "open_funds")
-		{
-			OpenFundsDialog();
-			return;
-		}
-
-		if (tag.IndexOf("money_") == 0)
-		{
-			HandleMoneyAction(tag);
-			return;
-		}
-
-		if (tag == "income_now")
-		{
-			SCR_PlayerController incomeController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
-			if (incomeController)
-				incomeController.AROR_RequestAdminPayIncome();
-
-			GetGame().GetCallqueue().CallLater(OpenEconomyDialog, REFRESH_DELAY_MS);
-			return;
-		}
-
-		if (tag == "storage_fill_resistance")
-		{
-			SCR_PlayerController storageController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
-			if (storageController)
-				storageController.AROR_RequestAdminFillResistanceStock();
-
-			GetGame().GetCallqueue().CallLater(OpenEconomyMoreDialog, REFRESH_DELAY_MS);
-			return;
-		}
-
-		AROR_EFactionRole role;
-		if (tag == "support_resistance")
-			role = AROR_EFactionRole.RESISTANCE;
-		else if (tag == "support_occupiers")
-			role = AROR_EFactionRole.OCCUPIERS;
-		else if (tag == "support_invaders")
-			role = AROR_EFactionRole.INVADERS;
-		else
-			return;
-
-		SCR_PlayerController playerController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
-		if (playerController)
-			playerController.AROR_RequestAdminSupport(role, SUPPORT_STEP);
-
-		GetGame().GetCallqueue().CallLater(OpenSupportDialog, REFRESH_DELAY_MS);
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Economy and faction funds buttons; the dialog they came from reopens with the updated balances
-	protected void HandleMoneyAction(string tag)
-	{
-		AROR_EFactionRole role;
-		bool selfMoney;
-		if (tag == "money_resistance")
-			role = AROR_EFactionRole.RESISTANCE;
-		else if (tag == "money_occupiers")
-			role = AROR_EFactionRole.OCCUPIERS;
-		else if (tag == "money_invaders")
-			role = AROR_EFactionRole.INVADERS;
-		else if (tag == "money_self")
-			selfMoney = true;
-		else
-			return;
-
-		SCR_PlayerController playerController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
-		if (playerController)
-			playerController.AROR_RequestAdminMoney(role, selfMoney, MONEY_STEP);
-
-		if (selfMoney)
-			GetGame().GetCallqueue().CallLater(OpenEconomyDialog, REFRESH_DELAY_MS);
-		else
-			GetGame().GetCallqueue().CallLater(OpenFundsDialog, REFRESH_DELAY_MS);
-	}
-
+	// Map picking (teleport, capture)
 	//------------------------------------------------------------------------------------------------
-	// Teleport
-	//------------------------------------------------------------------------------------------------
-	protected void StartTeleportPicking()
+	protected void StartPicking(int mode)
 	{
 		if (!CanUseLocalTools())
 			return;
-		if (m_bPickingTeleport)
+		if (m_iPickMode != PICK_NONE)
 			return;
 
-		m_bPickingTeleport = true;
+		m_iPickMode = mode;
 		AROR_LocationMapIconsComponent.SetInfoPopupSuppressed(true);
 		SCR_MapEntity.GetOnSelection().Insert(OnMapSelection);
 		SCR_MapEntity.GetOnMapOpen().Insert(OnMapOpened);
 		SCR_MapEntity.GetOnMapClose().Insert(OnMapClosed);
 		GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.MapMenu);
+
+		// Esc is not available in Workbench, so M closes the map too
+		GetGame().GetCallqueue().CallLater(CheckMapCloseKey, 0, true);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Polled while a map pick is active: M closes the map (and with it ends the pick)
+	protected void CheckMapCloseKey()
+	{
+		if (!Debug.KeyState(KeyCode.KC_M))
+			return;
+
+		Debug.ClearKey(KeyCode.KC_M);
+		GetGame().GetMenuManager().CloseMenuByPreset(ChimeraMenuPreset.MapMenu);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -533,6 +415,11 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 		SCR_MapEntity mapEntity = SCR_MapEntity.GetMapInstance();
 		if (mapEntity)
 			mapEntity.ZoomOut();
+
+		if (m_iPickMode == PICK_CAPTURE)
+			AROR_NotificationManagerComponent.ShowHint(string.Format("Capture for %1: click locations on the map. M or Esc to finish.",AROR_FactionRoles.GetDisplayName(m_eCaptureRole)));
+		else if (m_iPickMode == PICK_TELEPORT)
+			AROR_NotificationManagerComponent.ShowHint("Teleport: click a position on the map.");
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -541,10 +428,10 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	{
 		if (!CanUseLocalTools())
 		{
-			StopTeleportPicking();
+			StopPicking();
 			return;
 		}
-		if (!m_bPickingTeleport)
+		if (m_iPickMode == PICK_NONE)
 			return;
 
 		SCR_MapEntity mapEntity = SCR_MapEntity.GetMapInstance();
@@ -553,9 +440,16 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 
 		float worldX, worldZ;
 		mapEntity.GetMapCursorWorldPosition(worldX, worldZ);
-		vector target = Vector(worldX, GetGame().GetWorld().GetSurfaceY(worldX, worldZ), worldZ);
 
-		StopTeleportPicking();
+		if (m_iPickMode == PICK_CAPTURE)
+		{
+			// The map stays open for the next click
+			CaptureAt(Vector(worldX, 0, worldZ));
+			return;
+		}
+
+		vector target = Vector(worldX, GetGame().GetWorld().GetSurfaceY(worldX, worldZ), worldZ);
+		StopPicking();
 		GetGame().GetMenuManager().CloseMenuByPreset(ChimeraMenuPreset.MapMenu);
 
 		// The owning client moves its own character; movement replicates to the server
@@ -564,16 +458,40 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Closing the map without clicking cancels the teleport
-	protected void OnMapClosed(MapConfiguration config)
+	//! Client: asks the server to give the location nearest to the map click to the chosen side
+	protected void CaptureAt(vector position)
 	{
-		StopTeleportPicking();
+		AROR_LocationManagerComponent locations = AROR_LocationManagerComponent.GetInstance();
+		if (!locations)
+			return;
+
+		AROR_LocationComponent location = locations.GetNearestLocation(position);
+		if (!location || (!location.IsPositionInside(position) && vector.DistanceXZ(location.GetCenter(), position) > CAPTURE_PICK_DISTANCE))
+		{
+			AROR_NotificationManagerComponent.ShowHint("No location there. Click closer to one.");
+			return;
+		}
+
+		SCR_PlayerController controller = SCR_PlayerController.Cast(GetGame().GetPlayerController());
+		if (controller)
+			controller.AROR_RequestAdminCapture(location.GetId(), m_eCaptureRole);
 	}
 
 	//------------------------------------------------------------------------------------------------
-	protected void StopTeleportPicking()
+	//! Closing the map cancels a teleport; after capturing it brings the admin menu back
+	protected void OnMapClosed(MapConfiguration config)
 	{
-		m_bPickingTeleport = false;
+		bool reopen = m_iPickMode == PICK_CAPTURE;
+		StopPicking();
+		if (reopen)
+			GetGame().GetCallqueue().CallLater(OpenAdminMenu, REOPEN_DELAY_MS);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void StopPicking()
+	{
+		m_iPickMode = PICK_NONE;
+		GetGame().GetCallqueue().Remove(CheckMapCloseKey);
 		AROR_LocationMapIconsComponent.SetInfoPopupSuppressed(false);
 		SCR_MapEntity.GetOnSelection().Remove(OnMapSelection);
 		SCR_MapEntity.GetOnMapOpen().Remove(OnMapOpened);
@@ -609,11 +527,8 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 		GetGame().GetCallqueue().Remove(CheckHotkey);
 		GetGame().GetCallqueue().Remove(HandleAction);
 		GetGame().GetCallqueue().Remove(OpenGameMaster);
-		GetGame().GetCallqueue().Remove(OpenEconomyDialog);
-		GetGame().GetCallqueue().Remove(OpenEconomyMoreDialog);
-		GetGame().GetCallqueue().Remove(OpenFundsDialog);
-		GetGame().GetCallqueue().Remove(OpenSupportDialog);
-		StopTeleportPicking();
+		GetGame().GetCallqueue().Remove(OpenAdminMenu);
+		StopPicking();
 
 		if (s_Instance == this)
 			s_Instance = null;

@@ -181,6 +181,25 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Admin menu: give a location (picked on the map) to a side
+	void AROR_RequestAdminCapture(string locationId, AROR_EFactionRole role)
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_AdminCapture(locationId, role);
+		else
+			Rpc(AROR_RpcAsk_AdminCapture, locationId, role);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_AdminCapture(string locationId, int role)
+	{
+		AROR_AdminMenuComponent adminMenu = AROR_AdminMenuComponent.GetInstance();
+		if (adminMenu)
+			adminMenu.CaptureLocation_S(GetPlayerId(), locationId, role);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
 	protected void AROR_RpcAsk_NewPlaythrough(vector hqPosition, string playthroughName, array<string> presetIds)
 	{
