@@ -186,6 +186,9 @@ FrameWidgetClass {
      Slot FrameWidgetSlot "{6AB676BC70EE1002}" {
       Anchor 0 0 0 0
      }
+     FontProperties FontProperties "{6AB676BC70EE2002}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
     }
     ButtonWidgetClass "{6AB676BC70EE0003}" {
      Name "QuickSlot0Button"

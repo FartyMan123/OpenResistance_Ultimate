@@ -9,7 +9,7 @@ function runCapturePlacementTests(sources) {
   function compile(source,name,returnOutput=false){
     const m=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
     if(!m)throw Error('Missing '+name);
-    const args=m[1].replace(/\bout\s+/g,'').replace(/\b(?:vector|float|int|AROR_\w+)\s+/g,'');
+    const args=m[1].replace(/\bout\s+/g,'').replace(/\b(?:vector|float|int|bool|AROR_\w+)\s+/g,'');
     let body=m[2].replace(/\bfloat\.MAX/g,'Number.MAX_VALUE')
       .replace(/vector (\w+)\[4\];/g,'let $1=[];').replace(/vector (\w+);/g,'let $1=[0,0,0];')
       .replace(/foreach \(\w+ (\w+) : ([^)]+)\)/g,'for(const $1 of $2)')

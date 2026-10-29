@@ -3,14 +3,15 @@ const fs=require('fs'),path=require('path');
 const source=fs.readFileSync(path.join(__dirname,'../AROpenResistance/Open Resistance/Scripts/Game/Operations/AROR_GroundOperationForce.c'),'utf8');
 let assertions=0,server=true;
 const check=(ok,message)=>{assertions++;if(!ok)throw Error(message);};
-for(const [name,fn]of Object.entries({Count(){return this.length;},Insert(x){this.push(x);},Contains(x){return this.includes(x);}}))Object.defineProperty(Array.prototype,name,{value:fn,configurable:true});
-const env={Replication:{IsServer:()=>server},GetGame:()=>({GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:x=>x?.player?1:0})}),
+Object.defineProperty(String.prototype,'IsEmpty',{value(){return !this.length;},configurable:true});
+for(const [name,fn]of Object.entries({Count(){return this.length;},Insert(x){this.push(x);},Contains(x){return this.includes(x);},IsEmpty(){return !this.length;},Clear(){this.length=0;},Copy(x){this.splice(0,this.length,...x);}}))Object.defineProperty(Array.prototype,name,{value:fn,configurable:true});
+const env={Math:{Max:Math.max},Replication:{IsServer:()=>server},GetGame:()=>({GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:x=>x?.player?1:0})}),
   AROR_EForceType:{AIRBORNE:3,MOTORIZED:0},ECloseDoorAfterActions:{CLOSE_DOOR:1},
   string:{Format:(s,...a)=>s.replace(/%(\d+)/g,(_,i)=>a[i-1])}};
 for(const name of ['BaseCompartmentManagerComponent','SCR_AIVehicleUsageComponent','CompartmentAccessComponent'])env[name]={Cast:x=>x};
 env.ChimeraCharacter={Cast:x=>x?.character?x:null};
 env.TurretCompartmentSlot={Cast:x=>x?.kind==='turret'?x:null};env.CargoCompartmentSlot={Cast:x=>x?.kind==='cargo'?x:null};
-const methods=['Seat','IsMountComplete','ReseatMissing_S','ReseatMember','RecoverStaleBoarding_S','IsSeatedInOwnVehicle'];
+const methods=['Seat','PreparePassengerRoster_S','Mount_S','IsRequiredGunnerSeat','IsMountComplete','ReseatMissing_S','ReseatMember','RecoverStaleBoarding_S','IsSeatedInOwnVehicle'];
 function compile(name){
   const m=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
   if(!m)throw Error('Missing '+name);
@@ -18,7 +19,8 @@ function compile(name){
   let body=m[2].replace(/foreach \(\w+ (\w+) : ([^)]+)\)/g,'for(const $1 of $2)')
     .replace(/array<\w+> (\w+) = \{([^;]*)\};/g,'let $1 = [$2];')
     .replace(/int (\w+), (\w+), (\w+);/g,'let $1=0,$2=0,$3=0;')
-    .replace(/\b(?:IEntity|bool|int|float|string|Physics|ChimeraCharacter|BaseCompartmentSlot|BaseCompartmentManagerComponent|SCR_AIVehicleUsageComponent|CompartmentAccessComponent)\s+(\w+)/g,'let $1')
+    .replace(/int (\w+), (\w+);/g,'let $1=0,$2=0;')
+    .replace(/\b(?:IEntity|bool|int|float|string|Physics|ChimeraCharacter|AIAgent|SCR_AIGroupUtilityComponent|BaseCompartmentSlot|BaseCompartmentManagerComponent|SCR_AIVehicleUsageComponent|CompartmentAccessComponent)\s+(\w+)/g,'let $1')
     .replace(/let (\w+);/g,'let $1=0;').replace(/(?<![.\w])m_\w+/g,x=>'this.'+x);
   for(const n of methods)body=body.replace(new RegExp('(?<![.\\w])'+n+'\\(','g'),'this.'+n+'(');
   return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
@@ -28,13 +30,13 @@ function fixture(crewCount=1,passengerCount=4){
   const all=[],calls=[],resets=[];
   const vehicle={speed:0,FindComponent(type){return type===env.BaseCompartmentManagerComponent?{GetCompartments:a=>a.push(...slots)}:usage;},GetPhysics(){return {GetVelocity:()=>({Length:()=>this.speed})};}};
   function seat(kind){return {kind,occupant:null,reserved:null,accessible:true,GetOccupant(){return this.occupant;},IsOccupied(){return !!this.occupant;},
-    IsCompartmentAccessible(){return this.accessible;},IsReserved(){return !!this.reserved;},IsReservedBy(x){return this.reserved===x;},SetReserved(x){this.reserved=x;},GetVehicle:()=>vehicle};}
+    GetAttachedTurret(){return this.attachedTurret||null;},IsCompartmentAccessible(){return this.accessible;},IsReserved(){return !!this.reserved;},IsReservedBy(x){return this.reserved===x;},SetReserved(x){this.reserved=x;},GetVehicle:()=>vehicle};}
   const slots=[seat('driver'),...Array.from({length:crewCount-1},()=>seat('turret')),...Array.from({length:passengerCount},()=>seat('cargo'))];
-  const usage={GetPilotCompartmentSlot:()=>slots[0]};
+  const usage={CanBePiloted:()=>true,GetPilotCompartmentSlot:()=>slots[0]};
   function actor(){
     const a={character:true,dead:false,GetCharacterController(){return {IsDead:()=>this.dead};},FindComponent:()=>a.access};
     a.access={entering:true,exiting:false,inside:false,current:null,allow:true,
-      IsGettingIn(){return this.entering;},IsGettingOut(){return this.exiting;},IsInCompartment(){return this.inside;},GetCompartment(){return this.current;},
+      CanGetInVehicle(){return this.allow;},IsGettingIn(){return this.entering;},IsGettingOut(){return this.exiting;},IsInCompartment(){return this.inside;},GetCompartment(){return this.current;},
       InterruptVehicleActionQueue(...args){resets.push({actor:a,args});this.entering=false;},
       GetInVehicle(v,slot,teleport,door,close,paused){calls.push({actor:a,slot,paused});if(!this.allow)return false;
         // Outside the simulation bubble, an ordinary queued action cannot execute.
@@ -42,11 +44,11 @@ function fixture(crewCount=1,passengerCount=4){
     all.push(a);return a;
   }
   const crew=Array.from({length:crewCount},actor),passengers=Array.from({length:passengerCount},actor);
-  const group=members=>({players:0,GetPlayerCount(){return this.players;},GetAgents:out=>out.push(...members.map(x=>({GetControlledEntity:()=>x})))});
+  const group=members=>({players:0,m_aUnitPrefabSlots:['rifle','support'],GetGroupUtilityComponent:()=>({AddUsableVehicle:()=>{}}),GetPlayerCount(){return this.players;},GetAgents:out=>out.push(...members.map(x=>({GetControlledEntity:()=>x})))});
   all.forEach((a,i)=>slots[i].reserved=a);
   const force={...compiled,m_Vehicle:vehicle,m_Profile:{m_eType:0},m_CrewGroup:group(crew),m_Group:group(passengers),
     m_aMembers:all,m_aPassengers:passengers,m_bMountRequested:true,m_bMounted:false,m_bDismountRequested:false,m_bDismounted:false,
-    m_iSeatAttempts:0,m_iSeatQueueResets:0,m_iSeatBusy:0};
+    m_iSeatAttempts:0,m_iSeatQueueResets:0,m_iSeatBusy:0,m_sSeatRejection:''};
   return {force,vehicle,crew,passengers,slots,all,calls,resets};
 }
 let f=fixture();
@@ -64,6 +66,7 @@ check(f.force.IsMountComplete()&&f.calls.length===7,'IFV crew and infantry all r
 check(new Set(f.calls.map(x=>x.slot)).size===7,'one occupant per seat');
 f=fixture();f.crew[0].access.allow=false;report=f.force.ReseatMissing_S(true);
 check(report.includes('accepted=4 attempted=5'),'native rejection distinguishable from retry being skipped');
+check(report.includes('canEnter=false')&&report.includes('paused=true'),'paced rejection diagnostic records native entry eligibility and execution mode');
 check(!f.force.IsMountComplete(),'accepted passengers cannot hide an absent driver');
 f=fixture();f.crew[0].access.entering=false;check(f.force.Seat(f.crew[0],f.slots[0])&&f.calls[0].paused,'first placement also uses paused execution');
 f=fixture();f.force.m_bMounted=true;f.force.Seat(f.crew[0],f.slots[0]);check(f.calls[0].paused===false,'live-operation reseating does not force paused execution');
@@ -88,4 +91,66 @@ f=fixture();f.crew[0].access.entering=false;f.slots[0].reserved=other;
 check(!f.force.ReseatMember(f.crew[0],[f.slots[0]],null),'another actor reservation is not stolen');
 f=fixture();f.crew[0].player=true;
 check(!f.force.Seat(f.crew[0],f.slots[0])&&!f.calls.length,'player never teleported into deployment seat');
+// A nonempty driver seat is insufficient when its occupant is not the assigned crew.
+f=fixture();f.force.ReseatMissing_S(true);
+const spare={...f.slots[1],occupant:f.crew[0]};f.crew[0].access.current=spare;
+f.slots[0].occupant={character:true,GetCharacterController:()=>({IsDead:()=>false})};
+check(!f.force.IsMountComplete(),'foreign driver cannot satisfy readiness while assigned crew sit elsewhere');
+f=fixture();f.force.ReseatMissing_S(true);f.force.m_CrewGroup.GetAgents=()=>{};
+check(!f.force.IsMountComplete(),'empty crew cannot activate merely because the driver compartment is occupied');
+f=fixture();f.force.ReseatMissing_S(true);f.crew[0].dead=true;
+check(!f.force.IsMountComplete(),'a dead assigned driver cannot be hidden by other living crew');
+f=fixture();f.force.ReseatMissing_S(true);f.crew[0].player=true;
+check(!f.force.IsMountComplete(),'player-controlled driver cannot pass automated deployment readiness');
+f=fixture();f.force.ReseatMissing_S(true);f.force.m_CrewGroup.players=1;
+check(!f.force.IsMountComplete(),'player takeover of the crew group revokes deployment readiness');
+// An attached mounted gun can use a cargo-style compartment, rather than TurretCompartmentSlot.
+f=fixture(2,2);f.slots[1].kind='cargo';f.slots[1].attachedTurret={};
+// Native enumeration need not list the weapon ahead of ordinary passenger seats.
+const mountedWeaponSeat=f.slots.splice(1,1)[0];f.slots.push(mountedWeaponSeat);
+check(f.force.Mount_S(),'armed cargo-style compartment accepts the authored Humvee crew');
+check(mountedWeaponSeat.occupant===f.crew[1]&&f.force.IsMountComplete(),'assigned gunner occupies attached weapon before dispatch');
+for(const [label,change]of [
+ ['empty gunner',f=>{f.slots[1].occupant=null;const cargo={...f.slots[2],occupant:f.crew[1]};f.slots.push(cargo);f.crew[1].access.current=cargo;}],
+ ['dead gunner',f=>f.crew[1].dead=true],['player gunner',f=>f.crew[1].player=true],
+ ['inaccessible gunner seat',f=>f.slots[1].accessible=false],
+ ['foreign gunner',f=>{const foreign={...f.crew[1],access:{...f.crew[1].access}};f.slots[1].occupant=foreign;const cargo={...f.slots[2],occupant:f.crew[1]};f.slots.push(cargo);f.crew[1].access.current=cargo;}]
+]){
+ f=fixture(2,2);f.force.ReseatMissing_S(true);change(f);
+ check(!f.force.IsMountComplete(),label+' cannot satisfy dispatch readiness');
+}
+for(const [label,change]of [
+ ['occupied turret',f=>f.slots[1].occupant={player:true}],['blocked turret',f=>f.slots[1].accessible=false],
+ ['reserved turret',f=>f.slots[1].reserved={}]
+]){
+ f=fixture(2,2);change(f);check(!f.force.Mount_S(),label+' must not be skipped in favour of cargo');
+}
+f=fixture(3,2);f.force.ReseatMissing_S(true);f.slots[2].occupant=null;
+check(!f.force.IsMountComplete(),'every turret in a multi-gunner vehicle is required');
+f=fixture(2,2);f.slots[1].kind='cargo';f.slots[1].attachedTurret={};f.force.ReseatMissing_S(true);
+check(f.slots[1].occupant===f.crew[1]&&f.force.IsMountComplete(),'boarding recovery also prioritizes attached weapon seats');
+check(f.force.ReseatMissing_S().includes('occupied gunner seats=1/1'),'retry diagnostics expose gunner occupancy');
+f=fixture(2,2);f.force.m_CrewGroup.GetAgents=out=>out.push({GetControlledEntity:()=>f.crew[0]});
+check(!f.force.Mount_S(),'insufficient authored crew must not launch a driver-only armed vehicle');
+for(const [crewCount,cargoCount]of [[1,13],[2,3],[3,7]]){
+ f=fixture(crewCount,cargoCount);Object.assign(f.force.m_Profile,{m_bFillPassengerSeats:true,m_iCrewCount:crewCount});f.force.m_iReservedMembers=22;
+ check(f.force.PreparePassengerRoster_S(),'native full load fits reserved capacity');
+ check(f.force.m_Group.m_aUnitPrefabSlots.length===cargoCount,'every passenger seat receives an infantry slot');
+ check(f.force.m_Group.m_aUnitPrefabSlots.every((x,i)=>x===['rifle','support'][i%2]),'full load repeats the authored infantry mix');
+}
+f=fixture(2,3);Object.assign(f.force.m_Profile,{m_bFillPassengerSeats:true,m_iCrewCount:2});f.force.m_iReservedMembers=4;
+check(!f.force.PreparePassengerRoster_S()&&f.force.m_Group.m_aUnitPrefabSlots.length===2,'under-reserved full load is rejected before changing spawn queues');
+f=fixture(2,3);Object.assign(f.force.m_Profile,{m_bFillPassengerSeats:true,m_iCrewCount:1});f.force.m_iReservedMembers=22;
+check(!f.force.PreparePassengerRoster_S(),'missing turret crew cannot be replaced by dismount infantry');
+f=fixture(2,3);Object.assign(f.force.m_Profile,{m_bFillPassengerSeats:true,m_iCrewCount:2});f.force.m_iReservedMembers=22;f.slots[1].kind='cargo';f.slots[1].attachedTurret={};
+check(f.force.PreparePassengerRoster_S()&&f.force.m_Group.m_aUnitPrefabSlots.length===3,'mounted weapon is excluded from passenger capacity');
+for(const escorts of [0,1]){
+ f=fixture(1,24);Object.assign(f.force.m_Profile,{m_eType:3,m_bFillPassengerSeats:true,m_iCrewCount:1+escorts,m_iEscortCount:escorts});f.force.m_iReservedMembers=32;
+ check(f.force.PreparePassengerRoster_S()&&f.force.m_Group.m_aUnitPrefabSlots.length===24,'helicopter fills cabin independently of the separate escort pilot');
+ f.force.m_iReservedMembers=24+escorts;
+ check(!f.force.PreparePassengerRoster_S(),'helicopter cabin must leave reserved room for transport and escort pilots');
+}
+f=fixture(2,4);f.slots.forEach(s=>s.reserved=null);f.all.forEach(a=>{a.access.entering=false;a.access.GetInVehicle=(v,s)=>{f.calls.push({actor:a,slot:s});return true;}});
+f.force.ReseatMissing_S();
+check(f.calls.length===6&&new Set(f.calls.map(c=>c.slot)).size===6,'ground retry assigns distinct destinations without synchronous native reservation updates');
 console.log(JSON.stringify({assertions,note:'Native paused simulation/queue cancellation must be verified in Workbench Play.'}));

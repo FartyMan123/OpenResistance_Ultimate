@@ -7,7 +7,7 @@ function runRebIntelTests(sources) {
   Object.defineProperty(String.prototype,'Length',{value(){return this.length;},configurable:true});
   Object.defineProperty(Array.prototype,'Insert',{value(x){this.push(x);},configurable:true});
   const roles={RESISTANCE:0,OCCUPIERS:1,INVADERS:2};
-  const apps={HOME:0,BANK:1,TEST:2,REBINTEL:3};
+  const apps={HOME:0,BANK:1,TEST:2,REBINTEL:3,HICOMM:4,OPS:5,MARS:6,BLACK_MARKET:7,BANK_TRANSFER:8};
   const env={AROR_EFactionRole:roles,AROR_EPhoneApp:apps,Replication:{IsServer:()=>server,BumpMe:()=>bumps++},
     Math:{Floor:Math.floor,Clamp:(x,a,b)=>Math.max(a,Math.min(b,x)),Round:Math.round,Min:Math.min,Max:Math.max},
     Print(){},LogLevel:{NORMAL:0},string:{Empty:'',Format:(s,...a)=>s.replace(/%([1-9])/g,(_,n)=>a[n-1])},
@@ -72,8 +72,10 @@ function runRebIntelTests(sources) {
     return widgets;
   }
   const widgets=parse(sources.layout);
-  const direct=[...sources.menu.matchAll(/FindAnyWidget\("([^"]+)"\)/g),...sources.app.matchAll(/FindAnyWidget\("([^"]+)"\)/g)].map(m=>m[1]);
+  const direct=[...sources.menu.matchAll(/(?:root|m_wBankApp)\.FindAnyWidget\("([^"]+)"\)/g),...sources.app.matchAll(/phoneRoot\.FindAnyWidget\("([^"]+)"\)/g)].map(m=>m[1]);
   check(direct.every(n=>widgets[n]),'every direct menu/app binding resolves in the layout');
+  const market=parse(sources.marketTileLayout);
+  check([...sources.menu.matchAll(/market\.FindAnyWidget\("([^"]+)"\)/g)].every(m=>market[m[1]]),'dynamic market tile bindings resolve in their separate layout');
   const appControls=['RebIntelBackground','RebIntelTitle','RebIntelSubtitle','RebIntelDivider','RebIntelHudHeading'];
   for(const p of ['TabOccupiers','TabInvaders','OptionCompact','OptionFull','OptionLeft','OptionRight'])for(const s of ['Border','Fill','Label','Button'])appControls.push('RebIntel'+p+s);
   for(const t of ['Hud','Alerts'])for(const s of ['Border','Fill','Label','Track','TrackFill','Knob','Button'])appControls.push('RebIntelToggle'+t+s);
@@ -91,13 +93,13 @@ function runRebIntelTests(sources) {
   check(!sources.app.includes('Rpc(')&&!/Set(?:ReadinessPressure|ReadinessLevel|Crackdown|CrackdownLevel)_S\(/.test(sources.app),'app has no authority to mutate campaign state');
   check(!sources.settings.includes('Rpc(')&&sources.settings.includes('$profile:'),'player settings stay local to the client profile');
   check(/RplSession\.Mode\(\) != RplMode\.Dedicated\)\s*GetGame\(\)\.GetCallqueue\(\)\.CallLater\(UpdateRebIntelHud/.test(sources.notifications),'HUD widget never runs on a dedicated server');
-  const phone={m_bClosing:false,m_fTurn:0,m_fTurnTarget:0,m_eApp:apps.HOME};
+  const phone={m_bClosing:false,m_fTurn:0,m_fTurnTarget:0,m_eApp:apps.HOME,m_Mars:{},m_BlackMarket:{},m_RebIntel:null,m_BankTransfer:null};
   for(const n of ['OnPhoneButton','OpenApp','IsLandscapeApp','IsSettled','OnBack','RequestClose'])phone[n]=compile(sources.menu,n);
   phone.OnPhoneButton('RebIntelTileButton');check(phone.m_eApp===apps.REBINTEL&&phone.m_fTurnTarget===0,'RebIntel tile opens portrait app');
   phone.OnPhoneButton('HomeButton');check(phone.m_eApp===apps.HOME,'frame Home returns from RebIntel');
   phone.OnPhoneButton('BankTileButton');check(phone.m_eApp===apps.BANK,'Bank remains accessible');
-  phone.OnPhoneButton('TestTileButton');check(phone.m_eApp===apps.TEST&&phone.m_fTurnTarget===1,'landscape app retains rotation');
-  phone.OnPhoneButton('RebIntelTileButton');check(phone.m_eApp===apps.TEST,'clicks ignored while phone turning');
+  phone.OnPhoneButton('TestTileButton');check(phone.m_eApp===apps.MARS&&phone.m_fTurnTarget===1,'MARS tile opens the landscape debugger');
+  phone.OnPhoneButton('RebIntelTileButton');check(phone.m_eApp===apps.MARS,'clicks ignored while phone turning');
   phone.m_fTurn=1;phone.OnPhoneButton('HomeButton');phone.m_fTurn=0;phone.OnPhoneButton('RebIntelTileButton');
   check(phone.m_eApp===apps.REBINTEL&&phone.m_fTurnTarget===0,'return from landscape can reopen RebIntel');
   phone.OnBack();check(phone.m_bClosing,'Escape closes phone from RebIntel');
@@ -111,6 +113,6 @@ if(typeof require!=='undefined'&&require.main===module){
   const read=p=>fs.readFileSync(path.join(root,p),'utf8');
   console.log(runRebIntelTests({policy:read('Scripts/Game/Operations/AROR_QRFStrategicPolicy.c'),manager:read('Scripts/Game/Operations/AROR_OperationManagerComponent.c'),
     app:read('Scripts/Game/Phone/AROR_RebIntelApp.c'),menu:read('Scripts/Game/Phone/AROR_PhoneMenu.c'),layout:read('UI/Layouts/Phone/AROR_PhoneMenu.layout'),
-    labels:read('Scripts/Game/Operations/AROR_ThreatLabels.c'),admin:read('Scripts/Game/Admin/AROR_AdminMenuComponent.c'),settings:read('Scripts/Game/Phone/AROR_RebIntelSettings.c'),
+    marketTileLayout:read('UI/Layouts/Phone/AROR_BlackMarket.layout'),labels:read('Scripts/Game/Operations/AROR_ThreatLabels.c'),admin:read('Scripts/Game/Admin/AROR_AdminMenuComponent.c'),settings:read('Scripts/Game/Phone/AROR_RebIntelSettings.c'),
     notifications:read('Scripts/Game/Notifications/AROR_NotificationManagerComponent.c'),notificationsLayout:read('UI/Layouts/Notifications/AROR_Notifications.layout')}));
 }

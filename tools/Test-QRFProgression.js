@@ -13,9 +13,10 @@ function runQRFProgressionTests(sources) {
     Replication:{IsServer:()=>server,BumpMe:()=>bumps++},Print(){},LogLevel:{NORMAL:0},string:{Empty:'',Format:(s,...a)=>s.replace(/%([1-9])/g,(_,n)=>a[n-1])},
     AROR_OperationManagerComponent:{Cast:x=>x},ESerializeResult:{OK:1},VERSION:Number(sources.serializer.match(/VERSION\s*=\s*(\d+)/)[1]),
     AROR_LocationManagerComponent:{GetInstance:()=>({GetLocationById:()=>({GetLocationType:()=>8})})}};
+  env.AROR_EResponseType={AIR_GROUND:7};
   const names=['PressureForLevel','ReadinessLevel','ResponseLevel','Importance','GetReadinessPressure','GetReadinessLevel','GetCrackdown','GetCrackdownLevel','GetCrackdownPercent','HasThreatState',
     'IsEnemyRole','SetReadinessPressure_S','SetReadinessLevel_S','SetCrackdown_S','RestoreQRFStrategy_S','RecordStrategicEvidence','RecordCaptureEscalation_S','UpdateCrackdown_S','GetCrackdownForSave',
-    'IsValid','AllowsReadinessLevel','HasNativeExecutor','GetWeight','GetGroupBudget','VehicleLossValue','ReplacementQuote','IsReady','HasLocation','Resolve',
+    'IsValid','AllowsReadinessLevel','HasNativeExecutor','GetWeight','GetGroupBudget','GetVehicleBudget','VehicleLossValue','ReplacementQuote','IsReady','HasLocation','Resolve',
     'FindStrategicGroundRecipe','QRFPoolReadinessLevel','GetReservedGroups','GetReservedMembers','GetReservedVehicles','GetSpottingKind'];
   function compile(source,name){
     const match=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}','m'));
@@ -115,18 +116,18 @@ function runQRFProgressionTests(sources) {
   function fields(block){const result={};for(const m of block.matchAll(/^\s+(m_\w+)\s+(?:"([^"\r\n]*)"|(-?[\d.]+))\s*$/gm))result[m[1]]=m[2]??Number(m[3]);return result;}
   const profiles=[...sources.layer.matchAll(/^ {4}AROR_ForceProfile \{\r?\n([\s\S]*?)^ {4}\}/gm)].map(m=>{
     const p={m_iMinimumReadinessLevel:1,m_iEscortCount:1,m_iEscortLossValue:2000,m_iPersonnelLossValue:25,...fields(m[1])};
-    for(const n of ['IsValid','HasNativeExecutor','GetWeight','GetGroupBudget','VehicleLossValue','ReplacementQuote','GetSpottingKind'])p[n]=compile(sources.profile,n);return p;
+    for(const n of ['IsValid','HasNativeExecutor','GetWeight','GetGroupBudget','GetVehicleBudget','VehicleLossValue','ReplacementQuote','GetSpottingKind'])p[n]=compile(sources.profile,n);return p;
   });
   const recipes=[...sources.layer.matchAll(/^ {4}AROR_GroundQRFRecipe \{\r?\n([\s\S]*?)^ {4}\}/gm)].map(m=>{
     const r={m_iMinimumReadinessLevel:1,m_iMaximumReadinessLevel:5,...fields(m[1]),m_aProfileIds:[...m[1].match(/m_aProfileIds\s*\{([^}]*)\}/)[1].matchAll(/"([^"]+)"/g)].map(v=>v[1])};
     for(const n of ['IsValid','AllowsReadinessLevel','Resolve'])r[n]=compile(sources.recipe,n);return r;
   });
-  check(profiles.length===10&&recipes.length===32,'Chicken contains two light escorts and three complete ground response bands');
+  check(profiles.length===12&&recipes.length===62,'Chicken contains light/escorted air profiles and complete ground/joint readiness bands');
   check(profiles.every(p=>p.IsValid())&&recipes.every(r=>r.IsValid()),'every authored progression profile and recipe passes production configuration validation');
   check(profiles.filter(p=>/_light_support$/.test(p.m_sId)).every(p=>p.GetSpottingKind()===5)&&profiles.find(p=>p.m_sId==='us_armour').GetSpottingKind()===2,'light escorts report their own intelligence class while genuine armour keeps its class');
   check(profiles.filter(p=>/_light_support$/.test(p.m_sId)).every(p=>p.GetWeight(0)===0&&p.GetWeight(1)>0),'new QRF escorts do not change the separate scheduled-attack pool');
   let funds=100000,debt=0;
-  const context={m_aGroundQRFRecipes:recipes,m_aForceProfiles:profiles,m_iMaxGroups:20,m_iMaxMembers:128,m_iMaxVehicles:10,
+  const context={m_aGroundQRFRecipes:recipes,m_aForceProfiles:profiles,m_iMaxGroups:20,m_iMaxMembers:Number(sources.layer.match(/m_iMaxMembers (\d+)/)[1]),m_iMaxVehicles:10,
     m_Operations:{GetReadinessLevel:()=>1,GetCrackdownLevel:()=>5,GetQRFFinance:()=>({Available:()=>funds,Debt:()=>debt}),QRFOverhead:t=>50+t*10,AllowsMinimumCaptureQRF:()=>true},
     GetReservedGroups:()=>0,GetReservedMembers:()=>0,GetReservedVehicles:()=>0};
   context.FindStrategicGroundRecipe=compile(sources.executor,'FindStrategicGroundRecipe');context.QRFPoolReadinessLevel=compile(sources.executor,'QRFPoolReadinessLevel');
@@ -134,7 +135,7 @@ function runQRFProgressionTests(sources) {
   for(const role of [1,2])for(let readinessLevel=1;readinessLevel<=5;readinessLevel++)for(let intensity=1;intensity<=5;intensity++){
     const faction=role===1?'AROR_OCCUPIERS':'AROR_INVADERS';
     const r=context.FindStrategicGroundRecipe(role,faction,intensity,false,readinessLevel),elements=[];
-    check(r&&r.m_iLevel===intensity,'each readiness/intensity/faction cell has a funded complete response');
+    check(r&&r.m_iLevel===intensity,'each readiness/intensity/faction cell has a funded complete response: '+[role,readinessLevel,intensity,r?.m_sId]);
     check(r.Resolve(profiles,role,faction,elements,readinessLevel)&&elements.every(p=>p.m_iMinimumReadinessLevel<=readinessLevel),'every selected element respects the equipment unlock');
     if(readinessLevel<=2)check(elements.every(p=>/motorized|light_support/.test(p.m_sId)),'even maximum early crackdown excludes APC/armour/aircraft');
     if(readinessLevel>=3&&readinessLevel<=4)check(elements.some(p=>/mechanized/.test(p.m_sId))&&elements.every(p=>!/_(armour|airborne)$/.test(p.m_sId)),'middle readiness introduces APCs without late support/aircraft');
@@ -159,7 +160,7 @@ function runQRFProgressionTests(sources) {
   }
   funds=100000;const emptyCapacity={...context,GetReservedGroups:()=>20};
   check(!context.FindStrategicGroundRecipe.call(emptyCapacity,1,'AROR_OCCUPIERS',1,true,1),'unsecured early baseline cannot exceed an exhausted group budget');
-  emptyCapacity.GetReservedGroups=()=>0;emptyCapacity.GetReservedMembers=()=>121;
+  emptyCapacity.GetReservedGroups=()=>0;emptyCapacity.GetReservedMembers=()=>context.m_iMaxMembers-7;
   check(!context.FindStrategicGroundRecipe.call(emptyCapacity,1,'AROR_OCCUPIERS',1,true,1),'unsecured baseline still needs the complete truck personnel reservation');
   const captured={m_iPoolReadinessLevel:0,m_iRequestedTier:5,m_bCaptureThreatRecorded:true,GetRole:()=>1};
   const chosen=select.call(context,captured,{GetFactionKey:()=> 'AROR_OCCUPIERS'});
@@ -181,7 +182,7 @@ function runQRFProgressionTests(sources) {
   const air=compile(sources.reaper,'AffordableReaperTier'),helicopter=profiles.find(p=>p.m_sId==='us_airborne');
   check(air.call(context,helicopter,5,1)===0,'even an explicitly configured air adapter cannot buy locked aircraft through high crackdown');
   check(air.call(context,helicopter,5,5)===5,'unlocked experimental air path retains existing paid intensity/capacity limits');
-  check(sources.app.includes('GetCrackdownLevel(role)')&&sources.app.includes('Readiness unlocks equipment.'),'phone explains and displays the separate response intensity');
+  check(sources.app.includes('AROR_EThreatScale.READINESS')&&sources.app.includes('AROR_EThreatScale.CRACKDOWN')&&sources.app.includes('AROR_ThreatLabels'),'phone binds independent equipment and intensity cards using army threat labels');
   check(!sources.app.includes('SetCrackdown_S('),'phone remains read-only');
   return {assertions,note:'Actual source and all Chicken readiness/intensity cells; native compile, driving, crew, replication and balance remain unverified.'};
 }

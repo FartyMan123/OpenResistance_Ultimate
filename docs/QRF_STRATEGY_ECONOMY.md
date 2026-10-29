@@ -1,8 +1,10 @@
 # QRF strategy, prices and response lifecycle
 
-Status: source implementation and offline checks complete; **new Workbench compilation, multiplayer and combat acceptance are pending**. Both opposing roles use the same framework. Chicken enables strategic economy and visual spotting; Chicken also enables Invader ground capture responses; combat/REAPER dispatch remain disabled.
+Status: source implementation and offline checks; **current Workbench compilation, multiplayer and combat acceptance are pending**. Chicken enables both armies' capture responses, light airborne selections from Readiness 1 and joint responses from Readiness 2. Combat-triggered QRF dispatch and the blanket REAPER override remain off. See [release validation](QRF_RELEASE_VALIDATION.md) for current evidence.
 
 ## What happens after a capture
+
+Stronghold defence is a separate trusted scenario policy using the same executor. It can waive faction funding, freeze a named recipe and use a coastal launch point, while preserving actor capacity, launch safety and existing operations on the same role/target. Its requests do not establish capture-QRF attack eligibility. See [strongholds](STRONGHOLDS.md) and [reconciliation validation](RECONCILIATION_VALIDATION.md).
 
 1. A canonical enabled settlement/military capture supplies a trusted role/location threat. Chicken keeps combat-triggered QRFs off: validated damage can update recent contacts and bounded crackdown but cannot request a response. No player RPC can create a threat or change readiness.
 2. The manager coalesces reports into at most 32 pending threats. Repeated reports for one role/location contribute evidence at most every 30 seconds. A live QRF for the same target is reused.
@@ -32,7 +34,7 @@ The existing `AROR_EconomyComponent` remains the only bank. Income, Resistance m
 | Transport helicopter | 1,600 | 1,800 |
 | Escort gunship | 2,000 | 2,000 |
 
-Prices live on each `AROR_ForceProfile`: `m_iPersonnelLossValue`, `m_iVehicleLossValue`, `m_iEscortLossValue`. A negative main-vehicle value uses the shared type fallback; Chicken explicitly authors each asset value. The same US LAV has the same hull value in mechanized and armour profiles. Crew and passengers are charged separately when lost. An airborne quote includes both aircraft and the profile's full personnel capacity.
+Prices live on each `AROR_ForceProfile`: `m_iPersonnelLossValue`, `m_iVehicleLossValue`, `m_iEscortLossValue`. A negative main-vehicle value uses the shared type fallback; Chicken explicitly authors each asset value. The same US LAV has the same hull value in mechanized and armour profiles. Crew and passengers are charged separately when lost. An airborne quote includes the transport, any authored escort and the profile's full personnel reservation.
 
 Collateral uses **reserved personnel slots**, which can exceed actual spawned personnel. Only registered physical assets incur loss charges. An unused slot or unspawned wave never becomes a casualty bill. Cancelling an unspawned ground/air reserve releases its quoted collateral. Closing an operation releases unmaterialized collateral while retained physical assets continue to hold theirs until normal retirement or loss.
 
@@ -72,6 +74,10 @@ Machine-readable values: [QRF_PRICES.csv](QRF_PRICES.csv). The needed-funds colu
 
 For example, a tier-2 US deployment pays 70. Losing one LAV and two soldiers adds 850, for a total 920 campaign cost; the other surviving assets do not incur replacement charges. Losing a truck with its driver costs 225 in addition to that response's overhead.
 
+## Joint responses
+
+Chicken retains the Readiness-5 `occupier_joint_l1`–`l5` / `invader_joint_l1`–`l5` recipes and adds `*_joint_r2_l1`–`l5` and `*_joint_r3_l1`–`l5`. Early recipes use an unescorted transport/fireteam with trucks/light support at Readiness 2 and mechanized options at 3–4. At equal tier, eligible funded joint recipes are preferred when joint, airborne and tactical execution are enabled. Affordable ground alternatives remain available; the unsecured minimum stays ground-only. See [the roster and native gates](QRF_RELEASE_VALIDATION.md#joint-airborne-and-ground-responses) and [QRF_PRICES.csv](QRF_PRICES.csv).
+
 ## Readiness and crackdown
 
 Each enemy role has two independent server-owned values on a 0–1,000 scale. New Chicken campaigns start at readiness 1 and 20% crackdown (response level 2). Loaded campaigns retain their saved values.
@@ -96,7 +102,7 @@ Crackdown directly requests response levels 1–5: 0–19% / 20–39% / 40–59%
 | 4 | 3 trucks + 2 light escorts | 2 trucks + 2 APCs/IFVs + 1 light escort |
 | 5 | 4 trucks + 2 light escorts | 3 trucks + 3 APCs/IFVs + 1 light escort |
 
-Readiness-5 mixes/prices are listed above. US light escort is the M2 Humvee; USSR light escort is the PKM UAZ, a functional light-support counterpart with different firepower. The new escort profiles are QRF-only and do not add weight to the separate scheduled-attack pool. Each escort uses mounted crew only and reports a light armed vehicle map contact using ground spotting range. Trucks and APCs carry their configured fireteams. Late support remains LAV/BRDM, with no tank or newly enabled aircraft claim. This progression controls QRFs; it does not rewrite saved garrison recipes.
+Readiness-5 mixes/prices are listed above. US light escort is the M2 Humvee; USSR light escort is the PKM UAZ, a functional light-support counterpart with different firepower. The new escort profiles are QRF-only and do not add weight to the separate scheduled-attack pool. Each escort uses mounted crew only and reports a light armed vehicle map contact using ground spotting range. Trucks and APCs carry their configured fireteams. Ground support remains LAV/BRDM rather than a tank. Separate light airborne and joint bands are described above; none of these source changes establishes native flight success. This progression controls QRFs; it does not rewrite saved garrison recipes.
 
 Recipes expose minimum/maximum readiness levels, and profiles independently expose their minimum unlock. A mislabeled early recipe cannot introduce a locked profile. The readiness-provider preview now accepts an explicit readiness too; it still has no automatic dispatch caller. Legacy fixed truck/APC fixtures remain available when strategic selection is disabled.
 

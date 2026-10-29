@@ -220,7 +220,16 @@ class AROR_MarsApp : AROR_PhonePooledApp
 			Text(56, 611, 900, 100, 23, reason, text);
 			Text(56, 728, 900, 50, 17, "Increase Readiness to unlock equipment, or select another response type.", muted);
 		}
+#ifdef WORKBENCH
+		// Workbench only: the same response as a territory attack (staging, then assault), without the campaign timers
+		string attackAction;
+		if (!launchAction.IsEmpty())
+			attackAction = "attack";
+		Button(1040, 650, 305, 78, "SUMMON RESPONSE", launchAction, accent, AROR_UIColors.Get(AROR_UIColors.MARS_INK), 21);
+		Button(1355, 650, 305, 78, "LAUNCH AS ATTACK", attackAction, accent, AROR_UIColors.Get(AROR_UIColors.MARS_INK), 21);
+#else
 		Button(1040, 650, 620, 78, "SUMMON RESPONSE", launchAction, accent, AROR_UIColors.Get(AROR_UIColors.MARS_INK), 25);
+#endif
 		DrawControl(1040, 748, 620, 52, "USE CAMPAIGN LEVELS", "campaign", false);
 		Text(32, 815, 1620, 24, 15, m_sMessage, text);
 		AROR_OperationManagerComponent operations = GetOperations();
@@ -305,12 +314,15 @@ class AROR_MarsApp : AROR_PhonePooledApp
 			m_iType = action.Substring(5, action.Length() - 5).ToInt();
 			m_bPreviewDirty = true;
 		}
-		else if (action == "launch" && m_Preview && m_Preview.IsAvailable())
+		else if ((action == "launch" || action == "attack") && m_Preview && m_Preview.IsAvailable())
 		{
 			SCR_PlayerController controller = SCR_PlayerController.Cast(GetGame().GetPlayerController());
 			if (controller)
 			{
-				controller.AROR_RequestMars(m_sCredential, m_eRole, "type:" + m_iType, m_iCrackdown, m_iReadiness);
+				string selection = "type:";
+				if (action == "attack")
+					selection = "attack:";
+				controller.AROR_RequestMars(m_sCredential, m_eRole, selection + m_iType, m_iCrackdown, m_iReadiness);
 				m_sMessage = "Response requested. Server admission and operation state appear below.";
 			}
 		}

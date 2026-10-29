@@ -8,15 +8,15 @@ function runGarrisonCrewTests(source) {
   vector:{Zero:[0,0,0],DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])},
   string:{Format:(s,...a)=>s.replace(/%(\d+)/g,(_,n)=>String(a[n-1]))},Print:()=>{},LogLevel:{NORMAL:0},
   GetGame:()=>({GetWorld:()=>({GetWorldTime:()=>clock}),GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:e=>e.player?1:0})}),
-  ECloseDoorAfterActions:{CLOSE_DOOR:0},SCR_EntityHelper:{DeleteEntityAndChildren:e=>deleted.push(e)}};
- for(const name of ['BaseCompartmentManagerComponent','SCR_AIVehicleUsageComponent','DamageManagerComponent','CompartmentAccessComponent','FactionAffiliationComponent','AIWaypoint'])env[name]={Cast:x=>x};
+  ECloseDoorAfterActions:{CLOSE_DOOR:0},SENTRY_VARIANT:1000,Math3D:{AnglesToMatrix:()=>{}},SCR_EntityHelper:{DeleteEntityAndChildren:e=>deleted.push(e)}};
+ for(const name of ['BaseGameEntity','BaseCompartmentManagerComponent','SCR_AIVehicleUsageComponent','DamageManagerComponent','CompartmentAccessComponent','FactionAffiliationComponent','AIWaypoint'])env[name]={Cast:x=>x};
  env.ChimeraCharacter={Cast:e=>e&&e.character?e:null};
- const names=['IsPlayerOrForeignAsset','MaintainCrewSeats_S','HasMountedDefence','CrewAndOrder','AssignMembers','HasDormantReserve','InfantryDefenceGoal'];
+ const names=['IsPlayerOrForeignAsset','MaintainCrewSeats_S','HasMountedDefence','CrewAndOrder','IsSentry','AssignMembers','HasDormantReserve','InfantryDefenceGoal'];
  function compile(name){
   const m=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
   if(!m)throw Error('Missing actual method '+name);
   const args=m[1].replace(/\b(?:AROR_\w+|IEntity|bool)\s+/g,'');
-  let body=m[2].replace(/array<\w+> (\w+) = \{\};/g,'let $1=[];')
+  let body=m[2].replace(/array<\w+> (\w+) = \{\};/g,'let $1=[];').replace(/vector (\w+)\[4\];/g,'let $1=[];')
    .replace(/foreach \(\w+ (\w+) : ([^)]+)\)/g,'for(const $1 of $2)')
    .replace(/\b(?:bool|int|float|vector|IEntity|NavmeshWorldComponent|ChimeraAIWorld|ChimeraCharacter|DamageManagerComponent|CompartmentAccessComponent|FactionAffiliationComponent|Base\w+|AIWaypoint|SCR_\w+|AROR_\w+) (\w+);/g,'let $1=0;')
    .replace(/\b(?:bool|int|float|vector|IEntity|NavmeshWorldComponent|ChimeraAIWorld|ChimeraCharacter|DamageManagerComponent|CompartmentAccessComponent|FactionAffiliationComponent|Base\w+|AIWaypoint|SCR_\w+|AROR_\w+) (\w+) =/g,'let $1 =')
@@ -28,7 +28,7 @@ function runGarrisonCrewTests(source) {
    .replace('let reachable=0;','let reachable=[0,0,0];');
   return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
  }
- const compiled=Object.fromEntries(names.slice(0,4).map(n=>[n,compile(n)]));
+ const compiled=Object.fromEntries(names.slice(0,5).map(n=>[n,compile(n)]));
  function fixture(kind=3){
   clock=0;
   const requests=[],events=[],waypoints=[];

@@ -14,8 +14,8 @@ function runGarrisonsAndSupportTests(sources) {
     vector:{DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])},
     Print:()=>{},LogLevel:{NORMAL:0,WARNING:1,ERROR:2},string:{Empty:'',Format:(text,...args)=>text.replace(/%(\d+)/g,(_,i)=>String(args[i-1]))},
     AROR_GarrisonSlot:class{constructor(){Object.assign(this,{m_bLost:false,m_fHealth:1,m_bSpawned:false,m_Entity:null,m_iGroup:-1,m_iVehicle:-1,m_iSeat:-1,m_bPlacementUnavailable:false,m_iPlacementFailureSince:-1,m_iVariant:0,m_bCrewRecorded:false});}},
-    AROR_GarrisonPolicy:{},AROR_GarrisonManagerComponent:{GetInstance:()=>({CanDefendRole:()=>true})}};
-  const methods=['SetValues','UpdateControl_S','IsEligible','AddSlot','ReservedPersonnel','ReportFailure','AssignMembers','CrewAndOrder','IsPlayerOrForeignAsset','Observe_S','ClearAssignments_S','HasDormantReserve','IsDefencePending','GetDefenceCaptureBlockReason','GetLocation','GetOwner','PlayerNear','FactionFor'];
+    AROR_GarrisonPolicy:{},SENTRY_VARIANT:1000,AROR_DefencePositionComponent:{Cast:x=>x},AROR_SentryPostComponent:{Cast:x=>x},AROR_GarrisonManagerComponent:{GetInstance:()=>({CanDefendRole:()=>true})}};
+  const methods=['SentryPosts','SetValues','UpdateControl_S','IsEligible','AddSlot','ReservedPersonnel','ReportFailure','AssignMembers','CrewAndOrder','IsPlayerOrForeignAsset','Observe_S','ClearAssignments_S','HasDormantReserve','IsDefencePending','GetDefenceCaptureBlockReason','GetLocation','GetOwner','PlayerNear','FactionFor'];
   for(const source of Object.values(sources))for(const m of source.matchAll(/^\t(?:override )?(?:protected )?(?:static )?\w+ (\w+)\(/gm))if(!methods.includes(m[1]))methods.push(m[1]);
   for(const [name,fn]of Object.entries({Clear(){this.length=0;},Copy(a){this.length=0;this.push(...a);},Contains(x){return this.includes(x);},Find(x){return this.indexOf(x);},RemoveItem(x){const i=this.indexOf(x);if(i<0)return false;this.splice(i,1);return true;},Remove(i){this.splice(i,1);}}))Object.defineProperty(Array.prototype,name,{value:fn,configurable:true});
   function compile(source,name){
@@ -106,13 +106,22 @@ function runGarrisonsAndSupportTests(sources) {
     check(env.AROR_GarrisonPolicy.DefenceLevel(types.TOWN,roll)===0,'no town garrison recipe');
   }
   check([0,1,2].map(r=>env.AROR_GarrisonPolicy.DefenceLevel(types.RESOURCES,r)).join(',')==='1,2,3','resources roll three stored defence levels');
-  const faction={m_eRole:1,m_sFactionKey:'AROR_OCCUPIERS',m_sAssetFactionKey:'US',m_sInfantry:'rifle',m_sStaticMG:'mg',m_sCrew:'crew',m_sParkedArmour:'lav',m_aMannedVehicles:['lav','humvee']};
+  const faction={m_eRole:1,m_sFactionKey:'AROR_OCCUPIERS',m_sAssetFactionKey:'US',m_sInfantry:'rifle',m_sMarksman:'',m_sStaticMG:'mg',m_sCrew:'crew',m_sParkedArmour:'lav',m_aMannedVehicles:['lav','humvee']};
   const add=compile(sources.garrison,'AddSlot'),reserve=compile(sources.garrison,'ReservedPersonnel'),generate=compile(sources.garrison,'Generate_S');
-  function roster(type,override=0,staticOverride=0,omitParked=false){
+  function roster(type,override=0,staticOverride=0,omitParked=false,extraTeams=0,parked=[],posts=0){
     const state={m_aSlots:[],m_bGenerated:false,m_iDefenceLevel:override,m_iStaticWeaponCountOverride:staticOverride,m_bOmitParkedArmour:omitParked,IsEligible:()=>true,
+      m_aExtraParkedVehicles:parked,GetExtraInfantryTeams:()=>extraTeams,SentryPosts:()=>Array.from({length:posts},()=>({})),GetOwner:()=>({}),stocked:0,StockStores_S(entity,depth){this.stocked++;},GetExtraParkedCount:()=>parked.length,
       m_Location:{GetControllingRole:()=>1,GetLocationType:()=>type,GetId:()=>'site'},AddSlot:add,ReservedPersonnel:reserve,InfantryPrefab:compile(sources.garrison,'InfantryPrefab'),StaticPrefab:compile(sources.garrison,'StaticPrefab'),GetStaticWeaponCount:compile(sources.garrison,'GetStaticWeaponCount')};
     generate.call(state,faction);return state;
   }
+  const towered=roster(types.OUTPOST,1,0,false,0,[],2),plain=roster(types.OUTPOST,1);
+  check(towered.stocked===1&&plain.stocked===1,'stores are stocked once, when the roster is generated');
+  generate.call(plain,faction);check(plain.stocked===1,'an existing roster never restocks its stores');
+  const sentries=towered.m_aSlots.filter(s=>s.m_iKind===0&&s.m_iVariant>=1000);
+  check(sentries.length===2&&sentries.map(s=>s.m_iVariant).join(',')==='1000,1001','one marksman per guard tower, recording its post');
+  check(new Set(sentries.map(s=>s.m_iGroup)).size===2&&sentries.every(s=>s.m_iGroup>Math.max(...plain.m_aSlots.map(p=>p.m_iGroup))),'each sentry is its own group after every authored group');
+  check(sentries.every(s=>s.m_sPrefab==='rifle'),'sentry falls back to the infantry character without a marksman');
+  check(JSON.stringify(towered.m_aSlots.slice(0,plain.m_aSlots.length).map(s=>[s.m_iKind,s.m_iGroup]))===JSON.stringify(plain.m_aSlots.map(s=>[s.m_iKind,s.m_iGroup])),'towers leave the team, gun and crew ordinals unchanged');
   const outpost=roster(types.OUTPOST,4);
   check(outpost.m_aSlots.filter(s=>s.m_iKind===2||s.m_iKind===3).length===0,'even strong outpost overrides never add vehicles');
   const military=roster(types.MILITARY_BASE);
@@ -125,6 +134,12 @@ function runGarrisonsAndSupportTests(sources) {
   const airport=roster(types.AIRPORT,1);
   check(airport.m_iLevel===4&&airport.m_aSlots.filter(s=>s.m_iKind===3).length===3,'airbase stays large under low override');
   check(reserve.call(airport)===48,'airbase reserves all infantry, static and possible hull crew before spawning');
+  const stronghold=roster(types.AIRPORT,4,6,false,4,['heli','heli','heli']);
+  check(stronghold.m_aSlots.filter(s=>s.m_iKind===0).length===48,'stronghold adds four infantry teams to the airport roster');
+  const extraHulls=stronghold.m_aSlots.filter(s=>s.m_iKind===2&&s.m_iVariant>0);
+  check(extraHulls.length===3&&extraHulls.map(s=>s.m_iVariant).join(',')==='1,2,3','extra parked hulls retain distinct saved variants');
+  const parkedPrefab=compile(sources.garrison,'ParkedPrefab');
+  for(const hull of extraHulls)check(parkedPrefab.call(stronghold,faction,hull.m_iVariant)==='heli','saved helicopter variant restores as helicopter');
   const before=airport.m_aSlots.length;check(!generate.call(airport,faction)&&airport.m_aSlots.length===before,'active recipe cannot reroll');
   server=false;check(!generate.call({...military,m_bGenerated:false},faction),'client cannot generate roster');server=true;
 
@@ -274,10 +289,10 @@ function runGarrisonsAndSupportTests(sources) {
   const playerIds=new Map();
   env.GetGame=()=>({GetWorld:()=>({GetWorldTime:()=>worldTime}),GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:e=>playerIds.get(e)||0})});
   env.AROR_QRFDefenseComponent={Cast:x=>x};env.SCR_EntityHelper={};
-  const lifecycleNames=['BeginDeployment_S','UpdateDeployment_S','CloseDeployment_S','HasUnresolvedQueue','CancelQueuedGroup_S','DetachOrphanedCrew_S','QuarantineRoster_S','BindAssets_S','InfantryPrefab','StaticPrefab','GetStaticWeaponCount'];
+  const lifecycleNames=['BeginDeployment_S','UpdateDeployment_S','CloseDeployment_S','HasUnresolvedQueue','CancelQueuedGroup_S','DetachOrphanedCrew_S','QuarantineRoster_S','BindAssets_S','InfantryPrefab','StaticPrefab','ParkedPrefab','GetStaticWeaponCount'];
   const lifecycle=Object.fromEntries(lifecycleNames.map(n=>[n,compile(sources.garrison,n)]));
   function newDeployment(slots=[]){
-    return {...lifecycle,m_aSlots:slots,m_aGroups:[],m_iDeploymentStartedAt:-1,m_iDeploymentGraceSeconds:60,m_iSpawnQueueTimeoutSeconds:30,
+    return {...lifecycle,m_aSlots:slots,m_aGroups:[],GetExtraParkedCount:()=>0,m_iDeploymentStartedAt:-1,m_iDeploymentGraceSeconds:60,m_iSpawnQueueTimeoutSeconds:30,
       m_iCapacityWaitSeconds:180,m_iCapacityWaitSince:-1,m_iCapacityWaited:0,m_iNextCapacityLog:0,m_bCapacityLimited:false,m_bHadDeployedPersonnel:false,
       m_bDeploymentClosed:false,m_bRestoreQuarantined:false,m_eRosterRole:1,m_bGenerated:true,
       m_Location:{GetControllingRole:()=>1,GetId:()=>'failure-site'},IsEligible:()=>true,AssignMembers:()=>{},IsPlayerOrForeignAsset:e=>!!e.foreign};
@@ -298,7 +313,7 @@ function runGarrisonsAndSupportTests(sources) {
   let terrainSamples=0,terrainGood=false;
   env.AROR_DefenceLayout={TerrainFits:()=>{terrainSamples++;return terrainGood;}};
   const terrainState={m_bDefenceTerrainChecked:false,m_bDefenceTerrainFits:false,m_iTerrainRetryAt:0,
-    IsDefenceCenterAllowed:()=>true,GetDefenceCenter:()=>[0,0,0],GetDefenceHalfExtent:()=>18,
+    IsDefenceCenterAllowed:()=>true,GetDefenceCenter:()=>[0,0,0],GetDefenceHalfExtent:()=>18,GetDefenceHalfDepth:()=>18,
     GetOwner:()=>({GetYawPitchRoll:()=>[0,0,0]}),ReportFailure:()=>{},m_fMaxDefenceRelief:2};
   const terrainCheck=compile(sources.garrison,'HasSuitableDefenceTerrain_S');
   worldTime=0;check(!terrainCheck.call(terrainState),'failed terrain measurement rejects construction');
@@ -497,7 +512,7 @@ function runGarrisonsAndSupportTests(sources) {
   env.GetGame=()=>({...game,GetWorld:()=>({...game.GetWorld(),GetSurfaceY:()=>0})});
   const existingPlace=compile(sources.garrison,'PlaceSlot');let localChecks=0;
   const unsafe={...localFallback,HasSuitableDefenceTerrain_S:()=>false,GetOwner:()=>({GetYawPitchRoll:()=>[0,0,0],VectorToParent:v=>v}),
-    PositionOrdinal:()=>0,FindDefencePosition:()=>({GetOrigin:()=>[0,0,0],GetYawPitchRoll:()=>[0,0,0]}),GetDefenceCenter:()=>[0,0,0],GetDefenceHalfExtent:()=>18,IsClear:()=>{localChecks++;return false;}};
+    PositionOrdinal:()=>0,IsSentry:()=>false,DefenceMarker:()=>({GetOrigin:()=>[0,0,0],GetYawPitchRoll:()=>[0,0,0],FindComponent:type=>type===env.AROR_SentryPostComponent?null:({GetElevation:()=>0})}),GetDefenceCenter:()=>[0,0,0],GetDefenceHalfExtent:()=>18,GetDefenceHalfDepth:()=>18,IsClear:()=>{localChecks++;return false;}};
   // The same individual pad gate remains in production; non-infantry exits before native terrain access.
   check(!existingPlace.call(unsafe,1,6),'full-footprint failure cannot admit a heavy hull through the infantry exception');
   check(!existingPlace.call(unsafe,0,6)&&localChecks===25,'infantry fallback still rejects every obstructed or unwalkable local pad within its search bound');

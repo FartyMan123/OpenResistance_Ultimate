@@ -11,10 +11,16 @@ class AROR_GarrisonComponent : ScriptComponent
 	protected int m_iStaticWeaponCountOverride;
 	[Attribute("0", desc: "Omit the spare uncrewed armour hull in a compact compound. The manned vehicle recipe and all static crews remain unchanged.")]
 	protected bool m_bOmitParkedArmour;
+	[Attribute("0", desc: "Infantry teams added to the defence-level recipe (strongholds). Each needs an authored position.", params: "0 8 1")]
+	protected int m_iExtraInfantryTeams;
+	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Extra unmanned vehicles parked after the spare armour hull, e.g. helicopters on pads. Not for outposts. Each needs an authored parked position.", params: "et")]
+	protected ref array<ResourceName> m_aExtraParkedVehicles;
 	[Attribute("", desc: "Optional authored world-space positions for statics/vehicles. Otherwise use bounded clear terrain search.")]
 	protected ref array<vector> m_aDefencePositions;
 	[Attribute("0", desc: "Perimeter half-width in metres; zero uses the standard location-type preset. Independent of capture radius.", params: "0 64 1")]
 	protected float m_fDefenceHalfExtent;
+	[Attribute("0", desc: "Perimeter half-depth (local front-to-back) in metres for a rectangular compound on a narrow site, such as a quay; zero keeps the perimeter square", params: "0 64 1")]
+	protected float m_fDefenceHalfDepth;
 	[Attribute("2", desc: "Maximum terrain height range across the full perimeter footprint", params: "0.25 4 0.25")]
 	protected float m_fMaxDefenceRelief;
 	[Attribute("800", desc: "Editor-only clearing search radius; does not move runtime defenders or alter activation distance.", params: "25 1600 25")]
@@ -92,6 +98,13 @@ class AROR_GarrisonComponent : ScriptComponent
 	//! Designer recipe override, available to read-only editor audits before a roster exists.
 	int GetDefenceLevelOverride() { return m_iDefenceLevel; }
 	bool AllowsParkedArmour() { return !m_bOmitParkedArmour; }
+	int GetExtraInfantryTeams() { return Math.Clamp(m_iExtraInfantryTeams, 0, 8); }
+	int GetExtraParkedCount()
+	{
+		if (!m_aExtraParkedVehicles)
+			return 0;
+		return m_aExtraParkedVehicles.Count();
+	}
 	int GetStaticWeaponCount(int level)
 	{
 		if (m_iStaticWeaponCountOverride > 0)
@@ -477,7 +490,7 @@ class AROR_GarrisonComponent : ScriptComponent
 			m_iLevel = 4;
 		// An outpost override may strengthen infantry/statics, never add armour.
 		int group;
-		for (int team = 0; team < AROR_GarrisonPolicy.InfantryTeams(m_iLevel); team++)
+		for (int team = 0; team < AROR_GarrisonPolicy.InfantryTeams(m_iLevel) + GetExtraInfantryTeams(); team++)
 		{
 			for (int member = 0; member < 4; member++)
 			{
@@ -499,6 +512,12 @@ class AROR_GarrisonComponent : ScriptComponent
 		{
 			if (m_iLevel >= 3 && !m_bOmitParkedArmour)
 				AddSlot(faction.m_sParkedArmour, 2);
+			// Variant k identifies extra vehicle k-1, so a reload re-binds the same vehicle rather than armour
+			for (int extra = 0; extra < GetExtraParkedCount(); extra++)
+			{
+				int parked = AddSlot(m_aExtraParkedVehicles[extra], 2);
+				m_aSlots[parked].m_iVariant = extra + 1;
+			}
 			for (int hull = 0; hull < AROR_GarrisonPolicy.MannedCount(m_iLevel); hull++)
 			{
 				if (!faction.m_aMannedVehicles || faction.m_aMannedVehicles.IsEmpty())
@@ -508,8 +527,17 @@ class AROR_GarrisonComponent : ScriptComponent
 				m_aSlots[hullSlot].m_iVariant = variant;
 			}
 		}
+		// One marksman per guard tower, each his own group, after every other group so authored team, gun and crew
+		// ordinals are unchanged. The variant records which post he holds.
+		for (int post = 0; post < SentryPosts().Count(); post++)
+		{
+			int sentry = AddSlot(InfantryPrefab(faction, SENTRY_VARIANT + post), 0, group++);
+			m_aSlots[sentry].m_iVariant = SENTRY_VARIANT + post;
+		}
 		// Crew slots are added from each actual hull's seat list on first activation.
 		m_bGenerated = true;
+		// Stores are stocked with the roster, once: a saved roster is never regenerated, so looted stores stay looted
+		StockStores_S(GetOwner(), 0);
 		Print(string.Format("[AROR GARRISON] %1 roster role=%2 level=%3 personnel reservation=%4", m_Location.GetId(), m_eRosterRole, m_iLevel, ReservedPersonnel()), LogLevel.NORMAL);
 		return true;
 	}
@@ -523,8 +551,74 @@ class AROR_GarrisonComponent : ScriptComponent
 		}
 		return faction.m_sStaticMG;
 	}
+	//! Variant 0 is the role's spare armour; higher variants are this site's extra parked vehicles
+	protected ResourceName ParkedPrefab(AROR_GarrisonFaction faction, int variant)
+	{
+		if (variant > 0 && variant <= GetExtraParkedCount())
+			return m_aExtraParkedVehicles[variant - 1];
+		return faction.m_sParkedArmour;
+	}
+	//! Stock every store (AROR_OutpostSupplyComponent) in the composition from the roster army's faction preset
+	protected void StockStores_S(IEntity entity, int depth)
+	{
+		if (!entity || depth > 4)
+			return;
+		IEntity child = entity.GetChildren();
+		while (child)
+		{
+			AROR_OutpostSupplyComponent store = AROR_OutpostSupplyComponent.Cast(child.FindComponent(AROR_OutpostSupplyComponent));
+			if (store)
+				store.Stock_S(m_eRosterRole);
+			else
+				StockStores_S(child, depth + 1);
+			child = child.GetSibling();
+		}
+	}
+
+	static const int SENTRY_VARIANT = 1000;	//!< Infantry variants from here are tower marksmen; variant - SENTRY_VARIANT is the post
+
+	//! Guard towers (AROR_SentryPostComponent) among the composition's direct children, in order
+	protected array<IEntity> SentryPosts()
+	{
+		array<IEntity> posts = {};
+		IEntity child = GetOwner().GetChildren();
+		while (child)
+		{
+			if (child.FindComponent(AROR_SentryPostComponent))
+				posts.Insert(child);
+			child = child.GetSibling();
+		}
+		return posts;
+	}
+
+	protected bool IsSentry(AROR_GarrisonSlot slot)
+	{
+		return slot.m_iKind == 0 && slot.m_iVariant >= SENTRY_VARIANT;
+	}
+
+	//! The authored marker for a slot: a sentry's tower, otherwise the matching defence position
+	protected IEntity DefenceMarker(int index)
+	{
+		AROR_GarrisonSlot slot = m_aSlots[index];
+		if (IsSentry(slot))
+		{
+			array<IEntity> posts = SentryPosts();
+			int post = slot.m_iVariant - SENTRY_VARIANT;
+			if (post < posts.Count())
+				return posts[post];
+			return null;
+		}
+		return FindDefencePosition(slot.m_iKind, PositionOrdinal(index));
+	}
+
 	protected ResourceName InfantryPrefab(AROR_GarrisonFaction faction, int variant)
 	{
+		if (variant >= SENTRY_VARIANT)
+		{
+			if (!faction.m_sMarksman.IsEmpty())
+				return faction.m_sMarksman;
+			return faction.m_sInfantry;
+		}
 		if (variant > 0 && faction.m_aInfantryVariants && variant <= faction.m_aInfantryVariants.Count())
 		{
 			ResourceName specialist = faction.m_aInfantryVariants[variant - 1];
@@ -551,6 +645,13 @@ class AROR_GarrisonComponent : ScriptComponent
 		if (m_fDefenceHalfExtent > 0)
 			return Math.Clamp(m_fDefenceHalfExtent, 12, 64);
 		return AROR_DefenceLayout.HalfExtent(m_Location.GetLocationType());
+	}
+	//! Local front-to-back half size; equals the half-extent for square compounds
+	float GetDefenceHalfDepth()
+	{
+		if (m_fDefenceHalfDepth > 0)
+			return Math.Clamp(m_fDefenceHalfDepth, 12, GetDefenceHalfExtent());
+		return GetDefenceHalfExtent();
 	}
 	float GetMaxDefenceRelief() { return m_fMaxDefenceRelief; }
 	float GetEditorSearchRadius() { return Math.Clamp(m_fEditorSearchRadius, 25, 1600); }
@@ -621,7 +722,7 @@ class AROR_GarrisonComponent : ScriptComponent
 			}
 			float relief;
 			vector siteAngles = GetOwner().GetYawPitchRoll();
-			m_bDefenceTerrainFits = AROR_DefenceLayout.TerrainFits(GetGame().GetWorld(), GetDefenceCenter(), GetDefenceHalfExtent() + 2, m_fMaxDefenceRelief, relief, siteAngles[0]);
+			m_bDefenceTerrainFits = AROR_DefenceLayout.TerrainFits(GetGame().GetWorld(), GetDefenceCenter(), GetDefenceHalfExtent() + 2, m_fMaxDefenceRelief, relief, siteAngles[0], GetDefenceHalfDepth() + 2);
 			m_bDefenceTerrainChecked = true;
 			if (!m_bDefenceTerrainFits)
 				ReportFailure(string.Format("perimeter terrain rejected: half-width=%1 relief=%2 limit=%3; relocate to an audited flat site", GetDefenceHalfExtent(), relief, m_fMaxDefenceRelief));
@@ -664,11 +765,11 @@ class AROR_GarrisonComponent : ScriptComponent
 		}
 		if (slot.m_bPlaced)
 		{
-			IEntity currentMarker = FindDefencePosition(slot.m_iKind, PositionOrdinal(index));
+			IEntity currentMarker = DefenceMarker(index);
 			if (currentMarker && vector.DistanceXZ(slot.m_vPosition, currentMarker.GetOrigin()) > 1.5)
 				slot.m_bPlaced = false; // Layout edits invalidate positions, never casualties or the stored recipe.
 			vector savedLocal = GetOwner().VectorToLocal(slot.m_vPosition - GetDefenceCenter());
-			if (Math.AbsFloat(savedLocal[0]) > GetDefenceHalfExtent() - 2 || Math.AbsFloat(savedLocal[2]) > GetDefenceHalfExtent() - 2)
+			if (Math.AbsFloat(savedLocal[0]) > GetDefenceHalfExtent() - 2 || Math.AbsFloat(savedLocal[2]) > GetDefenceHalfDepth() - 2)
 				slot.m_bPlaced = false;
 		}
 		if (slot.m_bPlaced)
@@ -678,15 +779,22 @@ class AROR_GarrisonComponent : ScriptComponent
 			return slot.m_iKind != 1 || HasClearMGArc(slot.m_vPosition, slot.m_vAngles[0]);
 		}
 		int ordinal = PositionOrdinal(index);
-		IEntity marker = FindDefencePosition(slot.m_iKind, ordinal);
+		IEntity marker = DefenceMarker(index);
 		vector seed;
 		vector ownerAngles = GetOwner().GetYawPitchRoll();
 		float yaw = ownerAngles[0] + AROR_DefenceLayout.Facing(slot.m_iKind, ordinal);
+		float elevation;
 		if (marker)
 		{
 			seed = marker.GetOrigin();
 			vector markerAngles = marker.GetYawPitchRoll();
 			yaw = markerAngles[0];
+			AROR_DefencePositionComponent authored = AROR_DefencePositionComponent.Cast(marker.FindComponent(AROR_DefencePositionComponent));
+			if (authored)
+				elevation = authored.GetElevation();
+			AROR_SentryPostComponent post = AROR_SentryPostComponent.Cast(marker.FindComponent(AROR_SentryPostComponent));
+			if (post && IsSentry(slot))
+				elevation = post.GetFloorHeight();
 		}
 		else if (slot.m_iKind > 0 && slot.m_iKind < 4 && m_aDefencePositions && !m_aDefencePositions.IsEmpty())
 		{
@@ -706,6 +814,27 @@ class AROR_GarrisonComponent : ScriptComponent
 		{
 			vector position = seed + AROR_DefenceLayout.RepairOffset(attempt);
 			position[1] = GetGame().GetWorld().GetSurfaceY(position[0], position[2]);
+			if (elevation > 0 && attempt == 0)
+			{
+				// Try the authored platform first. A missing tower, or one whose parapet masks a gun, falls back
+				// to the ground beside it through the repair offsets rather than losing the gun or sentry.
+				float platform;
+				if (FindPlatform(position, elevation, platform))
+				{
+					vector raised = position;
+					raised[1] = platform;
+					if (IsClear(raised, slot.m_iKind, index, playerExclusion) && (slot.m_iKind != 1 || HasClearMGArc(raised, yaw)))
+					{
+						slot.m_vPosition = raised;
+						slot.m_vAngles = Vector(yaw, 0, 0);
+						slot.m_bPlaced = true;
+						return true;
+					}
+				}
+				continue;
+			}
+			if (slot.m_iKind == 2)
+				position[1] = PadSurface(position);
 			if (!IsClear(position, slot.m_iKind, index, playerExclusion))
 				continue;
 			if (slot.m_iKind == 1 && !HasClearMGArc(position, yaw))
@@ -716,6 +845,101 @@ class AROR_GarrisonComponent : ScriptComponent
 			return true;
 		}
 		return false;
+	}
+
+	//! The lowest surface with standing room over it between two metres above the authored platform height and two
+	//! below (never under a metre and a half off the terrain): a tower's floor rather than the roof over it.
+	//! False when nothing is there (tower missing or destroyed), so nobody is left floating.
+	protected bool FindPlatform(vector position, float elevation, out float height)
+	{
+		BaseWorld world = GetGame().GetWorld();
+		float ground = world.GetSurfaceY(position[0], position[2]);
+		float bottom = ground + Math.Max(elevation - 2, 1.5);
+		float start = ground + elevation + 2;
+		bool found;
+		for (int surface = 0; surface < 6 && start > bottom; surface++)
+		{
+			TraceParam down = new TraceParam();
+			down.Start = Vector(position[0], start, position[2]);
+			down.End = Vector(position[0], bottom, position[2]);
+			down.Flags = TraceFlags.ENTS;
+			float fraction = world.TraceMove(down, null);
+			if (fraction >= 1)
+				break;
+			float hit = start + (bottom - start) * fraction;
+			TraceParam up = new TraceParam();
+			up.Start = Vector(position[0], hit + 0.1, position[2]);
+			up.End = Vector(position[0], hit + PLATFORM_HEADROOM, position[2]);
+			up.Flags = TraceFlags.ENTS;
+			if (world.TraceMove(up, null) >= 1)
+			{
+				height = hit;
+				found = true;
+			}
+			// Keep looking under it: a roof also has open sky above
+			start = hit - 0.3;
+		}
+		return found;
+	}
+	static const float PLATFORM_HEADROOM = 1.8;
+
+	//! Every entity of the helipads (AROR_LandingPadComponent children) in this composition, including their props
+	protected void CollectLandingPads(notnull array<IEntity> pads)
+	{
+		IEntity child = GetOwner().GetChildren();
+		while (child)
+		{
+			if (child.FindComponent(AROR_LandingPadComponent))
+				CollectHierarchy(child, pads);
+			child = child.GetSibling();
+		}
+	}
+
+	protected void CollectHierarchy(IEntity entity, notnull array<IEntity> entities)
+	{
+		entities.Insert(entity);
+		IEntity child = entity.GetChildren();
+		while (child)
+		{
+			CollectHierarchy(child, entities);
+			child = child.GetSibling();
+		}
+	}
+
+	static const float ROTOR_CLEARANCE_BOTTOM = 2.5;	//!< Above walls and sandbags, below a parked helicopter's rotor
+	static const float ROTOR_CLEARANCE_TOP = 6;
+
+	//! The helipad (direct child) whose centre is within three metres of a position, if any
+	protected AROR_LandingPadComponent LandingPadAt(vector position)
+	{
+		IEntity child = GetOwner().GetChildren();
+		while (child)
+		{
+			AROR_LandingPadComponent pad = AROR_LandingPadComponent.Cast(child.FindComponent(AROR_LandingPadComponent));
+			if (pad && vector.DistanceXZ(child.GetOrigin(), position) <= 3)
+				return pad;
+			child = child.GetSibling();
+		}
+		return null;
+	}
+
+	//! A parked vehicle stands on a helipad's deck where one is under it, otherwise on the terrain
+	protected float PadSurface(vector position)
+	{
+		BaseWorld world = GetGame().GetWorld();
+		float ground = world.GetSurfaceY(position[0], position[2]);
+		array<IEntity> pads = {};
+		CollectLandingPads(pads);
+		if (pads.IsEmpty())
+			return ground;
+		TraceParam trace = new TraceParam();
+		trace.Start = Vector(position[0], ground + 2, position[2]);
+		trace.End = Vector(position[0], ground - 0.5, position[2]);
+		trace.Flags = TraceFlags.ENTS;
+		float fraction = world.TraceMove(trace, null);
+		if (fraction >= 1 || !pads.Contains(trace.TraceEnt))
+			return ground;
+		return Math.Max(ground, trace.Start[1] + (trace.End[1] - trace.Start[1]) * fraction);
 	}
 
 	protected bool HasPlayerClearance(vector position, int kind, float playerExclusion)
@@ -746,8 +970,25 @@ class AROR_GarrisonComponent : ScriptComponent
 		if (position[1] <= world.GetOceanHeight(position[0], position[2]) + 0.2 || !m_Location.IsPositionInside(position))
 			return false;
 		vector local = GetOwner().VectorToLocal(position - GetDefenceCenter());
-		if (Math.AbsFloat(local[0]) > GetDefenceHalfExtent() - 2 || Math.AbsFloat(local[2]) > GetDefenceHalfExtent() - 2)
+		if (Math.AbsFloat(local[0]) > GetDefenceHalfExtent() - 2 || Math.AbsFloat(local[2]) > GetDefenceHalfDepth() - 2)
 			return false;
+		// A gun or sentry on a tower or roof: the platform replaces the ground, slope and navmesh checks (crews are seated
+		// directly, and a sentry is spawned in place and holds it)
+		bool raised = (kind == 1 || kind == 0) && position[1] - world.GetSurfaceY(position[0], position[2]) > 1.5;
+		// A sentry stands inside his post (a bunker's walls and roof are around him): one man's room, as on a platform
+		bool posted = kind == 0 && index >= 0 && index < m_aSlots.Count() && IsSentry(m_aSlots[index]);
+		if (raised || posted)
+		{
+			if (!HasPlayerClearance(position, kind, playerExclusion))
+				return false;
+			TraceBox platform = new TraceBox();
+			platform.Start = position + Vector(0, 0.25, 0);
+			platform.End = platform.Start + Vector(0, 0.05, 0);
+			platform.Mins = Vector(-0.6, 0, -0.6);
+			platform.Maxs = Vector(0.6, 1.6, 0.6);
+			platform.Flags = TraceFlags.ENTS | TraceFlags.VISIBILITY;
+			return world.TraceMove(platform, null) == 1;
+		}
 		if (Math.AbsFloat(world.GetSurfaceY(position[0] + size, position[2]) - position[1]) > 1 || Math.AbsFloat(world.GetSurfaceY(position[0], position[2] + size) - position[1]) > 1 || Math.AbsFloat(world.GetSurfaceY(position[0] - size, position[2]) - position[1]) > 1 || Math.AbsFloat(world.GetSurfaceY(position[0], position[2] - size) - position[1]) > 1)
 			return false;
 		for (int other = 0; other < m_aSlots.Count(); other++)
@@ -781,6 +1022,28 @@ class AROR_GarrisonComponent : ScriptComponent
 		trace.Mins = Vector(-size, 0, -size);
 		trace.Maxs = Vector(size, 3, size);
 		trace.Flags = TraceFlags.ENTS | TraceFlags.VISIBILITY;
+		if (kind == 2)
+		{
+			// A helipad's deck, markings and lights are where the helicopter belongs, not obstructions
+			array<IEntity> pads = {};
+			CollectLandingPads(pads);
+			if (!pads.IsEmpty())
+				trace.ExcludeArray = pads;
+			// The helicopter on it needs its whole rotor disc clear at rotor height (buildings, trees, poles, towers)
+			AROR_LandingPadComponent pad = LandingPadAt(position);
+			if (pad)
+			{
+				TraceBox rotor = new TraceBox();
+				rotor.Start = position + Vector(0, ROTOR_CLEARANCE_BOTTOM, 0);
+				rotor.End = rotor.Start + Vector(0, 0.05, 0);
+				rotor.Mins = Vector(-pad.GetRotorRadius(), 0, -pad.GetRotorRadius());
+				rotor.Maxs = Vector(pad.GetRotorRadius(), ROTOR_CLEARANCE_TOP - ROTOR_CLEARANCE_BOTTOM, pad.GetRotorRadius());
+				rotor.Flags = TraceFlags.ENTS | TraceFlags.VISIBILITY;
+				rotor.ExcludeArray = pads;
+				if (world.TraceMove(rotor, null) < 1)
+					return false;
+			}
+		}
 		return world.TraceMove(trace, null) == 1;
 	}
 
@@ -1192,6 +1455,31 @@ class AROR_GarrisonComponent : ScriptComponent
 			pending.m_Waypoint = null;
 		}
 		pending.m_bMountedDefence = mounted;
+		// A tower marksman holds his post: a defend waypoint would walk him off the platform
+		AROR_GarrisonSlot sentry = m_aSlots[pending.m_aSlots[0]];
+		if (IsSentry(sentry))
+		{
+			if (!pending.m_bOrdered)
+			{
+				// Group spawns put members on the terrain, inside the tower's base: lift him onto the platform found
+				// for the slot (on the ground fallback the heights already match and he stays where he is)
+				BaseGameEntity marksman = BaseGameEntity.Cast(sentry.m_Entity);
+				vector standing;
+				if (marksman)
+					standing = marksman.GetOrigin();
+				if (marksman && !IsPlayerOrForeignAsset(marksman) && Math.AbsFloat(standing[1] - sentry.m_vPosition[1]) > 1)
+				{
+					vector transform[4];
+					Math3D.AnglesToMatrix(Vector(sentry.m_vAngles[0], 0, 0), transform);
+					transform[3] = sentry.m_vPosition;
+					marksman.Teleport(transform);
+				}
+				float above = sentry.m_vPosition[1] - GetGame().GetWorld().GetSurfaceY(sentry.m_vPosition[0], sentry.m_vPosition[2]);
+				Print(string.Format("[AROR GARRISON] %1 group=%2 sentry holding post %3m above ground", m_Location.GetId(), pending.m_iId, above), LogLevel.NORMAL);
+			}
+			pending.m_bOrdered = true;
+			return;
+		}
 		if (mounted)
 		{
 			// Infantry defend waypoints can order vehicle crews out. Keep the assigned
@@ -1483,7 +1771,7 @@ class AROR_GarrisonComponent : ScriptComponent
 			{
 				case 0: slot.m_sPrefab = InfantryPrefab(faction, slot.m_iVariant); break;
 				case 1: slot.m_sPrefab = StaticPrefab(faction, slot.m_iVariant); break;
-				case 2: slot.m_sPrefab = faction.m_sParkedArmour; break;
+				case 2: slot.m_sPrefab = ParkedPrefab(faction, slot.m_iVariant); break;
 				case 4: slot.m_sPrefab = faction.m_sCrew; break;
 				case 3:
 				{

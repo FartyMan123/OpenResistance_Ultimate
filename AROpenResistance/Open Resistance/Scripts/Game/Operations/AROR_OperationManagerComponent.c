@@ -692,6 +692,9 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 
 	protected string RequestOperation_S(AROR_EFactionRole role, AROR_EOperationType type, string targetId, int delaySeconds, bool debugRequest = false)
 	{
+		// Unsupported enum values would never enter either scheduler processing pass.
+		if (type != AROR_EOperationType.ATTACK && type != AROR_EOperationType.QRF)
+			return string.Empty;
 		if (role == AROR_EFactionRole.INVADERS && !m_bInvaderOperationsEnabled)
 			return string.Empty;
 		if (!IsReady() || !IsEnemyRole(role) || delaySeconds < 0 || delaySeconds > 86400 || !HasLocation(targetId))
@@ -727,7 +730,8 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 		AROR_Operation created = new AROR_Operation(id, role, type, targetId, m_iClock, delaySeconds);
 		created.m_bDebugRequest = debugRequest;
 		m_aOperations.Insert(created);
-		if (type == AROR_EOperationType.ATTACK)
+		// Test requests (MARS) never move the real campaign timers
+		if (!debugRequest && type == AROR_EOperationType.ATTACK)
 		{
 			if (role == AROR_EFactionRole.OCCUPIERS)
 				m_iOccupiersNextAttack = m_iClock + m_iAttackInterval;

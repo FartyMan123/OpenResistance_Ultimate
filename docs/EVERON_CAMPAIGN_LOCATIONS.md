@@ -70,7 +70,7 @@ The [CSV catalogue](EVERON_CAMPAIGN_LOCATIONS.csv) is the editable scenario data
 | Mercy Hill Field Hospital | MILITARY_BASE | everon_military_outpost_hospital | 150 m | 0 |
 | Seawatch Base | MILITARY_BASE | everon_military_outpost_lamentin | 150 m | 0 |
 | Morton Bluff Base | MILITARY_BASE | everon_military_outpost_morton | 150 m | 0 |
-| Everon International Airport | AIRPORT | everon_airport | 500 m | 0 |
+| Stronghold Delaware (Everon International Airport) | AIRPORT | everon_airport | 500 m | 0 |
 | North Ridge Works | FACTORY | everon_factory_north_ridge | 250 m | 0 |
 | Montignac Ridge Depot | RESOURCES | everon_resources_north_ridge_west | 250 m | 0 |
 | Entre-Deux Ridge Depot | RESOURCES | everon_resources_north_ridge_east | 250 m | 0 |
@@ -116,9 +116,9 @@ Three PORT locations are placed directly in Chicken's `MilitaryInstallations.lay
 |---|---|---|---:|
 | Lamentin Port | everon_lamentin_port | 1100, 6065 | 150 m |
 | Saint-Philippe Port (Charlet Bay) | everon_saint_philippe_port | 4350, 11030 | 150 m |
-| Saint-Pierre Port | everon_saint_pierre_port | 9990, 1515 | 160 m |
+| Morton Port | everon_saint_pierre_port (retained legacy ID) | 4957, 3876 | 150 m |
 
-Positions were read from in-game map grid references (010 061, 043 110 and 100 014) on the quays. Roots use `GroundOnInit 1` and the capture flag keeps the prefab's runtime auto-placement (clear flat ground within 60 m), so no height is baked. Lamentin Port reuses the base AROR_Everon world's stable ID. Each overlaps its town's support radius. Check the placement in Workbench, then bake the heights and add catalogue rows once the generator is reconciled.
+Lamentin and Saint-Philippe positions were read from in-game map grid references (010 061 and 043 110) on the quays. Morton Port uses the source `coastalBaseMorton` coordinate on the Morton harbour quay. Saint-Pierre Port (`everon_saint_pierre_port`) was removed: its harbour is now the Invader stronghold, Fortress Vostok (`everon_fortress_vostok`, see [Fortress Vostok](STRONGHOLDS.md)). Saves that hold the old port ID simply have no location to apply it to. Roots use `GroundOnInit 1` and the capture flag keeps the prefab's runtime auto-placement (clear flat ground within 60 m), so no height is baked. Lamentin Port reuses the base AROR_Everon world's stable ID. Each overlaps its town's support radius. Check the placement in Workbench, then bake the heights and add catalogue rows once the generator is reconciled.
 
 ## Site names
 

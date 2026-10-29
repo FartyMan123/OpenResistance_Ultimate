@@ -96,7 +96,7 @@ function runInvaderCampaignTests(sources, catalogue) {
   campaign.m_bQuarantined=false;campaign.m_bInvaderCampaign=false;evaluate();check(!campaign.IsAdvanceActive()&&campaign.GetExternalSupportBonus()===0&&!campaign.SuppressAICaptureQRF_S(1,2),'shared opt-out leaves existing behaviour intact');
   // Funded offscreen model on actual island sites: isolates front policy from income depletion/player interference.
   const island=catalogue.filter(r=>policy.Cost(type[r.Type],1000)>0).map(r=>makeSite(r.Id,r.Role==='INVADERS'?2:1,[+r.X,+r.Y,+r.Z],type[r.Type]));
-  const foothold=island.find(s=>s.id==='everon_outpost_durras_hill');
+  const foothold=island.find(s=>s.id==='everon_fortress_vostok');
   campaign.m_aSites=island;campaign.m_bInvaderCampaign=true;campaign.m_bQuarantined=false;campaign.m_aPlayers=[];campaign.m_aOperations=[];
   const model=goal=>{for(const s of island)s.owner=s===foothold?2:1;let sum=0,samples=0;
     for(let step=0;step<5000;step++){const held=island.filter(s=>s.owner===2).length,indI=campaign.Industry(2),indU=campaign.Industry(1),winI=policy.BattleChance(1000,1000,indI,indU),winU=policy.BattleChance(1000,1000,indU,indI);
@@ -115,5 +115,20 @@ if(typeof require!=='undefined'&&require.main===module){
   const sources={};for(const [key,file]of Object.entries({policy:'Commanders/AROR_InvaderCampaignPolicy.c',component:'Commanders/AROR_InvaderCampaignComponent.c',serializer:'Commanders/AROR_InvaderCampaignComponentSerializer.c',observer:'Operations/AROR_QRFCaptureObserver.c',income:'Economy/AROR_IncomeComponent.c'}))sources[key]=fs.readFileSync(path.join(root,file),'utf8');
   const lines=fs.readFileSync(path.resolve(__dirname,'../docs/EVERON_CAMPAIGN_LOCATIONS.csv'),'utf8').trim().split(/\r?\n/),split=l=>l.split(',').map(x=>x.replace(/^"|"$/g,'')),header=split(lines.shift());
   const catalogue=lines.map(l=>Object.fromEntries(split(l).map((x,i)=>[header[i],x])));
+  // The legacy CSV omits three ports, the stronghold and some later authored transforms. Use current placed military roots.
+  const layer=fs.readFileSync(path.resolve(__dirname,'../AROpenResistance/Open Resistance/Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/MilitaryInstallations.layer'),'utf8');
+  let placed=0;
+  for(const match of layer.matchAll(/^([ \t]*)(?:GenericEntity[ \t]+)?AROR_Location_\w+[^\r\n]*\{\r?\n([\s\S]*?)^\1\}/gm)){
+    const body=match[2],id=body.match(/\bm_sId "([^"]+)"/)?.[1],type=body.match(/\bm_eType (\w+)/)?.[1];
+    const positionLine=body.split(/\r?\n/).find(line=>line.startsWith(match[1]+' coords '));
+    const coordinates=positionLine?.trim().split(/\s+/);
+    const position=coordinates?.length===4?coordinates:null;
+    const role=body.match(/\bm_eInitialControllingRole (\w+)/)?.[1];
+    if(!id||!type||!position||!role)throw Error('Incomplete placed military location');
+    let row=catalogue.find(r=>r.Id===id);
+    if(!row){row={Id:id};catalogue.push(row)}
+    Object.assign(row,{Type:type,Role:role,X:position[1],Y:position[2],Z:position[3]});placed++;
+  }
+  if(placed!==27)throw Error('Expected all 27 actual military locations including seaports and the stronghold');
   console.log(runInvaderCampaignTests(sources,catalogue));
 }

@@ -1889,8 +1889,11 @@ class AROR_HiCommApp
 			}
 			else
 			{
-				// Same military-frame symbol as the location map (AROR_MapFrameIcon)
-				DrawFrameSymbol(point, 22 * markerScale, type, role, color);
+				// Same symbol as the location map: a military frame (AROR_MapFrameIcon), or the holder's flag for a stronghold
+				if (location.GetOwner().FindComponent(AROR_StrongholdComponent))
+					DrawStrongholdFlag(point, 22 * markerScale, role, color);
+				else
+					DrawFrameSymbol(point, 22 * markerScale, type, role, color);
 			}
 
 			string id = location.GetId();
@@ -1921,6 +1924,28 @@ class AROR_HiCommApp
 	//------------------------------------------------------------------------------------------------
 	//! A location's military-frame symbol centred on its map point: frame by owner, pale fill, glyph by type.
 	//! Line widths scale with the symbol, matching the 40-pixel location map icon.
+	//! The national flag of the army holding a stronghold, 3:2 and centred on the point
+	protected void DrawStrongholdFlag(vector point, float size, AROR_EFactionRole owner, Color color)
+	{
+		string presetId;
+		AROR_FactionPresetsComponent presets = AROR_FactionPresetsComponent.GetInstance();
+		if (presets)
+			presetId = presets.GetPresetId(owner);
+		float height = size * 2 / 3;
+		array<ref CanvasWidgetCommand> commands = {};
+		AROR_ArmyFlag.Build(commands, point[0] - size * 0.5, point[1] - height * 0.5, size, height, presetId, color, AROR_MapFrameIcon.KEYLINE_WIDTH * size / 40);
+		foreach (CanvasWidgetCommand command : commands)
+		{
+			PolygonDrawCommand polygon = PolygonDrawCommand.Cast(command);
+			if (polygon)
+				m_Map.DrawPolygon(polygon.m_Vertices, Color.FromInt(polygon.m_iColor));
+			LineDrawCommand line = LineDrawCommand.Cast(command);
+			if (line)
+				m_Map.DrawPolyline(line.m_Vertices, Color.FromInt(line.m_iColor), line.m_fWidth, line.m_bShouldEnclose);
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------
 	protected void DrawFrameSymbol(vector point, float size, AROR_ELocationType type, AROR_EFactionRole owner, Color color)
 	{
 		float left = point[0] - size * 0.5;

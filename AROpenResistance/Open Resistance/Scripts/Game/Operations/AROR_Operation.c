@@ -31,6 +31,13 @@ class AROR_Operation
 	string m_sRequestedRecipeId;
 	//! Bounded preparation allowance for incremental air landing-site planning plus boarding.
 	int m_iSpawnPreparationTimeout;
+	//! Scripted scenario responses (e.g. a stronghold's defence) are paid by the scenario, not the faction bank.
+	bool m_bFundingWaived;
+	//! Fixed launch point used instead of a friendly military origin (e.g. a beach landing).
+	bool m_bHasOriginOverride;
+	vector m_vOriginOverride;
+	//! Always hold half the packages back as a second wave, whatever the scenario's wave settings.
+	bool m_bForceTwoWaves;
 
 	bool UsesTacticalResponse()
 	{

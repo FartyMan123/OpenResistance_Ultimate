@@ -79,7 +79,7 @@ Use the Roboto family that ships with Reforger: Roboto Condensed for headings, l
 | P3 Info | Things got better or done: port secured, Crackdown eased | Toast, `REBEL` ■ | 4 s |
 | P4 Log | Background events | HICOMM Feed only | — |
 
-One banner at a time (P1 replaces P2). The same event within 10 s updates the open one (×2). Players can turn off P2/P3 pop-ups, never P1. **Banner**: 520px on `PLATE_STRONG`, 1px border in the priority colour; header band (glyph, source such as REBINTEL/HQ/MARKET, game time), headline, where/what line, optional action line. **Toast**: 300px on `PLATE`, ■ glyph, one `body-strong` line plus an optional caption.
+One banner at a time (P1 replaces P2). The same event within 10 s updates the open one (×2). Players can turn off P2/P3 pop-ups, never P1. **Banner**: 520px by default, expanding for text up to 900 reference pixels and bounded by the viewport with 24px side margins. Every text row wraps and contributes to the banner height, including the main headline. Use `PLATE_STRONG`, a 1px border in the priority colour, header band (glyph, source such as REBINTEL/HQ/MARKET, game time), headline, where/what line and optional action line. **Toast**: 300px on `PLATE`, ■ glyph, one `body-strong` line plus an optional caption.
 
 | Event | Priority | Headline |
 |---|---|---|

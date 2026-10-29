@@ -24,7 +24,7 @@ class AROR_QRFStrategySmokeTests
 		passed = Check(account.Reserved() == 1450, "Fee removed from collateral once charged") && passed;
 		account.m_bClosed = true;
 		passed = Check(account.Reserved() == 0, "Unspawned allocation releases on close") && passed;
-		AROR_ForceProfile profile = new AROR_ForceProfile();
+		AROR_ForceProfile profile = AROR_ForceProfile.CreateForScript();
 		profile.m_eType = AROR_EForceType.AIRBORNE;
 		profile.m_iPersonnelBudget = 20;
 		profile.m_iEscortCount = 1;

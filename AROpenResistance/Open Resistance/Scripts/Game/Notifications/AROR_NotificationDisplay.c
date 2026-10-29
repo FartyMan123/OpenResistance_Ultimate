@@ -12,6 +12,7 @@ class AROR_NotificationDisplay : Managed
 	// Alert banner (headlines), top-centre below the compass, in reference pixels
 	protected static const float HEADLINE_TOP = 96;
 	protected static const float HEADLINE_WIDTH = 520;
+	protected static const float HEADLINE_MAX_WIDTH = 900;
 	protected static const float HEADLINE_HEADER_HEIGHT = 26;
 	protected static const float HEADLINE_PADDING = 14;
 	protected static const float HEADLINE_ICON_SIZE = 24;
@@ -68,6 +69,10 @@ class AROR_NotificationDisplay : Managed
 	protected bool m_bHeadlineHasDetail;
 	protected bool m_bHeadlineHasIntercept;
 	protected bool m_bHeadlineHasEffect;
+	protected bool m_bHeadlineLayoutDirty;
+	protected float m_fHeadlineViewport;
+	protected float m_fHeadlineWidth;
+	protected float m_fHeadlineHeight;
 
 	protected Widget m_wCard;
 	protected ImageWidget m_wCardBackground;
@@ -264,6 +269,7 @@ class AROR_NotificationDisplay : Managed
 			string text = m_Current.GetText();
 			text.ToUpper();
 			m_wHeadlineText.SetText(text);
+			m_bHeadlineLayoutDirty = true;
 
 			// Header band in the priority colour with the source in ink; the detail line is optional
 			string source = m_Current.GetKicker();
@@ -427,60 +433,100 @@ class AROR_NotificationDisplay : Managed
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Banner: header band (source), headline, optional detail line, 1px border in the priority colour
+	//! One UTF-8-aware conservative estimate for both width and wrapping. This is not a font metric.
+	//! Never read GetScreenSize here: after Place(), it is our assigned frame, not natural text width.
+	protected static float EstimateHeadlineLineWidth(string line, int fontSize)
+	{
+		return AROR_TextUtils.CharCount(line) * fontSize * 0.75;
+	}
+
+	//! Natural text width independent of the previous frame's constrained widget size.
+	protected static float HeadlineTextWidth(TextWidget text, int fontSize)
+	{
+		if (!text)
+			return 0;
+		array<string> lines = {};
+		text.GetText().Split("\n", lines, false);
+		float width;
+		foreach (string line : lines)
+			width = Math.Max(width, EstimateHeadlineLineWidth(line, fontSize));
+		return width;
+	}
+
+	//! Reserve wrapping space before laying out the next row; never measure our assigned width.
+	protected static float PlaceHeadlineText(TextWidget text, int fontSize, float x, float y, float width)
+	{
+		if (!text)
+			return 0;
+		array<string> lines = {};
+		text.GetText().Split("\n", lines, false);
+		int rows;
+		foreach (string line : lines)
+			rows += Math.Max(1, Math.Ceil(EstimateHeadlineLineWidth(line, fontSize) / Math.Max(1, width)));
+		float height = Math.Max(1, rows) * fontSize * 1.3;
+		FrameSlot.SetSizeToContent(text, false);
+		text.SetTextWrapping(true);
+		Place(text, x, y, width, height);
+		return height;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Banner: expand for the title too, then wrap all rows within the viewport.
 	protected void LayoutHeadline(float remaining)
 	{
+		float screenWidth, screenHeight;
+		m_wRoot.GetScreenSize(screenWidth, screenHeight);
+		float maximum = HEADLINE_MAX_WIDTH;
+		if (screenWidth > 0)
+			maximum = Math.Min(maximum, Math.Max(160, GetGame().GetWorkspace().DPIUnscale(screenWidth) - 48));
+		if (!m_bHeadlineLayoutDirty && maximum == m_fHeadlineViewport)
+		{
+			Place(m_wHeadlineTimer, 1, m_fHeadlineHeight - 3, (m_fHeadlineWidth - 2) * remaining, 2);
+			return;
+		}
 		float width = HEADLINE_WIDTH;
-		float textWidth, textHeight, detailWidth, detailHeight, sourceWidth, sourceHeight, timeWidth, timeHeight;
-		float interceptWidth, interceptHeight, effectWidth, effectHeight;
-		MeasureText(m_wHeadlineText, HEADLINE_FONT_SIZE, textWidth, textHeight);
-		if (m_bHeadlineHasDetail)
-			MeasureText(m_wHeadlineDetail, HEADLINE_DETAIL_FONT_SIZE, detailWidth, detailHeight);
-		if (m_bHeadlineHasIntercept)
-			MeasureText(m_wHeadlineIntercept, HEADLINE_SOURCE_FONT_SIZE, interceptWidth, interceptHeight);
-		if (m_bHeadlineHasEffect)
-			MeasureText(m_wHeadlineEffect, HEADLINE_EFFECT_FONT_SIZE, effectWidth, effectHeight);
-		if (m_wHeadlineSource)
-			MeasureText(m_wHeadlineSource, HEADLINE_SOURCE_FONT_SIZE, sourceWidth, sourceHeight);
-		if (m_wHeadlineTime)
-			MeasureText(m_wHeadlineTime, HEADLINE_SOURCE_FONT_SIZE, timeWidth, timeHeight);
-
-		// Long transition lines (Cyrillic labels plus the English) widen the banner rather than overflow it
-		width = Math.Max(width, Math.Max(detailWidth, effectWidth) + HEADLINE_PADDING * 2);
-
 		float iconSpace;
 		if (m_bCurrentHasIcon)
 			iconSpace = HEADLINE_ICON_SIZE + HEADLINE_GAP;
-
 		float textLeft = HEADLINE_PADDING + iconSpace;
-		float y = HEADLINE_HEADER_HEIGHT + HEADLINE_PADDING * 0.5;
+		float naturalWidth = HeadlineTextWidth(m_wHeadlineText, HEADLINE_FONT_SIZE);
+		if (m_bHeadlineHasDetail)
+			naturalWidth = Math.Max(naturalWidth, HeadlineTextWidth(m_wHeadlineDetail, HEADLINE_DETAIL_FONT_SIZE));
+		if (m_bHeadlineHasIntercept)
+			naturalWidth = Math.Max(naturalWidth, HeadlineTextWidth(m_wHeadlineIntercept, HEADLINE_SOURCE_FONT_SIZE));
+		if (m_bHeadlineHasEffect)
+			naturalWidth = Math.Max(naturalWidth, HeadlineTextWidth(m_wHeadlineEffect, HEADLINE_EFFECT_FONT_SIZE));
+		float timeWidth = HeadlineTextWidth(m_wHeadlineTime, HEADLINE_SOURCE_FONT_SIZE) * 1.2;
+		float sourceWidth = HeadlineTextWidth(m_wHeadlineSource, HEADLINE_SOURCE_FONT_SIZE);
+		width = Math.Max(width, naturalWidth + textLeft + HEADLINE_PADDING);
+		width = Math.Max(width, sourceWidth + timeWidth + HEADLINE_PADDING * 3);
+		width = Math.Min(width, maximum);
+		float contentWidth = width - textLeft - HEADLINE_PADDING;
+		float sourceHeight = PlaceHeadlineText(m_wHeadlineSource, HEADLINE_SOURCE_FONT_SIZE, HEADLINE_PADDING, 4, Math.Max(32, width - timeWidth - HEADLINE_PADDING * 3));
+		float headerHeight = Math.Max(HEADLINE_HEADER_HEIGHT, sourceHeight + 8);
+		float y = headerHeight + HEADLINE_PADDING * 0.5;
 		if (m_bHeadlineHasIntercept)
 		{
-			FrameSlot.SetPos(m_wHeadlineIntercept, textLeft, y);
-			y += interceptHeight;
+			y += PlaceHeadlineText(m_wHeadlineIntercept, HEADLINE_SOURCE_FONT_SIZE, textLeft, y, contentWidth);
 		}
+		float textHeight = PlaceHeadlineText(m_wHeadlineText, HEADLINE_FONT_SIZE, textLeft, y, contentWidth);
 		Place(m_wHeadlineIcon, HEADLINE_PADDING, y + (textHeight - HEADLINE_ICON_SIZE) * 0.5, HEADLINE_ICON_SIZE, HEADLINE_ICON_SIZE);
-		FrameSlot.SetPos(m_wHeadlineText, textLeft, y);
 		y += textHeight;
 		if (m_bHeadlineHasDetail)
 		{
-			FrameSlot.SetPos(m_wHeadlineDetail, textLeft, y + 2);
-			y += detailHeight + 2;
+			y += PlaceHeadlineText(m_wHeadlineDetail, HEADLINE_DETAIL_FONT_SIZE, textLeft, y + 2, contentWidth) + 2;
 		}
 		if (m_bHeadlineHasEffect)
 		{
-			FrameSlot.SetPos(m_wHeadlineEffect, textLeft, y + 2);
-			y += effectHeight + 2;
+			y += PlaceHeadlineText(m_wHeadlineEffect, HEADLINE_EFFECT_FONT_SIZE, textLeft, y + 2, contentWidth) + 2;
 		}
 		float height = y + HEADLINE_PADDING;
 		if (m_wHeadlineTime)
-			FrameSlot.SetPos(m_wHeadlineTime, width - HEADLINE_PADDING - timeWidth, (HEADLINE_HEADER_HEIGHT - timeHeight) * 0.5);
+			PlaceHeadlineText(m_wHeadlineTime, HEADLINE_SOURCE_FONT_SIZE, width - HEADLINE_PADDING - timeWidth, 4, Math.Max(1, timeWidth));
 
 		FrameSlot.SetSize(m_wHeadline, width, height);
 		Place(m_wHeadlineBand, 0, 0, width, height);
-		Place(m_wHeadlineHeader, 0, 0, width, HEADLINE_HEADER_HEIGHT);
-		if (m_wHeadlineSource)
-			FrameSlot.SetPos(m_wHeadlineSource, HEADLINE_PADDING, (HEADLINE_HEADER_HEIGHT - sourceHeight) * 0.5);
+		Place(m_wHeadlineHeader, 0, 0, width, headerHeight);
 		Place(m_wHeadlineLineTop, 0, 0, width, 1);
 		Place(m_wHeadlineLineBottom, 0, height - 1, width, 1);
 		Place(m_wHeadlineLineLeft, 0, 0, 1, height);
@@ -488,6 +534,10 @@ class AROR_NotificationDisplay : Managed
 
 		// Drains from the right along the bottom edge
 		Place(m_wHeadlineTimer, 1, height - 3, (width - 2) * remaining, 2);
+		m_fHeadlineViewport = maximum;
+		m_fHeadlineWidth = width;
+		m_fHeadlineHeight = height;
+		m_bHeadlineLayoutDirty = false;
 	}
 
 	//------------------------------------------------------------------------------------------------

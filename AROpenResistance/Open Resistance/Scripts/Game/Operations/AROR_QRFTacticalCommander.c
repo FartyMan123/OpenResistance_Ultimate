@@ -23,6 +23,7 @@ class AROR_QRFTacticalCommander
 	AROR_EFactionRole m_eTargetControl;
 	AROR_EFactionRole m_eRole;	//!< The army this response belongs to
 	bool m_bAssault;	//!< An attack: stage at rally points, then assault on two axes
+	bool m_bJointResponse;	//!< One authored response sharing ground and airborne packages
 	bool m_bAssaultReleased;
 	int m_iStagingDeadline = -1;	//!< Executor clock when the assault goes even if not every package has staged
 	vector m_vContact;
@@ -56,6 +57,10 @@ class AROR_QRFTacticalCommander
 		m_bSafeWithdrawalOrigin = true;
 		m_bRosterDirty = false;
 		m_bKnowsTargetControl = false;
+		m_bAssault = false;
+		m_bAssaultReleased = false;
+		m_bJointResponse = false;
+		m_iStagingDeadline = -1;
 		m_iContactSequence = 0;
 		m_iContactVersion = 0;
 		m_iNextContactCheck = 0;
@@ -79,6 +84,21 @@ class AROR_QRFTacticalCommander
 				m_aWave.Insert(0);
 			else
 				m_aWave.Insert(1);
+		}
+	}
+
+	//! Scripted responses that must arrive in two waves regardless of tier and scenario wave settings.
+	void ForceTwoWaves()
+	{
+		if (m_iPackages < 2 || m_iFirstWaveCount < m_iPackages)
+			return;
+		m_iFirstWaveCount = (m_iPackages + 1) / 2;
+		for (int index = 0; index < m_iPackages; index++)
+		{
+			if (index < m_iFirstWaveCount)
+				m_aWave[index] = 0;
+			else
+				m_aWave[index] = 1;
 		}
 	}
 

@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([switch]$WriteReport)
+param([switch]$WriteReport,[string]$ReportPath='docs/CAMPAIGN_SITE_READINESS.csv')
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'CampaignGroundingData.ps1')
 $repoRoot=Split-Path -Parent $PSScriptRoot
@@ -11,7 +11,24 @@ if(@($catalogue.Id | Select-Object -Unique).Count -ne 41){throw 'Duplicate stabl
 $layer=[IO.File]::ReadAllText((Join-Path $addonRoot 'Worlds/AROR_Everon/AROR_Everon_Chicken_Layers/MilitaryInstallations.layer'))
 # Audit root data without interpreting or rewriting the user's castle/prop children.
 $saved=Read-CampaignLayerLocations $layer -RootsOnly
-if($saved.Count -ne 23){throw 'Saved military layer does not contain all 23 locations'}
+if($saved.Count -ne 27){throw 'Expected 23 catalogued military roots, three placed seaports and the Invader stronghold'}
+$strongholdId='everon_fortress_vostok'
+if(!$saved.ContainsKey($strongholdId)){throw 'Invader stronghold root missing'}
+if($saved[$strongholdId].Text -notmatch 'm_eType\s+MILITARY_BASE\b' -or $saved[$strongholdId].Text -notmatch 'm_eInitialControllingRole\s+INVADERS\b'){throw 'Stronghold must be an Invader-held military base'}
+if(!$saved[$strongholdId].Prefab.Contains('Prefabs/Compositions/Locations/AROR_Defence_Fortress_Vostok.et')){throw 'Stronghold does not use the fortress composition'}
+$fortress=[IO.File]::ReadAllText((Join-Path $addonRoot 'Prefabs/Compositions/Locations/AROR_Defence_Fortress_Vostok.et'))
+if(!$fortress.Contains('AROR_StrongholdComponent') -or $fortress -notmatch 'm_iDefenceLevel 4'){throw 'Fortress composition lacks its stronghold component or level-4 garrison'}
+if(!$saved['everon_airport'].Prefab.Contains('Prefabs/Compositions/Locations/AROR_Defence_Stronghold_Delaware.et')){throw 'Airport does not use the Stronghold Delaware composition'}
+$delaware=[IO.File]::ReadAllText((Join-Path $addonRoot 'Prefabs/Compositions/Locations/AROR_Defence_Stronghold_Delaware.et'))
+if(!$delaware.Contains('m_eHomeRole OCCUPIERS') -or ([regex]::Matches($delaware,'UH1H\.et').Count -ne 3)){throw 'Delaware must be an Occupier stronghold with three parked helicopters'}
+$placedPorts=@($saved.Keys | Where-Object {$_ -notin $sites.Id -and $_ -ne $strongholdId})
+if($placedPorts.Count -ne 3){throw 'Unexpected non-catalogue military roots'}
+foreach($portId in $placedPorts){
+ if($saved[$portId].Text -notmatch 'm_eType\s+PORT\b'){throw "Unexpected non-catalogue location: $portId"}
+ if(!$saved[$portId].Prefab.Contains('Prefabs/Locations/AROR_Location_Port.et')){throw "Placed port does not inherit the expected template: $portId"}
+}
+$portTemplate=[IO.File]::ReadAllText((Join-Path $addonRoot 'Prefabs/Locations/AROR_Location_Port.et'))
+if(!$portTemplate.Contains('AROR_GarrisonComponent') -or !$portTemplate.Contains('AROR_Prop_CaptureFlag.et')){throw 'Port template lacks garrison/capture flag'}
 $definitions=(Get-Content -Raw (Join-Path $repoRoot 'docs/MILITARY_DEFENCE_PRESETS.json') | ConvertFrom-Json).Presets
 function Distance($a,$b){[Math]::Sqrt([Math]::Pow(([double]$a.X-[double]$b.X),2)+[Math]::Pow(([double]$a.Z-[double]$b.Z),2))}
 function PersonnelRange($type){
@@ -19,6 +36,7 @@ function PersonnelRange($type){
   'OUTPOST' {return @(9,9)}
   'MILITARY_BASE' {return @(31,31)}
   'AIRPORT' {return @(48,48)}
+  'STRONGHOLD' {return @(47,72)}
   default {return @(9,31)}
  }
 }
@@ -27,8 +45,18 @@ $sceneSites=@($sites | ForEach-Object {
  if(!$root){throw "Saved root missing: $($_.Id)"}
  $savedRole=[regex]::Match($root.Text,'m_eInitialControllingRole\s+(OCCUPIERS|INVADERS|RESISTANCE)\b')
  if(!$savedRole.Success){throw "Saved role missing: $($_.Id)"}
- [pscustomobject]@{Id=$_.Id;Type=$_.Type;Role=$savedRole.Groups[1].Value;X=$root.Origin[0];Y=$root.Origin[1];Z=$root.Origin[2]}
+ $sceneType=$_.Type
+ if($root.Text.Contains('AROR_Defence_Stronghold_Delaware.et')){$sceneType='STRONGHOLD'}
+ [pscustomobject]@{Id=$_.Id;Type=$sceneType;Role=$savedRole.Groups[1].Value;X=$root.Origin[0];Y=$root.Origin[1];Z=$root.Origin[2]}
 })
+foreach($portId in $placedPorts){
+ $root=$saved[$portId]
+ $role=[regex]::Match($root.Text,'m_eInitialControllingRole\s+(OCCUPIERS|INVADERS|RESISTANCE)\b')
+ if(!$role.Success){throw "Missing placed port role: $portId"}
+ $sceneSites += [pscustomobject]@{Id=$portId;Type='PORT';Role=$role.Groups[1].Value;X=$root.Origin[0];Y=$root.Origin[1];Z=$root.Origin[2]}
+}
+$root=$saved[$strongholdId]
+$sceneSites += [pscustomobject]@{Id=$strongholdId;Type='STRONGHOLD';Role='INVADERS';X=$root.Origin[0];Y=$root.Origin[1];Z=$root.Origin[2]}
 # Circle intersections capture worst activation overlaps between site centres,
 # including a player standing between four sites rather than directly at a pole.
 $samples=New-Object 'Collections.Generic.List[object]'
@@ -69,7 +97,7 @@ $results=foreach($site in $sites){
  if(!$base.Contains('AROR_GarrisonComponent') -or !$base.Contains('AROR_Prop_CaptureFlag.et')){throw "Military template lacks garrison/capture flag: $($site.Id)"}
  $sceneSite=$sceneSites | Where-Object Id -EQ $site.Id
  $overlap=$peak[$site.Id]
- $origins=@($sceneSites | Where-Object {$_.Role -eq $sceneSite.Role -and $_.Id -ne $site.Id -and $_.Type -in @('OUTPOST','MILITARY_BASE','AIRPORT')} | Sort-Object {Distance $sceneSite $_})
+ $origins=@($sceneSites | Where-Object {$_.Role -eq $sceneSite.Role -and $_.Id -ne $site.Id -and $_.Type -in @('OUTPOST','MILITARY_BASE','AIRPORT','STRONGHOLD')} | Sort-Object {Distance $sceneSite $_})
  $nearestOrigin='none after capture'
  if($origins.Count){$nearestOrigin=$origins[0].Id}
  $offset=[Math]::Sqrt([Math]::Pow(([double]$site.FlagX-[double]$site.X),2)+[Math]::Pow(([double]$site.FlagZ-[double]$site.Z),2))
@@ -95,8 +123,8 @@ foreach($required in @('m_bOutpostCaptureQRFs 1','m_bInvaderOperationsEnabled 1'
  if(!$managers.Contains($required)){throw "Unexpected Chicken policy: $required"}
 }
 if($WriteReport){
- $results | Export-Csv -LiteralPath (Join-Path $repoRoot 'docs/CAMPAIGN_SITE_READINESS.csv') -NoTypeInformation -Encoding UTF8
+ $results | Export-Csv -LiteralPath (Join-Path $repoRoot $ReportPath) -NoTypeInformation -Encoding UTF8
 }
 $results | Format-Table Name,Role,PeakNearbySites,PeakNearbyMaximumPersonnel,PresetWallChildren -AutoSize
-Write-Output ('Audited all 23 saved military roots, types, roles, catalogue garrison/flag template bindings and Chicken capture-response policy. Catalogue transform differences: '+@($results | Where-Object RootVerified -eq $false).Count)
+Write-Output ('Audited 23 catalogued military roots plus three placed port roots and the Invader stronghold; all 27 contribute to activation-overlap estimates. Catalogue garrison/flag bindings and Chicken capture-response policy checked. Catalogue transform differences: '+@($results | Where-Object RootVerified -eq $false).Count)
 Write-Output 'Read-only scene audit. Terrain, current custom geometry, road reachability, native spawning and multiplayer are not certified.'

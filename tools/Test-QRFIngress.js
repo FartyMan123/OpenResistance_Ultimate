@@ -5,22 +5,23 @@ function runQRFIngressTests(sources) {
   let assertions=0;
   const check=(ok,msg)=>{assertions++;if(!ok)throw Error(msg);};
   const methods=['GetOwner','IsSeatedInOwnVehicle','TacticalLaunchPoint','TacticalRoadPoint','CanDismountOnFoot','IsLaunchPositionSafe','FailOperation','FailGroundPlanning','ResolveQRFOrigin','FindGroundRoadLaunch','ConfigureForceFunding','FindTacticalApproach','ConvertReservation','SpawnGroundVehicle','SpawnEmptyGroup','SpawnWaypoint','ConfigureGroup'];
-  const env={};
+  const env={GetGame:()=>({GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:e=>e?.player?1:0})})};
   function compile(source,name) {
     const match=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
     if(!match)throw Error('Missing '+name);
     let args=match[1].replace(/\bout\s+/g,'').replace(/\b(?:bool|vector|float|int|IEntity|AROR_\w+)\s+/g,'');
-    let body=match[2].replace(/array<AIAgent> (\w+) = \{\};/g,'let $1=[];')
+    let body=match[2].replace(/array<\w+> (\w+) = \{\};/g,'let $1=[];')
       .replace(/new TraceBox\(\)/g,'({})')
       .replace(/foreach \(\w+ (\w+) : ([^)]+)\)/g,'for(const $1 of $2)')
       .replace(/vector (\w+);/g,'let $1=[0,0,0];')
-      .replace(/\b(?:bool|float|int|vector|IEntity|ResourceName|Resource|NavmeshWorldComponent|ChimeraAIWorld|BaseWorld|CompartmentAccessComponent|BaseCompartmentSlot|SCR_AIVehicleUsageComponent|AROR_\w+|TraceBox)\s+(\w+)/g,'let $1')
+      .replace(/\b(?:bool|float|int|vector|IEntity|ResourceName|Resource|NavmeshWorldComponent|ChimeraAIWorld|BaseWorld|CompartmentAccessComponent|ChimeraCharacter|BaseCompartmentSlot|BaseCompartmentManagerComponent|SCR_AIVehicleUsageComponent|AROR_\w+|TraceBox)\s+(\w+)/g,'let $1')
       .replace(/let (\w+);/g,'let $1=0;')
       .replace(/(?<![.\w])m_\w+/g,x=>'this.'+x);
     for(const method of methods)body=body.replace(new RegExp('(?<![.\\w])'+method+'\\(', 'g'),'this.'+method+'(');
     // V8 does not implement Enforce's vector arithmetic. Represent the bounded
     // candidate offset explicitly; all acceptance decisions remain actual source.
     body=body.replace('seed + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * radius','seed.map((v,i)=>v+[Math.sin(angle)*radius,0,Math.cos(angle)*radius][i])')
+      .replace('origin - commander.m_vTown','origin.map((v,i)=>v-commander.m_vTown[i])')
       .replace('commander.m_vOrigin + Vector(Math.Sin(angle), 0, Math.Cos(angle)) * radius','commander.m_vOrigin.map((v,i)=>v+[Math.sin(angle)*radius,0,Math.cos(angle)*radius][i])')
       .replace('(attempt - 12) / 8 + 3','Math.floor((attempt - 12) / 8) + 3')
       .replace('trace.Start + Vector(0, 0.05, 0)','[trace.Start[0],trace.Start[1]+0.05,trace.Start[2]]')
@@ -30,14 +31,16 @@ function runQRFIngressTests(sources) {
     return new Function(...Object.keys(env),'return function('+args+'){'+body+'}')( ...Object.values(env));
   }
   env.CompartmentAccessComponent={Cast:x=>x};
+  env.ChimeraCharacter={Cast:x=>x};
   env.SCR_AIVehicleUsageComponent={Cast:x=>x};
-  const vehicle={FindComponent:()=>usage},otherVehicle={};
+  env.BaseCompartmentManagerComponent={Cast:x=>x};
+  const vehicle={FindComponent:type=>type===env.BaseCompartmentManagerComponent?{GetCompartments:()=>{}}:usage},otherVehicle={};
   let occupant={},inSeat=true,gettingIn=false,gettingOut=false,seatVehicle=vehicle;
   const access={IsInCompartment:()=>inSeat,IsGettingIn:()=>gettingIn,IsGettingOut:()=>gettingOut,
     GetCompartment:()=>({GetVehicle:()=>seatVehicle,GetOccupant:()=>occupant})};
-  const person={FindComponent:()=>access};occupant=person;
+  const person={FindComponent:()=>access,GetCharacterController:()=>({IsDead:()=>false})};occupant=person;
   const ownSeat=compile(sources.ground,'IsSeatedInOwnVehicle');
-  const force={m_Vehicle:vehicle,m_bMountRequested:false,m_CrewGroup:{GetAgents:a=>a.push({GetControlledEntity:()=>person})},
+  const force={m_Vehicle:vehicle,m_bMountRequested:false,m_CrewGroup:{GetPlayerCount:()=>0,GetAgents:a=>a.push({GetControlledEntity:()=>person})},
     m_aPassengers:[person],IsSeatedInOwnVehicle:e=>ownSeat.call(force,e)};
   let pilot=person;
   const usage={GetPilotCompartmentSlot:()=>({GetOccupant:()=>pilot})};
@@ -56,7 +59,7 @@ function runQRFIngressTests(sources) {
   const world={GetSurfaceY:(x,z)=>slope&&x>100?15:10,GetOceanHeight:()=>water?10:0,TraceMove:()=>blocked?0:1};
   let launchLogs=[];
   Object.assign(env,{GetGame:()=>({GetWorld:()=>world}),Vector:(...v)=>v,TraceFlags:{ENTS:1},
-    Math:{Sin:Math.sin,Cos:Math.cos,AbsFloat:Math.abs,Min:Math.min,Max:Math.max,Mod:(a,b)=>a%b,floor:Math.floor,sin:Math.sin,cos:Math.cos},float:{MAX:Infinity},vector:{DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])},
+    Math:{Atan2:Math.atan2,Sin:Math.sin,Cos:Math.cos,AbsFloat:Math.abs,Min:Math.min,Max:Math.max,Mod:(a,b)=>a%b,floor:Math.floor,sin:Math.sin,cos:Math.cos},float:{MAX:Infinity},vector:{DistanceXZ:(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2])},
     AROR_GroundOperationForce:{Cast:x=>x},Print:message=>launchLogs.push(message),string:{Format:(format,...args)=>format.replace(/%(\d+)/g,(_,n)=>String(args[n-1]))},LogLevel:{NORMAL:0,WARNING:1}});
   const launch=compile(sources.executor,'FindGroundRoadLaunch');
   const context={m_aForces:[],m_fQRFRoadLaunchRadius:150,IsLaunchPositionSafe:()=>true,TacticalLaunchPoint:()=>[100,10,100],TacticalRoadPoint:(origin,desired,out)=>{queries++;out.splice(0,3,...road);return roadOK;}};
@@ -98,6 +101,11 @@ function runQRFIngressTests(sources) {
   check(plan()&&roadQueries===1&&roadForce.m_fTacticalDeliveryRadius===0,'normal objective road delivery remains preferred');
   roadQueries=0;roadPoint=[160,10,0];
   check(plan()&&roadQueries<=24&&roadForce.m_fTacticalDeliveryRadius===180,'off-road objective permits a bounded planned road dismount with a foot approach');
+  roadQueries=0;
+  check(approach.call(roadContext,roadForce,roadCommander,[500,10,0],60,roadStop,3,true)&&roadQueries===1,'detour recovery tries the bounded road/foot stop before inner objective roads');
+  roadQueries=0;roadPoint=[60,10,0];footPad=false;
+  check(approach.call(roadContext,roadForce,roadCommander,[500,10,0],60,roadStop,3,true)&&roadQueries===13,'unsafe foot approach falls back to normal objective road delivery');
+  footPad=true;roadPoint=[160,10,0];roadForce.m_fTacticalDeliveryRadius=180;
   check(!arrival.call(roadContext,10,160,200),'unplanned remote road proximity cannot authorise unloading');
   check(arrival.call(roadContext,10,160,200,roadForce.m_fTacticalDeliveryRadius),'physical arrival at the planned fallback stop authorises dismount');
   check(!arrival.call(roadContext,21,160,200,180),'fallback still requires proximity to the actual selected stop');
@@ -123,6 +131,11 @@ function runQRFIngressTests(sources) {
   const failedProfile={m_eType:0,m_fDismountDistance:60,GetGroupBudget:()=>2,m_iPersonnelBudget:8,m_sAssetFactionKey:'US'};
   compile(sources.executor,'StartGroundForce').call(preflight,failedRequest,{GetFactionKey:()=>'OWN'},failedProfile,0,{});
   check(planningFailures===1&&createdVehicles===0&&converted===0&&preflight.m_aForces.length===0,'delivery failure leaves no empty hull, personnel queue or converted actor reservation');
+  let plannedRoadPads=0;
+  preflight.IsLaunchPositionSafe=p=>p[0]===520;
+  preflight.FindGroundRoadLaunch=(c,i,out)=>{plannedRoadPads++;out.splice(0,3,520,10,0);return true;};
+  compile(sources.executor,'StartGroundForce').call(preflight,failedRequest,{GetFactionKey:()=>'OWN'},failedProfile,0,{});
+  check(plannedRoadPads===1&&planningFailures===2,'unsafe coastal formation seed still reaches the bounded safe-road planner before delivery preflight');
   env.AROR_GarrisonComponent={Cast:x=>x};
   const strategicCentre=[0,0,0],flagPosition=[80,1,0];let flagInside=true,flagGarrison={IsEligible:()=>true,GetDefenceCenter:()=>flagPosition};
   const flagTarget={GetOwner:()=>({FindComponent:()=>flagGarrison}),GetCenter:()=>strategicCentre,IsPositionInside:()=>flagInside};
