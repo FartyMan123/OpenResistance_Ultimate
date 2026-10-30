@@ -222,6 +222,7 @@ Purpose: Resistance side missions, offered on a board and run through the **OPS*
 - Server/client: everything is decided on the server; a compact snapshot (missions and log) replicates to every client. Clients request through RPCs on the player controller. Active missions are drawn on the game map (Map Markers), in OPS and in HICOMM.
 - Saved: active missions (identity, target, rewards, time left) through `AROR_MissionBoardComponentSerializer`; a loaded mission restarts when Resistance players approach and can be aborted by any current Resistance Leader. Offers are not saved; the board rerolls.
 - Depends on: Locations, Factions (presets), Economy, High Command (leaders), Notifications, Phone, Map Markers.
+- Spawning (groups, vehicles, seating, waypoints, road positions) goes through `AROR_ForceSpawner`, shared with Patrols; the board keeps thin wrapper methods for missions.
 - Extension points: per-type settings and board size, caps, ranges and prefabs on the component; new mission types through `modded enum AROR_EMissionType` plus an `AROR_Mission` subclass returned from a modded `CreateMission`.
 - Feature detail: `docs/MISSIONS.md`.
 - Planned: enemy crackdown and support effects, item rewards, more mission types, balance.
