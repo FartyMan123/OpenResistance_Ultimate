@@ -295,6 +295,37 @@ Purpose: our own markers on any open map (player map, deploy screen, setup scree
 - QRF last-seen markers and incoming QRF/attack target markers (from Operations: a pulsing reticle ring on the threatened location with the army, response and arrival countdown; red for attacks, amber for QRFs) and active Resistance missions (from Missions) are currently drawn by the same component. Moving the map framework into its own system, with each feature providing its own layer, is under discussion.
 - Not replicated or saved; reads replicated location state. No base-game marker configs are used.
 
+### Player Map Markers — In progress
+Purpose: player-authored notes, danger reports, rally points, supplies and numbered route points on the game map, managed through the FIELD phone app.
+
+- `AROR_PlayerMarkersComponent` on the game mode owns annotations, author identity, sharing scope and optional expiry. Scopes are private, native player squad and Resistance-wide; only the author may edit or delete. Creation is bounded per author and per campaign.
+- Server/client: requests travel through the owning player controller; the server validates identity, faction, campaign phase and bounds. Each client receives only annotations visible to them through owner-targeted snapshots. Native squad membership is checked again on every publication. `AROR_PlayerMapMarkers` draws the client map layer through Map Markers.
+- Saved: private and Resistance-wide annotations, keyed by author identity, and remaining expiry time through `AROR_PlayerMarkersComponentSerializer`. Squad annotations are session-only because native groups are not persistent campaign identities.
+- Depends on: Game Flow, Factions, High Command (map bounds), Map Markers, Phone, Persistence, Notifications.
+- Extension points: marker limits on the component; extender maps use the same configurable map bounds as HICOMM.
+- Native compilation and multiplayer acceptance remain pending; see `docs/FIELD_AND_CIVILIANS.md`.
+
+### Personal Recruitment — In progress
+Purpose: each Resistance player can raise and manage individual AI companions, separately from leader-owned High Command squads.
+
+- `AROR_RecruitmentComponent` on the game mode purchases riflemen from the Resistance faction preset at HQ using faction funds and manpower. FIELD selects one recruit or the player's entire roster for follow, hold, regroup, vehicle passenger/driver/gunner assignment, dismount, nearby-player transfer and HQ dismissal.
+- Server/client: the server owns the roster, spawn lifecycle, movement and seat requests. Player-controller RPCs validate ownership, faction, location, capacity and vehicle safety. Only the owner receives their roster summary. Native AI and vehicle replication supplies world entities.
+- Saved: recruits themselves are session-only. Economy includes living and pending recruits' purchase value in saved funds/manpower, following HICOMM's refund policy. Failed formation, HQ dismissal, disconnect and campaign end return eligible value; casualties do not.
+- Depends on: Game Flow, High Command (HQ registry), Factions, Economy, Phone, Notifications; spawning uses the shared Force Spawner.
+- Extension points: recruitment limits, costs, HQ range, timeout and waypoint/group prefabs on the component; unit assets follow the selected Resistance preset.
+- Native compilation, vehicle seating and multiplayer acceptance remain pending; see `docs/FIELD_AND_CIVILIANS.md`.
+
+### Ambient Civilians — In progress
+Purpose: populate towns and cities with walking civilians and occupied civilian cars while players are nearby.
+
+- `AROR_CivilianManagerComponent` on the game mode activates settlement areas within a configurable radius, initially 1 km. Pedestrian destinations and road-traffic spawn/destination points remain inside that area. Cars carry a civilian driver and optionally a passenger, using the Civilians faction preset and the shared Force Spawner.
+- Server/client: all population, spawning, seating, routes and retirement run on the server. Clients see native replicated AI and cars. Town populations are shared by all nearby players, with global people/vehicle budgets and paced construction. No dedicated-server UI is created.
+- Civilians remain in the non-military Civilians role; they do not capture locations or generate military combat reports. Cleanup waits until players leave; claimed cars are retained. Spawn/seating timeouts cancel native queues and repeatedly stalled or failed routes retire without nearby despawning.
+- Saved: nothing; ambient activity is rebuilt around players each session. Vehicles deposited into the Resistance Garage subsequently follow the garage's existing persistence rules.
+- Depends on: Game Flow, Locations, Factions. No new faction assets or resource references are required.
+- Extension points: enablement, activity/retention radii, per-town populations, global budgets, spawn distances, cleanup delay and group/waypoint prefabs.
+- Native compilation, civilian driving/pathfinding and multiplayer acceptance remain pending; see `docs/FIELD_AND_CIVILIANS.md`.
+
 ### Economy — In progress
 Purpose: money and manpower for the campaign: balances, and periodic income from held locations. General purchasing rules come later.
 
@@ -305,7 +336,7 @@ Purpose: money and manpower for the campaign: balances, and periodic income from
   - The Resistance gains manpower per held town and city, and every online Resistance player is paid 10% of the Resistance's money income as personal money (extra, not taken from the funds).
   - Resistance players get an income notification. Rates and the interval are attributes.
 - Rules: balances never go below zero; spending succeeds only if the balance covers it. All changes happen on the server.
-- Saved: funds, manpower and player money (`AROR_EconomyComponentSerializer`); Resistance funds and manpower include the refund for living High Command squads. Income timing is not saved.
+- Saved: funds, manpower and player money (`AROR_EconomyComponentSerializer`); Resistance funds and manpower include the refund for living High Command squads and living/pending personal recruits. Income timing is not saved.
 - Used by: Operations (QRF costs), High Command (squad purchases), Missions (rewards), the phone's Bank app, admin tools.
 - Extension points: server API to add, spend and read balances, and to trigger a payment.
 
@@ -339,7 +370,7 @@ Purpose: an in-game phone that hosts player-facing apps. Client only.
 - `AROR_PhoneMenu` (a menu registered in `chimeraMenus.conf`) and `AROR_PhoneComponent` (game mode), which opens it with a rebindable keybind (**Ctrl+Y**) for living players when no other menu is open. Esc closes it.
 - A phone frame over a wallpaper with a status bar. Apps open in portrait, or turn the whole phone to landscape and enlarge it. The frame's home button returns to the home screen.
 - **Quick dock**: four slots along the bottom of the home screen. Slot 1 stores the looked-at vehicle (Resistance Garage) and closes the phone; slots 2–4 are empty placeholders for now.
-- Apps: **Bank** (account holder, personal money, Resistance funds, live from the Economy; Transfer screen sends personal money to an online player or Resistance funds), **REBINTEL** (one tab per enemy army: Readiness and Crackdown cards in that army's labels with a 5-segment meter and what the level means; the player's HUD widget and alert settings; read-only: the levels are driven by the campaign), **HICOMM** (landscape High Command app for Resistance Leaders: leadership, a zoomable map for orders, squad purchases; the map shows the base game map by default with military-frame location symbols, the procedural tactical map behind a toggle), **OPS** (landscape mission board from Missions: browse operations, dossier with an area map; leaders accept and abort), **Black Market** (landscape smugglers' shop from Black Market: access ladder, vehicle and firearm tabs, two-step ordering, order list) and **MARS** (landscape response debugger from Operations, replacing the temporary Test tile).
+- Apps: **Bank** (account holder, personal money, Resistance funds, live from the Economy; Transfer screen sends personal money to an online player or Resistance funds), **REBINTEL** (one tab per enemy army: Readiness and Crackdown cards in that army's labels with a 5-segment meter and what the level means; the player's HUD widget and alert settings; read-only: the levels are driven by the campaign), **HICOMM** (landscape High Command app for Resistance Leaders: leadership, a zoomable map for orders, squad purchases; the map shows the base game map by default with military-frame location symbols, the procedural tactical map behind a toggle), **OPS** (landscape mission board from Missions: browse operations, dossier with an area map; leaders accept and abort), **Black Market** (landscape smugglers' shop from Black Market: access ladder, vehicle and firearm tabs, two-step ordering, order list), **FIELD** (landscape personal map annotations and AI companion management) and **MARS** (landscape response debugger from Operations, replacing the temporary Test tile).
 - Depends on: Economy, Notifications (hints), Operations (RebIntel), High Command (HICOMM), Missions (OPS), Resistance Garage (quick store).
 - Saved: REBINTEL player settings (HUD widget on/off, compact/full, top left/right, alert pop-ups, tracked enemy) in the player's own profile folder, client-side (`AROR_RebIntelSettings`). Nothing on the server.
 - Planned: app registration so extender mods can add apps; a Settings app and Feed (see `docs/UI_DESIGN.md`).

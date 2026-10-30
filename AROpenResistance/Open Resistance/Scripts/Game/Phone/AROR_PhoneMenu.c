@@ -30,7 +30,8 @@ enum AROR_EPhoneApp
 	HICOMM,	//!< Landscape: Resistance high command (leaders only, see AROR_HiCommApp)
 	OPS,		//!< Landscape: Resistance mission board (see AROR_OpsApp)
 	MARS,		//!< Landscape: response debugger
-	BLACK_MARKET	//!< Landscape: port-gated smugglers' shop (see AROR_BlackMarketApp)
+	BLACK_MARKET,	//!< Landscape: port-gated smugglers' shop (see AROR_BlackMarketApp)
+	FIELD		//!< Landscape: personal map markers and recruits
 }
 
 //! The phone (see ARCHITECTURE.md -> Phone). A menu (preset AROR_PhoneMenu, registered in chimeraMenus.conf), so it
@@ -156,6 +157,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	protected Widget m_wOpsTileButton;
 	protected ref AROR_OpsApp m_Ops;
 	protected ref AROR_MarsApp m_Mars;
+	protected ref AROR_FieldApp m_Field;
 	protected ref AROR_BlackMarketApp m_BlackMarket;
 	protected RichTextWidget m_wBlackMarketTileGlyph;	//!< Home tile widgets live in the Black Market's own layout
 	protected RichTextWidget m_wBlackMarketTileLabel;
@@ -235,6 +237,8 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			OpenApp(AROR_EPhoneApp.OPS);
 		else if (buttonName == "BlackMarketTileButton")
 			OpenApp(AROR_EPhoneApp.BLACK_MARKET);
+		else if (buttonName == "FieldTileButton")
+			OpenApp(AROR_EPhoneApp.FIELD);
 		else if (buttonName == "QuickSlot0Button")
 		{
 			// Store first so the look ray still has a character/camera, then close the phone
@@ -271,6 +275,8 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	//! Switch screens; turns the phone when the new screen needs the other orientation
 	protected void OpenApp(AROR_EPhoneApp app)
 	{
+		if (app == AROR_EPhoneApp.FIELD && !m_Field)
+			return;
 		if (app == AROR_EPhoneApp.MARS && !m_Mars)
 			return;
 		if (app == AROR_EPhoneApp.BLACK_MARKET && !m_BlackMarket)
@@ -290,7 +296,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	//------------------------------------------------------------------------------------------------
 	protected static bool IsLandscapeApp(AROR_EPhoneApp app)
 	{
-		return app == AROR_EPhoneApp.TEST || app == AROR_EPhoneApp.HICOMM || app == AROR_EPhoneApp.OPS || app == AROR_EPhoneApp.MARS || app == AROR_EPhoneApp.BLACK_MARKET;
+		return app == AROR_EPhoneApp.TEST || app == AROR_EPhoneApp.HICOMM || app == AROR_EPhoneApp.OPS || app == AROR_EPhoneApp.MARS || app == AROR_EPhoneApp.BLACK_MARKET || app == AROR_EPhoneApp.FIELD;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -361,6 +367,13 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			m_Mars = null;
 			Print("[AROR MARS] Separate app layout unavailable; other phone apps remain available", LogLevel.WARNING);
 		}
+		m_Field = new AROR_FieldApp();
+		if (!m_Field.Init(root, this))
+		{
+			m_Field.Shutdown();
+			m_Field = null;
+		}
+
 		m_BlackMarket = new AROR_BlackMarketApp();
 		if (m_BlackMarket.Init(root))
 		{
@@ -474,6 +487,9 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			m_BlackMarket.Shutdown();
 		m_BlackMarket = null;
 		m_BankTransfer = null;
+		if (m_Field)
+			m_Field.Shutdown();
+		m_Field = null;
 
 		super.OnMenuClose();
 	}
@@ -573,6 +589,12 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		bool showMars = landscapeSettled && m_eApp == AROR_EPhoneApp.MARS;
 		if (m_Mars)
 			m_Mars.SetVisible(showMars, contentOpacity);
+		bool showField = landscapeSettled && m_eApp == AROR_EPhoneApp.FIELD;
+		if (m_Field)
+		{
+			m_Field.SetVisible(showField, contentOpacity);
+			m_Field.SetTileVisible(showHome, contentOpacity);
+		}
 		bool showBlackMarket = landscapeSettled && m_eApp == AROR_EPhoneApp.BLACK_MARKET;
 		if (m_BlackMarket)
 			m_BlackMarket.SetVisible(showBlackMarket, contentOpacity);
@@ -623,6 +645,8 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			m_Ops.Layout(centerX - SCREEN_HEIGHT * scale * 0.5, centerY - SCREEN_WIDTH * scale * 0.5, scale);
 		if (showMars && m_Mars)
 			m_Mars.Layout(centerX - SCREEN_HEIGHT * scale * 0.5, centerY - SCREEN_WIDTH * scale * 0.5, scale);
+		if (showField && m_Field)
+			m_Field.Layout(centerX - SCREEN_HEIGHT * scale * 0.5, centerY - SCREEN_WIDTH * scale * 0.5, scale);
 		if (showBlackMarket && m_BlackMarket)
 			m_BlackMarket.Layout(centerX - SCREEN_HEIGHT * scale * 0.5, centerY - SCREEN_WIDTH * scale * 0.5, scale);
 	}
@@ -708,6 +732,9 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			CentreText(m_wBlackMarketTileLabel, left + (tileLeft + TILE_SIZE * 0.5) * scale, top + (tileTop + TILE_SIZE + 34) * scale);
 			Place(m_wBlackMarketTileButton, left + tileLeft * scale, top + tileTop * scale, TILE_SIZE * scale, (TILE_SIZE + 60) * scale);
 		}
+
+		if (m_Field)
+			m_Field.LayoutTile(left + TILE_LEFT * scale, top + (TILE_TOP + (TILE_SIZE + TILE_ROW_SPACING) * 2) * scale, scale);
 
 		DrawRoundedTiles(scale);
 		LayoutQuickDock(scale);

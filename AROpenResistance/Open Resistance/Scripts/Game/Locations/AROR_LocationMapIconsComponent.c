@@ -61,6 +61,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	protected bool m_bHandlingMap;	//!< The open map is one we attached to (so its close is ours to handle)
 
 	protected Widget m_wIconParent;
+	protected ref AROR_PlayerMapMarkers m_PlayerMarkers = new AROR_PlayerMapMarkers();
 	protected ref AROR_QRFMapIntel m_QRFIntel = new AROR_QRFMapIntel();
 	protected ref AROR_MissionMapMarkers m_MissionMarkers = new AROR_MissionMapMarkers();
 	protected ref AROR_OperationMapMarkers m_OperationMarkers = new AROR_OperationMapMarkers();
@@ -320,6 +321,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	//------------------------------------------------------------------------------------------------
 	protected void ClearIcons()
 	{
+		m_PlayerMarkers.ClearWidgets();
 		m_QRFIntel.ClearWidgets();
 		m_MissionMarkers.ClearWidgets();
 		m_OperationMarkers.ClearWidgets();
@@ -580,6 +582,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 
 		UpdateSelector(mapEntity, workspace);
 		m_QRFIntel.Update(m_wIconParent, m_sIconLayout, mapEntity);
+		m_PlayerMarkers.Update(m_wIconParent, m_sIconLayout, mapEntity);
 		m_MissionMarkers.Update(m_wIconParent, m_sIconLayout, mapEntity);
 		m_OperationMarkers.Update(m_wIconParent, m_sIconLayout, mapEntity);
 	}
