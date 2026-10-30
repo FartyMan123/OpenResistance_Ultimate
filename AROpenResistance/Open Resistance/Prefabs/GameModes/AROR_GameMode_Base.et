@@ -112,6 +112,8 @@ SCR_BaseGameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" 
   }
   AROR_MissionBoardComponent "{6AC0A0F1A5000001}" {
   }
+  AROR_PatrolManagerComponent "{6AC0A0F1A5000002}" {
+  }
   AROR_GameFlowComponent "{6AAA8D6D8EB1E454}" {
    m_sHQPrefab "{3EC420BD9621F356}Prefabs/Locations/AROR_Location_HQ.et"
    m_sArsenalPrefab "{274839CB791B6A7B}Prefabs/Props/Locations/AROR_Prop_Arsenal.et"

@@ -272,6 +272,21 @@ Main parts:
 - Release validation and native acceptance: `docs/QRF_RELEASE_VALIDATION.md`; route and response matrices live in `docs/validation/`. The Workbench-only route audit probes ground planning, airborne launch formations and landing sites without deploying forces.
 - Planned: broader strategic target selection, physical military stock, durable save/restore of live operations, client summaries.
 
+### Patrols — In progress
+Purpose: ambient enemy activity around the players, so fights happen between captures and QRFs: Occupier and Invader **foot patrols** and **motorized road patrols** that cross the areas where Resistance players are.
+
+- `AROR_PatrolManagerComponent` (game mode, server): every few seconds, picks a living player's area that has fewer patrols than wanted (a base number, plus one per two Crackdown levels of the patrol's army) and spawns one, within global caps on patrols, soldiers and vehicles. Its soldier budget is separate from Garrisons and Operations.
+- **Bounded to the players, fair to them**: a patrol spawns on a road out of every player's range, outside every military site and Resistance location. Its route is fixed at spawn: a road point near the area's centre, then a road exit on the far side. It never re-targets players.
+- **One army at a time**: a patrol belongs to the army holding the nearest military site and must stay in that army's ground. Routes keep clear of Resistance military sites and the HQ (an enemy patrol must never wander in and recapture them) and well clear of the other army's sites, so the two armies do not meet.
+- **Strength**: foot team size grows with Crackdown; motorized patrols use cars, armed cars from Readiness 3 and APCs from Readiness 4, from the army's faction preset, with passengers.
+- **Robustness**: spawning and seating have timeouts that abandon and clean up the patrol instead of retrying; legs with no progress are skipped; patrols end after a lifetime, and despawn once no player has been near for a while and they have not fought recently. A wiped-out patrol leaves its bodies and vehicle for the players.
+- **Escalation**: losses report a combat contact to Operations (`ReportCombatContact_S`), which decides any investigation, QRF or Crackdown change through its own rules.
+- Spawning uses `AROR_ForceSpawner` (shared with Missions): faction preset lookups, group and vehicle spawning, seating, waypoints and road positions.
+- Server/client: server only; clients see only the replicated AI. Saved: nothing; patrols are rebuilt around whoever is online.
+- Depends on: Locations, Factions (presets and roles), Operations (Readiness, Crackdown, contact reports), Game Flow.
+- Extension points: every count, distance, chance, timeout and prefab is an attribute on the component.
+- Planned: supply convoys, checkpoints, hunter teams on reported contacts, helicopter patrols.
+
 ### Map Markers — In progress
 Purpose: our own markers on any open map (player map, deploy screen, setup screen). Client only.
 
