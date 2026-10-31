@@ -136,15 +136,17 @@ Purpose: the lifecycle from world boot to play, separating **scenario data** (fr
 
 Phases (mapped onto the base-game states PREGAME → GAME → POSTGAME):
 1. **Scenario load**: world boots, locations register, location markers appear.
-2. **Setup** (PREGAME): the server admin creates a new playthrough (choosing a faction preset per role, or a quick start with the base-game presets, then picking the Resistance HQ position on the map) or loads a saved one. A server config fallback for unattended dedicated servers is planned.
+2. **Setup** (PREGAME): the server admin creates a new playthrough in steps (an army/faction preset per role and the content packs in play, campaign settings, the resistance name, then the Resistance HQ position on the map) or loads a saved one. A server config fallback for unattended dedicated servers is planned.
 3. **Playthrough load**: new → fresh state; load → restore from the save. Then GAME.
 4. **Running**: state changes are saved (see Persistence).
 
 - `AROR_GameFlowComponent` (server, game mode) holds PREGAME until a playthrough exists and keeps player controls disabled until then; other systems can ask whether the playthrough is ready.
-- **Setup UI** (`AROR_SetupUIComponent`, client): a full-screen setup menu (`AROR_SetupMenu`, registered in `chimeraMenus.conf`) with the start options (new, load, quick start) and the save list; the faction and HQ steps use base-game configurable dialogs with our own presets (`Configs/UI/AROR_SetupDialogs.conf`).
+- **Setup UI** (`AROR_SetupUIComponent`, client): a full-screen setup menu (`AROR_SetupMenu`, registered in `chimeraMenus.conf`, drawn by `AROR_SetupApp` from the shared pooled-widget layout) with the start screen (new, load), the save list and the new campaign steps: **Armies and content** (a dropdown of presets per role; toggles for the content packs whose mods are loaded, at least one on), **Settings** (campaign settings by category) and **Name**. The choices are kept in a client-side draft (`AROR_SetupDraft`) until the HQ is confirmed on the base-game map (a configurable dialog, `Configs/UI/AROR_SetupDialogs.conf`), then sent in one request; backing out of the map or a server refusal returns to the name step with the choices kept.
+- **Resistance name** (`AROR_ResistanceName`): up to 32 letters, digits and single spaces (default "Resistance"), checked live on the client and again on the server, at setup and for HICOMM renames. Save points are named after it and the load list shows that name; the engine cannot rename a playthrough, so after a rename the next autosave writes a save point under the new name and deletes the old one.
+- **Campaign Settings** (`AROR_CampaignSettingsComponent`, game mode, every machine): categories of typed settings (on/off, choice, number) defined on the component; values are strings keyed by setting ID. The server sets them when a campaign is created (invalid or missing values take the default), replicates them and saves them (`AROR_CampaignSettingsComponentSerializer`); saved values for settings no longer defined are kept. Systems read values by ID and can listen for changes. No settings are defined yet. Extension point: extenders add categories and settings through game-mode prefab inheritance.
 - **Staging spawn** (`AROR_StagingSpawn.et`): before a playthrough exists, players spawn there as the Resistance and move freely. Afterwards it is disabled and players are moved to the HQ.
 - **Resistance HQ**: placed on land, outside every location's radius, and on a clear 10×10 m pad free of buildings and props (checked on the client, enforced by the server; invalid picks are rejected). A dynamic location of type HQ that carries the Resistance spawn point; players always spawn there. A new playthrough also spawns an arsenal beside the HQ via `SpawnArsenal` and a garage on the opposite side of the flag (same offset negated) via `SpawnGarage` before the initial save.
-- Planned: playthrough settings chosen at setup and editable mid-game, with lifecycle events (scenario ready, playthrough created/loaded, settings changed) for other systems.
+- Planned: campaign settings editable mid-game; lifecycle events (scenario ready, playthrough created/loaded) for other systems.
 - Server/client: the server owns phase transitions and all generated state; admin actions are client → server requests checked against admin roles.
 - Depends on: Game Mode, Locations, Persistence.
 
@@ -157,7 +159,7 @@ Purpose: persistent campaign saves, built on the **base-game save system** (`Sav
   - Each component with saved state has a matching `ScriptedComponentSerializer`. Serializers write a version first and keep loading older versions.
   - Locations are referenced by **stable ID**, never by position in a list.
 - Save generated results, not random seeds, so saves survive map and code changes.
-- Saved so far: location control, settlement support, the Resistance HQ, arsenals, faction presets per role, content pack overrides, faction funds, manpower, player money, Resistance item stock, Resistance garage vehicle snapshots, per-player arsenal loadout slots, garrison rosters, QRF readiness, crackdown and debt, the Invader campaign state, stronghold state and active Resistance missions.
+- Saved so far: location control, settlement support, the Resistance HQ, arsenals, faction presets per role, content pack overrides, campaign settings, the resistance name, faction funds, manpower, player money, Resistance item stock, Resistance garage vehicle snapshots, per-player arsenal loadout slots, garrison rosters, QRF readiness, crackdown and debt, the Invader campaign state, stronghold state and active Resistance missions.
 - Boot rule: launching the mission always starts fresh with setup (saving stays off until the admin chooses). A save is restored only when the admin loads it from setup. If the game resumed a save by itself, the server starts a new unnamed playthrough and reloads the mission once; if that fails, "new" is refused until a save is loaded. A new playthrough writes an initial save point, so new and loaded games share one restore path.
 - Limits: about 101 playthroughs and save points per mission; old autosaves need pruning.
 - Autosave (Game Flow, server): every few minutes (configurable) and shortly after key events (garage changes) the active save is overwritten, so the save list does not fill up. After a load, a garage prop is respawned beside the HQ if none came back with the save.
@@ -203,7 +205,8 @@ Purpose: everything that can be bought or fielded, per content source (the base 
 - Saved: the overrides (`AROR_ContentPacksComponentSerializer`). A saved pack whose mod is missing is kept in the save and simply unavailable.
 - Used by: Black Market and Imports (catalogue, prices, import gate); missions and outpost stores (an enemy role only fields prefabs its current readiness allows).
 - Extension points: extender mods add packs to the registry (Override in addon) or ship packs that replace core prefabs.
-- Planned: admin UI to toggle packs at campaign setup and during play (the server API exists); an RHS pack.
+- The admin chooses which available packs are on when creating a campaign (Setup UI); packs whose mods are not loaded are not shown.
+- Planned: admin UI to toggle packs during play (the server API exists); an RHS pack.
 
 ### Commanders — In progress
 Purpose: one server-owned command context per role. The Resistance is player-directed; the Occupiers and Invaders are AI-directed through the same evaluation interface.
@@ -221,7 +224,7 @@ Purpose: Resistance Leaders raise AI squads and command them through the **HICOM
 - `AROR_HighCommandComponent` (game mode): the Resistance Leaders (the host automatically; the host delegates others), the resistance name, a squad catalogue and the raised squads. Squads cost Resistance funds **and** manpower, form up at the HQ and take **attack**, **defend**, **move** (standing by on arrival) and **hold** orders. Each leader commands only their own squads; everyone sees all of them.
 - Client: the HICOMM app (see Phone) sends requests through RPCs on the player controller.
 - Server/client: everything is decided and validated on the server; a compact snapshot (leaders, name, squad summaries) replicates to clients.
-- Saved: nothing. Squads are refunded at full cost when the campaign ends, and saved funds and manpower already include the refund for living squads.
+- Saved: the resistance name (`AROR_HighCommandComponentSerializer`), set at campaign setup; a HICOMM rename (same name rule as setup) triggers an autosave soon after. Squads are not saved: they are refunded at full cost when the campaign ends, and saved funds and manpower already include the refund for living squads.
 - Depends on: Factions, Locations, Economy, Game Flow (the HQ), Phone, Notifications.
 - Extension points: squad catalogue, per-leader cap, group/waypoint prefabs and map bounds on the component.
 - Feature detail: `docs/HIGH_COMMAND.md`.

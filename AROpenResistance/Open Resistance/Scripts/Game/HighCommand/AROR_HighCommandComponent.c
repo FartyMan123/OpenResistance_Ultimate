@@ -9,8 +9,8 @@ class AROR_HighCommandComponentClass : SCR_BaseGameModeComponentClass
 //! Clients: read a compact replicated snapshot (leaders, name, squad summaries) to draw HICOMM.
 //! Leaders: the host (listen server/Workbench player; admins on a dedicated server) is always a leader and can
 //! delegate other players. Each leader commands only their own squads; everyone sees every squad.
-//! Nothing here is saved: squads are session-only and the Economy serializer saves funds/manpower as if every living
-//! squad had been refunded, so a loaded campaign never loses their cost.
+//! Only the resistance name is saved (AROR_HighCommandComponentSerializer): squads are session-only and the Economy
+//! serializer saves funds/manpower as if every living squad had been refunded, so a loaded campaign never loses their cost.
 class AROR_HighCommandComponent : SCR_BaseGameModeComponent
 {
 	[Attribute("", desc: "Squads leaders can raise in Unit Management")]
@@ -21,9 +21,6 @@ class AROR_HighCommandComponent : SCR_BaseGameModeComponent
 
 	[Attribute("Resistance", desc: "Name of the resistance until the host renames it")]
 	protected string m_sDefaultResistanceName;
-
-	[Attribute("32", desc: "Longest resistance name the host can set", params: "4 64 1")]
-	protected int m_iMaxNameLength;
 
 	[Attribute("{000CD338713F2B5A}Prefabs/AI/Groups/Group_Base.et", UIWidgets.ResourceNamePicker, desc: "Empty AI group prefab squads are built in", params: "et")]
 	protected ResourceName m_sGroupPrefab;
@@ -110,9 +107,10 @@ class AROR_HighCommandComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	int GetMaxNameLength()
+	//! The name a new campaign suggests on the setup screen
+	string GetDefaultResistanceName()
 	{
-		return m_iMaxNameLength;
+		return m_sDefaultResistanceName;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -537,19 +535,28 @@ class AROR_HighCommandComponent : SCR_BaseGameModeComponent
 		}
 
 		name = name.Trim();
-		name.Replace(FIELD_SEPARATOR, string.Empty);
-		name.Replace(ROW_SEPARATOR, string.Empty);
-		if (name.IsEmpty())
+		string reason;
+		if (!AROR_ResistanceName.Validate(name, reason))
 		{
-			Reply(requesterId, "The resistance needs a name");
+			Reply(requesterId, reason);
 			return;
 		}
 
-		if (name.Length() > m_iMaxNameLength)
-			name = name.Substring(0, m_iMaxNameLength);
+		SetResistanceName_S(name);
+		Reply(requesterId, "The resistance is now known as " + name);
+
+		// Write the new name into the active save soon rather than at the next timed autosave
+		AROR_GameFlowComponent.RequestAutosave_S();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server only. Sets the name without checks: campaign setup (already validated) and save restore.
+	void SetResistanceName_S(string name)
+	{
+		if (!Replication.IsServer())
+			return;
 
 		m_sResistanceName = name;
-		Reply(requesterId, "The resistance is now known as " + name);
 		PublishSnapshot_S();
 	}
 

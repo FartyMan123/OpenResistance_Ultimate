@@ -86,6 +86,8 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	protected ref SaveGameObtainCallback m_SaveListCallback;
 	protected ref SaveGameOperationCallback m_InitialSaveCallback;
 	protected ref SaveGameOperationCallback m_AutosaveCallback;
+	//! The save point being replaced by one under the resistance's new name (deleted once the new one exists)
+	protected SaveGame m_RenamedSave;
 
 	//! Key-event saves wait this long, so several changes in a row become one save and the world has settled
 	protected static const int AUTOSAVE_EVENT_DELAY_MS = 5000;
@@ -302,11 +304,21 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	//------------------------------------------------------------------------------------------------
 	// Server: requests from the admin (arrive through SCR_PlayerController RPCs)
 	//------------------------------------------------------------------------------------------------
-	//! presetIds: faction preset ID per role, indexed by AROR_EFactionRole (null or empty entries use the defaults)
-	void RequestNewPlaythrough_S(int playerId, vector hqPosition, string playthroughName, array<string> presetIds = null)
+	//! The admin's choices from the setup screen. resistanceName: checked by AROR_ResistanceName, also the playthrough
+	//! (save) name. presetIds: faction preset ID per role, indexed by AROR_EFactionRole (null or empty entries use the
+	//! defaults). disabledPackIds / enabledPackIds: content pack overrides (null = every pack on its default).
+	//! settingIds / settingValues: campaign settings (missing or invalid = default).
+	void RequestNewPlaythrough_S(int playerId, vector hqPosition, string resistanceName, array<string> presetIds = null, array<string> disabledPackIds = null, array<string> enabledPackIds = null, array<string> settingIds = null, array<string> settingValues = null)
 	{
 		if (!CanAcceptSetupRequest(playerId))
 			return;
+
+		string nameReason;
+		if (!AROR_ResistanceName.Validate(resistanceName, nameReason))
+		{
+			SendSetupResult(playerId, false, nameReason);
+			return;
+		}
 
 		if (m_bResumedSave)
 		{
@@ -348,28 +360,35 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 
 		Print(string.Format("[AROR] Garage spawned at %1", garage.GetOrigin()), LogLevel.NORMAL);
 
-		// Before the initial save point, so the first save already holds the admin's choice
+		// Before the initial save point, so the first save already holds the admin's choices
 		AROR_FactionPresetsComponent factionPresets = AROR_FactionPresetsComponent.GetInstance();
 		if (factionPresets)
 			factionPresets.SetPresets_S(presetIds);
 
-		// A new campaign starts with every content pack on its default (no setup choice yet)
 		AROR_ContentPacksComponent contentPacks = AROR_ContentPacksComponent.GetInstance();
 		if (contentPacks)
-			contentPacks.SetPackOverrides_S(null, null);
+			contentPacks.SetPackOverrides_S(disabledPackIds, enabledPackIds);
+
+		AROR_CampaignSettingsComponent campaignSettings = AROR_CampaignSettingsComponent.GetInstance();
+		if (campaignSettings)
+			campaignSettings.SetValues_S(settingIds, settingValues);
+
+		AROR_HighCommandComponent highCommand = AROR_HighCommandComponent.GetInstance();
+		if (highCommand)
+			highCommand.SetResistanceName_S(resistanceName);
 
 		SaveGameManager saveManager = SaveGameManager.Get();
 		if (saveManager)
 		{
 			// TODO: verify that transition = false starts the playthrough without reloading the world
-			saveManager.StartPlaythrough(SaveGameManager.GetCurrentMissionResource(), playthroughName, false);
+			saveManager.StartPlaythrough(SaveGameManager.GetCurrentMissionResource(), resistanceName, false);
 			saveManager.SetSavingAllowed(true);
 
 			LogSaveState();
 
 			// Initial save point so new and loaded playthroughs share the same restore path
 			m_InitialSaveCallback = new SaveGameOperationCallback(OnInitialSaveCompleted);
-			saveManager.RequestSavePoint(ESaveGameType.SCRIPTED, "Start", 0, m_InitialSaveCallback);
+			saveManager.RequestSavePoint(ESaveGameType.SCRIPTED, resistanceName, 0, m_InitialSaveCallback);
 		}
 
 		m_bPlaythroughReady = true;
@@ -379,7 +398,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 
 		SendHQEstablishedHeadline(hq);
 
-		Print(string.Format("[AROR] New playthrough '%1' started, HQ at %2", playthroughName, hq.GetOrigin()), LogLevel.NORMAL);
+		Print(string.Format("[AROR] New playthrough '%1' started, HQ at %2", resistanceName, hq.GetOrigin()), LogLevel.NORMAL);
 		SendSetupResult(playerId, true, string.Empty);
 	}
 
@@ -675,14 +694,23 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		int year, month, day, hour, minute, second;
 		save.GetSavePointCreatedLocalDateTime(year, month, day, hour, minute, second);
 
-		// Fields for the load dialog's campaign card: name | save point | date | compatible (1/0)
+		// Fields for the load list's campaign card: name | detail | date | compatible (1/0). The name is the save point's,
+		// which follows the resistance name (see Autosave_S); older saves named "Start" / "Autosave" show the playthrough.
 		string separator = AROR_SetupMenu.FIELD_SEPARATOR;
 		string compatible = "1";
 		if (!save.IsSavePointGameVersionCompatible() || !save.AreSavePointAddonsCompatible())
 			compatible = "0";
 
+		string title = save.GetSavePointName();
+		string detail;
+		if (title.IsEmpty() || title == "Start" || title == "Autosave")
+		{
+			title = save.GetPlaythroughName();
+			detail = save.GetSavePointName();
+		}
+
 		string date = string.Format("%1-%2-%3 %4:%5", year, month.ToString(2), day.ToString(2), hour.ToString(2), minute.ToString(2));
-		return CleanSaveField(save.GetPlaythroughName()) + separator + CleanSaveField(save.GetSavePointName()) + separator + date + separator + compatible;
+		return CleanSaveField(title) + separator + CleanSaveField(detail) + separator + date + separator + compatible;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -758,12 +786,58 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		if (!saveManager.IsSavingAllowed())
 			return;
 
-		m_AutosaveCallback = new SaveGameOperationCallback(OnAutosaveCompleted);
+		// Save points are named after the resistance, and the load list shows that name (the engine cannot rename a
+		// playthrough). After a rename the active save point is replaced by one under the new name.
+		string saveName = GetSaveName();
 		SaveGame active = saveManager.GetActiveSave();
+		if (active && active.GetSavePointName() != saveName)
+		{
+			m_RenamedSave = active;
+			m_AutosaveCallback = new SaveGameOperationCallback(OnRenamedSaveCompleted);
+			saveManager.RequestSavePoint(ESaveGameType.SCRIPTED, saveName, 0, m_AutosaveCallback);
+			return;
+		}
+
+		m_AutosaveCallback = new SaveGameOperationCallback(OnAutosaveCompleted);
 		if (active)
 			saveManager.RequestSavePointOverwrite(active, 0, m_AutosaveCallback);
 		else
-			saveManager.RequestSavePoint(ESaveGameType.SCRIPTED, "Autosave", 0, m_AutosaveCallback);
+			saveManager.RequestSavePoint(ESaveGameType.SCRIPTED, saveName, 0, m_AutosaveCallback);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! The name save points get: the resistance's current name
+	protected static string GetSaveName()
+	{
+		AROR_HighCommandComponent highCommand = AROR_HighCommandComponent.GetInstance();
+		if (highCommand)
+			return highCommand.GetResistanceName();
+
+		return "Resistance";
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! A save point under the new name exists: delete the one it replaces, so the load list keeps one entry per
+	//! campaign. Only when the new one became the active save, so the save being played is never deleted.
+	protected void OnRenamedSaveCompleted(bool success, Managed context = null)
+	{
+		SaveGame replaced = m_RenamedSave;
+		m_RenamedSave = null;
+		if (!success)
+		{
+			Print("[AROR] Autosave under the new resistance name failed", LogLevel.ERROR);
+			return;
+		}
+
+		SaveGameManager saveManager = SaveGameManager.Get();
+		if (!saveManager || !replaced || saveManager.GetActiveSave() == replaced)
+		{
+			Print("[AROR] Saved under the new resistance name; the old save point was kept", LogLevel.WARNING);
+			return;
+		}
+
+		Print(string.Format("[AROR] Saved under the new resistance name; deleting old save point '%1'", replaced.GetSavePointName()), LogLevel.NORMAL);
+		saveManager.Delete(replaced);
 	}
 
 	//------------------------------------------------------------------------------------------------
