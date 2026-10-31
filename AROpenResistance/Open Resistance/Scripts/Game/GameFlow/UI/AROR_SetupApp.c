@@ -54,7 +54,8 @@ class AROR_SetupApp : AROR_PhonePooledApp
 	{
 		m_Menu = menu;
 		m_wResource = GetGame().GetWorkspace().CreateWidgets(LAYOUT, parent);
-		if (!m_wResource || !InitPools(m_wResource, "BM", 96, 120, 64))
+		// Every pool in the layout is registered, even unused ones, so EndFrame hides them (an empty picture draws white)
+		if (!m_wResource || !InitPools(m_wResource, "BM", 96, 120, 64, 16, 16))
 			return false;
 
 		// The layout's search box serves as the name field
