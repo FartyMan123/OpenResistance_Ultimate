@@ -43,6 +43,9 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	[Attribute("8", UIWidgets.Slider, desc: "Players are moved to random points within this radius of the HQ when it is created", params: "0 50 1")]
 	protected float m_fHQArrivalRadius;
 
+	[Attribute("300", UIWidgets.Slider, desc: "Seconds between automatic saves while a playthrough is running (0 = off). Key events such as garage changes also save shortly after they happen", params: "0 1800 30")]
+	protected int m_iAutosaveIntervalSeconds;
+
 	[Attribute("1", desc: "Workbench only: treat every player as admin so setup can be tested", category: "Workbench")]
 	protected bool m_bWorkbenchEveryoneIsAdmin;
 
@@ -54,6 +57,14 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 
 	protected static AROR_GameFlowComponent s_Instance;
 
+	//! Server: written when the admin picks a save in setup, so the world reload that follows restores it. A file,
+	//! because in-memory state does not reliably survive the reload; it expires so an old one never restores a save.
+	protected static const string LOAD_MARKER_FILE = "$profile:AROR_LoadRequest.txt";
+	protected static const int LOAD_MARKER_MAX_AGE_S = 300;
+
+	//! Server: written before restarting the scenario to drop a save the game resumed by itself (prevents a loop)
+	protected static const string RESTART_MARKER_FILE = "$profile:AROR_FreshRestart.txt";
+
 	//! Server: staging spawns that initialised before the game flow existed
 	protected static ref array<SCR_SpawnPoint> s_aPendingStagingSpawns;
 
@@ -63,6 +74,9 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	//! Server: true once a playthrough is created or loaded; lets the game mode leave pre-game
 	protected bool m_bPlaythroughReady;
 
+	//! Server: the game restored a save before setup; its world state cannot take a new playthrough on top
+	protected bool m_bResumedSave;
+
 	//! Server: players already offered the setup screen (join and role change can both trigger it)
 	protected ref array<int> m_aSetupOfferedPlayerIds = {};
 
@@ -71,6 +85,15 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	protected int m_iSaveListRequesterId;
 	protected ref SaveGameObtainCallback m_SaveListCallback;
 	protected ref SaveGameOperationCallback m_InitialSaveCallback;
+	protected ref SaveGameOperationCallback m_AutosaveCallback;
+
+	//! Key-event saves wait this long, so several changes in a row become one save and the world has settled
+	protected static const int AUTOSAVE_EVENT_DELAY_MS = 5000;
+	protected bool m_bAutosavePending;
+
+	//! After a load, wait this long for the saved entities to restore before checking the garage prop exists
+	protected static const int ENSURE_GARAGE_DELAY_MS = 10000;
+	protected static const float ENSURE_GARAGE_RADIUS = 30;
 
 	//! Client events for the setup screen
 	protected ref ScriptInvoker m_OnSetupRequested = new ScriptInvoker();
@@ -285,6 +308,12 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		if (!CanAcceptSetupRequest(playerId))
 			return;
 
+		if (m_bResumedSave)
+		{
+			SendSetupResult(playerId, false, "A saved campaign was resumed on this server. Load a save, or restart the mission to start a new one");
+			return;
+		}
+
 		string reason;
 		if (!IsValidHQPosition(hqPosition, reason))
 		{
@@ -317,6 +346,8 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			return;
 		}
 
+		Print(string.Format("[AROR] Garage spawned at %1", garage.GetOrigin()), LogLevel.NORMAL);
+
 		// Before the initial save point, so the first save already holds the admin's choice
 		AROR_FactionPresetsComponent factionPresets = AROR_FactionPresetsComponent.GetInstance();
 		if (factionPresets)
@@ -337,6 +368,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		}
 
 		m_bPlaythroughReady = true;
+		StartAutosaveTimer();
 		DisableStagingSpawns();
 		MovePlayersToHQ(hq.GetOrigin());
 
@@ -382,7 +414,44 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			return;
 
 		Print(string.Format("[AROR] Loading save '%1'", m_aListedSaves[saveIndex].GetSavePointName()), LogLevel.NORMAL);
+		WriteMarker(LOAD_MARKER_FILE);
 		saveManager.Load(m_aListedSaves[saveIndex], true);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static void WriteMarker(string path)
+	{
+		FileHandle file = FileIO.OpenFile(path, FileMode.WRITE);
+		if (!file)
+		{
+			Print("[AROR] Could not write " + path, LogLevel.WARNING);
+			return;
+		}
+
+		file.WriteLine(System.GetUnixTime().ToString());
+		file.Close();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! True if the marker was written within the last few minutes (admin chose a save / we just restarted). Always removes it.
+	protected static bool ConsumeMarker(string path)
+	{
+		if (!FileIO.FileExists(path))
+			return false;
+
+		int requested;
+		FileHandle file = FileIO.OpenFile(path, FileMode.READ);
+		if (file)
+		{
+			string line;
+			if (file.ReadLine(line) >= 0)
+				requested = line.Trim().ToInt();
+
+			file.Close();
+		}
+
+		FileIO.DeleteFile(path);
+		return requested > 0 && System.GetUnixTime() - requested <= LOAD_MARKER_MAX_AGE_S;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -638,6 +707,89 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Server: save soon because something worth keeping changed (the garage). Does nothing before a playthrough runs.
+	static void RequestAutosave_S()
+	{
+		if (s_Instance)
+			s_Instance.ScheduleAutosave_S();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void ScheduleAutosave_S()
+	{
+		if (!Replication.IsServer() || !m_bPlaythroughReady || m_bAutosavePending)
+			return;
+
+		m_bAutosavePending = true;
+		GetGame().GetCallqueue().CallLater(Autosave_S, AUTOSAVE_EVENT_DELAY_MS);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void StartAutosaveTimer()
+	{
+		if (m_iAutosaveIntervalSeconds > 0)
+			GetGame().GetCallqueue().CallLater(Autosave_S, m_iAutosaveIntervalSeconds * 1000, true);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Overwrites the save being played (so the save list does not fill up), or creates one if none is active
+	protected void Autosave_S()
+	{
+		m_bAutosavePending = false;
+		if (!m_bPlaythroughReady)
+			return;
+
+		SaveGameManager saveManager = SaveGameManager.Get();
+		if (!saveManager)
+			return;
+
+		// Busy (another save in progress): try again shortly instead of dropping the request
+		if (saveManager.IsBusy())
+		{
+			ScheduleAutosave_S();
+			return;
+		}
+
+		if (!saveManager.IsSavingAllowed())
+			return;
+
+		m_AutosaveCallback = new SaveGameOperationCallback(OnAutosaveCompleted);
+		SaveGame active = saveManager.GetActiveSave();
+		if (active)
+			saveManager.RequestSavePointOverwrite(active, 0, m_AutosaveCallback);
+		else
+			saveManager.RequestSavePoint(ESaveGameType.SCRIPTED, "Autosave", 0, m_AutosaveCallback);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server, after a load: the garage prop does not reliably come back with the save, so spawn it beside the HQ
+	//! (where a new campaign puts it) if none stands there. Stored vehicles are restored separately by the Garage.
+	protected void EnsureGarage_S()
+	{
+		AROR_LocationComponent hq = AROR_HighCommandComponent.FindHQ();
+		if (!hq)
+		{
+			Print("[AROR] No Resistance HQ after loading; the garage was not checked", LogLevel.WARNING);
+			return;
+		}
+
+		vector hqPosition = hq.GetOwner().GetOrigin();
+		if (AROR_GarageSiteQuery.HasGarageNear(hqPosition, ENSURE_GARAGE_RADIUS))
+			return;
+
+		IEntity garage = SpawnGarage(hqPosition - m_vArsenalOffsetFromHQ);
+		if (garage)
+			Print(string.Format("[AROR] Garage missing after load: respawned at %1", garage.GetOrigin()), LogLevel.NORMAL);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void OnAutosaveCompleted(bool success, Managed context = null)
+	{
+		if (!success)
+			Print("[AROR] Autosave failed", LogLevel.ERROR);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	protected void OnInitialSaveCompleted(bool success, Managed context = null)
 	{
 		if (success)
@@ -688,18 +840,41 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		if (saveManager)
 			LogSaveState();
 
-		// TODO: verify that a loaded save is already active at this point
-		if (saveManager && saveManager.GetActiveSave())
+		// Launching the mission always starts fresh with the setup screen. A save is restored only when the admin
+		// chose it there (RequestLoad_S). If the game resumed a save by itself (a server resuming its last save,
+		// Continue from the menu), drop it and restart the scenario once, so no saved entities or characters return.
+		bool saveActive = saveManager && saveManager.GetActiveSave() != null;
+		bool loadRequested = ConsumeMarker(LOAD_MARKER_FILE);
+		bool restarted = ConsumeMarker(RESTART_MARKER_FILE);
+		if (saveActive && loadRequested)
 		{
 			m_bPlaythroughReady = true;
-			Print("[AROR] Active save found: restoring playthrough, skipping setup", LogLevel.NORMAL);
+			saveManager.SetSavingAllowed(true);
+			StartAutosaveTimer();
+			GetGame().GetCallqueue().CallLater(EnsureGarage_S, ENSURE_GARAGE_DELAY_MS);
+			Print("[AROR] Active save found: restoring the playthrough chosen in setup", LogLevel.NORMAL);
 		}
 		else
 		{
 			if (saveManager)
 				saveManager.SetSavingAllowed(false);
 
-			Print("[AROR] No active save: waiting for an admin to create or load a playthrough", LogLevel.NORMAL);
+			if (saveActive && !restarted)
+			{
+				WriteMarker(RESTART_MARKER_FILE);
+				Print("[AROR] A save was resumed by the game: starting a new unnamed playthrough and reloading for a fresh start", LogLevel.NORMAL);
+				saveManager.StartPlaythrough(SaveGameManager.GetCurrentMissionResource(), string.Empty, true);
+			}
+			else if (saveActive)
+			{
+				// The restart did not clear it: setup is still offered, but "new" is refused (see RequestNewPlaythrough_S)
+				m_bResumedSave = true;
+				Print("[AROR] A resumed save is still active: waiting for an admin to load a playthrough", LogLevel.WARNING);
+			}
+			else
+			{
+				Print("[AROR] No active save: waiting for an admin to create or load a playthrough", LogLevel.NORMAL);
+			}
 		}
 
 		// Staging spawns that registered before this component (enabled only while no playthrough exists)
