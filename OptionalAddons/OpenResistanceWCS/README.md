@@ -1,6 +1,9 @@
-# Open Resistance - WCS (test project)
+# Open Resistance Ultimate - WCS (dependency pack)
 
-An empty project whose only job is to load the Worst Case Scenario (WCS) content addons together with the core in Workbench, so the WCS integration can be tested. It holds no scripts or configs. On a server you just add WCS to the mod list; this project is not needed.
+An empty project whose only job is to depend on the core and the Worst Case Scenario (WCS) content addons. It holds no scripts or configs. It serves two purposes:
+
+- **Workbench testing:** opened through its launcher, it loads WCS together with the repository core.
+- **Hosting from the game:** published to the Workshop, enabling this one item pulls in Open Resistance Ultimate, RHS: Status Quo and every WCS addon below, so an in-game host needs nothing else. Dedicated servers can use it the same way, or list the addons themselves (`server/AROR_Everon_Chicken.wcs.json`).
 
 ## How WCS gets into the game mode
 

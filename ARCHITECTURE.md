@@ -53,7 +53,7 @@ Separate addons, maintained by others, that add extra content such as maps, weap
 
 Extenders we maintain ourselves live in `OptionalAddons/`, each opened in Workbench through its launcher in `tools/` (which resolves the repo core and the game's downloaded addons without registering them globally).
 
-- **Open Resistance - WCS** (`OptionalAddons/OpenResistanceWCS`, addon ID `OpenResistanceWCS`) — test project only. Holds no content; it depends on the core and the Worst Case Scenario (WCS) content addons, including the WCS RHS addons (so RHS Status Quo and WCS MRZR come too), so Workbench can load them together. WCS reaches the game mode through catalog augmentation (see Factions), not through this project; servers just load WCS. WCS's licence forbids modifying or adapting its content, so nothing here may inherit from or override WCS resources. Detail: `OptionalAddons/OpenResistanceWCS/README.md`.
+- **Open Resistance Ultimate - WCS** (`OptionalAddons/OpenResistanceWCS`, addon ID `OpenResistanceWCS`) — dependency pack. Holds no content; it depends on the core and the Worst Case Scenario (WCS) content addons, including the WCS RHS addons (so RHS Status Quo and WCS MRZR come too), so Workbench can load them together and, once published, enabling it in the game pulls in the whole stack for in-game hosting. WCS reaches the game mode through catalog augmentation (see Factions), not through this project; servers just load WCS. WCS's licence forbids modifying or adapting its content, so nothing here may inherit from or override WCS resources. Detail: `OptionalAddons/OpenResistanceWCS/README.md`.
 
 ### Base-game config overrides
 
