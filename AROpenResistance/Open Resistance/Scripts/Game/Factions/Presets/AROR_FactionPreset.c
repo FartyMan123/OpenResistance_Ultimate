@@ -204,7 +204,7 @@ class AROR_FactionPreset
 		int added;
 		foreach (EEntityCatalogType catalogType : catalogTypes)
 		{
-			SCR_EntityCatalog catalog = faction.GetFactionEntityCatalogOfType(catalogType);
+			SCR_EntityCatalog catalog = faction.GetFactionEntityCatalogOfType(catalogType, false);
 			if (!catalog)
 				continue;
 
