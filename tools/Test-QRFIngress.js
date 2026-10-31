@@ -5,7 +5,9 @@ function runQRFIngressTests(sources) {
   let assertions=0;
   const check=(ok,msg)=>{assertions++;if(!ok)throw Error(msg);};
   const methods=['GetOwner','IsSeatedInOwnVehicle','TacticalLaunchPoint','TacticalRoadPoint','CanDismountOnFoot','IsLaunchPositionSafe','FailOperation','FailGroundPlanning','ResolveQRFOrigin','FindGroundRoadLaunch','ConfigureForceFunding','FindTacticalApproach','ConvertReservation','SpawnGroundVehicle','SpawnEmptyGroup','SpawnWaypoint','ConfigureGroup'];
-  const env={LAST_RESORT_ROAD_RADIUS:600,UNDISPATCHED_CLEANUP_DISTANCE:300,GetGame:()=>({GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:e=>e?.player?1:0})})};
+  methods.push('GetMountRejection');
+  const env={AROR_ForceSpawner:{IsAlive:x=>!!x&&!x.dead},string:{Empty:'',Format:()=>''},LAST_RESORT_ROAD_RADIUS:600,UNDISPATCHED_CLEANUP_DISTANCE:300,GetGame:()=>({GetPlayerManager:()=>({GetPlayerIdFromControlledEntity:e=>e?.player?1:0})})};
+  if(!String.prototype.IsEmpty)Object.defineProperty(String.prototype,'IsEmpty',{value(){return !this.length},configurable:true});
   function compile(source,name) {
     const match=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
     if(!match)throw Error('Missing '+name);
@@ -45,6 +47,7 @@ function runQRFIngressTests(sources) {
   let pilot=person;
   const usage={GetPilotCompartmentSlot:()=>({GetOccupant:()=>pilot})};
   const complete=compile(sources.ground,'IsMountComplete');
+  force.GetMountRejection=compile(sources.ground,'GetMountRejection');
   check(!complete.call(force),'no readiness before initial seat request');
   force.m_bMountRequested=true;check(complete.call(force),'driver and all members in own seats allow readiness');
   inSeat=false;check(!complete.call(force),'accepted teleport request without physical seating cannot activate');inSeat=true;
