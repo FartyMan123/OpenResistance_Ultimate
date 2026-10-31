@@ -25,7 +25,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Garage prefab spawned beside the HQ (opposite side from the arsenal)", params: "et")]
 	protected ResourceName m_sGaragePrefab;
 
-	[Attribute("0.5 0 0", UIWidgets.Coords, desc: "World offset from the HQ origin (flag): arsenal at +offset, garage at -offset (opposite sides)")]
+	[Attribute("0.5 0 0", UIWidgets.Coords, desc: "Gap from the HQ origin (flag) to the nearest edge of each prop: arsenal on the +offset side, garage on the -offset side (opposite sides)")]
 	protected vector m_vArsenalOffsetFromHQ;
 
 	[Attribute("100", UIWidgets.Slider, desc: "Minimum distance in metres between the HQ and the edge (radius) of any location", params: "0 5000 10")]
@@ -365,6 +365,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		if (factionPresets)
 			factionPresets.SetPresets_S(presetIds);
 
+		PlaceClearOfFlag(arsenal, hq.GetOrigin(), m_vArsenalOffsetFromHQ);
 		AROR_ContentPacksComponent contentPacks = AROR_ContentPacksComponent.GetInstance();
 		if (contentPacks)
 			contentPacks.SetPackOverrides_S(disabledPackIds, enabledPackIds);
@@ -374,6 +375,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			campaignSettings.SetValues_S(settingIds, settingValues);
 
 		AROR_HighCommandComponent highCommand = AROR_HighCommandComponent.GetInstance();
+		PlaceClearOfFlag(garage, hq.GetOrigin(), -m_vArsenalOffsetFromHQ);
 		if (highCommand)
 			highCommand.SetResistanceName_S(resistanceName);
 
@@ -621,6 +623,33 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------------------------
+	//! Slides a prop along the offset direction so its near edge (bounds) is the offset's length from the flag,
+	//! instead of its origin, so wide props neither overlap each other nor the flag
+	protected void PlaceClearOfFlag(IEntity prop, vector flagPosition, vector offset)
+	{
+		float gap = offset.Length();
+		if (!prop || gap <= 0)
+			return;
+
+		vector direction = offset / gap;
+		vector mins, maxs;
+		prop.GetWorldBounds(mins, maxs);
+
+		// Half-size of the world-aligned bounds measured along the offset direction
+		float halfExtent = Math.AbsFloat(direction[0]) * (maxs[0] - mins[0]) * 0.5 + Math.AbsFloat(direction[2]) * (maxs[2] - mins[2]) * 0.5;
+
+		vector boundsCentre = (mins + maxs) * 0.5;
+		vector target = flagPosition + direction * (gap + halfExtent);
+
+		vector origin = prop.GetOrigin();
+		origin[0] = origin[0] + (target[0] - boundsCentre[0]);
+		origin[2] = origin[2] + (target[2] - boundsCentre[2]);
+		origin[1] = GetGame().GetWorld().GetSurfaceY(origin[0], origin[2]);
+		prop.SetOrigin(origin);
+		prop.Update();
+	}
+
 	//! Sends the setup screen to an admin while the game is still in pre-game
 	protected void TryOfferSetup(int playerId)
 	{
@@ -978,3 +1007,4 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		super.OnDelete(owner);
 	}
 }
+		PlaceClearOfFlag(garage, hqPosition, -m_vArsenalOffsetFromHQ);
