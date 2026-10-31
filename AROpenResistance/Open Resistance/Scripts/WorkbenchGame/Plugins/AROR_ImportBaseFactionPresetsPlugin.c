@@ -37,7 +37,8 @@ class AROR_PresetImportResult
 //! (Configs/FactionPresets/BaseGame/*.conf). Reads each faction's entity catalogs through our faction manager prefab
 //! (which inherits the base-game factions), sorts every entry into the preset types using the base game's own tags
 //! (Game Master labels for characters and vehicles, arsenal item type/mode for items) plus a few file-name hints, and
-//! rewrites the preset files. Costs are written as 0. Anything that cannot be placed is listed in the log.
+//! rewrites the preset files. Prices, readiness and import requirements live in the Base Game content pack, which this
+//! never touches; add new prefabs there by hand. Anything that cannot be placed is listed in the log.
 //! Re-run after game updates; it overwrites the four base preset files.
 [WorkbenchPluginAttribute(name: "Import base faction presets", description: "Fill the base-game faction presets (US, USSR, FIA, CIV) from the game's faction catalogs.", wbModules: {"WorldEditor", "ResourceManager"}, category: "Open Resistance")]
 class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin

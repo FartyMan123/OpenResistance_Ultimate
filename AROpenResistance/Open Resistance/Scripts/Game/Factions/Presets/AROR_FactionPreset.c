@@ -1,6 +1,6 @@
 //! A faction preset (see ARCHITECTURE.md -> Factions): everything an army makes available to the game, in fixed
-//! categories (AROR_EFactionPresetCategory), each entry with a base cost. A preset only lists what exists; garrisons,
-//! QRFs, shops and other systems decide what to use. One `.conf` per preset, listed in AROR_FactionPresetRegistry.
+//! categories (AROR_EFactionPresetCategory), each entry a prefab of a type. A preset only lists what exists; garrisons,
+//! QRFs, missions and other systems decide what to use. One `.conf` per preset, listed in AROR_FactionPresetRegistry.
 [BaseContainerProps(configRoot: true)]
 class AROR_FactionPreset
 {
@@ -57,7 +57,7 @@ class AROR_FactionPreset
 	}
 
 	//------------------------------------------------------------------------------------------------
-	// Queries (entries with an unknown type are never returned)
+	// Queries (entries with an unknown type, or whose prefab no enabled content pack offers, are never returned)
 	//------------------------------------------------------------------------------------------------
 	//! The unit of this type, or null if the preset has none
 	AROR_FactionPresetUnit GetUnit(AROR_EUnitType type)
@@ -81,7 +81,7 @@ class AROR_FactionPreset
 		int added;
 		foreach (AROR_FactionPresetEntry entry : entries)
 		{
-			if (entry.IsKnownType() && entry.GetTypeValue() == type)
+			if (entry.IsKnownType() && entry.GetTypeValue() == type && IsOffered(entry))
 			{
 				outEntries.Insert(entry);
 				added++;
@@ -101,7 +101,7 @@ class AROR_FactionPreset
 		int added;
 		foreach (AROR_FactionPresetEntry entry : entries)
 		{
-			if (entry.IsKnownType())
+			if (entry.IsKnownType() && IsOffered(entry))
 			{
 				outEntries.Insert(entry);
 				added++;
@@ -109,6 +109,17 @@ class AROR_FactionPreset
 		}
 
 		return added;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Units are always usable (content packs do not list units). Any other entry needs its prefab, after replacements,
+	//! in an enabled content pack; otherwise it is skipped and logged once.
+	protected bool IsOffered(notnull AROR_FactionPresetEntry entry)
+	{
+		if (entry.GetCategory() == AROR_EFactionPresetCategory.UNITS)
+			return true;
+
+		return AROR_ContentPacksComponent.IsOffered(entry.GetPrefab(), m_sId);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -136,7 +147,7 @@ class AROR_FactionPreset
 			CollectEntries(category, entries);
 			foreach (AROR_FactionPresetEntry entry : entries)
 			{
-				if (entry.GetPrefab().IsEmpty())
+				if (entry.GetListedPrefab().IsEmpty())
 					empty++;
 
 				if (!entry.IsKnownType())

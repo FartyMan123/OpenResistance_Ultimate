@@ -157,10 +157,11 @@ Purpose: persistent campaign saves, built on the **base-game save system** (`Sav
   - Each component with saved state has a matching `ScriptedComponentSerializer`. Serializers write a version first and keep loading older versions.
   - Locations are referenced by **stable ID**, never by position in a list.
 - Save generated results, not random seeds, so saves survive map and code changes.
-- Saved so far: location control, settlement support, the Resistance HQ, arsenals, faction presets per role, faction funds, manpower, player money, Resistance item stock, Resistance garage vehicle snapshots, per-player arsenal loadout slots, garrison rosters, QRF readiness, crackdown and debt, the Invader campaign state, stronghold state and active Resistance missions.
-- Boot rule: if a save is active when the world loads it is restored; otherwise setup starts. A new playthrough writes an initial save point, so new and loaded games share one restore path.
+- Saved so far: location control, settlement support, the Resistance HQ, arsenals, faction presets per role, content pack overrides, faction funds, manpower, player money, Resistance item stock, Resistance garage vehicle snapshots, per-player arsenal loadout slots, garrison rosters, QRF readiness, crackdown and debt, the Invader campaign state, stronghold state and active Resistance missions.
+- Boot rule: launching the mission always starts fresh with setup (saving stays off until the admin chooses). A save is restored only when the admin loads it from setup. If the game resumed a save by itself, the server starts a new unnamed playthrough and reloads the mission once; if that fails, "new" is refused until a save is loaded. A new playthrough writes an initial save point, so new and loaded games share one restore path.
 - Limits: about 101 playthroughs and save points per mission; old autosaves need pruning.
-- Planned: periodic autosave and saves on key events and shutdown; verification on a dedicated server.
+- Autosave (Game Flow, server): every few minutes (configurable) and shortly after key events (garage changes) the active save is overwritten, so the save list does not fill up. After a load, a garage prop is respawned beside the HQ if none came back with the save.
+- Planned: saves on other key events and shutdown; verification on a dedicated server.
 
 ### Factions — In progress
 Purpose: the sides in play, referenced by **role** so the actual factions are configurable.
@@ -180,8 +181,9 @@ Core factions live in `AROR_FactionManager.et`. The three military factions are 
 | `AROR_CIVILIANS` | civilian | `EVERON_CIV` |
 
 **Faction presets — In progress**
-- A preset (`AROR_FactionPreset`, one `.conf` each) lists what an army makes available in eight fixed categories: **Units** (AI characters, at most one per unit type), **Vehicles** (empty, no crew), **Gear**, **Equipment**, **Weapons**, **Weapon accessories**, **Ammunition** and **Vehicle ammunition** (munitions loaded onto vehicles and aircraft as items, such as helicopter rockets; vehicle-mounted guns rearm through the supply system instead). Every entry is a prefab with a **base cost** and a **minimum readiness** (default 1) when it becomes available, grouped by type (e.g. RIFLEMAN, MOTOR_TRUCK, RIFLE); apart from units, a type can have any number of entries. An entry can also require **import facilities**: a count of held seaports, heliports and airports together, plus optionally one held seaport (PORT) or one held heliport/airport (AIR), counted by `AROR_ImportPoints`. Black Market and Imports apply the gate (`HasRequiredImportPoints`); like minimum readiness, other systems apply it themselves.
-- Presets only make things available; the systems that use them (garrisons, QRFs, shops, recruitment) decide what to pick. Each preset lists the roles it can be used for.
+- A preset (`AROR_FactionPreset`, one `.conf` each) lists what an army fields in eight fixed categories: **Units** (AI characters, at most one per unit type), **Vehicles** (empty, no crew), **Gear**, **Equipment**, **Weapons**, **Weapon accessories**, **Ammunition** and **Vehicle ammunition** (munitions loaded onto vehicles and aircraft as items, such as helicopter rockets; vehicle-mounted guns rearm through the supply system instead). Every entry is only a **prefab of a type** (e.g. RIFLEMAN, MOTOR_TRUCK, RIFLE); apart from units, a type can have any number of entries. Prices, readiness and import requirements are not part of presets: they live in Content Packs.
+- An entry's prefab is resolved through Content Pack **replacements**, so with a weapon mod's pack enabled an army listing the base-game M16 fields the mod's variant instead.
+- Presets only make things available; the systems that use them (garrisons, QRFs, missions, recruitment) decide what to pick. Each preset lists the roles it can be used for.
 - `AROR_FactionPresetRegistry` (`Configs/FactionPresets/AROR_FactionPresetRegistry.conf`) lists the available presets. The base-game presets (`FIA`, `US_ARMY`, `USSR_ARMY`, `EVERON_CIV`) are built into the core, written the same way an extender would.
 - `AROR_FactionPresetsComponent` (game mode) loads the presets on every machine and answers queries for a role's preset. The server owns which preset each role uses: chosen by the admin per role when creating a campaign (defaults otherwise), replicated, and saved (`AROR_FactionPresetsComponentSerializer`). A saved preset that no longer exists falls back to the role's default.
 - Planned: garrisons, QRFs and air QRFs read their units and vehicles from presets instead of their own lists.
@@ -189,6 +191,19 @@ Core factions live in `AROR_FactionManager.et`. The three military factions are 
 
 - `AROR_LoadoutManager.et` offers only Resistance loadouts; `AROR_Character_Resistance_Base.et` is the player character.
 - Extension points: extender mods add presets (new `.conf` files listed in the registry through Override in addon). The categories and their types are a fixed core list; entries with any other type are ignored. Server admins or extenders point a role at another faction key without touching core code.
+
+### Content Packs — In progress
+Purpose: everything that can be bought or fielded, per content source (the base game, a mod such as RHS or WCS), with its economy data, independent of which factions are in play. With RHS enabled its gear is sold even when every faction uses base-game presets.
+
+- A pack (`AROR_ContentPack`, one `.conf` each) lists entries in the preset categories except Units, each a typed subclass (e.g. a Vehicle of type APC, a Weapon of type MARKSMAN_RIFLE). Every entry has a prefab, a **base cost**, a **minimum readiness** (default 1) and optional **import facilities** (a count of held seaports, heliports and airports together, plus optionally one held seaport or one held heliport/airport, counted by `AROR_ImportPoints`).
+- **Replacements**: an entry can list prefabs it replaces. While its pack is enabled, those prefabs are not sold and faction preset entries listing them resolve to the replacer (chains followed).
+- **Availability**: a pack names the addon GUIDs it needs and is only available while they are all loaded, so the core can ship packs for popular mods. An available pack is on or off per campaign: its own default, overridden by the admin.
+- `AROR_ContentPackRegistry` (`Configs/ContentPacks/AROR_ContentPackRegistry.conf`) lists the packs in priority order; the core ships `BASE_GAME`. `AROR_ContentPacksComponent` (game mode) loads them on every machine and builds one catalogue from the enabled packs (the earlier pack wins a duplicate prefab or replacement). Queries: enabled entries per category, an entry by prefab, a prefab's minimum readiness (1 if unlisted), replacement resolution.
+- Server/client: the server owns the per-campaign overrides (packs turned off, or turned on when off by default); they replicate and every machine rebuilds the same catalogue. A new campaign starts with the defaults.
+- Saved: the overrides (`AROR_ContentPacksComponentSerializer`). A saved pack whose mod is missing is kept in the save and simply unavailable.
+- Used by: Black Market and Imports (catalogue, prices, import gate); missions and outpost stores (an enemy role only fields prefabs its current readiness allows).
+- Extension points: extender mods add packs to the registry (Override in addon) or ship packs that replace core prefabs.
+- Planned: admin UI to toggle packs at campaign setup and during play (the server API exists); an RHS pack.
 
 ### Commanders — In progress
 Purpose: one server-owned command context per role. The Resistance is player-directed; the Occupiers and Invaders are AI-directed through the same evaluation interface.
@@ -226,17 +241,17 @@ Purpose: Resistance side missions, offered on a board and run through the **OPS*
 - Planned: enemy crackdown and support effects, item rewards, more mission types, balance.
 
 ### Black Market and Imports — In progress
-Purpose: two phone shops where Resistance players buy equipment from every faction's preset (the Resistance's first, so its prices win when a prefab is listed twice). **Black Market** sells items (everything except units and vehicles) into Resistance Storage; **Imports** ("Used Imports") sells vehicles into the Resistance Garage.
+Purpose: two phone shops where Resistance players buy equipment from the enabled Content Packs. **Black Market** sells items (everything except units and vehicles) into Resistance Storage; **Imports** ("Used Imports") sells vehicles into the Resistance Garage.
 
-- **Import facilities**: held seaports, heliports and airports (`AROR_ImportPoints`). Each preset entry carries a **facility count** and an optional **special location** (one held seaport, or one held heliport/airport). Below the count, or without the special location, an entry is shown locked with what it needs. Zero facilities held closes both shops. Prices come from the preset entries' base cost.
-- `AROR_BlackMarket` (items) and `AROR_Imports` (vehicles) build their catalogues from all faction presets, the same on every machine. The client sends prefabs and quantities, never prices; the server resolves them against its own catalogue, checks every requirement, takes payment and delivers. **Black Market** takes a whole cart all-or-nothing (`Import_S`). **Imports** buys one vehicle per request (`Buy_S`, no cart) and refuses when the Garage is full.
+- **Import facilities**: held seaports, heliports and airports (`AROR_ImportPoints`). Each pack entry carries a **facility count** and an optional **special location** (one held seaport, or one held heliport/airport). Below the count, or without the special location, an entry is shown locked with what it needs. Zero facilities held closes both shops. Prices come from the pack entries' base cost.
+- `AROR_BlackMarket` (items) and `AROR_Imports` (vehicles) build their catalogues from the enabled Content Packs, the same on every machine, and rebuild when the packs change. The client sends prefabs and quantities, never prices; the server resolves them against its own catalogue, checks every requirement, takes payment and delivers. **Black Market** takes a whole cart all-or-nothing (`Import_S`). **Imports** buys one vehicle per request (`Buy_S`, no cart) and refuses when the Garage is full.
 - **Who pays**: personal funds, or **Resistance faction funds** when the buyer is a Resistance Leader (HICOMM host or delegate) and chooses so. A faction-funded purchase is announced to everyone. There is no confirmation step: one click buys.
 - **Delivery**: items go to Resistance Storage (`Add_S`). Vehicles go to the Garage as a **factory-new entry** (`AddVehicleByPrefab_S`): no snapshot, so retrieving one gives the prefab's own fuel and cargo.
 - **Phone apps** (`AROR_BlackMarketApp`, `AROR_ImportsApp`, shared base `AROR_ShopAppBase`): category tabs, lists that scroll by whole rows (mouse wheel or arrows), a picture per entry (the base game's entity-catalogue image, else an inventory-style item preview of the prefab), and a purchase popup with a sound for every success or failure. The Black Market adds a search box over all categories and a slim scrolling cart; Imports shows two buttons per vehicle (faction, personal) and a garage-slots read-out.
 - Server/client: the client asks through the player controller (`AROR_RequestBlackMarketImport`, `AROR_RequestVehicleImport`); the server answers the buyer only with a result (`AROR_ShopResult`) that opens the popup. Facility counts read replicated location control.
 - Saved: nothing of its own. Delivered items and vehicles are saved by Storage and the Garage.
-- Depends on: Locations (import facilities), Factions (presets, Resistance check), Economy (personal money, faction funds), High Command (Leaders), Resistance Storage, Resistance Garage, Phone, Notifications.
-- Extension points: the catalogue is the preset (change prices, requirements and entries there); `GetOnImported_S` on each shop for server-side reactions; `modded enum AROR_EImportPointRequirement` for new special locations.
+- Depends on: Locations (import facilities), Content Packs, Factions (Resistance check), Economy (personal money, faction funds), High Command (Leaders), Resistance Storage, Resistance Garage, Phone, Notifications.
+- Extension points: the catalogue is the enabled Content Packs (change prices, requirements and entries there); `GetOnImported_S` on each shop for server-side reactions; `modded enum AROR_EImportPointRequirement` for new special locations.
 - Planned: Attention (black market heat), per-item stock limits.
 
 ### Operations (Attacks & QRF) — In progress
