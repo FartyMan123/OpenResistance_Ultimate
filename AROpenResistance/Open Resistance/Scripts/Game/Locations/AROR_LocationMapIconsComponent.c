@@ -17,6 +17,12 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	[Attribute("1", desc: "Draw locations as military-frame symbols (rectangle ours, diamond enemy) instead of the icon textures")]
 	protected bool m_bFrameIcons;
 
+	[Attribute("1", desc: "Show the local player's own position and facing on the map", category: "Navigation")]
+	protected bool m_bShowOwnPosition;
+
+	[Attribute("1", desc: "Shift-click on the map sets a personal waypoint (shown on the map and in the world); shift-click it again to remove it", category: "Navigation")]
+	protected bool m_bShiftClickWaypoint;
+
 	[Attribute("{EC2170E3AEEDEC1E}UI/Layouts/Map/AROR_MapInfoPopup.layout", UIWidgets.ResourceNamePicker, desc: "Layout of the info popup shown when an icon is clicked (see AROR_LocationInfoPopup for the widget names)", params: "layout", category: "Info popup")]
 	protected ResourceName m_sPopupLayout;
 
@@ -55,6 +61,8 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 
 	protected Widget m_wIconParent;
 	protected ref AROR_PlayerMapMarkers m_PlayerMarkers = new AROR_PlayerMapMarkers();
+	protected ref AROR_NavigationMapMarkers m_Navigation = new AROR_NavigationMapMarkers();
+	protected ref AROR_PlayerWaypoint m_Waypoint;
 	protected ref AROR_QRFMapIntel m_QRFIntel = new AROR_QRFMapIntel();
 	protected ref AROR_MissionMapMarkers m_MissionMarkers = new AROR_MissionMapMarkers();
 	protected ref AROR_OperationMapMarkers m_OperationMarkers = new AROR_OperationMapMarkers();
@@ -129,6 +137,9 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 			m_Selector.SetZOrder(SELECTOR_Z_ORDER);
 		}
 
+		if (m_Waypoint)
+			SCR_MapEntity.GetOnSelection().Insert(OnWaypointClick);
+
 		// Per frame only while a map is open (scheduled above), so icons follow pan and zoom interpolation
 	}
 
@@ -159,9 +170,46 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		}
 
 		SCR_MapEntity.GetOnSelection().Remove(OnMapClicked);
+		SCR_MapEntity.GetOnSelection().Remove(OnWaypointClick);
 		m_Popup = null;
 		m_Selector = null;
 		ClearIcons();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	// Personal waypoint
+	//------------------------------------------------------------------------------------------------
+	protected static bool IsShiftHeld()
+	{
+		return Debug.KeyState(KeyCode.KC_LSHIFT) || Debug.KeyState(KeyCode.KC_RSHIFT);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Shift-click: sets or moves the waypoint, or removes it when the click is on it. Ignored while another
+	//! feature uses map clicks (marker placement, HQ pick, teleport).
+	protected void OnWaypointClick(vector screenPosition)
+	{
+		if (!m_Waypoint || s_bInfoPopupSuppressed || !IsShiftHeld())
+			return;
+
+		SCR_MapEntity mapEntity = SCR_MapEntity.GetMapInstance();
+		if (!mapEntity)
+			return;
+
+		float worldX, worldZ;
+		mapEntity.GetMapCursorWorldPosition(worldX, worldZ);
+		int cursorX, cursorY;
+		mapEntity.WorldToScreen(worldX, worldZ, cursorX, cursorY, true);
+		if (AROR_NavigationMapMarkers.IsOnWaypoint(mapEntity, m_Waypoint, cursorX, cursorY))
+		{
+			m_Waypoint.Clear();
+			AROR_NotificationManagerComponent.ShowHint("Personal marker removed.");
+			return;
+		}
+
+		m_Waypoint.Set(Vector(worldX, 0, worldZ));
+		Print(string.Format("[AROR] Personal marker set at %1", m_Waypoint.GetPosition()), LogLevel.NORMAL);
+		AROR_NotificationManagerComponent.ShowHint("Personal marker set. Shift-click it on the map to remove it.");
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -172,6 +220,10 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	protected void OnMapClicked(vector screenPosition)
 	{
 		if (!m_Popup)
+			return;
+
+		// Shift-click is the waypoint's (OnWaypointClick)
+		if (m_Waypoint && IsShiftHeld())
 			return;
 
 		if (s_bInfoPopupSuppressed)
@@ -295,6 +347,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	protected void ClearIcons()
 	{
 		m_PlayerMarkers.ClearWidgets();
+		m_Navigation.ClearWidgets();
 		m_QRFIntel.ClearWidgets();
 		m_MissionMarkers.ClearWidgets();
 		m_OperationMarkers.ClearWidgets();
@@ -422,6 +475,8 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		m_PlayerMarkers.Update(m_wIconParent, m_sIconLayout, mapEntity);
 		m_MissionMarkers.Update(m_wIconParent, m_sIconLayout, mapEntity);
 		m_OperationMarkers.Update(m_wIconParent, m_sIconLayout, mapEntity);
+		// Last, so the player's own arrow and waypoint draw above the other markers
+		m_Navigation.Update(m_wIconParent, m_sIconLayout, mapEntity, m_Waypoint, m_bShowOwnPosition);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -500,6 +555,8 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		if (!GetGame().InPlayMode() || RplSession.Mode() == RplMode.Dedicated)
 			return;
 		AROR_QRFMapIntel.Clear();
+		if (m_bShiftClickWaypoint)
+			m_Waypoint = new AROR_PlayerWaypoint(m_sIconLayout);
 
 		SCR_MapEntity.GetOnMapOpen().Insert(OnMapOpen);
 		SCR_MapEntity.GetOnMapClose().Insert(OnMapClose);
@@ -512,6 +569,10 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		SCR_MapEntity.GetOnMapOpen().Remove(OnMapOpen);
 		SCR_MapEntity.GetOnMapClose().Remove(OnMapClose);
 		SCR_MapEntity.GetOnSelection().Remove(OnMapClicked);
+		SCR_MapEntity.GetOnSelection().Remove(OnWaypointClick);
+		if (m_Waypoint)
+			m_Waypoint.Clear();
+		m_Waypoint = null;
 		m_Popup = null;
 		m_Selector = null;
 		ClearIcons();
