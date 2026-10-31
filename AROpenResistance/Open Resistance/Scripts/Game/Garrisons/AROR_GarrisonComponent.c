@@ -511,7 +511,14 @@ class AROR_GarrisonComponent : ScriptComponent
 		if (m_Location.GetLocationType() != AROR_ELocationType.OUTPOST)
 		{
 			if (m_iLevel >= 3 && !m_bOmitParkedArmour)
-				AddSlot(faction.m_sParkedArmour, 2);
+			{
+				// A random armour choice per garrison (variant 0, the role's single armour, without preset choices)
+				int armourVariant;
+				if (faction.m_aParkedArmourChoices && !faction.m_aParkedArmourChoices.IsEmpty())
+					armourVariant = PARKED_ARMOUR_VARIANT + Math.RandomInt(0, faction.m_aParkedArmourChoices.Count());
+				int armourSlot = AddSlot(ParkedPrefab(faction, armourVariant), 2);
+				m_aSlots[armourSlot].m_iVariant = armourVariant;
+			}
 			// Variant k identifies extra vehicle k-1, so a reload re-binds the same vehicle rather than armour
 			for (int extra = 0; extra < GetExtraParkedCount(); extra++)
 			{
@@ -551,9 +558,16 @@ class AROR_GarrisonComponent : ScriptComponent
 		}
 		return faction.m_sStaticMG;
 	}
-	//! Variant 0 is the role's spare armour; higher variants are this site's extra parked vehicles
+	//! Variant 0 is the role's spare armour; low variants are this site's extra parked vehicles; PARKED_ARMOUR_VARIANT
+	//! and up pick from the preset-resolved armour choices (clamped, so a shorter list after a mod change still binds)
 	protected ResourceName ParkedPrefab(AROR_GarrisonFaction faction, int variant)
 	{
+		if (variant >= PARKED_ARMOUR_VARIANT)
+		{
+			if (faction.m_aParkedArmourChoices && !faction.m_aParkedArmourChoices.IsEmpty())
+				return faction.m_aParkedArmourChoices[Math.Clamp(variant - PARKED_ARMOUR_VARIANT, 0, faction.m_aParkedArmourChoices.Count() - 1)];
+			return faction.m_sParkedArmour;
+		}
 		if (variant > 0 && variant <= GetExtraParkedCount())
 			return m_aExtraParkedVehicles[variant - 1];
 		return faction.m_sParkedArmour;
@@ -576,6 +590,7 @@ class AROR_GarrisonComponent : ScriptComponent
 	}
 
 	static const int SENTRY_VARIANT = 1000;	//!< Infantry variants from here are tower marksmen; variant - SENTRY_VARIANT is the post
+	static const int PARKED_ARMOUR_VARIANT = 2000;	//!< Parked variants from here index the binding's parked armour choices
 
 	//! Guard towers (AROR_SentryPostComponent) among the composition's direct children, in order
 	protected array<IEntity> SentryPosts()

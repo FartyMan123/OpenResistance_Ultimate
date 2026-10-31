@@ -27,6 +27,10 @@ class AROR_GarrisonFaction
 	[Attribute("0", desc: "Append the role's faction preset static MGs, armed cars and APCs to the static and manned choices (after the authored ones, so saved variants keep their meaning). If the role uses another army's preset, the authored assets are dropped and soldiers and everything else come from the preset.")]
 	bool m_bUseFactionPreset;
 
+	//! Set by preset resolution: parked armour choices, the authored armour first, then the preset's APCs and IFVs.
+	//! Null on an unresolved binding, which parks m_sParkedArmour only.
+	ref array<ResourceName> m_aParkedArmourChoices;
+
 	//! The binding to use with this preset: itself when presets are off or the preset is missing, else a resolved copy
 	AROR_GarrisonFaction ResolveWithPreset(AROR_FactionPreset preset)
 	{
@@ -84,18 +88,27 @@ class AROR_GarrisonFaction
 		array<ResourceName> hulls = {};
 		PresetVehicles(preset, AROR_EVehicleType.ARMED_CAR, hulls);
 		PresetVehicles(preset, AROR_EVehicleType.APC, hulls);
+		PresetVehicles(preset, AROR_EVehicleType.IFV, hulls);
 		foreach (ResourceName hull : hulls)
 		{
 			if (!resolved.m_aMannedVehicles.Contains(hull))
 				resolved.m_aMannedVehicles.Insert(hull);
 		}
-		if (resolved.m_sParkedArmour.IsEmpty())
+
+		// Parked armour is picked per garrison from these, so content mods (e.g. WCS) vary it too
+		resolved.m_aParkedArmourChoices = {};
+		if (!resolved.m_sParkedArmour.IsEmpty())
+			resolved.m_aParkedArmourChoices.Insert(resolved.m_sParkedArmour);
+		array<ResourceName> armour = {};
+		PresetVehicles(preset, AROR_EVehicleType.APC, armour);
+		PresetVehicles(preset, AROR_EVehicleType.IFV, armour);
+		foreach (ResourceName parked : armour)
 		{
-			array<ResourceName> armour = {};
-			PresetVehicles(preset, AROR_EVehicleType.APC, armour);
-			if (!armour.IsEmpty())
-				resolved.m_sParkedArmour = armour[0];
+			if (!resolved.m_aParkedArmourChoices.Contains(parked))
+				resolved.m_aParkedArmourChoices.Insert(parked);
 		}
+		if (resolved.m_sParkedArmour.IsEmpty() && !resolved.m_aParkedArmourChoices.IsEmpty())
+			resolved.m_sParkedArmour = resolved.m_aParkedArmourChoices[0];
 
 		return resolved;
 	}
