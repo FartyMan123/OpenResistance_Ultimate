@@ -408,7 +408,8 @@ class AROR_MissionBoardComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! A random vehicle of the type from the role's faction preset, or empty if it has none
+	//! A random vehicle of the type from the role's faction preset that its readiness allows (any of the type if none
+	//! is allowed yet), or empty if it has none
 	ResourceName GetVehiclePrefab_S(AROR_EFactionRole role, AROR_EVehicleType type)
 	{
 		AROR_FactionPresetsComponent presets = AROR_FactionPresetsComponent.GetInstance();
@@ -423,6 +424,16 @@ class AROR_MissionBoardComponent : SCR_BaseGameModeComponent
 		preset.GetEntries(AROR_EFactionPresetCategory.VEHICLES, type, entries);
 		if (entries.IsEmpty())
 			return string.Empty;
+
+		array<ResourceName> allowed = {};
+		foreach (AROR_FactionPresetEntry candidate : entries)
+		{
+			if (AROR_ContentPacksComponent.IsAvailableAtReadiness(candidate.GetPrefab(), role))
+				allowed.Insert(candidate.GetPrefab());
+		}
+
+		if (!allowed.IsEmpty())
+			return allowed.GetRandomElement();
 
 		AROR_FactionPresetEntry entry = entries.GetRandomElement();
 		return entry.GetPrefab();
