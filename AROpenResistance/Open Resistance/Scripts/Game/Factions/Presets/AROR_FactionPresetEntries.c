@@ -31,6 +31,20 @@ class AROR_FactionPresetEntry
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Fills an entry created at runtime (catalog augmentation, see AROR_FactionPreset.AugmentFromCatalogs)
+	void InitGenerated(ResourceName prefab, int type, int minimumReadinessLevel)
+	{
+		m_sPrefab = prefab;
+		m_iMinimumReadinessLevel = minimumReadinessLevel;
+		SetTypeValue(type);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void SetTypeValue(int type)
+	{
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! The entry's type within its category, as the int value of that category's type enum
 	int GetTypeValue()
 	{
@@ -66,6 +80,12 @@ class AROR_FactionPresetUnit : AROR_FactionPresetEntry
 	}
 
 	//------------------------------------------------------------------------------------------------
+	override protected void SetTypeValue(int type)
+	{
+		m_eType = type;
+	}
+
+	//------------------------------------------------------------------------------------------------
 	override bool IsKnownType()
 	{
 		return m_eType >= 0 && m_eType <= AROR_EUnitType.CIVILIAN;
@@ -89,6 +109,12 @@ class AROR_FactionPresetVehicle : AROR_FactionPresetEntry
 	override int GetTypeValue()
 	{
 		return m_eType;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override protected void SetTypeValue(int type)
+	{
+		m_eType = type;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -118,6 +144,12 @@ class AROR_FactionPresetGear : AROR_FactionPresetEntry
 	}
 
 	//------------------------------------------------------------------------------------------------
+	override protected void SetTypeValue(int type)
+	{
+		m_eType = type;
+	}
+
+	//------------------------------------------------------------------------------------------------
 	override bool IsKnownType()
 	{
 		return m_eType >= 0 && m_eType <= AROR_EGearType.FACEWEAR;
@@ -141,6 +173,12 @@ class AROR_FactionPresetEquipment : AROR_FactionPresetEntry
 	override int GetTypeValue()
 	{
 		return m_eType;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override protected void SetTypeValue(int type)
+	{
+		m_eType = type;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -170,6 +208,12 @@ class AROR_FactionPresetWeapon : AROR_FactionPresetEntry
 	}
 
 	//------------------------------------------------------------------------------------------------
+	override protected void SetTypeValue(int type)
+	{
+		m_eType = type;
+	}
+
+	//------------------------------------------------------------------------------------------------
 	override bool IsKnownType()
 	{
 		return m_eType >= 0 && m_eType <= AROR_EWeaponType.GRENADE;
@@ -192,6 +236,12 @@ class AROR_FactionPresetWeaponAccessory : AROR_FactionPresetEntry
 	override int GetTypeValue()
 	{
 		return m_eType;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override protected void SetTypeValue(int type)
+	{
+		m_eType = type;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -221,6 +271,12 @@ class AROR_FactionPresetAmmunition : AROR_FactionPresetEntry
 	}
 
 	//------------------------------------------------------------------------------------------------
+	override protected void SetTypeValue(int type)
+	{
+		m_eType = type;
+	}
+
+	//------------------------------------------------------------------------------------------------
 	override bool IsKnownType()
 	{
 		return m_eType >= 0 && m_eType <= AROR_EAmmunitionType.GRENADE_ROUND;
@@ -244,6 +300,12 @@ class AROR_FactionPresetVehicleAmmunition : AROR_FactionPresetEntry
 	override int GetTypeValue()
 	{
 		return m_eType;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override protected void SetTypeValue(int type)
+	{
+		m_eType = type;
 	}
 
 	//------------------------------------------------------------------------------------------------

@@ -280,6 +280,28 @@ class AROR_FactionPresetsComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Every machine, a frame after loading so the factions and their catalogs exist: adds what mods put into the
+	//! faction catalogs (e.g. WCS weapons, vehicles and helicopters) to the presets that ask for it
+	protected void AugmentPresetsFromCatalogs()
+	{
+		FactionManager factionManager = GetGame().GetFactionManager();
+		if (!factionManager)
+		{
+			Print("[AROR] Faction presets: no faction manager, catalog augmentation skipped", LogLevel.WARNING);
+			return;
+		}
+
+		foreach (AROR_FactionPreset preset : m_aPresets)
+		{
+			int added = preset.AugmentFromCatalogs(factionManager);
+			if (added > 0)
+				Print(string.Format("[AROR] Faction preset '%1': %2 entries added from the faction catalogs", preset.GetId(), added), LogLevel.NORMAL);
+		}
+
+		m_OnPresetsChanged.Invoke();
+	}
+
+	//------------------------------------------------------------------------------------------------
 	protected static Managed LoadConfig(ResourceName path)
 	{
 		if (path.IsEmpty())
@@ -302,6 +324,7 @@ class AROR_FactionPresetsComponent : SCR_BaseGameModeComponent
 
 		s_Instance = this;
 		LoadPresets();
+		GetGame().GetCallqueue().CallLater(AugmentPresetsFromCatalogs, 0);
 
 		// Defaults until a campaign is created or a save restores the real choice; set directly (no BumpMe during
 		// init), the initial replication snapshot carries them to clients
@@ -321,6 +344,8 @@ class AROR_FactionPresetsComponent : SCR_BaseGameModeComponent
 	//------------------------------------------------------------------------------------------------
 	override void OnDelete(IEntity owner)
 	{
+		GetGame().GetCallqueue().Remove(AugmentPresetsFromCatalogs);
+
 		if (s_Instance == this)
 			s_Instance = null;
 
