@@ -69,6 +69,25 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Phone quick dock: save the running campaign (admins only; the server checks)
+	void AROR_RequestManualSave()
+	{
+		if (Replication.IsServer())
+			AROR_RpcAsk_ManualSave();
+		else
+			Rpc(AROR_RpcAsk_ManualSave);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
+	protected void AROR_RpcAsk_ManualSave()
+	{
+		AROR_GameFlowComponent gameFlow = AROR_GameFlowComponent.GetInstance();
+		if (gameFlow)
+			gameFlow.RequestManualSave_S(GetPlayerId());
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! Admin menu: unlock Game Master for this player
 	void AROR_RequestAdminGameMaster()
 	{

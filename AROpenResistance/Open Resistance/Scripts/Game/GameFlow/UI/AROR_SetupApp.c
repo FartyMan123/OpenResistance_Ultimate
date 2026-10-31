@@ -1,7 +1,8 @@
 //! The campaign setup screen (see AROR_SetupMenu), drawn immediate-mode from the shared pooled-widget layout on a
 //! 1700 x 900 canvas, as the admin menu is. Screens:
 //! - START: New campaign or Load campaign.
-//! - LOAD: the saved campaigns sent by the server, six per page.
+//! - LOAD: the saved campaigns sent by the server, one card per playthrough (loads its newest save), each expandable
+//!   to pick any of its saves.
 //! - New campaign, in steps: FACTIONS (an army per role and the content packs whose mods are loaded), SETTINGS (the
 //!   campaign settings by category), NAME (the resistance name), then the HQ is placed on the map.
 //! The choices are kept in the setup component's AROR_SetupDraft; the server checks them all again.
@@ -23,7 +24,13 @@ class AROR_SetupApp : AROR_PhonePooledApp
 	protected static const float CONTENT_TOP = 190;
 	protected static const float FOOTER_Y = 830;
 
-	protected static const int SAVE_ROWS = 6;
+	protected static const float LOAD_LIST_HEIGHT = 610;	//!< Space for campaign cards and save rows on one page
+	protected static const float GROUP_ROW_HEIGHT = 86;
+	protected static const float GROUP_ROW_STEP = 98;
+	protected static const float SAVE_ROW_HEIGHT = 52;
+	protected static const float SAVE_ROW_STEP = 60;
+	protected static const float SAVE_ROW_INDENT = 60;
+	protected static const float EXPAND_WIDTH = 220;
 	protected static const int PACK_ROWS = 4;
 	protected static const int SETTING_ROWS = 7;
 
@@ -37,10 +44,16 @@ class AROR_SetupApp : AROR_PhonePooledApp
 	protected string m_sMessage;
 	protected ref array<AROR_EFactionRole> m_aRoles = {};
 
-	// Load
+	// Load: one row per save from the server, grouped by playthrough (each group's saves together, newest first)
 	protected ref array<string> m_aSaves = {};
+	protected ref array<int> m_aGroupFirst = {};	//!< Index of each group's first (newest) save
+	protected ref array<int> m_aGroupCount = {};
+	protected ref array<int> m_aExpandedGroups = {};
+	protected ref array<int> m_aLoadRows = {};	//!< Visible rows: group g as -(g + 1), a single save by its index
+	protected ref array<int> m_aLoadPageStarts = {};	//!< First visible row of each page
 	protected int m_iSavePage;
-	protected int m_iSelectedSave = -1;
+	protected int m_iSelectedSave = -1;	//!< The save LOAD CAMPAIGN loads (a group's newest, or a picked one)
+	protected bool m_bSelectedSingleSave;	//!< A save picked from an expanded group rather than the group itself
 	protected bool m_bWaitingForList;
 
 	// New campaign
@@ -105,7 +118,10 @@ class AROR_SetupApp : AROR_PhonePooledApp
 		if (m_iScreen == SCREEN_LOAD)
 		{
 			m_aSaves.Copy(setup.GetSaveLabels());
+			BuildSaveGroups();
+			m_aExpandedGroups.Clear();
 			m_iSavePage = 0;
+			m_bSelectedSingleSave = false;
 			m_iSelectedSave = -1;
 			if (!m_aSaves.IsEmpty())
 				m_iSelectedSave = 0;
@@ -307,43 +323,34 @@ class AROR_SetupApp : AROR_PhonePooledApp
 	{
 		DrawHeader("EVERON  -  CAMPAIGN SETUP", "LOAD CAMPAIGN", LoadSubtitle());
 
-		int firstRow = m_iSavePage * SAVE_ROWS;
-		for (int r = 0; r < SAVE_ROWS; r++)
+		BuildLoadRows();
+		int pages = m_aLoadPageStarts.Count();
+		m_iSavePage = Math.ClampInt(m_iSavePage, 0, pages - 1);
+		int firstRow = m_aLoadPageStarts[m_iSavePage];
+		int endRow = m_aLoadRows.Count();
+		if (m_iSavePage + 1 < pages)
+			endRow = m_aLoadPageStarts[m_iSavePage + 1];
+
+		float y = CONTENT_TOP + 10;
+		for (int r = firstRow; r < endRow; r++)
 		{
-			int index = firstRow + r;
-			if (index >= m_aSaves.Count())
-				break;
-
-			string saveName, detail;
-			bool compatible;
-			ParseSave(m_aSaves[index], saveName, detail, compatible);
-
-			float y = CONTENT_TOP + 10 + r * 98;
-			bool selected = index == m_iSelectedSave;
-			int border = AROR_UIColors.LINE;
-			int fill = AROR_UIColors.SURFACE_RAISED;
-			int nameColor = AROR_UIColors.TEXT;
-			if (selected)
+			int row = m_aLoadRows[r];
+			if (row < 0)
 			{
-				border = AROR_UIColors.REBEL;
-				fill = AROR_UIColors.REBEL_DIM;
-				nameColor = AROR_UIColors.REBEL;
+				DrawSaveGroup(-row - 1, y);
+				y += GROUP_ROW_STEP;
 			}
-
-			CardColoured(LEFT, y, CONTENT_WIDTH, 86, border, fill);
-			Text(LEFT + 28, y + 12, CONTENT_WIDTH - 320, 36, 28, saveName, C(nameColor), true);
-			Text(LEFT + 28, y + 50, CONTENT_WIDTH - 320, 26, 18, detail, C(AROR_UIColors.TEXT_MUTED));
-			if (!compatible)
-				TextRight(LEFT + CONTENT_WIDTH - 28, y + 30, 20, "INCOMPATIBLE", C(AROR_UIColors.WARN), true);
-
-			HitArea(LEFT, y, CONTENT_WIDTH, 86, "save:" + index);
+			else
+			{
+				DrawSingleSave(row, y);
+				y += SAVE_ROW_STEP;
+			}
 		}
 
 		DrawFooterRule();
 		ActionButton(LEFT, FOOTER_Y, 220, 52, "BACK", "start");
-		if (m_aSaves.Count() > SAVE_ROWS)
+		if (pages > 1)
 		{
-			int pages = (m_aSaves.Count() + SAVE_ROWS - 1) / SAVE_ROWS;
 			ActionButton(580, FOOTER_Y, 140, 52, "PREV", "savepage:-1", false, m_iSavePage > 0, 18);
 			TextCentre(850, FOOTER_Y + 14, 18, string.Format("PAGE %1 OF %2", m_iSavePage + 1, pages), C(AROR_UIColors.TEXT_MUTED), true);
 			ActionButton(980, FOOTER_Y, 140, 52, "NEXT", "savepage:1", false, m_iSavePage < pages - 1, 18);
@@ -353,37 +360,198 @@ class AROR_SetupApp : AROR_PhonePooledApp
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! A playthrough's card: the resistance name, its newest save and how many it has; the toggle on the right
+	//! lists every save
+	protected void DrawSaveGroup(int group, float y)
+	{
+		int newest = m_aGroupFirst[group];
+		string groupKey, groupName, saveName, date;
+		bool autosave, compatible;
+		ParseSave(m_aSaves[newest], groupKey, groupName, saveName, autosave, date, compatible);
+
+		bool selected = !m_bSelectedSingleSave && m_iSelectedSave == newest;
+		int border = AROR_UIColors.LINE;
+		int fill = AROR_UIColors.SURFACE_RAISED;
+		int nameColor = AROR_UIColors.TEXT;
+		if (selected)
+		{
+			border = AROR_UIColors.REBEL;
+			fill = AROR_UIColors.REBEL_DIM;
+			nameColor = AROR_UIColors.REBEL;
+		}
+
+		string count = "1 save";
+		if (m_aGroupCount[group] != 1)
+			count = string.Format("%1 saves", m_aGroupCount[group]);
+
+		float textWidth = CONTENT_WIDTH - EXPAND_WIDTH - 220;
+		CardColoured(LEFT, y, CONTENT_WIDTH, GROUP_ROW_HEIGHT, border, fill);
+		Text(LEFT + 28, y + 12, textWidth, 36, 28, Upper(groupName), C(nameColor), true);
+		Text(LEFT + 28, y + 50, textWidth, 26, 18, "Last saved " + date + "  -  " + count, C(AROR_UIColors.TEXT_MUTED));
+		if (!compatible)
+			TextRight(LEFT + CONTENT_WIDTH - EXPAND_WIDTH - 28, y + 30, 20, "INCOMPATIBLE", C(AROR_UIColors.WARN), true);
+
+		HitArea(LEFT, y, CONTENT_WIDTH - EXPAND_WIDTH, GROUP_ROW_HEIGHT, "group:" + group);
+
+		string toggle = "SHOW ALL  V";
+		if (m_aExpandedGroups.Contains(group))
+			toggle = "HIDE  ^";
+
+		float toggleLeft = LEFT + CONTENT_WIDTH - EXPAND_WIDTH;
+		Panel(toggleLeft, y + 16, 1, GROUP_ROW_HEIGHT - 32, C(AROR_UIColors.LINE));
+		TextCentre(toggleLeft + EXPAND_WIDTH * 0.5, y + 30, 18, toggle, C(AROR_UIColors.REBEL), true);
+		HitArea(toggleLeft, y, EXPAND_WIDTH, GROUP_ROW_HEIGHT, "expand:" + group);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! One save of an expanded playthrough: autosave or manual, when, and the name it was saved under
+	protected void DrawSingleSave(int index, float y)
+	{
+		string groupKey, groupName, saveName, date;
+		bool autosave, compatible;
+		ParseSave(m_aSaves[index], groupKey, groupName, saveName, autosave, date, compatible);
+
+		bool selected = m_bSelectedSingleSave && m_iSelectedSave == index;
+		int border = AROR_UIColors.LINE;
+		int fill = AROR_UIColors.SURFACE;
+		int nameColor = AROR_UIColors.TEXT;
+		if (selected)
+		{
+			border = AROR_UIColors.REBEL;
+			fill = AROR_UIColors.REBEL_DIM;
+			nameColor = AROR_UIColors.REBEL;
+		}
+
+		string kind = "SAVE";
+		int kindColor = AROR_UIColors.REBEL;
+		if (autosave)
+		{
+			kind = "AUTOSAVE";
+			kindColor = AROR_UIColors.TEXT_MUTED;
+		}
+
+		float x = LEFT + SAVE_ROW_INDENT;
+		float width = CONTENT_WIDTH - SAVE_ROW_INDENT;
+		CardColoured(x, y, width, SAVE_ROW_HEIGHT, border, fill);
+		Text(x + 24, y + 15, 180, 26, 16, kind, C(kindColor), true);
+		Text(x + 200, y + 12, width - 440, 30, 20, date + "   " + Upper(saveName), C(nameColor));
+		if (!compatible)
+			TextRight(x + width - 24, y + 15, 18, "INCOMPATIBLE", C(AROR_UIColors.WARN), true);
+
+		HitArea(x, y, width, SAVE_ROW_HEIGHT, "pick:" + index);
+	}
+
+	//------------------------------------------------------------------------------------------------
 	protected string LoadSubtitle()
 	{
-		int count = m_aSaves.Count();
+		int count = m_aGroupFirst.Count();
 		if (count == 0)
 			return "No saved campaigns on this map yet. Go back and start a new one.";
 
 		if (count == 1)
-			return "1 saved campaign on this map, newest first.";
+			return "1 saved campaign on this map. Loading it picks up its latest save; show all to pick an older one.";
 
-		return string.Format("%1 saved campaigns on this map, newest first.", count);
+		return string.Format("%1 saved campaigns on this map, latest first. Loading one picks up its latest save; show all to pick an older one.", count);
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! "name|save point|date|compatible" to display lines; older plain labels show as the name
-	protected static void ParseSave(string fields, out string saveName, out string detail, out bool compatible)
+	//! Groups the server's rows: the rows of one playthrough arrive together, newest first
+	protected void BuildSaveGroups()
 	{
-		array<string> parts = {};
-		fields.Split(AROR_SetupMenu.FIELD_SEPARATOR, parts, false);
-		saveName = fields;
-		detail = string.Empty;
-		compatible = true;
-		if (parts.Count() >= 4)
+		m_aGroupFirst.Clear();
+		m_aGroupCount.Clear();
+
+		string lastKey;
+		foreach (int index, string row : m_aSaves)
 		{
-			saveName = parts[0];
-			detail = parts[2];
-			if (!parts[1].IsEmpty())
-				detail = parts[1] + "  -  " + parts[2];
-			compatible = parts[3] == "1";
+			string groupKey, groupName, saveName, date;
+			bool autosave, compatible;
+			ParseSave(row, groupKey, groupName, saveName, autosave, date, compatible);
+
+			if (index == 0 || groupKey != lastKey)
+			{
+				m_aGroupFirst.Insert(index);
+				m_aGroupCount.Insert(0);
+				lastKey = groupKey;
+			}
+
+			int last = m_aGroupCount.Count() - 1;
+			m_aGroupCount[last] = m_aGroupCount[last] + 1;
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! The visible rows (cards plus the saves of expanded ones) and where each page starts
+	protected void BuildLoadRows()
+	{
+		m_aLoadRows.Clear();
+		foreach (int group, int first : m_aGroupFirst)
+		{
+			m_aLoadRows.Insert(-group - 1);
+			if (!m_aExpandedGroups.Contains(group))
+				continue;
+
+			for (int i = first, groupEnd = first + m_aGroupCount[group]; i < groupEnd; i++)
+			{
+				m_aLoadRows.Insert(i);
+			}
 		}
 
-		saveName.ToUpper();
+		m_aLoadPageStarts.Clear();
+		float used = LOAD_LIST_HEIGHT;
+		foreach (int rowIndex, int row : m_aLoadRows)
+		{
+			float step = SAVE_ROW_STEP;
+			if (row < 0)
+				step = GROUP_ROW_STEP;
+
+			if (used + step > LOAD_LIST_HEIGHT)
+			{
+				m_aLoadPageStarts.Insert(rowIndex);
+				used = 0;
+			}
+
+			used += step;
+		}
+
+		if (m_aLoadPageStarts.IsEmpty())
+			m_aLoadPageStarts.Insert(0);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Group of a save index, or -1
+	protected int GroupOfSave(int index)
+	{
+		foreach (int group, int first : m_aGroupFirst)
+		{
+			if (index >= first && index < first + m_aGroupCount[group])
+				return group;
+		}
+
+		return -1;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! "group key|group name|save name|autosave (1/0)|date|compatible (1/0)" from the server
+	protected static void ParseSave(string row, out string groupKey, out string groupName, out string saveName, out bool autosave, out string date, out bool compatible)
+	{
+		array<string> parts = {};
+		row.Split(AROR_SetupMenu.FIELD_SEPARATOR, parts, false);
+		groupKey = row;
+		groupName = row;
+		saveName = row;
+		autosave = false;
+		date = string.Empty;
+		compatible = true;
+		if (parts.Count() < 6)
+			return;
+
+		groupKey = parts[0];
+		groupName = parts[1];
+		saveName = parts[2];
+		autosave = parts[3] == "1";
+		date = parts[4];
+		compatible = parts[5] == "1";
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -838,14 +1006,38 @@ class AROR_SetupApp : AROR_PhonePooledApp
 		{
 			GoTo(parts[1].ToInt());
 		}
-		else if (verb == "save" && parts.Count() > 1)
+		else if (verb == "group" && parts.Count() > 1 && m_aGroupFirst.IsIndexValid(parts[1].ToInt()))
+		{
+			m_iSelectedSave = m_aGroupFirst[parts[1].ToInt()];
+			m_bSelectedSingleSave = false;
+		}
+		else if (verb == "pick" && parts.Count() > 1)
 		{
 			m_iSelectedSave = parts[1].ToInt();
+			m_bSelectedSingleSave = true;
+		}
+		else if (verb == "expand" && parts.Count() > 1)
+		{
+			int group = parts[1].ToInt();
+			if (m_aExpandedGroups.Contains(group))
+			{
+				m_aExpandedGroups.RemoveItem(group);
+				// A picked save hidden by collapsing falls back to its group
+				if (m_bSelectedSingleSave && GroupOfSave(m_iSelectedSave) == group)
+				{
+					m_iSelectedSave = m_aGroupFirst[group];
+					m_bSelectedSingleSave = false;
+				}
+			}
+			else if (m_aGroupFirst.IsIndexValid(group))
+			{
+				m_aExpandedGroups.Insert(group);
+			}
 		}
 		else if (verb == "savepage" && parts.Count() > 1)
 		{
-			int savePages = Math.Max(1, (m_aSaves.Count() + SAVE_ROWS - 1) / SAVE_ROWS);
-			m_iSavePage = Math.ClampInt(m_iSavePage + parts[1].ToInt(), 0, savePages - 1);
+			BuildLoadRows();
+			m_iSavePage = Math.ClampInt(m_iSavePage + parts[1].ToInt(), 0, m_aLoadPageStarts.Count() - 1);
 		}
 		else if (verb == "loadsave" && m_aSaves.IsIndexValid(m_iSelectedSave))
 		{

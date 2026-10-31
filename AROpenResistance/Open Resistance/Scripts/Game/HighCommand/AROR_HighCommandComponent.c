@@ -545,7 +545,7 @@ class AROR_HighCommandComponent : SCR_BaseGameModeComponent
 		SetResistanceName_S(name);
 		Reply(requesterId, "The resistance is now known as " + name);
 
-		// Write the new name into the active save soon rather than at the next timed autosave
+		// Autosave under the new name soon rather than at the next timed autosave
 		AROR_GameFlowComponent.RequestAutosave_S();
 	}
 
