@@ -1,6 +1,6 @@
 # Open Resistance Ultimate - WCS (dependency pack)
 
-An empty project whose only job is to depend on the core and the Worst Case Scenario (WCS) content addons. It holds no scripts or configs. It serves two purposes:
+A project whose only job is to depend on the core and the Worst Case Scenario (WCS) content addons. It holds no scripts and no WCS resources, only one mission header, `Missions/AROR_Everon_Chicken_WCS.conf` ("Open Resistance - Everon (Chicken, WCS)"), which points at the core's Chicken world. Workbench cannot publish a project without any packed file, and the header also marks the WCS scenario in the host's scenario list. It serves two purposes:
 
 - **Workbench testing:** opened through its launcher, it loads WCS together with the repository core.
 - **Hosting from the game:** published to the Workshop, enabling this one item pulls in Open Resistance Ultimate, RHS: Status Quo and every WCS addon below, so an in-game host needs nothing else. Dedicated servers can use it the same way, or list the addons themselves (`server/AROR_Everon_Chicken.wcs.json`).
