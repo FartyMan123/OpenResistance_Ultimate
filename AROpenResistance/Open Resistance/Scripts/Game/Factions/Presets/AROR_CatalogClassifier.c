@@ -22,7 +22,7 @@ class AROR_CatalogClassifier
 
 			case EEntityCatalogType.WEAPONS_TRIPOD:
 				category = AROR_EFactionPresetCategory.VEHICLES;
-				type = AROR_EVehicleType.STATIC_MG;
+				type = StaticWeaponType(entry);
 				return true;
 
 			case EEntityCatalogType.ITEM:
@@ -241,7 +241,7 @@ class AROR_CatalogClassifier
 			return AROR_EVehicleType.BOAT;
 
 		if (entry.HasEditableEntityLabel(EEditableEntityLabel.VEHICLE_TURRET))
-			return AROR_EVehicleType.STATIC_MG;
+			return StaticWeaponType(entry);
 
 		if (entry.HasEditableEntityLabel(EEditableEntityLabel.VEHICLE_HELICOPTER))
 		{
@@ -250,6 +250,11 @@ class AROR_CatalogClassifier
 
 			return AROR_EVehicleType.HELI_TRANSPORT;
 		}
+
+		// RHS tanks use VEHICLE_APC because the native label enum has no dedicated tank label.
+		// Recognise the hull before that broad label; fuel tankers must remain trucks.
+		if (IsTankName(name))
+			return AROR_EVehicleType.TANK;
 
 		if (entry.HasEditableEntityLabel(EEditableEntityLabel.VEHICLE_APC))
 		{
@@ -260,12 +265,11 @@ class AROR_CatalogClassifier
 			return AROR_EVehicleType.APC;
 		}
 
-		// "tank" also matches fuel tankers (e.g. M923A1_tanker), which are trucks
-		if ((name.Contains("tank") && !name.Contains("tanker")) || name.Contains("t72") || name.Contains("m1a"))
-			return AROR_EVehicleType.TANK;
-
 		if (entry.HasEditableEntityLabel(EEditableEntityLabel.VEHICLE_TRUCK))
 		{
+			// Armed trucks, e.g. the WCS ZU-23 carriers, are support vehicles, not troop/supply transports.
+			if (entry.HasEditableEntityLabel(EEditableEntityLabel.TRAIT_ARMED))
+				return AROR_EVehicleType.ARMED_CAR;
 			if (entry.HasEditableEntityLabel(EEditableEntityLabel.TRAIT_REFUELING))
 				return AROR_EVehicleType.FUEL_TRUCK;
 			if (entry.HasEditableEntityLabel(EEditableEntityLabel.TRAIT_MEDICAL))
@@ -288,6 +292,29 @@ class AROR_CatalogClassifier
 		}
 
 		return -1;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	static bool IsTankName(string name)
+	{
+		return (name.Contains("tank") && !name.Contains("tanker")) || name.Contains("m1a")
+			|| name.Contains("t14") || name.Contains("t-14") || name.Contains("t_14")
+			|| name.Contains("t72") || name.Contains("t-72") || name.Contains("t_72")
+			|| name.Contains("t80") || name.Contains("t-80") || name.Contains("t_80")
+			|| name.Contains("t90") || name.Contains("t-90") || name.Contains("t_90");
+	}
+
+	//------------------------------------------------------------------------------------------------
+	static int StaticWeaponType(SCR_EntityCatalogEntry entry)
+	{
+		string name = LowerName(entry.GetPrefab());
+		if (name.Contains("zu23") || name.Contains("zu-23") || name.Contains("zu_23")
+			|| name.Contains("stinger") || name.Contains("igla") || name.Contains("strela"))
+			return AROR_EVehicleType.STATIC_AA;
+		if (name.Contains("9m113") || name.Contains("9k111") || name.Contains("tow")
+			|| name.Contains("spg9") || name.Contains("spg_9") || name.Contains("atgm") || name.Contains("metis"))
+			return AROR_EVehicleType.STATIC_AT;
+		return AROR_EVehicleType.STATIC_MG;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -330,7 +357,7 @@ class AROR_CatalogClassifier
 			return type >= 0;
 		}
 
-		type = WeaponType(itemType);
+		type = WeaponType(itemType, name);
 		if (type >= 0)
 		{
 			category = AROR_EFactionPresetCategory.WEAPONS;
@@ -355,7 +382,7 @@ class AROR_CatalogClassifier
 	}
 
 	//------------------------------------------------------------------------------------------------
-	static int WeaponType(SCR_EArsenalItemType itemType)
+	static int WeaponType(SCR_EArsenalItemType itemType, string name = "")
 	{
 		switch (itemType)
 		{
@@ -368,6 +395,8 @@ class AROR_CatalogClassifier
 			case SCR_EArsenalItemType.SNIPER_RIFLE:
 				return AROR_EWeaponType.SNIPER_RIFLE;
 			case SCR_EArsenalItemType.ROCKET_LAUNCHER:
+				if (name.Contains("stinger") || name.Contains("fim92") || name.Contains("igla") || name.Contains("9k38") || name.Contains("strela"))
+					return AROR_EWeaponType.LAUNCHER_AA;
 				return AROR_EWeaponType.LAUNCHER_AT;
 			case SCR_EArsenalItemType.LETHAL_THROWABLE:
 			case SCR_EArsenalItemType.NON_LETHAL_THROWABLE:

@@ -600,11 +600,7 @@ modded class AROR_OperationExecutorComponent
 			if (aircraft)
 			{
 				force.m_Vehicle = aircraft;
-				string misfit;
-				if (force.CountRequiredCrewSeats_S() < 1)
-					misfit = "no pilot seat";
-				else if (transport && force.CountCargoSeats_S() < 1)
-					misfit = "no passenger seats";
+				string misfit = PresetAircraftMisfit(force, transport);
 				if (misfit.IsEmpty())
 				{
 					force.m_bPresetVehicle = true;
@@ -620,6 +616,22 @@ modded class AROR_OperationExecutorComponent
 		if (!resource || !resource.IsValid())
 			return null;
 		return SpawnReaperAircraft(resource, launch, height);
+	}
+
+	//! This adapter currently boards one pilot per aircraft. A gunship requiring separate turret crew cannot
+	//! replace the authored pilot-controlled gunship: it would dispatch successfully but never fire that turret.
+	protected string PresetAircraftMisfit(AROR_GroundOperationForce force, bool transport)
+	{
+		if (!force.m_Vehicle || !force.m_Vehicle.FindComponent(HelicopterControllerComponent))
+			return "no helicopter controller";
+		int crew = force.CountRequiredCrewSeats_S();
+		if (crew < 1)
+			return "no pilot seat";
+		if (transport && force.CountCargoSeats_S() < 1)
+			return "no passenger seats";
+		if (!transport && crew > 1)
+			return "gunship requires additional turret crew; this adapter boards one pilot";
+		return string.Empty;
 	}
 
 	protected bool SpawnReaperPackage(AROR_Operation operation, AROR_ReaperAirForce force, ResourceName pilot)

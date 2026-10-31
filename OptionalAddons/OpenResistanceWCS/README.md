@@ -28,9 +28,20 @@ The core (`6AA282336705EED2`), RHS: Status Quo, and the WCS content addons: Core
 
 ## Testing
 
-1. Subscribe to every dependency in the game. Run `Open WCS Workbench.cmd`; it refuses to start and lists the GUIDs of anything missing. The project GUID `1CAE49450A83DEAB` was written by hand; save the project once in Workbench.
+1. Subscribe to every dependency in the game. Run `Open WCS Workbench.cmd`; it validates the complete dependency chain, including engine data, and refuses to start for a missing GUID, dependency cycle or ambiguous installed copy. Folder names alone are not trusted. The project GUID `1CAE49450A83DEAB` was written by hand; save the project once in Workbench.
 2. Open the Chicken world and play. The log should show lines like `[AROR] Faction preset 'US_ARMY': N entries added from the faction catalogs` for US_ARMY, USSR_ARMY and FIA.
 3. FIA should add only a few dozen items (WCS-made). If it adds hundreds, the excluded-source check (`$ArmaReforger:` / `$RHS_Core:` file lookups) is not working.
-4. Raise Readiness with MARS and dispatch QRFs: the log shows `Ground package <profile> uses preset vehicle …` or `[AROR REAPER] package uses preset aircraft …`, or a `does not fit` warning with the authored fallback. Check that gunship escorts actually fire; REAPER seats only a pilot, so gunships whose weapons sit on a gunner turret may stay silent.
+4. Raise Readiness with MARS and dispatch QRFs: the log shows `Ground package <profile> uses preset vehicle …` or `[AROR REAPER] package uses preset aircraft …`, or a `does not fit` warning with the authored fallback. The current REAPER adapter seats one pilot per aircraft. Preset gunships requiring additional turret crew are rejected with an explanation and fall back to the authored gunship. Test firing on compatible pilot-controlled aircraft in Workbench; this is not proof of weapon/AI compatibility for every WCS variant.
 5. Capture import facilities (the admin menu's capture on map is quickest): Black Market should list WCS weapons (search e.g. "SCAR") and Imports WCS vehicles and helicopters, priced like the curated ones (no 0-cost entries). Helicopters stay locked without a heliport or airport. `[AROR GARRISON] … binding resolved with preset …` shows the garrison choices.
 6. Without WCS (the normal core project), `entries added` lines should be absent or tiny: the base presets were imported from the base catalogs. A large number means the base presets are out of date; re-run the base import plugin.
+
+## Review and repeatable checks
+
+See [WCS integration review](../../docs/WCS_REVIEW.md) for the verified dependency/asset scope, fixes and remaining native checks.
+
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/Start-WCSWorkbench.ps1 -PrintOnly` validates the actual installed dependency chain without launching Workbench.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/Test-WCSDependencies.ps1` runs isolated missing/transitive/misidentified/duplicate/cyclic dependency fixtures.
+- `node tools/Test-WCSIntegration.js` exercises the actual classification and vehicle/aircraft fit decisions with mocked native services.
+- `python tools/Test-WCSAssets.py --game-addons "<downloaded addons folder>" --base-addons "<Arma Reforger installation>/addons"` checks the reviewed preset/profile asset paths and GUID metadata against installed packages without editing them.
+
+The shared classifier identifies T-14/T-72/M1 variants before broad APC/truck labels, separates static anti-air and anti-tank weapons from machine guns, keeps armed trucks out of troop/supply-truck pools, and recognises anti-air launchers. These rules affect generated entries; authored preset entries retain their own types and requirements. Authored garrison indices are preserved; existing saves containing formerly misclassified modded variants require a restore check because generated pool membership changes.

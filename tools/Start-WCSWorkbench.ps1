@@ -21,19 +21,12 @@ if (!$BaseGameAddonsPath) {
 	$BaseGameAddonsPath = Join-Path $steamCommonPath 'Arma Reforger/addons'
 }
 $baseGameProject = Join-Path $BaseGameAddonsPath 'data/ArmaReforger.gproj'
+$engineProject = Join-Path $BaseGameAddonsPath 'core/core.gproj'
 
-foreach ($requiredFile in @($WorkbenchPath, $projectPath, $corePath, $baseGameProject)) {
+foreach ($requiredFile in @($WorkbenchPath, $projectPath, $corePath, $baseGameProject, $engineProject)) {
 	if (!(Test-Path -LiteralPath $requiredFile -PathType Leaf)) { throw "Required file not found: $requiredFile" }
 }
 if (![IO.File]::ReadAllText($corePath).Contains($coreGuid)) { throw 'The repository core project has an unexpected GUID' }
-
-# Every dependency of the extender (and the core's own, e.g. REAPER) except the core and the base game must be
-# installed in the game's addon folder
-$projectText = [IO.File]::ReadAllText($projectPath) + [IO.File]::ReadAllText($corePath)
-$dependencies = [regex]::Matches(($projectText -split 'Dependencies')[1..2] -join ' ', '"([0-9A-F]{16})"') |
-	ForEach-Object { $_.Groups[1].Value } |
-	Where-Object { $_ -ne $coreGuid -and $_ -ne '58D0FB3206B6F859' } |
-	Select-Object -Unique
 
 if (!$GameAddonsPath) {
 	$documentCandidates = @([Environment]::GetFolderPath('MyDocuments'))
@@ -47,20 +40,18 @@ if (!$GameAddonsPath) {
 	if (!$GameAddonsPath) { throw 'The game addon folder was not found in Documents/OneDrive. Supply -GameAddonsPath explicitly.' }
 }
 
-$installed = Get-ChildItem -LiteralPath $GameAddonsPath -Directory
-$missing = @()
-foreach ($guid in $dependencies) {
-	$folder = $installed | Where-Object Name -Like "*$guid" | Select-Object -First 1
-	if (!$folder -or !(Test-Path -LiteralPath (Join-Path $folder.FullName 'addon.gproj') -PathType Leaf)) { $missing += $guid }
-}
-if ($missing) { throw ("Not installed in {0}: {1}. Subscribe to them in the game and let them download." -f $GameAddonsPath, ($missing -join ', ')) }
+# Resolve the actual project GUIDs and all transitive dependencies, including engine data.
+# A folder suffix is not proof that the matching addon is installed or that its dependencies exist.
+. (Join-Path $PSScriptRoot 'WCSDependencyGraph.ps1')
+$dependencyProjects = @(Resolve-ARORAddonDependencies -RootProject $projectPath -SearchRoots @($GameAddonsPath) -ExplicitProjects @($corePath, $baseGameProject, $engineProject))
+$dependencies = @($dependencyProjects | Where-Object { $_.Guid -ne '1CAE49450A83DEAB' })
 
 $searchPaths = $BaseGameAddonsPath + ',' + $coreAddonsPath + ',' + $GameAddonsPath
 if ($projectPath.Contains('"') -or $searchPaths.Contains('"')) { throw 'Unexpected quote in project/search path' }
 $launchArguments = @('-gproj', ('"{0}"' -f $projectPath), '-addonsDir', ('"{0}"' -f $searchPaths))
 Write-Output "Project: $projectPath"
 Write-Output "Core: $corePath"
-Write-Output "Dependencies found: $($dependencies.Count)"
+Write-Output "Dependencies validated (including transitive): $($dependencies.Count)"
 Write-Output "Search roots: $searchPaths"
 if ($PrintOnly) { return }
 
