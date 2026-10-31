@@ -33,6 +33,11 @@ Every entry has a **type** (e.g. a Weapon of type MARKSMAN_RIFLE) and:
 | **Import Point Requirement** | `NONE`, `PORT` (the buyer must hold a seaport) or `AIR` (a heliport or airport) |
 | **Required Import Points** | How many import facilities (seaports, heliports and airports together) the buyer must hold. Default 0. |
 | **Replaces** | Prefabs this entry replaces while the pack is enabled (see below) |
+| **Required Addons** | Addon GUIDs this entry needs. The entry is ignored (and replaces nothing) unless all are loaded on the server. Empty: always available. |
+
+### One pack for many mods
+
+A pack's own **Required Addons** is all-or-nothing: if any addon is missing, the whole pack is unavailable. To cover a mod family with many optional parts (e.g. WCS and its sub-mods), leave the pack's list empty and put each sub-mod's GUID on the entries from that sub-mod. The pack is always available, and only the entries whose mods the server loads are offered. The server's mod list decides, and clients load the same mods. The `[AROR] Content packs enabled` log line reports how many entries were skipped for missing addons.
 
 The types per category:
 

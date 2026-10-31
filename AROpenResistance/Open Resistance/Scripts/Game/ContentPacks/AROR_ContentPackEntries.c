@@ -23,10 +23,20 @@ class AROR_ContentPackEntry
 	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Prefabs this entry replaces while its pack is enabled: they are not sold, and faction presets listing them use this prefab instead", params: "et")]
 	protected ref array<ResourceName> m_aReplaces;
 
+	[Attribute("", desc: "GUIDs of the addons this entry needs (as in their addon.gproj). The entry is ignored, including what it replaces, unless all are loaded. Empty: always available.")]
+	protected ref array<string> m_aRequiredAddons;
+
 	//------------------------------------------------------------------------------------------------
 	ResourceName GetPrefab()
 	{
 		return m_sPrefab;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! True when every addon this entry needs is in loadedAddons
+	bool HasRequiredAddons(notnull array<string> loadedAddons)
+	{
+		return AROR_ContentPack.AreAddonsLoaded(m_aRequiredAddons, loadedAddons);
 	}
 
 	//------------------------------------------------------------------------------------------------
