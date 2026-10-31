@@ -10,7 +10,7 @@ Status tags: **Planned** (designed, not built) · **In progress** · **Implement
 
 All the scripts and functionality, plus templates for base-game assets.
 
-- Lives in this repo: `AROpenResistance/Open Resistance/` (addon ID `OpenResistance`, GUID `6AA282336705EED2`).
+- Lives in this repo: `AROpenResistance/Open Resistance/` (addon ID `OpenResistance`, GUID `6C68A5E5654D7210`).
 - Class prefix: `AROR_` for all core classes, enums, and globals (e.g. `AROR_LocationComponent`). Reserved for the core mod.
 - Intended to depend only on the base game (`ArmaReforger`, `58D0FB3206B6F859`). **Current exception:** it also depends on the REAPER helicopter mod (`69A4D664A6284E06`) for the airborne QRF experiment. This must be moved out (e.g. into `OptionalAddons/OpenResistanceREAPER`) before a base-game-only release.
 - Provides:
@@ -22,7 +22,7 @@ All the scripts and functionality, plus templates for base-game assets.
 
 Separate addons, maintained by others, that add extra content such as maps, weapons, vehicles, scripts, functions, missions etc.
 
-- Each one lists the core mod (`6AA282336705EED2`) as a dependency in its `addon.gproj`.
+- Each one lists the core mod (`6C68A5E5654D7210`) as a dependency in its `addon.gproj`.
 - Extends the core by:
   - inheriting from core template prefabs and configs
   - supplying their own configs (factions, loadouts, location data for new maps, missions)
@@ -48,6 +48,12 @@ Separate addons, maintained by others, that add extra content such as maps, weap
  │             │       │ vehicles    │       │ missions    │
  └─────────────┘       └─────────────┘       └─────────────┘
 ```
+
+### Optional addons (in this repo)
+
+Extenders we maintain ourselves live in `OptionalAddons/`, each opened in Workbench through its launcher in `tools/` (which resolves the repo core and the game's downloaded addons without registering them globally).
+
+- **Open Resistance - WCS** (`OptionalAddons/OpenResistanceWCS`, addon ID `OpenResistanceWCS`) — test project only. Holds no content; it depends on the core and the Worst Case Scenario (WCS) content addons, including the WCS RHS addons (so RHS Status Quo and WCS MRZR come too), so Workbench can load them together. WCS reaches the game mode through catalog augmentation (see Factions), not through this project; servers just load WCS. WCS's licence forbids modifying or adapting its content, so nothing here may inherit from or override WCS resources. Detail: `OptionalAddons/OpenResistanceWCS/README.md`.
 
 ### Base-game config overrides
 
@@ -104,6 +110,7 @@ Purpose: how a location's controlling role changes. All changes are made by the 
 - **Settlements are support-only**: towns and cities reject flag capture and AI recapture; they change hands only through support (see Settlements).
 - **Flip cooldown**: after a Resistance capture, the location cannot flip back to the Occupiers or Invaders for **5 minutes**. Replicated, not saved.
 - **AI recapture** (`AROR_RecaptureComponent`, server): every few seconds the forces inside each capturable location are weighed; defenders count ×2 and attacking AI ×1. An attacking AI role that outweighs the defenders takes the location, subject to the cooldown.
+- **Aircraft occupants never count**: characters seated in a helicopter are ignored by both the flag's hostile check and AI recapture, so a passing or landing aircraft cannot block or flip a capture.
 - **Capture flag placement**: optionally, the server moves a capture flag to a clear, walkable spot near the location centre when play starts ("Auto Place"), and replicates the result.
 - Key classes: `AROR_CaptureLocationAction` (user action on `AROR_Prop_CaptureFlag.et`), `AROR_RecaptureComponent`, `AROR_CaptureFlagPlacementComponent`.
 - Server/client: clients check the rules only to show feedback; the server re-checks and decides.
@@ -127,6 +134,7 @@ Purpose: defend flag-capturable military installations with a saved roster whose
 - Server/client: roster, spawning and saves are server-owned; clients see the replicated defenders. A replicated gate stops capture while a defence is still deploying.
 - Saved: the roster (what remains and what was lost) per location, through Persistence. Defenders are not refilled when players leave and return.
 - Depends on: Locations, Location Capture, Factions, Operations (damage reporting).
+- Role asset bindings can use the role's faction preset: its static MGs, armed cars and APCs are appended to the static and manned choices (after the authored ones, so saved variants keep their meaning), and a role given another army's preset takes its soldiers and assets from that preset. Both core bindings opt in.
 - Extension points: scenario and editor settings (activation range, capacity, defence levels, layouts); role asset catalogues can be replaced for extender factions.
 - Planned: preset-driven units and vehicles (see Factions), restoring exact inventory and live positions, replenishment.
 - Feature detail: `docs/GARRISONS_AND_REGIONAL_SUPPORT.md`, `docs/MILITARY_DEFENCE_PRESETS.md`, `docs/FORTIFIED_OUTPOSTS.md`.
@@ -184,11 +192,13 @@ Core factions live in `AROR_FactionManager.et`. The three military factions are 
 - Presets only make things available; the systems that use them (garrisons, QRFs, shops, recruitment) decide what to pick. Each preset lists the roles it can be used for.
 - `AROR_FactionPresetRegistry` (`Configs/FactionPresets/AROR_FactionPresetRegistry.conf`) lists the available presets. The base-game presets (`FIA`, `US_ARMY`, `USSR_ARMY`, `EVERON_CIV`) are built into the core, written the same way an extender would.
 - `AROR_FactionPresetsComponent` (game mode) loads the presets on every machine and answers queries for a role's preset. The server owns which preset each role uses: chosen by the admin per role when creating a campaign (defaults otherwise), replicated, and saved (`AROR_FactionPresetsComponentSerializer`). A saved preset that no longer exists falls back to the role's default.
-- Planned: garrisons, QRFs and air QRFs read their units and vehicles from presets instead of their own lists.
+- **Catalog augmentation**: a preset can name a catalog faction (e.g. `US`). A frame after loading, on every machine, it adds everything that faction's entity catalogs hold and it does not list: units only for unit types it lacks, everything else with a default Readiness by type (heavier vehicles later). Listed entries always win, so hand tuning stays. An added entry copies the base cost and import facility requirements of the preset's first listed entry of the same type, else a default by type on the same scale, so the Black Market and Imports price and gate it like the curated stock. A preset can also take hand-held weapons, accessories and ammunition from further factions, leaving out items from named addon filesystems or with named file name fragments. This is how content mods such as WCS, which add their assets to the base-game catalogs, reach the game mode with no extender: the base presets augment from `US`, `USSR`, `FIA` and `CIV`, and FIA takes the US/USSR hand-held items that are neither base-game, RHS nor WCS RHS, minus guided launchers. The shops rebuild their catalogues once augmentation has run. Sorting rules (`AROR_CatalogClassifier`) are shared with the Workbench import of the base presets.
+- QRF force profiles can pick their vehicle and air escort from the role's preset (see Operations), and garrison bindings can take their assets from it (see Garrisons).
+- **Soldier armory** (`AROR_SoldierArmory`, server): every Occupier and Invader AI soldier, whichever system spawned it (garrisons, QRFs, patrols, missions), has its primary rifle, machine gun or sniper rifle replaced on spawn by a random preset weapon of the same type available at the role's Readiness, with its spare magazines swapped for the new weapon's default magazine. This is how weapons from content mods (e.g. WCS) reach enemy soldiers, since the unit prefabs carry base-game guns. Hooked once through a modded `SCR_AIGroup.OnAgentAdded`.
 - To verify: whether Override in addon merges additions into the registry's plain path list or replaces it (named entries are proven to merge, plain arrays are not). Needs a test with two addons; if it replaces, the registry switches to named entries.
 
 - `AROR_LoadoutManager.et` offers only Resistance loadouts; `AROR_Character_Resistance_Base.et` is the player character.
-- Extension points: extender mods add presets (new `.conf` files listed in the registry through Override in addon). The categories and their types are a fixed core list; entries with any other type are ignored. Server admins or extenders point a role at another faction key without touching core code.
+- Extension points: extender mods add presets (new `.conf` files listed in the registry through Override in addon). The categories and their types are a fixed core list; entries with any other type are ignored. Server admins or extenders point a role at another faction key without touching core code. Mods that add assets to the base-game faction catalogs (e.g. WCS) need no extender at all, through catalog augmentation.
 
 ### Commanders — In progress
 Purpose: one server-owned command context per role. The Resistance is player-directed; the Occupiers and Invaders are AI-directed through the same evaluation interface.
@@ -216,11 +226,12 @@ Purpose: Resistance Leaders raise AI squads and command them through the **HICOM
 Purpose: Resistance side missions, offered on a board and run through the **OPS** phone app, paid in Resistance funds and manpower.
 
 - `AROR_MissionBoardComponent` (game mode): keeps a board of mission offers (rerolled as offers expire or are taken) and the active missions. Only **Resistance Leaders** (see High Command) accept or abort them; active missions are capped. A mission's enemies and props spawn when a Resistance player comes near, and its leftovers are removed once players leave.
-- Mission types (`AROR_EMissionType`), one `AROR_Mission` subclass each: **Supply Theft**, **Convoy Ambush**, **Prisoner Rescue**, **Supply Sabotage**, **Officer Assassination** and **Arms Cache Recovery**. Each picks its target from Locations (usually an enemy-held site), takes its units and vehicles from the enemy role's faction preset, and checks its own objectives and failure conditions. Rewards, time limits and guard counts are per type (`AROR_MissionType`) and rise with the target's threat level.
+- Mission types (`AROR_EMissionType`), one `AROR_Mission` subclass each: **Supply Theft**, **Convoy Ambush**, **Prisoner Rescue**, **Supply Sabotage**, **Officer Assassination** and **Arms Cache Recovery**. Each picks its target from Locations (usually an enemy-held site), takes its units and vehicles from the enemy role's faction preset (vehicles limited to the army's current Readiness), and checks its own objectives and failure conditions. Rewards, time limits and guard counts are per type (`AROR_MissionType`) and rise with the target's threat level.
 - Results: success pays the Resistance through Economy; start, success and failure are announced through Notifications; a short network log is kept for OPS.
 - Server/client: everything is decided on the server; a compact snapshot (missions and log) replicates to every client. Clients request through RPCs on the player controller. Active missions are drawn on the game map (Map Markers), in OPS and in HICOMM.
 - Saved: active missions (identity, target, rewards, time left) through `AROR_MissionBoardComponentSerializer`; a loaded mission restarts when Resistance players approach and can be aborted by any current Resistance Leader. Offers are not saved; the board rerolls.
 - Depends on: Locations, Factions (presets), Economy, High Command (leaders), Notifications, Phone, Map Markers.
+- Spawning (groups, vehicles, seating, waypoints, road positions) goes through `AROR_ForceSpawner`, shared with Patrols; the board keeps thin wrapper methods for missions.
 - Extension points: per-type settings and board size, caps, ranges and prefabs on the component; new mission types through `modded enum AROR_EMissionType` plus an `AROR_Mission` subclass returned from a modded `CreateMission`.
 - Feature detail: `docs/MISSIONS.md`.
 - Planned: enemy crackdown and support effects, item rewards, more mission types, balance.
@@ -245,7 +256,8 @@ Purpose: enemy **attacks** and defensive **quick reaction forces (QRF)** for the
 Main parts:
 - **Scheduling** (`AROR_OperationManagerComponent`): accepts attack requests and threat reports, ranks threats, applies per-role cooldowns, capacity and deduplication, and tracks each operation from planned to a final outcome. Invader operations are **disabled by default** until territory and resource integration is ready.
 - **Force selection**: designer-authored force profiles and ground recipes per role and faction (motorized, mechanized, armour, airborne), response levels 1–5, and an optional strategy layer: saved **Readiness** (was "war level") decides which equipment a response may use, and a separate saved **Crackdown** (was "aggression") sets its strength. Both are integer levels 1–5 per enemy role.
-  New campaigns begin at the lowest response tier. Capture losses build intensity in regular steps; authored ground/joint bands add one full package per tier while preserving equipment gates and separate infantry/vehicle crews. Loaded escalation remains saved campaign state.
+  A profile can pick its hull (and air escort) per dispatch from the role's faction preset: a random vehicle of a set type available at the operation's Readiness, so content mods reach QRFs through catalog augmentation. Ground crews grow to the hull's driver and turret seats and passengers are capped to the reserved personnel budget; a picked hull that cannot fit the package (or an aircraft without a pilot or passenger seat) is replaced by the profile's authored vehicle. Chicken enables this for all its profiles (armour picks IFVs, since its armour profiles carry infantry).
+  New campaigns begin at Readiness 2 and response tier 2 (both scenario settings), and Crackdown does not cool during quiet periods (cooling is a setting, off by default). Capture losses build intensity in regular steps; authored ground/joint bands add one full package per tier while preserving equipment gates and separate infantry/vehicle crews. Loaded escalation remains saved campaign state.
   Ordinary campaign QRFs target a running airborne share per army, counting standalone and joint deployments together. Successful dispatch totals are saved; manual/debug/scripted responses are excluded. Equipment, finance and launch safety can force a ground fallback without consuming an airborne dispatch.
 - **Threat labels** (`AROR_ThreatLabels`): display names for each level, keyed by the army (faction preset) holding the role, e.g. ГОТОВНОСТЬ/РЕЖИМ for the Soviet Army and THREATCON/CRACKDOWN for the US Army, with a generic English fallback. Logic only uses the integers.
 - **Funding** (`AROR_QRFFinance`): responses reserve and spend the role's funds through the **Economy** API; losses are charged and shortfalls become saved QRF debt. Economy remains the only bank.
@@ -273,13 +285,60 @@ Main parts:
 - Release validation and native acceptance: `docs/QRF_RELEASE_VALIDATION.md`; route and response matrices live in `docs/validation/`. The Workbench-only route audit probes ground planning, airborne launch formations and landing sites without deploying forces.
 - Planned: broader strategic target selection, physical military stock, durable save/restore of live operations, client summaries.
 
+### Patrols — In progress
+Purpose: ambient enemy activity around the players, so fights happen between captures and QRFs: Occupier and Invader **foot patrols** and **motorized road patrols** that cross the areas where Resistance players are.
+
+- `AROR_PatrolManagerComponent` (game mode, server): every few seconds, picks a living player's area that has fewer patrols than wanted (a base number, plus one per two Crackdown levels of the patrol's army) and spawns one, within global caps on patrols, soldiers and vehicles. Its soldier budget is separate from Garrisons and Operations.
+- **Bounded to the players, fair to them**: a patrol spawns on a road out of every player's range, outside every military site and Resistance location. Its route is fixed at spawn: a road point near the area's centre, then a road exit on the far side. It never re-targets players.
+- **One army at a time**: a patrol belongs to the army holding the nearest military site and must stay in that army's ground. Routes keep clear of Resistance military sites and the HQ (an enemy patrol must never wander in and recapture them) and well clear of the other army's sites, so the two armies do not meet.
+- **Strength**: foot team size grows with Crackdown; motorized patrols use cars, armed cars from Readiness 3 and APCs from Readiness 4, from the army's faction preset, with passengers.
+- **Robustness**: spawning and seating have timeouts that abandon and clean up the patrol instead of retrying; legs with no progress are skipped; patrols end after a lifetime, and despawn once no player has been near for a while and they have not fought recently. A wiped-out patrol leaves its bodies and vehicle for the players.
+- **Escalation**: losses report a combat contact to Operations (`ReportCombatContact_S`), which decides any investigation, QRF or Crackdown change through its own rules.
+- Spawning uses `AROR_ForceSpawner` (shared with Missions): faction preset lookups, group and vehicle spawning, seating, waypoints and road positions.
+- Server/client: server only; clients see only the replicated AI. Saved: nothing; patrols are rebuilt around whoever is online.
+- Depends on: Locations, Factions (presets and roles), Operations (Readiness, Crackdown, contact reports), Game Flow.
+- Extension points: every count, distance, chance, timeout and prefab is an attribute on the component.
+- Planned: supply convoys, checkpoints, hunter teams on reported contacts, helicopter patrols.
+
 ### Map Markers — In progress
 Purpose: our own markers on any open map (player map, deploy screen, setup screen). Client only.
 
 - `AROR_LocationMapIconsComponent` (game mode) draws an icon per location, tinted by the controlling faction's colour, and keeps it positioned as the map pans and zooms. Names are not drawn beside icons (vanilla prints city names); clicking an icon opens the info popup, which is drawn above every marker. Icons are drawn as military-frame symbols (`AROR_MapFrameIcon`: rectangle ours, diamond enemy, glyph per type) unless the component switches back to textures. Strongholds, the campaign objectives, show the holding army's national flag instead (`AROR_ArmyFlag`), on the game map and in HICOMM. Each location prefab chooses its icon image (white, so it can be tinted).
 - Hovering shows a pulsing selector; clicking opens an info card (name, type, controller; population and support for settlements) that updates live.
 - QRF last-seen markers and incoming QRF/attack target markers (from Operations: a pulsing reticle ring on the threatened location with the army, response and arrival countdown; red for attacks, amber for QRFs) and active Resistance missions (from Missions) are currently drawn by the same component. Moving the map framework into its own system, with each feature providing its own layer, is under discussion.
+- **Navigation** (`AROR_NavigationMapMarkers`, `AROR_PlayerWaypoint`): the local player's own position as an arrow along their facing, and a **personal marker** (waypoint) set by **shift-clicking** the map (shift-click it again to remove it). It is also shown in the world as a HUD marker ("PERSONAL MARKER", distance and compass bearing) inside the notification overlay, pinned to the screen edge when out of view and hidden while a menu is open. Private to the player: never sent to the server or saved. Both can be turned off on the component.
 - Not replicated or saved; reads replicated location state. No base-game marker configs are used.
+
+### Player Map Markers — In progress
+Purpose: player-authored notes, danger reports, rally points, supplies and numbered route points on the game map, managed through the FIELD phone app.
+
+- `AROR_PlayerMarkersComponent` on the game mode owns annotations, author identity, sharing scope and optional expiry. Scopes are private, native player squad and Resistance-wide; only the author may edit or delete. Creation is bounded per author and per campaign.
+- Server/client: requests travel through the owning player controller; the server validates identity, faction, campaign phase and bounds. Each client receives only annotations visible to them through owner-targeted snapshots. Native squad membership is checked again on every publication. `AROR_PlayerMapMarkers` draws the client map layer through Map Markers.
+- Saved: private and Resistance-wide annotations, keyed by author identity, and remaining expiry time through `AROR_PlayerMarkersComponentSerializer`. Squad annotations are session-only because native groups are not persistent campaign identities.
+- Depends on: Game Flow, Factions, High Command (map bounds), Map Markers, Phone, Persistence, Notifications.
+- Extension points: marker limits on the component; extender maps use the same configurable map bounds as HICOMM.
+- Native compilation and multiplayer acceptance remain pending; see `docs/FIELD_AND_CIVILIANS.md`.
+
+### Personal Recruitment — In progress
+Purpose: each Resistance player can raise and manage individual AI companions, separately from leader-owned High Command squads.
+
+- `AROR_RecruitmentComponent` on the game mode purchases riflemen from the Resistance faction preset at HQ using faction funds and manpower. FIELD selects one recruit or the player's entire roster for follow, hold, regroup, vehicle passenger/driver/gunner assignment, dismount, nearby-player transfer and HQ dismissal.
+- Server/client: the server owns the roster, spawn lifecycle, movement and seat requests. Player-controller RPCs validate ownership, faction, location, capacity and vehicle safety. Only the owner receives their roster summary. Native AI and vehicle replication supplies world entities.
+- Saved: recruits themselves are session-only. Economy includes living and pending recruits' purchase value in saved funds/manpower, following HICOMM's refund policy. Failed formation, HQ dismissal, disconnect and campaign end return eligible value; casualties do not.
+- Depends on: Game Flow, High Command (HQ registry), Factions, Economy, Phone, Notifications; spawning uses the shared Force Spawner.
+- Extension points: recruitment limits, costs, HQ range, timeout and waypoint/group prefabs on the component; unit assets follow the selected Resistance preset.
+- Native compilation, vehicle seating and multiplayer acceptance remain pending; see `docs/FIELD_AND_CIVILIANS.md`.
+
+### Ambient Civilians — In progress
+Purpose: populate towns and cities with walking civilians and occupied civilian cars while players are nearby.
+
+- `AROR_CivilianManagerComponent` on the game mode activates settlement areas within a configurable radius, initially 1 km. Pedestrian destinations and road-traffic spawn/destination points remain inside that area. Cars carry a civilian driver and optionally a passenger, using the Civilians faction preset and the shared Force Spawner.
+- Server/client: all population, spawning, seating, routes and retirement run on the server. Clients see native replicated AI and cars. Town populations are shared by all nearby players, with global people/vehicle budgets and paced construction. No dedicated-server UI is created.
+- Civilians remain in the non-military Civilians role; they do not capture locations or generate military combat reports. Cleanup waits until players leave; claimed cars are retained. Spawn/seating timeouts cancel native queues and repeatedly stalled or failed routes retire without nearby despawning.
+- Saved: nothing; ambient activity is rebuilt around players each session. Vehicles deposited into the Resistance Garage subsequently follow the garage's existing persistence rules.
+- Depends on: Game Flow, Locations, Factions. No new faction assets or resource references are required.
+- Extension points: enablement, activity/retention radii, per-town populations, global budgets, spawn distances, cleanup delay and group/waypoint prefabs.
+- Native compilation, civilian driving/pathfinding and multiplayer acceptance remain pending; see `docs/FIELD_AND_CIVILIANS.md`.
 
 ### Economy — In progress
 Purpose: money and manpower for the campaign: balances, and periodic income from held locations. General purchasing rules come later.
@@ -291,7 +350,7 @@ Purpose: money and manpower for the campaign: balances, and periodic income from
   - The Resistance gains manpower per held town and city, and every online Resistance player is paid 10% of the Resistance's money income as personal money (extra, not taken from the funds).
   - Resistance players get an income notification. Rates and the interval are attributes.
 - Rules: balances never go below zero; spending succeeds only if the balance covers it. All changes happen on the server.
-- Saved: funds, manpower and player money (`AROR_EconomyComponentSerializer`); Resistance funds and manpower include the refund for living High Command squads. Income timing is not saved.
+- Saved: funds, manpower and player money (`AROR_EconomyComponentSerializer`); Resistance funds and manpower include the refund for living High Command squads and living/pending personal recruits. Income timing is not saved.
 - Used by: Operations (QRF costs), High Command (squad purchases), Missions (rewards), the phone's Bank app, admin tools.
 - Extension points: server API to add, spend and read balances, and to trigger a payment.
 
@@ -299,12 +358,12 @@ Purpose: money and manpower for the campaign: balances, and periodic income from
 Purpose: the Resistance's shared item stock for the campaign (what gear is on hand), separate from Economy money and manpower.
 
 - `AROR_ResistanceStorageComponent` (game mode): a ledger of **item prefab + quantity**. Any inventory item can be stocked; slot, type and volume stay on the item when it is later spawned or equipped. Starts empty.
-- Server API: `Add_S` / `Take_S` (atomic) by prefab; `GetQuantity` / `GetEntries` on every machine; `AddEntity_S` deposits a world/inventory item by unpacking nested contents (vest cargo, weapon attachments, magazines, and so on) into **separate stock lines**, then deleting the entity. Magazine fill and item health are not preserved.
+- Server API: `Add_S` / `Take_S` (atomic) by prefab; `GetQuantity` / `GetEntries` on every machine; `AddEntity_S` deposits a world/inventory item by unpacking nested contents (vest cargo, weapon attachments, magazines, and so on) into **separate stock lines**, then deleting the entity. Magazines are credited by their **rounds**: leftover rounds pool per magazine type (server-only) and become stock as they add up to full magazines, so an emptied magazine is worth nothing. Item health is not preserved.
 - Server-owned; stock replicates to all clients as parallel prefab/quantity arrays. Change invoker for future UI.
-- Saved: the stock ledger (`AROR_ResistanceStorageComponentSerializer`).
+- Saved: the stock ledger and the pooled loose rounds (`AROR_ResistanceStorageComponentSerializer`).
 - Admin: Economy → More can fill stock with one of every Resistance preset item (excl. units/vehicles).
 - **Arsenal**: Prefab inherits vanilla `ArsenalBox_Base` plus `AROR_ResistanceArsenalComponent` (same entity as `SCR_ArsenalComponent`). Lists stocked prefabs (qty > 0), sorted by Resistance preset category then path, with stock quantity on each slot. Takes call `Take_S`; refunds call `AddEntity_S`. Supplies are never the budget (`IsArsenalUsingSupplies` forced off). Game mode has `SCR_ArsenalManagerComponent` so vanilla type flags do not disable the box; Resistance arsenals also force-enable. Modded `SCR_ArsenalComponent`, arsenal slot UI, and `SCR_ResourcePlayerControllerInventoryComponent` implement the bridge. Access: open the box like a normal arsenal. Empty stock shows an empty arsenal until admin Fill or deposits. Placement is not HQ-exclusive; Game Flow spawns the first one beside the HQ via `SpawnArsenal`.
-- **Loadout slots**: `AROR_PlayerLoadoutsComponent` (game mode) holds **three** kits per player, keyed by identity ID (same as personal money) and saved with the playthrough (`AROR_PlayerLoadoutsComponentSerializer`). F-key actions (`AROR_SaveLoadoutSlotAction` / `AROR_LoadLoadoutSlotAction`) save a snapshot of worn gear or load a slot. Load **swaps with stock**: deposit current gear via `AddEntity_S`, take the kit’s flat prefab counts via `Take_S`, then re-equip with vanilla `SCR_PlayerArsenalLoadout` apply. Fails with a hint if stock would be short. Slot occupancy is pushed only to the owning client. Magazine fill and item health follow Storage (not preserved). Wire the six actions in Workbench onto the arsenal’s **inherited** `ActionsManagerComponent` as `additionalActions +` (do not add a second ActionsManager — that breaks the prefab / spawn).
+- **Loadout slots**: `AROR_PlayerLoadoutsComponent` (game mode) holds **three** kits per player, keyed by identity ID (same as personal money) and saved with the playthrough (`AROR_PlayerLoadoutsComponentSerializer`). F-key actions (`AROR_SaveLoadoutSlotAction` / `AROR_LoadLoadoutSlotAction`) save a snapshot of worn gear or load a slot. Load **swaps with stock**: deposit current gear via `AddEntity_S`, take the kit’s flat prefab counts via `Take_S`, then re-equip with vanilla `SCR_PlayerArsenalLoadout` apply. Fails with a hint, before anything is deposited, if stock plus what the worn gear is worth (Storage's deposit rules) would be short. Slot occupancy is pushed only to the owning client. Magazine and item health handling follow Storage. Wire the six actions in Workbench onto the arsenal’s **inherited** `ActionsManagerComponent` as `additionalActions +` (do not add a second ActionsManager — that breaks the prefab / spawn).
 
 ### Resistance Garage — In progress
 Purpose: the Resistance's shared vehicle garage for the campaign — unique stored vehicles with condition preserved, separate from Resistance Storage (fungible item stock).
@@ -325,7 +384,7 @@ Purpose: an in-game phone that hosts player-facing apps. Client only.
 - `AROR_PhoneMenu` (a menu registered in `chimeraMenus.conf`) and `AROR_PhoneComponent` (game mode), which opens it with a rebindable keybind (**Ctrl+Y**) for living players when no other menu is open. Esc closes it.
 - A phone frame over a wallpaper with a status bar. Apps open in portrait, or turn the whole phone to landscape and enlarge it. The frame's home button returns to the home screen.
 - **Quick dock**: four slots along the bottom of the home screen. Slot 1 stores the looked-at vehicle (Resistance Garage) and closes the phone; slots 2–4 are empty placeholders for now.
-- Apps: **Bank** (account holder, personal money, Resistance funds, live from the Economy; Transfer screen sends personal money to an online player or Resistance funds), **REBINTEL** (one tab per enemy army: Readiness and Crackdown cards in that army's labels with a 5-segment meter and what the level means; the player's HUD widget and alert settings; read-only: the levels are driven by the campaign), **HICOMM** (landscape High Command app for Resistance Leaders: leadership, a zoomable map for orders, squad purchases; the map shows the base game map by default with military-frame location symbols, the procedural tactical map behind a toggle), **OPS** (landscape mission board from Missions: browse operations, dossier with an area map; leaders accept and abort), **Black Market** (landscape item shop from Black Market and Imports: category tabs, search, a scrolling cart, one-click import into Storage, purchase popup and sound) and **Imports** (landscape vehicle shop: pictures, one click per vehicle into the Garage, faction or personal funds) and **MARS** (landscape response debugger from Operations, replacing the temporary Test tile).
+- Apps: **Bank** (account holder, personal money, Resistance funds, live from the Economy; Transfer screen sends personal money to an online player or Resistance funds), **REBINTEL** (one tab per enemy army: Readiness and Crackdown cards in that army's labels with a 5-segment meter and what the level means; the player's HUD widget and alert settings; read-only: the levels are driven by the campaign), **HICOMM** (landscape High Command app for Resistance Leaders: leadership, a zoomable map for orders, squad purchases; the map shows the base game map by default with military-frame location symbols, the procedural tactical map behind a toggle), **OPS** (landscape mission board from Missions: browse operations, dossier with an area map; leaders accept and abort), **Black Market** (landscape item shop from Black Market and Imports: category tabs, search, a scrolling cart, one-click import into Storage, purchase popup and sound) and **Imports** (landscape vehicle shop: pictures, one click per vehicle into the Garage, faction or personal funds), **FIELD** (landscape personal map annotations and AI companion management) and **MARS** (landscape response debugger from Operations, replacing the temporary Test tile).
 - Depends on: Economy, Notifications (hints), Operations (RebIntel), High Command (HICOMM), Missions (OPS), Resistance Garage (quick store).
 - Saved: REBINTEL player settings (HUD widget on/off, compact/full, top left/right, alert pop-ups, tracked enemy) in the player's own profile folder, client-side (`AROR_RebIntelSettings`). Nothing on the server.
 - Planned: app registration so extender mods can add apps; a Settings app and Feed (see `docs/UI_DESIGN.md`).

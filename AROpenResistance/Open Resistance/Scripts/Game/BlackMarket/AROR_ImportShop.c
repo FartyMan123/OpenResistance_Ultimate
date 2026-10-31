@@ -226,6 +226,10 @@ class AROR_ImportShop
 			key += "|" + preset.GetId();
 		}
 
+		// Catalog augmentation (e.g. WCS) adds entries a frame after loading: rebuild a catalogue built before it
+		if (presets.AreCatalogsAugmented())
+			key += "|augmented";
+
 		return key;
 	}
 }

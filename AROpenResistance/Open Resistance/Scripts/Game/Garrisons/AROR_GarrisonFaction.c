@@ -24,4 +24,108 @@ class AROR_GarrisonFaction
 	ResourceName m_sParkedArmour;
 	[Attribute("", desc: "Random manned defence choices. Every selected hull is fully crewed using native pilot/turret compartments.")]
 	ref array<ResourceName> m_aMannedVehicles;
+	[Attribute("0", desc: "Append the role's faction preset static MGs, armed cars and APCs to the static and manned choices (after the authored ones, so saved variants keep their meaning). If the role uses another army's preset, the authored assets are dropped and soldiers and everything else come from the preset.")]
+	bool m_bUseFactionPreset;
+
+	//! The binding to use with this preset: itself when presets are off or the preset is missing, else a resolved copy
+	AROR_GarrisonFaction ResolveWithPreset(AROR_FactionPreset preset)
+	{
+		if (!m_bUseFactionPreset || !preset)
+			return this;
+
+		AROR_GarrisonFaction resolved = new AROR_GarrisonFaction();
+		resolved.m_eRole = m_eRole;
+		resolved.m_sFactionKey = m_sFactionKey;
+
+		// Authored assets are native to m_sAssetFactionKey; another army's preset replaces them all
+		string presetAssets = preset.GetCatalogFactionKey();
+		bool sameArmy = presetAssets.IsEmpty() || presetAssets == m_sAssetFactionKey;
+		resolved.m_sAssetFactionKey = m_sAssetFactionKey;
+		resolved.m_aInfantryVariants = {};
+		resolved.m_aStaticVariants = {};
+		resolved.m_aMannedVehicles = {};
+		if (sameArmy)
+		{
+			resolved.m_sStaticMG = m_sStaticMG;
+			resolved.m_sParkedArmour = m_sParkedArmour;
+			if (m_aStaticVariants)
+				resolved.m_aStaticVariants.Copy(m_aStaticVariants);
+			if (m_aMannedVehicles)
+				resolved.m_aMannedVehicles.Copy(m_aMannedVehicles);
+		}
+		else
+		{
+			resolved.m_sAssetFactionKey = presetAssets;
+		}
+
+		resolved.m_sInfantry = PresetUnit(preset, AROR_EUnitType.RIFLEMAN, m_sInfantry, sameArmy);
+		// Specialists keep their authored order: automatic rifleman, grenadier, leader
+		array<AROR_EUnitType> specialists = {AROR_EUnitType.AUTORIFLEMAN, AROR_EUnitType.GRENADIER, AROR_EUnitType.LEADER};
+		foreach (int i, AROR_EUnitType specialist : specialists)
+		{
+			ResourceName authored;
+			if (m_aInfantryVariants && i < m_aInfantryVariants.Count())
+				authored = m_aInfantryVariants[i];
+			resolved.m_aInfantryVariants.Insert(PresetUnit(preset, specialist, authored, sameArmy));
+		}
+		resolved.m_sMarksman = PresetUnit(preset, AROR_EUnitType.MARKSMAN, PresetUnit(preset, AROR_EUnitType.SNIPER, m_sMarksman, sameArmy), sameArmy);
+		resolved.m_sCrew = PresetUnit(preset, AROR_EUnitType.CREW, m_sCrew, sameArmy);
+
+		array<ResourceName> statics = {};
+		PresetVehicles(preset, AROR_EVehicleType.STATIC_MG, statics);
+		foreach (ResourceName weapon : statics)
+		{
+			if (resolved.m_sStaticMG.IsEmpty())
+				resolved.m_sStaticMG = weapon;
+			else if (weapon != resolved.m_sStaticMG && !resolved.m_aStaticVariants.Contains(weapon))
+				resolved.m_aStaticVariants.Insert(weapon);
+		}
+
+		array<ResourceName> hulls = {};
+		PresetVehicles(preset, AROR_EVehicleType.ARMED_CAR, hulls);
+		PresetVehicles(preset, AROR_EVehicleType.APC, hulls);
+		foreach (ResourceName hull : hulls)
+		{
+			if (!resolved.m_aMannedVehicles.Contains(hull))
+				resolved.m_aMannedVehicles.Insert(hull);
+		}
+		if (resolved.m_sParkedArmour.IsEmpty())
+		{
+			array<ResourceName> armour = {};
+			PresetVehicles(preset, AROR_EVehicleType.APC, armour);
+			if (!armour.IsEmpty())
+				resolved.m_sParkedArmour = armour[0];
+		}
+
+		return resolved;
+	}
+
+	//! Same army: the authored unit (deliberate picks), the preset's when none is authored. Another army: the
+	//! preset's unit of the type, falling back to its rifleman.
+	protected static ResourceName PresetUnit(AROR_FactionPreset preset, AROR_EUnitType type, ResourceName authored, bool sameArmy)
+	{
+		if (sameArmy && !authored.IsEmpty())
+			return authored;
+		AROR_FactionPresetUnit unit = preset.GetUnit(type);
+		if (unit && !unit.GetPrefab().IsEmpty())
+			return unit.GetPrefab();
+		if (sameArmy)
+			return authored;
+		AROR_FactionPresetUnit rifleman = preset.GetUnit(AROR_EUnitType.RIFLEMAN);
+		if (rifleman)
+			return rifleman.GetPrefab();
+		return string.Empty;
+	}
+
+	//! Appends the preset's vehicles of the type, in preset order (stable while the loaded mods stay the same)
+	protected static void PresetVehicles(AROR_FactionPreset preset, AROR_EVehicleType type, notnull array<ResourceName> outPrefabs)
+	{
+		array<AROR_FactionPresetEntry> entries = {};
+		preset.GetEntries(AROR_EFactionPresetCategory.VEHICLES, type, entries);
+		foreach (AROR_FactionPresetEntry entry : entries)
+		{
+			if (!entry.GetPrefab().IsEmpty())
+				outPrefabs.Insert(entry.GetPrefab());
+		}
+	}
 }
