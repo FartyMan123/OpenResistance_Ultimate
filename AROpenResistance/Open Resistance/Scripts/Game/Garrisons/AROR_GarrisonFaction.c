@@ -76,7 +76,8 @@ class AROR_GarrisonFaction
 		resolved.m_sCrew = PresetUnit(preset, AROR_EUnitType.CREW, m_sCrew, sameArmy);
 
 		array<ResourceName> statics = {};
-		PresetVehicles(preset, AROR_EVehicleType.STATIC_MG, statics);
+		PresetVehicles(preset, AROR_EVehicleType.STATIC_MG_LOW, statics);
+		PresetVehicles(preset, AROR_EVehicleType.STATIC_MG_HIGH, statics);
 		foreach (ResourceName weapon : statics)
 		{
 			if (resolved.m_sStaticMG.IsEmpty())
@@ -87,6 +88,7 @@ class AROR_GarrisonFaction
 
 		array<ResourceName> hulls = {};
 		PresetVehicles(preset, AROR_EVehicleType.ARMED_CAR, hulls);
+		PresetVehicles(preset, AROR_EVehicleType.ARMED_TRUCK, hulls);
 		PresetVehicles(preset, AROR_EVehicleType.APC, hulls);
 		PresetVehicles(preset, AROR_EVehicleType.IFV, hulls);
 		foreach (ResourceName hull : hulls)

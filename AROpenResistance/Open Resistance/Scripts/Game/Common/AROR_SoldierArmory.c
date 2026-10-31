@@ -62,7 +62,7 @@ class AROR_SoldierArmory
 	{
 		switch (weaponType)
 		{
-			case EWeaponType.WT_RIFLE: return AROR_EWeaponType.RIFLE;
+			case EWeaponType.WT_RIFLE: return AROR_EWeaponType.ASSAULT_RIFLE;
 			case EWeaponType.WT_MACHINEGUN: return AROR_EWeaponType.MACHINEGUN;
 			case EWeaponType.WT_SNIPERRIFLE: return AROR_EWeaponType.SNIPER_RIFLE;
 		}
@@ -89,13 +89,13 @@ class AROR_SoldierArmory
 
 		array<AROR_FactionPresetEntry> entries = {};
 		preset.GetEntries(AROR_EFactionPresetCategory.WEAPONS, presetType, entries);
-		if (presetType == AROR_EWeaponType.RIFLE)
+		if (presetType == AROR_EWeaponType.ASSAULT_RIFLE)
 			preset.GetEntries(AROR_EFactionPresetCategory.WEAPONS, AROR_EWeaponType.CARBINE, entries);
 
 		array<ResourceName> candidates = {};
 		foreach (AROR_FactionPresetEntry entry : entries)
 		{
-			if (entry.GetMinimumReadinessLevel() <= readiness && !entry.GetPrefab().IsEmpty())
+			if (!entry.GetPrefab().IsEmpty() && AROR_ContentPacksComponent.GetMinimumReadinessOf(entry.GetPrefab()) <= readiness)
 				candidates.Insert(entry.GetPrefab());
 		}
 

@@ -168,7 +168,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	protected RichTextWidget m_wImportsTileLabel;
 	protected Widget m_wImportsTileButton;
 
-	//! Home quick dock: slot 0 = garage store; 1–3 empty placeholders
+	//! Home quick dock: slot 0 = garage store; 1–2 empty placeholders; 3 = save campaign (admins, drawn on HomeTileCanvas)
 	protected ImageWidget m_wQuickSlot0;
 	protected RichTextWidget m_wQuickSlot0Glyph;
 	protected Widget m_wQuickSlot0Button;
@@ -178,6 +178,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	protected Widget m_wQuickSlot2Button;
 	protected ImageWidget m_wQuickSlot3;
 	protected Widget m_wQuickSlot3Button;
+	protected bool m_bManualSaveAvailable;	//!< Set when the phone opens: an admin with a campaign running
 
 	protected Widget m_wBankApp;
 	protected ImageWidget m_wBankBackground;
@@ -257,6 +258,15 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		{
 			// Store first so the look ray still has a character/camera, then close the phone
 			AROR_GarageStoreAPI.TryStoreLookedAtVehicle();
+			RequestClose();
+		}
+		else if (buttonName == "QuickSlot3Button" && m_bManualSaveAvailable)
+		{
+			// The server checks admin rights again and answers with a hint
+			SCR_PlayerController playerController = SCR_PlayerController.Cast(GetGame().GetPlayerController());
+			if (playerController)
+				playerController.AROR_RequestManualSave();
+
 			RequestClose();
 		}
 		else if (buttonName == "BankTransferButton")
@@ -466,11 +476,14 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			return;
 		}
 
+		m_bManualSaveAvailable = CanManualSave();
 		ApplyStyle();
 
 		m_ButtonHandler = new AROR_PhoneButtonHandler(this);
 		// Empty quick slots keep buttons for layout but are not registered (not clickable)
 		array<Widget> buttons = {m_wBankTileButton, m_wTestTileButton, m_wRebIntelTileButton, m_wHiCommTileButton, m_wOpsTileButton, m_wQuickSlot0Button, m_wBankTransferButton, m_wTestBackButton, m_wHomeButton};
+		if (m_bManualSaveAvailable)
+			buttons.Insert(m_wQuickSlot3Button);
 		m_BankTransfer.CollectButtons(buttons);
 		if (m_wBlackMarketTileButton)
 		{
@@ -831,7 +844,27 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			AddRoundedTile(TILE_LEFT, TILE_TOP + (TILE_SIZE + TILE_ROW_SPACING) * 2, AROR_UIColors.SURFACE, pixels);
 		if (m_Field)
 			AddRoundedTile(TILE_LEFT + TILE_SIZE + TILE_SPACING, TILE_TOP + (TILE_SIZE + TILE_ROW_SPACING) * 2, AROR_UIColors.SURFACE, pixels);
+		if (m_bManualSaveAvailable)
+		{
+			// Quick dock slot 3, in the garage slot's colours
+			float rowWidth = QUICK_SLOT_COUNT * QUICK_SLOT_SIZE + (QUICK_SLOT_COUNT - 1) * QUICK_SLOT_GAP;
+			float slotLeft = (SCREEN_WIDTH - rowWidth) * 0.5 + 3 * (QUICK_SLOT_SIZE + QUICK_SLOT_GAP);
+			float slotTop = SCREEN_HEIGHT - QUICK_DOCK_BOTTOM - QUICK_SLOT_SIZE;
+			AROR_PhoneSaveIcon.Add(m_aTileCommands, slotLeft, slotTop, QUICK_SLOT_SIZE, pixels, Color.FromRGBA(36, 72, 48, 255), Color.FromRGBA(168, 240, 196, 255));
+		}
 		m_wHomeTileCanvas.SetDrawCommands(m_aTileCommands);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Save campaign in the quick dock: admins (the server checks again) once a campaign is running
+	protected bool CanManualSave()
+	{
+		PlayerController playerController = GetGame().GetPlayerController();
+		if (!playerController || !AROR_AdminAccess.IsAdministrator(playerController.GetPlayerId()))
+			return false;
+
+		SCR_BaseGameMode gameMode = SCR_BaseGameMode.Cast(GetGame().GetGameMode());
+		return gameMode && gameMode.GetState() == SCR_EGameModeState.GAME;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -868,7 +901,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Four equal slots along the bottom of the home screen (slot 0 = garage store; 1–3 empty)
+	//! Four equal slots along the bottom of the home screen (slot 0 = garage store; 1–2 empty; 3 = save campaign)
 	protected void LayoutQuickDock(float scale)
 	{
 		float rowWidth = QUICK_SLOT_COUNT * QUICK_SLOT_SIZE + (QUICK_SLOT_COUNT - 1) * QUICK_SLOT_GAP;
@@ -984,7 +1017,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		}
 		SetColor(m_wTestBackBackground, Color.FromRGBA(255, 255, 255, 40));
 
-		// Quick dock: slot 0 active (garage); 1–3 muted empty placeholders
+		// Quick dock: slot 0 active (garage); 1–2 muted empty placeholders; 3 muted unless the player can save
 		SetColor(m_wQuickSlot0, Color.FromRGBA(36, 72, 48, 255));
 		SetColor(m_wQuickSlot1, Color.FromRGBA(28, 32, 36, 180));
 		SetColor(m_wQuickSlot2, Color.FromRGBA(28, 32, 36, 180));
@@ -1001,8 +1034,11 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			m_wQuickSlot1Button.SetEnabled(false);
 		if (m_wQuickSlot2Button)
 			m_wQuickSlot2Button.SetEnabled(false);
+		// Save campaign: its square and floppy disk are drawn on HomeTileCanvas (see DrawRoundedTiles)
 		if (m_wQuickSlot3Button)
-			m_wQuickSlot3Button.SetEnabled(false);
+			m_wQuickSlot3Button.SetEnabled(m_bManualSaveAvailable);
+		if (m_wQuickSlot3)
+			m_wQuickSlot3.SetVisible(!m_bManualSaveAvailable);
 
 		StyleText(m_wClock, "--:--", true);
 		StyleText(m_wBankTileLabel, "Bank", false);

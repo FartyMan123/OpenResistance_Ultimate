@@ -642,9 +642,6 @@ class AROR_ResistanceGarageComponent : SCR_BaseGameModeComponent
 		if (!Replication.IsServer())
 			return;
 
-		// Every change to the stored vehicles is worth a save
-		AROR_GameFlowComponent.RequestAutosave_S();
-
 		m_aEntryIds.Clear();
 		m_aPrefabs.Clear();
 		m_aHealths.Clear();

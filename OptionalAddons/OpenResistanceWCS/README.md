@@ -7,20 +7,20 @@ A project whose only job is to depend on the core and the Worst Case Scenario (W
 
 ## How WCS gets into the game mode
 
-WCS adds its weapons, vehicles and helicopters to the base-game US, USSR and FIA faction catalogs. The core faction presets augment themselves from those catalogs at runtime (ARCHITECTURE.md → Factions → catalog augmentation):
+WCS adds its weapons, vehicles and helicopters to the base-game US, USSR and FIA faction catalogs. Two core mechanisms pick them up at runtime, with no WCS-specific code or configs:
 
-- **US Army** and **Soviet Army** gain every catalog asset they do not list, with a default Readiness by type: armed cars, transport helicopters and static AT at 2; APCs, IFVs and static AA at 3; armed helicopters and aircraft munitions at 4; tanks at 5.
-- **FIA** (Resistance) gains the hand-held weapons, accessories and ammunition of the US and USSR catalogs that exist neither in the base game, RHS nor WCS RHS Weapons, i.e. the WCS-made ones. Guided launchers (Javelin, Stinger, Igla) are left out by name. Base-game, RHS and WCS RHS weapons and the guided launchers are left for the Black Market.
+- **Content Packs → catalog generation** (ARCHITECTURE.md → Content Packs): the core's **Mod assets** pack (`MOD_CATALOGS`) offers every vehicle, static weapon and item in the US, USSR, FIA and CIV catalogs that is not a base-game prefab and that no other pack lists. Each generated entry copies the price and import facility requirements of the base game pack's first entry of the same type (vehicle munitions such as rocket pods keep their own terms), else a default by type. Its minimum Readiness is a default by type: armed cars, armed trucks, transport helicopters, static AT and mortars at 2; APCs, IFVs, AA vehicles and static AA at 3; armed helicopters and aircraft munitions at 4; tanks at 5. The admin can turn the pack off at campaign setup to play with base-game assets only.
+- **Factions → catalog augmentation**: the faction presets add the prefab and type of what their catalogs hold. **US Army** and **Soviet Army** gain every catalog asset they do not list. **FIA** (Resistance) gains the hand-held weapons, accessories and ammunition of the US and USSR catalogs that exist neither in the base game, RHS nor WCS RHS Weapons, i.e. the WCS-made ones. Guided launchers (Javelin, Stinger, Igla) are left out by name and stay Black Market only. An added entry is used only while an enabled pack (normally Mod assets) offers it, at that pack entry's Readiness.
 
-The systems then use the augmented presets:
+The systems then use the augmented presets and the pack catalogue:
 
 | System | What WCS adds |
 |---|---|
 | QRFs (Chicken profiles) | Trucks, APCs, IFVs (armour profiles), armed cars, transport helicopters and gunship escorts picked per dispatch at the army's Readiness; crews sized to the hull; authored vehicle as fallback |
 | Patrols | Cars, armed cars and APCs by Readiness (unchanged code: already preset-driven) |
 | Missions | Convoy/supply trucks and escorts, limited to the army's Readiness |
-| Garrisons | Static MGs, armed cars and APCs appended to the manned/static choices |
-| Black Market and Imports | Every WCS item (Black Market) and vehicle, helicopters and tanks included (Imports). Each added entry copies the price and import facility requirements of a curated entry of the same type, e.g. attack helicopters 60,000 with 6 facilities, one of them a heliport or airport; IFVs (22,000, 5 + seaport) and tanks (40,000, 6 + seaport) use defaults |
+| Garrisons | Static MGs (low and high tripods), armed cars, armed trucks, APCs and IFVs appended to the manned/static choices |
+| Black Market and Imports | Every WCS and RHS item (Black Market) and vehicle, helicopters and tanks included (Imports), from the Mod assets pack, e.g. attack helicopters 60,000 with 6 facilities, one of them a heliport or airport; IFVs (22,000, 5 + seaport) and tanks (40,000, 6 + seaport) use defaults. Armed trucks (e.g. ZU-23 carriers) are sold as armed trucks or AA vehicles |
 | Arsenal (admin fill) | The WCS-made firearms in the FIA preset |
 
 ## Dependencies
@@ -32,11 +32,12 @@ The core (`6C68A5E5654D7210`), RHS: Status Quo, and the WCS content addons: Core
 ## Testing
 
 1. Subscribe to every dependency in the game. Run `Open WCS Workbench.cmd`; it validates the complete dependency chain, including engine data, and refuses to start for a missing GUID, dependency cycle or ambiguous installed copy. Folder names alone are not trusted. The project GUID `1CAE49450A83DEAB` was written by hand; save the project once in Workbench.
-2. Open the Chicken world and play. The log should show lines like `[AROR] Faction preset 'US_ARMY': N entries added from the faction catalogs` for US_ARMY, USSR_ARMY and FIA.
-3. FIA should add only a few dozen items (WCS-made). If it adds hundreds, the excluded-source check (`$ArmaReforger:` / `$RHS_Core:` file lookups) is not working.
+2. Open the Chicken world and play. The log should show `[AROR] Content pack 'MOD_CATALOGS': N entries added from the faction catalogs`, then `Content packs enabled: BASE_GAME, MOD_CATALOGS (…)`, and lines like `[AROR] Faction preset 'US_ARMY': N entries added from the faction catalogs` for US_ARMY, USSR_ARMY and FIA. The setup screen's content pack step lists **Mod assets** next to **Base Game**.
+3. FIA should add only a few dozen items (WCS-made). If it adds hundreds, the excluded-source check (`$ArmaReforger:` / `$RHS_Core:` file lookups) is not working. If MOD_CATALOGS adds base-game items, the `$ArmaReforger:` lookup is not working.
 4. Raise Readiness with MARS and dispatch QRFs: the log shows `Ground package <profile> uses preset vehicle …` or `[AROR REAPER] package uses preset aircraft …`, or a `does not fit` warning with the authored fallback. The current REAPER adapter seats one pilot per aircraft. Preset gunships requiring additional turret crew are rejected with an explanation and fall back to the authored gunship. Test firing on compatible pilot-controlled aircraft in Workbench; this is not proof of weapon/AI compatibility for every WCS variant.
 5. Capture import facilities (the admin menu's capture on map is quickest): Black Market should list WCS weapons (search e.g. "SCAR") and Imports WCS vehicles and helicopters, priced like the curated ones (no 0-cost entries). Helicopters stay locked without a heliport or airport. `[AROR GARRISON] … binding resolved with preset …` shows the garrison choices.
-6. Without WCS (the normal core project), `entries added` lines should be absent or tiny: the base presets were imported from the base catalogs. A large number means the base presets are out of date; re-run the base import plugin.
+6. Without WCS (the normal core project), `entries added` lines should be absent or tiny: the base presets and the base game pack were imported from the base catalogs. A large number means the base presets are out of date; re-run the base import plugin.
+7. Start a campaign with **Mod assets** turned off: QRFs, garrisons and the shops should use base-game assets only, and the log should not warn about each WCS prefab (catalog-added preset entries are skipped quietly).
 
 ## Hosting a WCS server
 

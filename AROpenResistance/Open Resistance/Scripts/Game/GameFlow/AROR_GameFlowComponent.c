@@ -25,7 +25,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Garage prefab spawned beside the HQ (opposite side from the arsenal)", params: "et")]
 	protected ResourceName m_sGaragePrefab;
 
-	[Attribute("0.5 0 0", UIWidgets.Coords, desc: "World offset from the HQ origin (flag): arsenal at +offset, garage at -offset (opposite sides)")]
+	[Attribute("0.5 0 0", UIWidgets.Coords, desc: "Gap from the HQ origin (flag) to the nearest edge of each prop: arsenal on the +offset side, garage on the -offset side (opposite sides)")]
 	protected vector m_vArsenalOffsetFromHQ;
 
 	[Attribute("100", UIWidgets.Slider, desc: "Minimum distance in metres between the HQ and the edge (radius) of any location", params: "0 5000 10")]
@@ -43,8 +43,11 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	[Attribute("8", UIWidgets.Slider, desc: "Players are moved to random points within this radius of the HQ when it is created", params: "0 50 1")]
 	protected float m_fHQArrivalRadius;
 
-	[Attribute("300", UIWidgets.Slider, desc: "Seconds between automatic saves while a playthrough is running (0 = off). Key events such as garage changes also save shortly after they happen", params: "0 1800 30")]
+	[Attribute("300", UIWidgets.Slider, desc: "Seconds between automatic saves while a playthrough is running (0 = off)", params: "0 1800 30")]
 	protected int m_iAutosaveIntervalSeconds;
+
+	[Attribute("5", UIWidgets.Slider, desc: "Autosaves kept per playthrough; older ones are deleted after each autosave. Manual saves are never deleted", params: "1 50 1")]
+	protected int m_iAutosavesKept;
 
 	[Attribute("1", desc: "Workbench only: treat every player as admin so setup can be tested", category: "Workbench")]
 	protected bool m_bWorkbenchEveryoneIsAdmin;
@@ -77,6 +80,15 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	//! Server: the game restored a save before setup; its world state cannot take a new playthrough on top
 	protected bool m_bResumedSave;
 
+	//! Server: the game resumed a save by itself and the scenario is being reloaded fresh. The engine ignores a world
+	//! change during world init, so the reload is requested once the game has started and retried a few times.
+	protected bool m_bFreshRestartPending;
+	protected int m_iFreshRestartAttempts;
+	protected static const int FRESH_RESTART_RETRY_MS = 2000;
+	protected static const int FRESH_RESTART_MAX_ATTEMPTS = 5;
+	protected static const int FRESH_RESTART_START_TIMEOUT_MS = 60000;
+	protected bool m_bFreshRestartAttempting;	//!< The game has started; attempts are running
+
 	//! Server: players already offered the setup screen (join and role change can both trigger it)
 	protected ref array<int> m_aSetupOfferedPlayerIds = {};
 
@@ -86,10 +98,30 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	protected ref SaveGameObtainCallback m_SaveListCallback;
 	protected ref SaveGameOperationCallback m_InitialSaveCallback;
 	protected ref SaveGameOperationCallback m_AutosaveCallback;
+	protected ref SaveGameOperationCallback m_ManualSaveCallback;
+	protected int m_iManualSaveRequesterId;	//!< Admin whose manual save is pending, or 0
+	protected int m_iManualSaveAttempts;
+	protected static const int MANUAL_SAVE_MAX_WAITS = 20;	//!< Busy checks PRUNE_RETRY_MS apart before giving up
+
+	//! Server: the mission's saves at boot, to spot a new playthrough reusing an existing playthrough number
+	protected ref array<SaveGame> m_aKnownSaves = {};
+	protected ref SaveGameObtainCallback m_KnownSavesCallback;
+
+	//! Server: old autosaves of the running playthrough waiting to be deleted, one at a time
+	protected ref SaveGameObtainCallback m_PruneCallback;
+	protected ref array<SaveGame> m_aPruneQueue = {};
+	protected static const int PRUNE_RETRY_MS = 500;
+
+	//! Autosave names start with this, followed by the resistance name; manual saves are the resistance name alone.
+	//! The "-" is not allowed in resistance names (AROR_ResistanceName), so no manual save can look like an autosave.
+	static const string AUTOSAVE_PREFIX = "Autosave - ";
+	protected static const string DIGITS = "0123456789";
+	protected static const int ENGINE_NAME_TIME_TOLERANCE_S = 600;
 
 	//! Key-event saves wait this long, so several changes in a row become one save and the world has settled
 	protected static const int AUTOSAVE_EVENT_DELAY_MS = 5000;
 	protected bool m_bAutosavePending;
+	protected bool m_bAutosaveTimerStarted;
 
 	//! After a load, wait this long for the saved entities to restore before checking the garage prop exists
 	protected static const int ENSURE_GARAGE_DELAY_MS = 10000;
@@ -302,11 +334,21 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	//------------------------------------------------------------------------------------------------
 	// Server: requests from the admin (arrive through SCR_PlayerController RPCs)
 	//------------------------------------------------------------------------------------------------
-	//! presetIds: faction preset ID per role, indexed by AROR_EFactionRole (null or empty entries use the defaults)
-	void RequestNewPlaythrough_S(int playerId, vector hqPosition, string playthroughName, array<string> presetIds = null)
+	//! The admin's choices from the setup screen. resistanceName: checked by AROR_ResistanceName, also the playthrough
+	//! (save) name. presetIds: faction preset ID per role, indexed by AROR_EFactionRole (null or empty entries use the
+	//! defaults). disabledPackIds / enabledPackIds: content pack overrides (null = every pack on its default).
+	//! settingIds / settingValues: campaign settings (missing or invalid = default).
+	void RequestNewPlaythrough_S(int playerId, vector hqPosition, string resistanceName, array<string> presetIds = null, array<string> disabledPackIds = null, array<string> enabledPackIds = null, array<string> settingIds = null, array<string> settingValues = null)
 	{
 		if (!CanAcceptSetupRequest(playerId))
 			return;
+
+		string nameReason;
+		if (!AROR_ResistanceName.Validate(resistanceName, nameReason))
+		{
+			SendSetupResult(playerId, false, nameReason);
+			return;
+		}
 
 		if (m_bResumedSave)
 		{
@@ -329,6 +371,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		}
 
 		IEntity arsenal = SpawnArsenal(hq.GetOrigin() + m_vArsenalOffsetFromHQ);
+		PlaceClearOfFlag(arsenal, hq.GetOrigin(), m_vArsenalOffsetFromHQ);
 		if (!arsenal)
 		{
 			SCR_EntityHelper.DeleteEntityAndChildren(hq);
@@ -338,6 +381,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 
 		// Same distance as the arsenal, opposite side of the HQ flag
 		IEntity garage = SpawnGarage(hq.GetOrigin() - m_vArsenalOffsetFromHQ);
+		PlaceClearOfFlag(garage, hq.GetOrigin(), -m_vArsenalOffsetFromHQ);
 		if (!garage)
 		{
 			SCR_EntityHelper.DeleteEntityAndChildren(arsenal);
@@ -348,23 +392,36 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 
 		Print(string.Format("[AROR] Garage spawned at %1", garage.GetOrigin()), LogLevel.NORMAL);
 
-		// Before the initial save point, so the first save already holds the admin's choice
+		// Before the initial save point, so the first save already holds the admin's choices
 		AROR_FactionPresetsComponent factionPresets = AROR_FactionPresetsComponent.GetInstance();
 		if (factionPresets)
 			factionPresets.SetPresets_S(presetIds);
+
+		AROR_ContentPacksComponent contentPacks = AROR_ContentPacksComponent.GetInstance();
+		if (contentPacks)
+			contentPacks.SetPackOverrides_S(disabledPackIds, enabledPackIds);
+
+		AROR_CampaignSettingsComponent campaignSettings = AROR_CampaignSettingsComponent.GetInstance();
+		if (campaignSettings)
+			campaignSettings.SetValues_S(settingIds, settingValues);
+
+		AROR_HighCommandComponent highCommand = AROR_HighCommandComponent.GetInstance();
+		if (highCommand)
+			highCommand.SetResistanceName_S(resistanceName);
 
 		SaveGameManager saveManager = SaveGameManager.Get();
 		if (saveManager)
 		{
 			// TODO: verify that transition = false starts the playthrough without reloading the world
-			saveManager.StartPlaythrough(SaveGameManager.GetCurrentMissionResource(), playthroughName, false);
+			saveManager.StartPlaythrough(SaveGameManager.GetCurrentMissionResource(), resistanceName, false);
 			saveManager.SetSavingAllowed(true);
 
 			LogSaveState();
+			CheckPlaythroughNumberUnused();
 
-			// Initial save point so new and loaded playthroughs share the same restore path
+			// Initial save point (an autosave) so new and loaded playthroughs share the same restore path
 			m_InitialSaveCallback = new SaveGameOperationCallback(OnInitialSaveCompleted);
-			saveManager.RequestSavePoint(ESaveGameType.SCRIPTED, "Start", 0, m_InitialSaveCallback);
+			saveManager.RequestSavePoint(ESaveGameType.SCRIPTED, AUTOSAVE_PREFIX + resistanceName, 0, m_InitialSaveCallback);
 		}
 
 		m_bPlaythroughReady = true;
@@ -374,7 +431,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 
 		SendHQEstablishedHeadline(hq);
 
-		Print(string.Format("[AROR] New playthrough '%1' started, HQ at %2", playthroughName, hq.GetOrigin()), LogLevel.NORMAL);
+		Print(string.Format("[AROR] New playthrough '%1' started, HQ at %2", resistanceName, hq.GetOrigin()), LogLevel.NORMAL);
 		SendSetupResult(playerId, true, string.Empty);
 	}
 
@@ -460,6 +517,10 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	protected bool CanAcceptSetupRequest(int playerId)
 	{
 		if (!Replication.IsServer())
+			return false;
+
+		// The world is about to be reloaded without the save the game resumed
+		if (m_bFreshRestartPending)
 			return false;
 
 		if (m_bPlaythroughReady)
@@ -569,6 +630,36 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Slides a prop along the offset direction so its near edge (bounds) is the offset's length from the flag,
+	//! instead of its origin, so wide props neither overlap each other nor the flag
+	protected void PlaceClearOfFlag(IEntity prop, vector flagPosition, vector offset)
+	{
+		float gap = offset.Length();
+		if (!prop || gap <= 0)
+			return;
+
+		vector direction = offset / gap;
+		vector mins, maxs;
+		prop.GetWorldBounds(mins, maxs);
+
+		// Half-size of the world-aligned bounds measured along the offset direction
+		float halfExtent = Math.AbsFloat(direction[0]) * (maxs[0] - mins[0]) * 0.5 + Math.AbsFloat(direction[2]) * (maxs[2] - mins[2]) * 0.5;
+
+		vector boundsCentre = (mins + maxs) * 0.5;
+		vector target = flagPosition + direction * (gap + halfExtent);
+
+		// Keep the prop's height above the terrain (its pivot offset) at the new spot
+		BaseWorld world = GetGame().GetWorld();
+		vector origin = prop.GetOrigin();
+		float heightAboveSurface = origin[1] - world.GetSurfaceY(origin[0], origin[2]);
+		origin[0] = origin[0] + (target[0] - boundsCentre[0]);
+		origin[2] = origin[2] + (target[2] - boundsCentre[2]);
+		origin[1] = world.GetSurfaceY(origin[0], origin[2]) + heightAboveSurface;
+		prop.SetOrigin(origin);
+		prop.Update();
+	}
+
+	//------------------------------------------------------------------------------------------------
 	protected IEntity SpawnSurfacePrefab(ResourceName prefab, vector position, string label)
 	{
 		Resource resource = Resource.Load(prefab);
@@ -600,7 +691,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	//! Sends the setup screen to an admin while the game is still in pre-game
 	protected void TryOfferSetup(int playerId)
 	{
-		if (!Replication.IsServer() || m_bPlaythroughReady || !IsAdmin(playerId))
+		if (!Replication.IsServer() || m_bPlaythroughReady || m_bFreshRestartPending || !IsAdmin(playerId))
 			return;
 
 		if (m_aSetupOfferedPlayerIds.Contains(playerId))
@@ -626,18 +717,41 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	{
 		m_aListedSaves.Clear();
 
+		array<SaveGame> newestFirst = {};
 		if (success && saves)
 		{
-			foreach (SaveGame save : saves)
+			foreach (SaveGame obtained : saves)
 			{
-				InsertNewestFirst(save);
+				InsertNewestFirst(newestFirst, obtained);
 			}
 		}
 
-		array<string> labels = {};
-		foreach (SaveGame save : m_aListedSaves)
+		// Group by playthrough: groups in order of their newest save, each group's saves newest first. The client
+		// refers to saves by their index in this flat order (RequestLoad_S).
+		array<string> groupKeys = {};
+		foreach (SaveGame sorted : newestFirst)
 		{
-			labels.Insert(FormatSaveLabel(save));
+			string sortedKey = GetPlaythroughKey(sorted);
+			if (!groupKeys.Contains(sortedKey))
+				groupKeys.Insert(sortedKey);
+		}
+
+		array<string> labels = {};
+		foreach (string key : groupKeys)
+		{
+			array<SaveGame> groupSaves = {};
+			foreach (SaveGame candidate : newestFirst)
+			{
+				if (GetPlaythroughKey(candidate) == key)
+					groupSaves.Insert(candidate);
+			}
+
+			string groupName = GetGroupName(groupSaves);
+			foreach (SaveGame listed : groupSaves)
+			{
+				m_aListedSaves.Insert(listed);
+				labels.Insert(FormatSaveLabel(listed, key, groupName));
+			}
 		}
 
 		SCR_PlayerController playerController = GetPlayerController(m_iSaveListRequesterId);
@@ -646,38 +760,121 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	protected void InsertNewestFirst(SaveGame save)
+	protected static void InsertNewestFirst(notnull array<SaveGame> list, SaveGame save)
 	{
 		if (!save)
 			return;
 
 		int created = save.GetSavePointCreatedUnix();
-		for (int i = 0, count = m_aListedSaves.Count(); i < count; i++)
+		for (int i = 0, count = list.Count(); i < count; i++)
 		{
-			if (created > m_aListedSaves[i].GetSavePointCreatedUnix())
+			if (created > list[i].GetSavePointCreatedUnix())
 			{
-				m_aListedSaves.InsertAt(save, i);
+				list.InsertAt(save, i);
 				return;
 			}
 		}
 
-		m_aListedSaves.Insert(save);
+		list.Insert(save);
 	}
 
 	//------------------------------------------------------------------------------------------------
-	protected string FormatSaveLabel(SaveGame save)
+	//! Saves of one playthrough share its number and start time (the start time tells apart a reused number)
+	protected static string GetPlaythroughKey(notnull SaveGame save)
+	{
+		return string.Format("%1-%2", save.GetPlaythroughNumber(), save.GetPlaythroughStartedUnix());
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Save lists hold their own SaveGame objects, so compare by playthrough and save point number, not by object
+	protected static bool IsSameSave(SaveGame a, SaveGame b)
+	{
+		if (!a || !b)
+			return false;
+
+		return GetPlaythroughKey(a) == GetPlaythroughKey(b) && a.GetSavePointNumber() == b.GetSavePointNumber();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! True for our autosaves and the engine's own saves (shutdown, unnamed). Everything else is a manual save, which
+	//! is never pruned: no resistance name can start with AUTOSAVE_PREFIX or match an engine name.
+	static bool IsAutosave(notnull SaveGame save)
+	{
+		string name = save.GetSavePointName();
+		return name.StartsWith(AUTOSAVE_PREFIX) || IsGeneratedSaveName(save);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Names we did not give: empty, or the engine's own name for its saves (e.g. shutdown saves), which is the
+	//! creation time in Unix seconds. A resistance named only with digits is not mistaken for it.
+	protected static bool IsGeneratedSaveName(notnull SaveGame save)
+	{
+		string name = save.GetSavePointName();
+		if (name.IsEmpty())
+			return true;
+
+		for (int i = 0, length = name.Length(); i < length; i++)
+		{
+			if (!DIGITS.Contains(name.Get(i)))
+				return false;
+		}
+
+		return Math.AbsInt(name.ToInt() - save.GetSavePointCreatedUnix()) <= ENGINE_NAME_TIME_TOLERANCE_S;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! The resistance name a save was made under, or empty when the engine named it
+	protected static string GetResistanceNameOf(notnull SaveGame save)
+	{
+		string name = save.GetSavePointName();
+		if (name.StartsWith(AUTOSAVE_PREFIX))
+			return name.Substring(AUTOSAVE_PREFIX.Length(), name.Length() - AUTOSAVE_PREFIX.Length());
+
+		if (IsGeneratedSaveName(save))
+			return string.Empty;
+
+		return name;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! A playthrough is listed under the resistance name of its newest named save
+	protected static string GetGroupName(notnull array<SaveGame> newestFirst)
+	{
+		foreach (SaveGame save : newestFirst)
+		{
+			string name = GetResistanceNameOf(save);
+			if (!name.IsEmpty())
+				return name;
+		}
+
+		if (!newestFirst.IsEmpty() && !newestFirst[0].GetPlaythroughName().IsEmpty())
+			return newestFirst[0].GetPlaythroughName();
+
+		return "Resistance";
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Fields for the load list: group key | group name | save name | autosave (1/0) | date | compatible (1/0)
+	protected string FormatSaveLabel(notnull SaveGame save, string groupKey, string groupName)
 	{
 		int year, month, day, hour, minute, second;
 		save.GetSavePointCreatedLocalDateTime(year, month, day, hour, minute, second);
 
-		// Fields for the load dialog's campaign card: name | save point | date | compatible (1/0)
-		string separator = AROR_SetupMenu.FIELD_SEPARATOR;
 		string compatible = "1";
 		if (!save.IsSavePointGameVersionCompatible() || !save.AreSavePointAddonsCompatible())
 			compatible = "0";
 
+		string autosave = "0";
+		if (IsAutosave(save))
+			autosave = "1";
+
+		string saveName = GetResistanceNameOf(save);
+		if (saveName.IsEmpty())
+			saveName = groupName;
+
+		string separator = AROR_SetupMenu.FIELD_SEPARATOR;
 		string date = string.Format("%1-%2-%3 %4:%5", year, month.ToString(2), day.ToString(2), hour.ToString(2), minute.ToString(2));
-		return CleanSaveField(save.GetPlaythroughName()) + separator + CleanSaveField(save.GetSavePointName()) + separator + date + separator + compatible;
+		return groupKey + separator + CleanSaveField(groupName) + separator + CleanSaveField(saveName) + separator + autosave + separator + date + separator + compatible;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -707,7 +904,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Server: save soon because something worth keeping changed (the garage). Does nothing before a playthrough runs.
+	//! Server: save soon because something worth keeping changed (no callers yet). Does nothing before a playthrough runs.
 	static void RequestAutosave_S()
 	{
 		if (s_Instance)
@@ -725,14 +922,18 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Once per world: a playthrough is either created or loaded in it
 	protected void StartAutosaveTimer()
 	{
-		if (m_iAutosaveIntervalSeconds > 0)
-			GetGame().GetCallqueue().CallLater(Autosave_S, m_iAutosaveIntervalSeconds * 1000, true);
+		if (m_bAutosaveTimerStarted || m_iAutosaveIntervalSeconds <= 0)
+			return;
+
+		m_bAutosaveTimerStarted = true;
+		GetGame().GetCallqueue().CallLater(Autosave_S, m_iAutosaveIntervalSeconds * 1000, true);
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Overwrites the save being played (so the save list does not fill up), or creates one if none is active
+	//! Writes a new autosave point named after the resistance, then deletes the playthrough's oldest autosaves
 	protected void Autosave_S()
 	{
 		m_bAutosavePending = false;
@@ -754,11 +955,190 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			return;
 
 		m_AutosaveCallback = new SaveGameOperationCallback(OnAutosaveCompleted);
-		SaveGame active = saveManager.GetActiveSave();
-		if (active)
-			saveManager.RequestSavePointOverwrite(active, 0, m_AutosaveCallback);
+		saveManager.RequestSavePoint(ESaveGameType.SCRIPTED, GetSaveName(true), 0, m_AutosaveCallback);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Server: an admin saves the running campaign (phone quick dock). Manual saves are never pruned. One at a time:
+	//! presses while a manual save is pending are refused.
+	void RequestManualSave_S(int playerId)
+	{
+		if (!Replication.IsServer())
+			return;
+
+		// Same rule as the phone's save slot (includes the host of a listen server)
+		if (!AROR_AdminAccess.IsAdministrator(playerId))
+		{
+			AROR_NotificationManagerComponent.SendHint_S(playerId, "Only the server admin can save the campaign");
+			return;
+		}
+
+		SaveGameManager saveManager = SaveGameManager.Get();
+		if (!m_bPlaythroughReady || !saveManager || !saveManager.IsSavingEnabled())
+		{
+			AROR_NotificationManagerComponent.SendHint_S(playerId, "Saving is not available right now");
+			return;
+		}
+
+		if (m_iManualSaveRequesterId != 0)
+		{
+			AROR_NotificationManagerComponent.SendHint_S(playerId, "The campaign is already being saved");
+			return;
+		}
+
+		m_iManualSaveRequesterId = playerId;
+		m_iManualSaveAttempts = 0;
+		TryManualSave_S();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Waits a few seconds at most for another save to finish
+	protected void TryManualSave_S()
+	{
+		SaveGameManager saveManager = SaveGameManager.Get();
+		if (!saveManager || !m_bPlaythroughReady)
+		{
+			FinishManualSave_S("Saving is not available right now");
+			return;
+		}
+
+		if (saveManager.IsBusy())
+		{
+			m_iManualSaveAttempts++;
+			if (m_iManualSaveAttempts > MANUAL_SAVE_MAX_WAITS)
+			{
+				FinishManualSave_S("Saving is busy, try again in a moment");
+				return;
+			}
+
+			GetGame().GetCallqueue().CallLater(TryManualSave_S, PRUNE_RETRY_MS);
+			return;
+		}
+
+		if (!saveManager.IsSavingAllowed())
+		{
+			FinishManualSave_S("Saving is not available right now");
+			return;
+		}
+
+		// RequestSavePoint returns nothing; a failure arrives through the callback
+		m_ManualSaveCallback = new SaveGameOperationCallback(OnManualSaveCompleted);
+		saveManager.RequestSavePoint(ESaveGameType.SCRIPTED, GetSaveName(false), 0, m_ManualSaveCallback);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void OnManualSaveCompleted(bool success, Managed context = null)
+	{
+		if (success)
+		{
+			Print(string.Format("[AROR] Manual save by player %1", m_iManualSaveRequesterId), LogLevel.NORMAL);
+			FinishManualSave_S("Campaign saved");
+		}
 		else
-			saveManager.RequestSavePoint(ESaveGameType.SCRIPTED, "Autosave", 0, m_AutosaveCallback);
+		{
+			Print("[AROR] Manual save failed", LogLevel.ERROR);
+			FinishManualSave_S("Saving failed");
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Tells the requester the outcome and allows the next manual save
+	protected void FinishManualSave_S(string message)
+	{
+		int playerId = m_iManualSaveRequesterId;
+		m_iManualSaveRequesterId = 0;
+		if (playerId != 0)
+			AROR_NotificationManagerComponent.SendHint_S(playerId, message);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Save points are named after the resistance.
+	//! Autosaves carry AUTOSAVE_PREFIX.
+	protected static string GetSaveName(bool autosave)
+	{
+		string name = "Resistance";
+		AROR_HighCommandComponent highCommand = AROR_HighCommandComponent.GetInstance();
+		if (highCommand)
+			name = highCommand.GetResistanceName();
+
+		if (autosave)
+			return AUTOSAVE_PREFIX + name;
+
+		return name;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	// Autosave pruning (server)
+	//------------------------------------------------------------------------------------------------
+	protected void PruneAutosaves_S()
+	{
+		SaveGameManager saveManager = SaveGameManager.Get();
+		if (!saveManager || !m_aPruneQueue.IsEmpty())
+			return;
+
+		m_PruneCallback = new SaveGameObtainCallback(OnPruneSavesObtained);
+		saveManager.GetSaves(SaveGameManager.GetCurrentMissionResource(), m_PruneCallback);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Keeps the newest m_iAutosavesKept autosaves of the running playthrough; never the active save or manual saves
+	protected void OnPruneSavesObtained(bool success, array<SaveGame> saves, Managed context = null)
+	{
+		SaveGameManager saveManager = SaveGameManager.Get();
+		if (!success || !saves || !saveManager)
+			return;
+
+		// The active save is the one just written; its key (number and start time) keeps another campaign that
+		// reused the playthrough number out of the pruning
+		SaveGame active = saveManager.GetActiveSave();
+		if (!active)
+			return;
+
+		string playthroughKey = GetPlaythroughKey(active);
+		array<SaveGame> autosaves = {};
+		foreach (SaveGame save : saves)
+		{
+			if (save && GetPlaythroughKey(save) == playthroughKey && IsAutosave(save))
+				InsertNewestFirst(autosaves, save);
+		}
+
+		for (int i = m_iAutosavesKept, count = autosaves.Count(); i < count; i++)
+		{
+			if (!IsSameSave(autosaves[i], active))
+				m_aPruneQueue.Insert(autosaves[i]);
+		}
+
+		if (!m_aPruneQueue.IsEmpty())
+			DeleteNextPruned_S();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! One delete at a time: the manager is busy while it deletes
+	protected void DeleteNextPruned_S()
+	{
+		SaveGameManager saveManager = SaveGameManager.Get();
+		if (!saveManager)
+		{
+			m_aPruneQueue.Clear();
+			return;
+		}
+
+		if (saveManager.IsBusy())
+		{
+			GetGame().GetCallqueue().CallLater(DeleteNextPruned_S, PRUNE_RETRY_MS);
+			return;
+		}
+
+		SaveGame save = m_aPruneQueue[0];
+		m_aPruneQueue.RemoveOrdered(0);
+		if (save && !IsSameSave(save, saveManager.GetActiveSave()))
+		{
+			Print(string.Format("[AROR] Deleting old autosave '%1' (save point %2)", save.GetSavePointName(), save.GetSavePointNumber()), LogLevel.NORMAL);
+			saveManager.Delete(save);
+		}
+
+		if (!m_aPruneQueue.IsEmpty())
+			GetGame().GetCallqueue().CallLater(DeleteNextPruned_S, PRUNE_RETRY_MS);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -778,6 +1158,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			return;
 
 		IEntity garage = SpawnGarage(hqPosition - m_vArsenalOffsetFromHQ);
+		PlaceClearOfFlag(garage, hqPosition, -m_vArsenalOffsetFromHQ);
 		if (garage)
 			Print(string.Format("[AROR] Garage missing after load: respawned at %1", garage.GetOrigin()), LogLevel.NORMAL);
 	}
@@ -785,7 +1166,9 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	//------------------------------------------------------------------------------------------------
 	protected void OnAutosaveCompleted(bool success, Managed context = null)
 	{
-		if (!success)
+		if (success)
+			PruneAutosaves_S();
+		else
 			Print("[AROR] Autosave failed", LogLevel.ERROR);
 	}
 
@@ -796,6 +1179,137 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			Print("[AROR] Initial save point created", LogLevel.NORMAL);
 		else
 			Print("[AROR] Failed to create the initial save point", LogLevel.ERROR);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	// Fresh boot (server)
+	//------------------------------------------------------------------------------------------------
+	//! The game resumed a save by itself: reload the scenario without it. Requesting the world change during world
+	//! init is ignored by the engine ("No active game state"), so attempts only begin once the game has started.
+	protected void BeginFreshRestart_S()
+	{
+		WriteMarker(RESTART_MARKER_FILE);
+		m_bFreshRestartPending = true;
+		m_bFreshRestartAttempting = false;
+		m_iFreshRestartAttempts = 0;
+		Print("[AROR] A save was resumed by the game: reloading the scenario fresh once the game has started", LogLevel.NORMAL);
+
+		SCR_BaseGameMode gameMode = SCR_BaseGameMode.Cast(GetOwner());
+		if (gameMode)
+			gameMode.GetOnGameStart().Insert(StartFreshRestartAttempts_S);
+
+		// In case the game-start event never comes: start the attempts anyway rather than stay locked
+		GetGame().GetCallqueue().CallLater(StartFreshRestartAttempts_S, FRESH_RESTART_START_TIMEOUT_MS);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Game started (or the timeout passed): first attempt next frame, then retries
+	protected void StartFreshRestartAttempts_S()
+	{
+		if (!m_bFreshRestartPending || m_bFreshRestartAttempting)
+			return;
+
+		m_bFreshRestartAttempting = true;
+		SCR_BaseGameMode gameMode = SCR_BaseGameMode.Cast(GetOwner());
+		if (gameMode)
+			gameMode.GetOnGameStart().Remove(StartFreshRestartAttempts_S);
+
+		GetGame().GetCallqueue().Remove(StartFreshRestartAttempts_S);
+		GetGame().GetCallqueue().CallLater(TryFreshRestart_S, 0);
+		GetGame().GetCallqueue().CallLater(TryFreshRestart_S, FRESH_RESTART_RETRY_MS, true);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! An accepted request unloads this world (and its call queue); an ignored one only logs an engine error
+	protected void TryFreshRestart_S()
+	{
+		if (!m_bFreshRestartPending)
+			return;
+
+		if (m_iFreshRestartAttempts >= FRESH_RESTART_MAX_ATTEMPTS)
+		{
+			FailFreshRestart_S();
+			return;
+		}
+
+		SaveGameManager saveManager = SaveGameManager.Get();
+		if (!saveManager)
+		{
+			FailFreshRestart_S();
+			return;
+		}
+
+		m_iFreshRestartAttempts++;
+		Print(string.Format("[AROR] Reloading the scenario fresh (attempt %1 of %2)", m_iFreshRestartAttempts, FRESH_RESTART_MAX_ATTEMPTS), LogLevel.NORMAL);
+		saveManager.StartPlaythrough(SaveGameManager.GetCurrentMissionResource(), string.Empty, true);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! The reload never happened: keep the resumed world, refuse "new" (it would sit on top of the save) and let the
+	//! admin load a save instead
+	protected void FailFreshRestart_S()
+	{
+		m_bFreshRestartPending = false;
+		GetGame().GetCallqueue().Remove(TryFreshRestart_S);
+
+		GetGame().GetCallqueue().Remove(StartFreshRestartAttempts_S);
+		SCR_BaseGameMode gameMode = SCR_BaseGameMode.Cast(GetOwner());
+		if (gameMode)
+			gameMode.GetOnGameStart().Remove(StartFreshRestartAttempts_S);
+
+		// So a later boot does not mistake it for a restart that just happened
+		if (FileIO.FileExists(RESTART_MARKER_FILE))
+			FileIO.DeleteFile(RESTART_MARKER_FILE);
+
+		m_bResumedSave = true;
+		Print("[AROR] Could not reload the scenario fresh: waiting for an admin to load a playthrough", LogLevel.ERROR);
+
+		array<int> playerIds = {};
+		GetGame().GetPlayerManager().GetPlayers(playerIds);
+		foreach (int playerId : playerIds)
+		{
+			TryOfferSetup(playerId);
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! The mission's saves at boot, for CheckPlaythroughNumberUnused
+	protected void FetchKnownSaves_S()
+	{
+		SaveGameManager saveManager = SaveGameManager.Get();
+		if (!saveManager)
+			return;
+
+		m_KnownSavesCallback = new SaveGameObtainCallback(OnKnownSavesObtained);
+		saveManager.GetSaves(SaveGameManager.GetCurrentMissionResource(), m_KnownSavesCallback);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void OnKnownSavesObtained(bool success, array<SaveGame> saves, Managed context = null)
+	{
+		m_aKnownSaves.Clear();
+		if (success && saves)
+			m_aKnownSaves.Copy(saves);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Diagnostic: a new playthrough must not take the number of an existing one, or its save points mix with that
+	//! campaign's. Seen when a new campaign was started on top of a resumed save; a fresh boot should prevent it.
+	protected void CheckPlaythroughNumberUnused()
+	{
+		SaveGameManager saveManager = SaveGameManager.Get();
+		if (!saveManager)
+			return;
+
+		int number = saveManager.GetCurrentPlaythroughNumber();
+		foreach (SaveGame known : m_aKnownSaves)
+		{
+			if (known && known.GetPlaythroughNumber() == number)
+			{
+				Print(string.Format("[AROR] New playthrough reuses number %1 of existing playthrough '%2'; its saves will mix", number, known.GetPlaythroughName()), LogLevel.ERROR);
+				return;
+			}
+		}
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -842,7 +1356,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 
 		// Launching the mission always starts fresh with the setup screen. A save is restored only when the admin
 		// chose it there (RequestLoad_S). If the game resumed a save by itself (a server resuming its last save,
-		// Continue from the menu), drop it and restart the scenario once, so no saved entities or characters return.
+		// Continue from the menu), drop it and reload the scenario once, so no saved entities or characters return.
 		bool saveActive = saveManager && saveManager.GetActiveSave() != null;
 		bool loadRequested = ConsumeMarker(LOAD_MARKER_FILE);
 		bool restarted = ConsumeMarker(RESTART_MARKER_FILE);
@@ -861,9 +1375,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 
 			if (saveActive && !restarted)
 			{
-				WriteMarker(RESTART_MARKER_FILE);
-				Print("[AROR] A save was resumed by the game: starting a new unnamed playthrough and reloading for a fresh start", LogLevel.NORMAL);
-				saveManager.StartPlaythrough(SaveGameManager.GetCurrentMissionResource(), string.Empty, true);
+				BeginFreshRestart_S();
 			}
 			else if (saveActive)
 			{
@@ -875,6 +1387,8 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			{
 				Print("[AROR] No active save: waiting for an admin to create or load a playthrough", LogLevel.NORMAL);
 			}
+
+			FetchKnownSaves_S();
 		}
 
 		// Staging spawns that registered before this component (enabled only while no playthrough exists)
@@ -895,6 +1409,18 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	{
 		if (s_Instance == this)
 			s_Instance = null;
+
+		// Timers and retries must not outlive the game mode
+		ScriptCallQueue callQueue = GetGame().GetCallqueue();
+		if (callQueue)
+		{
+			callQueue.Remove(Autosave_S);
+			callQueue.Remove(TryManualSave_S);
+			callQueue.Remove(DeleteNextPruned_S);
+			callQueue.Remove(EnsureGarage_S);
+			callQueue.Remove(StartFreshRestartAttempts_S);
+			callQueue.Remove(TryFreshRestart_S);
+		}
 
 		super.OnDelete(owner);
 	}

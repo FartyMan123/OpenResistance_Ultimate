@@ -50,7 +50,7 @@ class AROR_ForceSpawner
 		preset.GetEntries(AROR_EFactionPresetCategory.VEHICLES, type, entries);
 		for (int i = entries.Count() - 1; i >= 0; i--)
 		{
-			if (!entries[i] || entries[i].GetPrefab().IsEmpty() || entries[i].GetMinimumReadinessLevel() > readiness)
+			if (!entries[i] || entries[i].GetPrefab().IsEmpty() || AROR_ContentPacksComponent.GetMinimumReadinessOf(entries[i].GetPrefab()) > readiness)
 				entries.Remove(i);
 		}
 
