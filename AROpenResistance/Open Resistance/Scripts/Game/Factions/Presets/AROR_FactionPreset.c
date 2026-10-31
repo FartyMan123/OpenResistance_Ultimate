@@ -17,6 +17,9 @@ class AROR_FactionPreset
 	[Attribute(desc: "AI units: at most one per unit type", category: "Units")]
 	protected ref array<ref AROR_FactionPresetUnit> m_aUnits;
 
+	[Attribute(desc: "Starting kit for players spawning in the role this preset serves (in practice the Resistance). Empty keeps the player character's own kit.", category: "Units")]
+	protected ref AROR_PlayerLoadout m_PlayerLoadout;
+
 	[Attribute(desc: "Empty vehicles (no crew)", category: "Vehicles")]
 	protected ref array<ref AROR_FactionPresetVehicle> m_aVehicles;
 
@@ -65,6 +68,13 @@ class AROR_FactionPreset
 			return null;
 
 		return AROR_FactionPresetUnit.Cast(units[0]);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! The starting kit for players, or null when the preset has none
+	AROR_PlayerLoadout GetPlayerLoadout()
+	{
+		return m_PlayerLoadout;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -120,7 +130,7 @@ class AROR_FactionPreset
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Logs configuration mistakes: missing ID or roles, unknown types, duplicate unit types, empty prefabs.
+	//! Logs configuration mistakes: missing ID or roles, unknown types, duplicate unit types, empty prefabs, loadouts.
 	//! Returns false if the preset is unusable.
 	bool Validate(string source)
 	{
@@ -144,7 +154,8 @@ class AROR_FactionPreset
 			CollectEntries(category, entries);
 			foreach (AROR_FactionPresetEntry entry : entries)
 			{
-				if (entry.GetListedPrefab().IsEmpty())
+				// Units may leave the prefab empty to use the role default
+				if (entry.GetListedPrefab().IsEmpty() && category != AROR_EFactionPresetCategory.UNITS)
 					empty++;
 
 				if (!entry.IsKnownType())
@@ -153,13 +164,24 @@ class AROR_FactionPreset
 					continue;
 				}
 
-				if (category == AROR_EFactionPresetCategory.UNITS && !unitTypes.Insert(entry.GetTypeValue()))
-					Print(string.Format("[AROR] Faction preset '%1' lists unit type %2 more than once; only the first is used", m_sId, entry.GetTypeName()), LogLevel.WARNING);
+				if (category == AROR_EFactionPresetCategory.UNITS)
+				{
+					if (!unitTypes.Insert(entry.GetTypeValue()))
+						Print(string.Format("[AROR] Faction preset '%1' lists unit type %2 more than once; only the first is used", m_sId, entry.GetTypeName()), LogLevel.WARNING);
+
+					AROR_FactionPresetUnit.Cast(entry).ValidateLoadouts(m_sId);
+				}
 			}
 		}
 
 		if (empty > 0)
 			Print(string.Format("[AROR] Faction preset '%1' has %2 entries without a prefab", m_sId, empty), LogLevel.WARNING);
+
+		if (m_PlayerLoadout)
+			m_PlayerLoadout.Validate(string.Format("Faction preset '%1', player loadout", m_sId));
+		else if (IsUsableAs(AROR_EFactionRole.RESISTANCE))
+			// Players always join the Resistance and its character is gear-less, so they would spawn with nothing
+			Print(string.Format("[AROR] Faction preset '%1' can be used for the Resistance but has no player loadout; players would spawn with no gear", m_sId), LogLevel.ERROR);
 
 		return true;
 	}
