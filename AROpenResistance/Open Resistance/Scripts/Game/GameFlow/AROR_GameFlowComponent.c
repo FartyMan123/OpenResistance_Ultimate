@@ -43,7 +43,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	[Attribute("8", UIWidgets.Slider, desc: "Players are moved to random points within this radius of the HQ when it is created", params: "0 50 1")]
 	protected float m_fHQArrivalRadius;
 
-	[Attribute("300", UIWidgets.Slider, desc: "Seconds between automatic saves while a playthrough is running (0 = off). Key events such as garage changes also save shortly after they happen", params: "0 1800 30")]
+	[Attribute("300", UIWidgets.Slider, desc: "Seconds between automatic saves while a playthrough is running (0 = off)", params: "0 1800 30")]
 	protected int m_iAutosaveIntervalSeconds;
 
 	[Attribute("5", UIWidgets.Slider, desc: "Autosaves kept per playthrough; older ones are deleted after each autosave. Manual saves are never deleted", params: "1 50 1")]
@@ -837,7 +837,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! A playthrough is listed under the resistance name of its newest named save (it follows HICOMM renames)
+	//! A playthrough is listed under the resistance name of its newest named save
 	protected static string GetGroupName(notnull array<SaveGame> newestFirst)
 	{
 		foreach (SaveGame save : newestFirst)
@@ -904,7 +904,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Server: save soon because something worth keeping changed (the garage). Does nothing before a playthrough runs.
+	//! Server: save soon because something worth keeping changed (no callers yet). Does nothing before a playthrough runs.
 	static void RequestAutosave_S()
 	{
 		if (s_Instance)
@@ -1021,9 +1021,9 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			return;
 		}
 
+		// RequestSavePoint returns nothing; a failure arrives through the callback
 		m_ManualSaveCallback = new SaveGameOperationCallback(OnManualSaveCompleted);
-		if (!saveManager.RequestSavePoint(ESaveGameType.SCRIPTED, GetSaveName(false), 0, m_ManualSaveCallback))
-			FinishManualSave_S("Saving failed");
+		saveManager.RequestSavePoint(ESaveGameType.SCRIPTED, GetSaveName(false), 0, m_ManualSaveCallback);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -1052,7 +1052,7 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Save points are named after the resistance's current name, so a HICOMM rename shows from the next save on.
+	//! Save points are named after the resistance.
 	//! Autosaves carry AUTOSAVE_PREFIX.
 	protected static string GetSaveName(bool autosave)
 	{

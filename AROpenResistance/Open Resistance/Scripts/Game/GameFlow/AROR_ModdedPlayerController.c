@@ -549,15 +549,6 @@ modded class SCR_PlayerController
 	}
 
 	//------------------------------------------------------------------------------------------------
-	void AROR_RequestHiCommRename(string name)
-	{
-		if (Replication.IsServer())
-			AROR_RpcAsk_HiCommRename(name);
-		else
-			Rpc(AROR_RpcAsk_HiCommRename, name);
-	}
-
-	//------------------------------------------------------------------------------------------------
 	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
 	protected void AROR_RpcAsk_HiCommRaise(int typeIndex)
 	{
@@ -582,15 +573,6 @@ modded class SCR_PlayerController
 		AROR_HighCommandComponent highCommand = AROR_HighCommandComponent.GetInstance();
 		if (highCommand)
 			highCommand.RequestSetLeader_S(GetPlayerId(), targetPlayerId, leader);
-	}
-
-	//------------------------------------------------------------------------------------------------
-	[RplRpc(RplChannel.Reliable, RplRcver.Server)]
-	protected void AROR_RpcAsk_HiCommRename(string name)
-	{
-		AROR_HighCommandComponent highCommand = AROR_HighCommandComponent.GetInstance();
-		if (highCommand)
-			highCommand.RequestRename_S(GetPlayerId(), name);
 	}
 
 	//------------------------------------------------------------------------------------------------

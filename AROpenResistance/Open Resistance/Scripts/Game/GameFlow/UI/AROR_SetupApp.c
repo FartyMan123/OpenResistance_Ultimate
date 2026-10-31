@@ -837,7 +837,7 @@ class AROR_SetupApp : AROR_PhonePooledApp
 	//------------------------------------------------------------------------------------------------
 	protected void DrawName()
 	{
-		DrawHeader("NEW CAMPAIGN  -  STEP 3 OF 4", "NAME YOUR RESISTANCE", "The name your fighters go by. It also names the campaign in the save list, and follows any rename in HICOMM.");
+		DrawHeader("NEW CAMPAIGN  -  STEP 3 OF 4", "NAME YOUR RESISTANCE", "The name your fighters go by. It also names the campaign in the save list and cannot be changed later.");
 		DrawSteps(2);
 
 		AROR_SetupDraft draft = GetDraft();

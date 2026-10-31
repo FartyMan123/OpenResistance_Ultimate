@@ -19,7 +19,7 @@ class AROR_HighCommandComponent : SCR_BaseGameModeComponent
 	[Attribute("4", desc: "Most squads one leader can command at a time", params: "1 20 1")]
 	protected int m_iMaxSquadsPerLeader;
 
-	[Attribute("Resistance", desc: "Name of the resistance until the host renames it")]
+	[Attribute("Resistance", desc: "Name of the resistance until campaign setup sets it")]
 	protected string m_sDefaultResistanceName;
 
 	[Attribute("{000CD338713F2B5A}Prefabs/AI/Groups/Group_Base.et", UIWidgets.ResourceNamePicker, desc: "Empty AI group prefab squads are built in", params: "et")]
@@ -518,35 +518,6 @@ class AROR_HighCommandComponent : SCR_BaseGameModeComponent
 		}
 
 		PublishSnapshot_S();
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! Host only
-	void RequestRename_S(int requesterId, string name)
-	{
-		if (!Replication.IsServer())
-			return;
-
-		RefreshLeaders_S();
-		if (!IsHost(requesterId))
-		{
-			Reply(requesterId, "Only the host can rename the resistance");
-			return;
-		}
-
-		name = name.Trim();
-		string reason;
-		if (!AROR_ResistanceName.Validate(name, reason))
-		{
-			Reply(requesterId, reason);
-			return;
-		}
-
-		SetResistanceName_S(name);
-		Reply(requesterId, "The resistance is now known as " + name);
-
-		// Autosave under the new name soon rather than at the next timed autosave
-		AROR_GameFlowComponent.RequestAutosave_S();
 	}
 
 	//------------------------------------------------------------------------------------------------
