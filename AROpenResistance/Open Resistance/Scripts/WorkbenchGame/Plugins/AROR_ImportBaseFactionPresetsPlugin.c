@@ -39,7 +39,7 @@ class AROR_PresetImportResult
 //! rewrites the preset files. Prices, readiness and import requirements live in the Base Game content pack, which this
 //! never touches; add new prefabs there by hand. Anything that cannot be placed is listed in the log.
 //! Re-run after game updates; it overwrites the four base preset files, except their units (hand-authored prefabs and
-//! loadouts), which are kept as they are. Units are generated only for a preset that has none.
+//! loadouts) and player loadout, which are kept as they are. Units are generated only for a preset that has none.
 [WorkbenchPluginAttribute(name: "Import base faction presets", description: "Fill the base-game faction presets (US, USSR, FIA, CIV) from the game's faction catalogs.", wbModules: {"WorldEditor", "ResourceManager"}, category: "Open Resistance")]
 class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 {
@@ -509,6 +509,10 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 			Print(string.Format("[AROR] Import base faction presets: %1 had no units, so they were generated from the base game", factionImport.m_sPresetId), LogLevel.NORMAL);
 		}
 
+		// The player loadout is hand-authored too and has no base-game source: always keep it
+		array<string> playerLoadout = {};
+		ReadTopLevelBlock(path, "m_PlayerLoadout", playerLoadout);
+
 		FileHandle file = FileIO.OpenFile(path, FileMode.WRITE);
 		if (!file)
 		{
@@ -535,6 +539,11 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 		file.WriteLine(" }");
 
 		WriteList(file, "m_aUnits", result.m_aUnits);
+		foreach (string playerLine : playerLoadout)
+		{
+			file.WriteLine(playerLine);
+		}
+
 		WriteList(file, "m_aVehicles", result.m_aVehicles);
 		WriteList(file, "m_aGear", result.m_aGear);
 		WriteList(file, "m_aEquipment", result.m_aEquipment);
@@ -600,6 +609,40 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 				break;
 
 			outLines.Insert(line);
+		}
+
+		file.Close();
+		return outLines.Count();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Adds a whole top-level object member of an existing preset file, verbatim: its " name Class {" line, its body and
+	//! its closing " }". Returns how many lines were added; 0 when the file or the member does not exist.
+	protected int ReadTopLevelBlock(string path, string memberName, notnull array<string> outLines)
+	{
+		if (!FileIO.FileExists(path))
+			return 0;
+
+		FileHandle file = FileIO.OpenFile(path, FileMode.READ);
+		if (!file)
+			return 0;
+
+		string prefix = string.Format(" %1 ", memberName);
+		bool inside;
+		string line;
+		while (file.ReadLine(line) >= 0)
+		{
+			line.Replace("\r", string.Empty);
+			if (!inside)
+			{
+				inside = line.IndexOf(prefix) == 0;
+				if (!inside)
+					continue;
+			}
+
+			outLines.Insert(line);
+			if (line == " }")
+				break;
 		}
 
 		file.Close();

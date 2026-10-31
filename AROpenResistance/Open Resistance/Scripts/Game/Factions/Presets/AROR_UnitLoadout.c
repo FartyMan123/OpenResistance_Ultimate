@@ -1,5 +1,5 @@
-//! Unit loadouts (see ARCHITECTURE.md -> Faction presets): the full kit a faction preset gives one of its units, authored
-//! inline on the unit entry (AROR_FactionPresetUnit). A unit can have several loadouts as Readiness variants. Every
+//! Loadouts (see ARCHITECTURE.md -> Faction presets): the full kit a faction preset gives one of its units (authored
+//! inline on AROR_FactionPresetUnit, several as Readiness variants) or its players (one AROR_PlayerLoadout). Every
 //! prefab here is read through AROR_ContentPacksComponent.Resolve, so an enabled pack's replacements reach kits too;
 //! Content Pack readiness does not gate loadout items (the variant's own readiness decides).
 //! This is data only: applying a loadout to a spawned character is the job of the spawning systems.
@@ -24,7 +24,7 @@ class AROR_LoadoutItem
 	//! Adds the contents; returns how many were added
 	int GetContents(notnull array<AROR_LoadoutItem> outItems)
 	{
-		return AROR_UnitLoadout.CollectItems(m_aContents, outItems);
+		return AROR_LoadoutBase.CollectItems(m_aContents, outItems);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ class AROR_LoadoutItem
 		if (m_iCount < 1)
 			Print(string.Format("[AROR] %1: item '%2' has a count below 1", context, m_sPrefab), LogLevel.WARNING);
 
-		AROR_UnitLoadout.ValidateItems(m_aContents, string.Format("%1, contents of '%2'", context, m_sPrefab));
+		AROR_LoadoutBase.ValidateItems(m_aContents, string.Format("%1, contents of '%2'", context, m_sPrefab));
 	}
 }
 
@@ -88,7 +88,7 @@ class AROR_LoadoutClothing
 	//! Adds the contents; returns how many were added
 	int GetContents(notnull array<AROR_LoadoutItem> outItems)
 	{
-		return AROR_UnitLoadout.CollectItems(m_aContents, outItems);
+		return AROR_LoadoutBase.CollectItems(m_aContents, outItems);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -97,7 +97,7 @@ class AROR_LoadoutClothing
 		if (m_sPrefab.IsEmpty())
 			Print(string.Format("[AROR] %1: a clothing piece has no prefab", context), LogLevel.WARNING);
 
-		AROR_UnitLoadout.ValidateItems(m_aContents, string.Format("%1, contents of '%2'", context, m_sPrefab));
+		AROR_LoadoutBase.ValidateItems(m_aContents, string.Format("%1, contents of '%2'", context, m_sPrefab));
 	}
 }
 
@@ -169,17 +169,11 @@ class AROR_LoadoutWeapon
 	}
 }
 
-//! One complete kit for a unit. Of a unit's loadouts, those with the highest minimum readiness at or below the role's
-//! current readiness are used, picked at random by weight.
-[BaseContainerProps()]
-class AROR_UnitLoadout
+//! One complete kit: clothing with contents, weapons and loose items. Shared by unit loadouts (AROR_UnitLoadout, with
+//! Readiness variants) and player loadouts (AROR_PlayerLoadout, a single kit).
+[BaseContainerProps(insertable: false)]
+class AROR_LoadoutBase
 {
-	[Attribute("1", desc: "Readiness from which this loadout is used; a higher variant replaces it once reached", params: "1 5 1")]
-	protected int m_iMinimumReadiness;
-
-	[Attribute("1", desc: "Relative chance among loadouts of the same readiness", params: "1 100 1")]
-	protected int m_iWeight;
-
 	[Attribute(desc: "Clothing worn, each with its contents")]
 	protected ref array<ref AROR_LoadoutClothing> m_aClothing;
 
@@ -188,18 +182,6 @@ class AROR_UnitLoadout
 
 	[Attribute(desc: "Loose items placed wherever they fit")]
 	protected ref array<ref AROR_LoadoutItem> m_aItems;
-
-	//------------------------------------------------------------------------------------------------
-	int GetMinimumReadiness()
-	{
-		return m_iMinimumReadiness;
-	}
-
-	//------------------------------------------------------------------------------------------------
-	int GetWeight()
-	{
-		return m_iWeight;
-	}
 
 	//------------------------------------------------------------------------------------------------
 	//! Adds the clothing; returns how many were added
@@ -249,14 +231,9 @@ class AROR_UnitLoadout
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Logs mistakes in the kit; context names the preset and the loadout
 	void Validate(string context)
 	{
-		if (m_iMinimumReadiness < 1 || m_iMinimumReadiness > 5)
-			Print(string.Format("[AROR] %1: minimum readiness %2 is outside 1-5", context, m_iMinimumReadiness), LogLevel.WARNING);
-
-		if (m_iWeight < 1)
-			Print(string.Format("[AROR] %1: weight is below 1, so it is never picked", context), LogLevel.WARNING);
-
 		if (m_aClothing)
 		{
 			foreach (AROR_LoadoutClothing clothing : m_aClothing)
@@ -310,6 +287,42 @@ class AROR_UnitLoadout
 				item.Validate(context);
 		}
 	}
+}
+
+//! A unit's kit as one Readiness variant (see AROR_FactionPresetUnit). Of a unit's loadouts, those with the highest
+//! minimum readiness at or below the role's current readiness are used, picked at random by weight.
+[BaseContainerProps()]
+class AROR_UnitLoadout : AROR_LoadoutBase
+{
+	[Attribute("1", desc: "Readiness from which this loadout is used; a higher variant replaces it once reached", params: "1 5 1")]
+	protected int m_iMinimumReadiness;
+
+	[Attribute("1", desc: "Relative chance among loadouts of the same readiness", params: "1 100 1")]
+	protected int m_iWeight;
+
+	//------------------------------------------------------------------------------------------------
+	int GetMinimumReadiness()
+	{
+		return m_iMinimumReadiness;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	int GetWeight()
+	{
+		return m_iWeight;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	override void Validate(string context)
+	{
+		if (m_iMinimumReadiness < 1 || m_iMinimumReadiness > 5)
+			Print(string.Format("[AROR] %1: minimum readiness %2 is outside 1-5", context, m_iMinimumReadiness), LogLevel.WARNING);
+
+		if (m_iWeight < 1)
+			Print(string.Format("[AROR] %1: weight is below 1, so it is never picked", context), LogLevel.WARNING);
+
+		super.Validate(context);
+	}
 
 	//------------------------------------------------------------------------------------------------
 	//! The loadout to use at a readiness: of the loadouts with the highest minimum readiness at or below it, one picked
@@ -361,4 +374,10 @@ class AROR_UnitLoadout
 
 		return null;
 	}
+}
+
+//! The starting kit for players of a role (see AROR_FactionPreset): one kit, no Readiness variants
+[BaseContainerProps()]
+class AROR_PlayerLoadout : AROR_LoadoutBase
+{
 }

@@ -57,6 +57,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	protected ref AROR_QRFMapIntel m_QRFIntel = new AROR_QRFMapIntel();
 	protected ref AROR_MissionMapMarkers m_MissionMarkers = new AROR_MissionMapMarkers();
 	protected ref AROR_OperationMapMarkers m_OperationMarkers = new AROR_OperationMapMarkers();
+	protected ref AROR_PlayerMapMarkers m_PlayerMarkers = new AROR_PlayerMapMarkers();
 	protected ref array<AROR_LocationComponent> m_aIconLocations = {};
 	protected ref array<Widget> m_aIconWidgets = {};
 	//! Draw commands per frame canvas: the canvas does not keep its own copy, so they live as long as the icon
@@ -296,6 +297,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		m_QRFIntel.ClearWidgets();
 		m_MissionMarkers.ClearWidgets();
 		m_OperationMarkers.ClearWidgets();
+		m_PlayerMarkers.ClearWidgets();
 		foreach (Widget widget : m_aIconWidgets)
 		{
 			if (widget)
@@ -419,6 +421,7 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		m_QRFIntel.Update(m_wIconParent, m_sIconLayout, mapEntity);
 		m_MissionMarkers.Update(m_wIconParent, m_sIconLayout, mapEntity);
 		m_OperationMarkers.Update(m_wIconParent, m_sIconLayout, mapEntity);
+		m_PlayerMarkers.Update(m_wIconParent, m_sIconLayout, mapEntity);
 	}
 
 	//------------------------------------------------------------------------------------------------
