@@ -10,7 +10,7 @@ Status tags: **Planned** (designed, not built) · **In progress** · **Implement
 
 All the scripts and functionality, plus templates for base-game assets.
 
-- Lives in this repo: `AROpenResistance/Open Resistance/` (addon ID `OpenResistance`, GUID `6AA282336705EED2`).
+- Lives in this repo: `AROpenResistance/Open Resistance/` (addon ID `OpenResistance`, GUID `6C68A5E5654D7210`).
 - Class prefix: `AROR_` for all core classes, enums, and globals (e.g. `AROR_LocationComponent`). Reserved for the core mod.
 - Intended to depend only on the base game (`ArmaReforger`, `58D0FB3206B6F859`). **Current exception:** it also depends on the REAPER helicopter mod (`69A4D664A6284E06`) for the airborne QRF experiment. This must be moved out (e.g. into `OptionalAddons/OpenResistanceREAPER`) before a base-game-only release.
 - Provides:
@@ -22,7 +22,7 @@ All the scripts and functionality, plus templates for base-game assets.
 
 Separate addons, maintained by others, that add extra content such as maps, weapons, vehicles, scripts, functions, missions etc.
 
-- Each one lists the core mod (`6AA282336705EED2`) as a dependency in its `addon.gproj`.
+- Each one lists the core mod (`6C68A5E5654D7210`) as a dependency in its `addon.gproj`.
 - Extends the core by:
   - inheriting from core template prefabs and configs
   - supplying their own configs (factions, loadouts, location data for new maps, missions)

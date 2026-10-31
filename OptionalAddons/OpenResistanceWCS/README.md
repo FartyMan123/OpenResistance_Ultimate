@@ -22,7 +22,7 @@ The systems then use the augmented presets:
 
 ## Dependencies
 
-The core (`6AA282336705EED2`), RHS: Status Quo, and the WCS content addons: Core, Arsenal, Armaments, Weapons, Attachments, Scopes, Clothing, NATO, RU, RHS Weapons/Attachments/Scopes/Vehicles, Vehicles, Stryker, FMTV, JLTV (+ Upgrade), MRZR, Motorbikes, ZU-23-2, KBA-105, Helicopters, AH-1S, AH-64D (+ Upgrade), AH-6M, Mi-24V (+ Upgrade) and KA-52 (+ Upgrade). WCS server-gameplay addons and maps are deliberately left out.
+The core (`6C68A5E5654D7210`), RHS: Status Quo, and the WCS content addons: Core, Arsenal, Armaments, Weapons, Attachments, Scopes, Clothing, NATO, RU, RHS Weapons/Attachments/Scopes/Vehicles, Vehicles, Stryker, FMTV, JLTV (+ Upgrade), MRZR, Motorbikes, ZU-23-2, KBA-105, Helicopters, AH-1S, AH-64D (+ Upgrade), AH-6M, Mi-24V (+ Upgrade) and KA-52 (+ Upgrade). WCS server-gameplay addons and maps are deliberately left out.
 
 **Licence.** WCS content may not be modified or adapted without the author's written permission. Never add resources here that inherit from, override or copy WCS resources.
 
