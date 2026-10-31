@@ -65,6 +65,114 @@ class AROR_CatalogClassifier
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Base cost and import facility requirements for an added entry whose type the preset does not list yet
+	//! (added entries otherwise copy a listed entry of the same type). Same scale as the base presets.
+	static void DefaultImportTerms(AROR_EFactionPresetCategory category, int type, out int cost, out int importPoints, out AROR_EImportPointRequirement importRequirement)
+	{
+		cost = 0;
+		importPoints = 0;
+		importRequirement = AROR_EImportPointRequirement.NONE;
+		switch (category)
+		{
+			case AROR_EFactionPresetCategory.VEHICLES:
+				DefaultVehicleTerms(type, cost, importPoints, importRequirement);
+				return;
+
+			case AROR_EFactionPresetCategory.WEAPONS:
+				DefaultWeaponTerms(type, cost, importPoints, importRequirement);
+				return;
+
+			case AROR_EFactionPresetCategory.WEAPON_ACCESSORIES:
+				cost = 400;
+				importPoints = 2;
+				return;
+
+			case AROR_EFactionPresetCategory.AMMUNITION:
+				DefaultAmmunitionTerms(type, cost, importPoints, importRequirement);
+				return;
+
+			case AROR_EFactionPresetCategory.VEHICLE_AMMUNITION:
+				cost = 3800;
+				importPoints = 5;
+				importRequirement = AROR_EImportPointRequirement.AIR;
+				return;
+
+			case AROR_EFactionPresetCategory.GEAR:
+				cost = 100;
+				return;
+
+			case AROR_EFactionPresetCategory.EQUIPMENT:
+				cost = 90;
+				importPoints = 1;
+				return;
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static void DefaultVehicleTerms(int type, out int cost, out int importPoints, out AROR_EImportPointRequirement importRequirement)
+	{
+		importRequirement = AROR_EImportPointRequirement.PORT;
+		switch (type)
+		{
+			case AROR_EVehicleType.MOTOR_CAR: cost = 1800; importPoints = 1; importRequirement = AROR_EImportPointRequirement.NONE; return;
+			case AROR_EVehicleType.BOAT: cost = 2500; importPoints = 1; return;
+			case AROR_EVehicleType.AMBULANCE: cost = 3000; importPoints = 2; return;
+			case AROR_EVehicleType.MOTOR_TRUCK:
+			case AROR_EVehicleType.SUPPLY_TRUCK: cost = 3400; importPoints = 2; return;
+			case AROR_EVehicleType.FUEL_TRUCK: cost = 4200; importPoints = 2; return;
+			case AROR_EVehicleType.ARMED_CAR: cost = 4800; importPoints = 2; return;
+			case AROR_EVehicleType.APC: cost = 14500; importPoints = 4; return;
+			case AROR_EVehicleType.IFV: cost = 22000; importPoints = 5; return;
+			case AROR_EVehicleType.TANK: cost = 40000; importPoints = 6; return;
+			case AROR_EVehicleType.HELI_TRANSPORT: cost = 26000; importPoints = 4; importRequirement = AROR_EImportPointRequirement.AIR; return;
+			case AROR_EVehicleType.HELI_ATTACK: cost = 60000; importPoints = 6; importRequirement = AROR_EImportPointRequirement.AIR; return;
+		}
+
+		// Static weapons are not sold (Imports skips them)
+		cost = 0;
+		importPoints = 0;
+		importRequirement = AROR_EImportPointRequirement.NONE;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static void DefaultWeaponTerms(int type, out int cost, out int importPoints, out AROR_EImportPointRequirement importRequirement)
+	{
+		importRequirement = AROR_EImportPointRequirement.NONE;
+		importPoints = 1;
+		switch (type)
+		{
+			case AROR_EWeaponType.PISTOL: cost = 150; return;
+			case AROR_EWeaponType.SHOTGUN: cost = 400; return;
+			case AROR_EWeaponType.SMG: cost = 500; return;
+			case AROR_EWeaponType.GRENADE: cost = 60; return;
+			case AROR_EWeaponType.MACHINEGUN: cost = 2200; importPoints = 3; return;
+			case AROR_EWeaponType.SNIPER_RIFLE: cost = 1800; importPoints = 3; return;
+			case AROR_EWeaponType.LAUNCHER_AT: cost = 1800; importPoints = 3; importRequirement = AROR_EImportPointRequirement.PORT; return;
+			case AROR_EWeaponType.LAUNCHER_AA: cost = 2400; importPoints = 4; importRequirement = AROR_EImportPointRequirement.PORT; return;
+		}
+
+		// Rifles and carbines
+		cost = 600;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected static void DefaultAmmunitionTerms(int type, out int cost, out int importPoints, out AROR_EImportPointRequirement importRequirement)
+	{
+		importRequirement = AROR_EImportPointRequirement.NONE;
+		importPoints = 1;
+		switch (type)
+		{
+			case AROR_EAmmunitionType.MAGAZINE: cost = 25; importPoints = 0; return;
+			case AROR_EAmmunitionType.GRENADE_ROUND: cost = 60; return;
+			case AROR_EAmmunitionType.SHELL: cost = 150; importPoints = 3; return;
+			case AROR_EAmmunitionType.ROCKET: cost = 350; importPoints = 3; importRequirement = AROR_EImportPointRequirement.PORT; return;
+		}
+
+		// Belts
+		cost = 90;
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! Lower-case file name of a prefab, for name hints
 	static string LowerName(ResourceName prefab)
 	{

@@ -228,6 +228,7 @@ class AROR_Mission
 			case AROR_ELocationType.TOWN:
 				return RISK_LOW;
 			case AROR_ELocationType.PORT:
+			case AROR_ELocationType.HELIPORT:
 				return RISK_HIGH;
 			case AROR_ELocationType.MILITARY_BASE:
 				return RISK_HIGH;

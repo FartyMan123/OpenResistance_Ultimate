@@ -2,7 +2,7 @@
 //! Resistance-held location; the Resistance keeps the truck.
 class AROR_SupplyTheftMission : AROR_Mission
 {
-	protected static const ref array<AROR_ELocationType> SITE_TYPES = {AROR_ELocationType.OUTPOST, AROR_ELocationType.MILITARY_BASE, AROR_ELocationType.FACTORY, AROR_ELocationType.RESOURCES, AROR_ELocationType.PORT, AROR_ELocationType.AIRPORT};
+	protected static const ref array<AROR_ELocationType> SITE_TYPES = {AROR_ELocationType.OUTPOST, AROR_ELocationType.MILITARY_BASE, AROR_ELocationType.FACTORY, AROR_ELocationType.RESOURCES, AROR_ELocationType.PORT, AROR_ELocationType.HELIPORT, AROR_ELocationType.AIRPORT};
 
 	//! The truck counts as seized once it is this far (m) from where it was parked
 	protected static const float SEIZED_DISTANCE = 40;

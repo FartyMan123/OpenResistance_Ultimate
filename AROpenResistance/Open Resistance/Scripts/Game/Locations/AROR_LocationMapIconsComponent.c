@@ -14,22 +14,16 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	[Attribute("40", UIWidgets.Slider, desc: "Icon size in reference pixels", params: "8 128 1")]
 	protected float m_fIconSize;
 
-	[Attribute("19", desc: "Font size of the name beside military, port and industrial site icons, in reference pixels", params: "8 32 1")]
-	protected int m_iLabelFontSize;
-
-	[Attribute("90", desc: "Map scale, in reference pixels per kilometre, below which site names are hidden to declutter the overview. Stronghold names always show. 0 always shows names.", params: "0 1000 1")]
-	protected float m_fLabelMinPixelsPerKm;
-
 	[Attribute("1", desc: "Draw locations as military-frame symbols (rectangle ours, diamond enemy) instead of the icon textures")]
 	protected bool m_bFrameIcons;
 
-	[Attribute("{EC2170E3AEEDEC1E}UI/Layouts/Map/AROR_MapInfoPopup.layout", UIWidgets.ResourceNamePicker, desc: "Layout of the info popup shown when an icon is clicked; needs a text widget named 'Text'", params: "layout", category: "Info popup")]
+	[Attribute("{EC2170E3AEEDEC1E}UI/Layouts/Map/AROR_MapInfoPopup.layout", UIWidgets.ResourceNamePicker, desc: "Layout of the info popup shown when an icon is clicked (see AROR_LocationInfoPopup for the widget names)", params: "layout", category: "Info popup")]
 	protected ResourceName m_sPopupLayout;
 
-	[Attribute("230", desc: "Popup width in reference pixels (height fits the text)", category: "Info popup")]
+	[Attribute("360", desc: "Popup width in reference pixels (height fits the text)", category: "Info popup")]
 	protected float m_fPopupWidth;
 
-	[Attribute("0.031 0.043 0.035 0.82", UIWidgets.ColorPicker, desc: "Popup background colour (design system plate)", category: "Info popup")]
+	[Attribute("0.031 0.043 0.035 0.94", UIWidgets.ColorPicker, desc: "Popup background colour (design system strong plate)", category: "Info popup")]
 	protected ref Color m_PopupBackgroundColor;
 
 	[Attribute("{9B65C8ACFFEE4DD6}UI/Layouts/Map/AROR_MapIconSelector.layout", UIWidgets.ResourceNamePicker, desc: "Corner-bracket selector shown on hover (and steady on the selected icon)", params: "layout", category: "Selector")]
@@ -47,10 +41,9 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	protected static const string ICON_WIDGET_NAME = "Icon";
 	protected static const string LABEL_WIDGET_NAME = "QRFLabel";	//!< Shared with QRF intel markers, which caption it themselves
 	protected static const string FRAME_WIDGET_NAME = "Frame";
-	protected static const float LABEL_MAX_WIDTH = 360;	//!< Room for the longest site name beside its icon
-	protected static const float LABEL_GAP = 5;			//!< Space between an icon's right edge and its name
-	protected static const int LABEL_WEIGHT_SIZE = 1;	//!< Same-colour shadow under the name: thickens the thin condensed strokes (faux bold)
-	protected static const float LABEL_TEXT_DROP = 0.18;	//!< Text offset down the plate, as a fraction of the font size, to centre it
+	protected static const int POPUP_Z_ORDER = 1000;	//!< Above every marker, including QRF and mission markers created later
+	protected static const int SELECTOR_Z_ORDER = 900;
+	protected static const float POPUP_EDGE_MARGIN = 8;	//!< Keeps the popup this far inside the map, in reference pixels
 
 	//! Extra clickable margin around an icon, in reference pixels
 	protected static const float CLICK_MARGIN = 4;
@@ -67,13 +60,8 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 	protected ref AROR_OperationMapMarkers m_OperationMarkers = new AROR_OperationMapMarkers();
 	protected ref array<AROR_LocationComponent> m_aIconLocations = {};
 	protected ref array<Widget> m_aIconWidgets = {};
-	//! Name label per icon (null for unnamed types), parallel to m_aIconWidgets. A sibling rather than a child of
-	//! the icon, so the icon's small frame never clips it.
-	protected ref array<Widget> m_aLabelWidgets = {};
 	//! Draw commands per frame canvas: the canvas does not keep its own copy, so they live as long as the icon
 	protected ref map<Widget, ref array<ref CanvasWidgetCommand>> m_mFrameCommands = new map<Widget, ref array<ref CanvasWidgetCommand>>();
-	//! Dark plate behind each name label (created before it, so drawn beneath), keyed by the label
-	protected ref map<Widget, Widget> m_mLabelPlates = new map<Widget, Widget>();
 	protected ref AROR_LocationInfoPopup m_Popup;
 	protected ref AROR_MapIconSelector m_Selector;
 
@@ -131,11 +119,15 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		if (!m_sPopupLayout.IsEmpty())
 		{
 			m_Popup = new AROR_LocationInfoPopup(m_sPopupLayout, m_wIconParent, m_fPopupWidth, m_PopupBackgroundColor);
+			m_Popup.SetZOrder(POPUP_Z_ORDER);
 			SCR_MapEntity.GetOnSelection().Insert(OnMapClicked);
 		}
 
 		if (!m_sSelectorLayout.IsEmpty())
+		{
 			m_Selector = new AROR_MapIconSelector(m_sSelectorLayout, m_wIconParent, m_SelectorColor);
+			m_Selector.SetZOrder(SELECTOR_Z_ORDER);
+		}
 
 		// Per frame only while a map is open (scheduled above), so icons follow pan and zoom interpolation
 	}
@@ -276,7 +268,6 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		Widget ownLabel = root.FindAnyWidget(LABEL_WIDGET_NAME);
 		if (ownLabel)
 			ownLabel.SetVisible(false);
-		m_aLabelWidgets.Insert(CreateNameLabel(location));
 		ApplyControlColor(image, location);
 	}
 
@@ -295,27 +286,9 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 			m_mFrameCommands.Remove(m_aIconWidgets[index].FindAnyWidget(FRAME_WIDGET_NAME));
 			m_aIconWidgets[index].RemoveFromHierarchy();
 		}
-		RemoveLabel(m_aLabelWidgets[index]);
 
 		m_aIconLocations.Remove(index);
 		m_aIconWidgets.Remove(index);
-		m_aLabelWidgets.Remove(index);
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! A name label and the plate behind it
-	protected void RemoveLabel(Widget label)
-	{
-		if (!label)
-			return;
-		Widget plate = m_mLabelPlates.Get(label);
-		if (plate)
-		{
-			m_mFrameCommands.Remove(plate.FindAnyWidget(FRAME_WIDGET_NAME));
-			plate.RemoveFromHierarchy();
-		}
-		m_mLabelPlates.Remove(label);
-		label.RemoveFromHierarchy();
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -330,16 +303,10 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 			if (widget)
 				widget.RemoveFromHierarchy();
 		}
-		foreach (Widget label : m_aLabelWidgets)
-		{
-			RemoveLabel(label);
-		}
 
 		m_aIconLocations.Clear();
 		m_aIconWidgets.Clear();
-		m_aLabelWidgets.Clear();
 		m_mFrameCommands.Clear();
-		m_mLabelPlates.Clear();
 		m_wIconParent = null;
 	}
 	protected void SetQRFObserverMapOpen(bool open)
@@ -347,108 +314,6 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		SCR_PlayerController controller = SCR_PlayerController.Cast(GetGame().GetPlayerController());
 		if (controller)
 			controller.AROR_SetQRFMapOpen(open);
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! Every location but cities gets its name to the right of the icon, vertically centred on it (vanilla already
-	//! prints city names large). Light bold text on a dark plate with an edge in the owner's colour, so it reads over any terrain.
-	//! Built from the icon layout with the icon and frame hidden, and positioned with the icon every frame.
-	protected Widget CreateNameLabel(notnull AROR_LocationComponent location)
-	{
-		if (location.GetLocationType() == AROR_ELocationType.CITY)
-			return null;
-
-		// The plate first, so it is drawn beneath the text
-		Widget plate = GetGame().GetWorkspace().CreateWidgets(m_sIconLayout, m_wIconParent);
-		Widget root = GetGame().GetWorkspace().CreateWidgets(m_sIconLayout, m_wIconParent);
-		RichTextWidget label;
-		if (root)
-			label = RichTextWidget.Cast(root.FindAnyWidget(LABEL_WIDGET_NAME));
-		if (!label)
-		{
-			if (root)
-				root.RemoveFromHierarchy();
-			if (plate)
-				plate.RemoveFromHierarchy();
-			return null;
-		}
-		if (plate)
-		{
-			Widget plateIcon = plate.FindAnyWidget(ICON_WIDGET_NAME);
-			if (plateIcon)
-				plateIcon.SetVisible(false);
-			Widget plateText = plate.FindAnyWidget(LABEL_WIDGET_NAME);
-			if (plateText)
-				plateText.SetVisible(false);
-			FrameSlot.SetAlignment(plate, 0, 0.5);
-			m_mLabelPlates.Set(root, plate);
-		}
-		Widget icon = root.FindAnyWidget(ICON_WIDGET_NAME);
-		if (icon)
-			icon.SetVisible(false);
-		Widget frame = root.FindAnyWidget(FRAME_WIDGET_NAME);
-		if (frame)
-			frame.SetVisible(false);
-
-		string name = location.GetName();
-		name.ToUpper();
-		label.SetVisible(true);
-		label.SetText(name);
-		label.SetExactFontSize(m_iLabelFontSize);
-		label.SetBold(true);
-		// Explicit sizes, as for QRF captions: size-to-content leaves it empty inside the map widget
-		FrameSlot.SetAlignment(root, 0, 0.5);
-		FrameSlot.SetSize(root, LABEL_MAX_WIDTH, LabelHeight());
-		FrameSlot.SetPos(label, AROR_MapLabelPlate.TextInset(), m_iLabelFontSize * LABEL_TEXT_DROP);
-		FrameSlot.SetSize(label, LABEL_MAX_WIDTH, LabelHeight());
-		ApplyLabelColor(label, location);
-		return root;
-	}
-
-	//------------------------------------------------------------------------------------------------
-	//! Light name on a dark plate edged in the owner's colour (AROR_MapLabelPlate): coloured or dark text alone fades
-	//! to grey in the thin condensed font over Everon's light terrain and sea
-	protected void ApplyLabelColor(notnull RichTextWidget label, notnull AROR_LocationComponent location)
-	{
-		Color color;
-		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.GetInstance();
-		if (roles)
-		{
-			Faction faction = roles.GetFaction(location.GetControllingRole());
-			if (faction)
-				color = faction.GetFactionColor();
-		}
-		Color stroke = AROR_MapFrameIcon.StrokeColor(color);
-		label.SetColor(AROR_UIColors.Get(AROR_UIColors.TEXT));
-		// A same-colour shadow thickens the thin condensed strokes a little (faux bold)
-		label.SetShadow(LABEL_WEIGHT_SIZE, AROR_UIColors.TEXT, 0.6, 0, 0);
-
-		Widget root = label.GetParent();
-		if (!root)
-			return;
-		Widget plate = m_mLabelPlates.Get(root);
-		if (!plate)
-			return;
-		string name = location.GetName();
-		name.ToUpper();
-		float width = AROR_MapLabelPlate.Width(name, m_iLabelFontSize);
-		FrameSlot.SetSize(plate, width, LabelHeight());
-		CanvasWidget canvas = CanvasWidget.Cast(plate.FindAnyWidget(FRAME_WIDGET_NAME));
-		if (!canvas)
-			return;
-		array<ref CanvasWidgetCommand> commands = m_mFrameCommands.Get(canvas);
-		if (!commands)
-		{
-			commands = new array<ref CanvasWidgetCommand>();
-			m_mFrameCommands.Set(canvas, commands);
-		}
-		AROR_MapLabelPlate.Draw(canvas, commands, width, LabelHeight(), stroke.PackToInt());
-	}
-
-	//------------------------------------------------------------------------------------------------
-	protected float LabelHeight()
-	{
-		return m_iLabelFontSize * 1.6;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -521,12 +386,6 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		ImageWidget image = ImageWidget.Cast(m_aIconWidgets[index].FindAnyWidget(ICON_WIDGET_NAME));
 		if (image)
 			ApplyControlColor(image, location);
-		if (m_aLabelWidgets[index])
-		{
-			RichTextWidget label = RichTextWidget.Cast(m_aLabelWidgets[index].FindAnyWidget(LABEL_WIDGET_NAME));
-			if (label)
-				ApplyLabelColor(label, location);
-		}
 
 		if (m_Popup && m_Popup.GetLocation() == location)
 			m_Popup.Refresh();
@@ -542,12 +401,6 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		WorkspaceWidget workspace = GetGame().GetWorkspace();
 		int screenX, screenY;
 
-		// Current map scale from a one-kilometre span; zoomed out, ordinary site names overlap into noise
-		int kmX, kmY;
-		mapEntity.WorldToScreen(0, 0, screenX, screenY, true);
-		mapEntity.WorldToScreen(1000, 0, kmX, kmY, true);
-		bool showNames = workspace.DPIUnscale(Math.AbsInt(kmX - screenX)) >= m_fLabelMinPixelsPerKm;
-
 		foreach (int i, AROR_LocationComponent location : m_aIconLocations)
 		{
 			Widget widget = m_aIconWidgets[i];
@@ -559,25 +412,9 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 			float x = workspace.DPIUnscale(screenX);
 			float y = workspace.DPIUnscale(screenY);
 			FrameSlot.SetPos(widget, x, y);
-			Widget label = m_aLabelWidgets[i];
-			if (label)
-			{
-				FrameSlot.SetPos(label, x + m_fIconSize * 0.5 + LABEL_GAP, y);
-				bool show = showNames || location.GetOwner().FindComponent(AROR_StrongholdComponent) != null;
-				if (label.IsVisible() != show)
-					label.SetVisible(show);
-				Widget plate = m_mLabelPlates.Get(label);
-				if (plate)
-				{
-					FrameSlot.SetPos(plate, x + m_fIconSize * 0.5 + LABEL_GAP, y);
-					if (plate.IsVisible() != show)
-						plate.SetVisible(show);
-				}
-			}
 
-			// Popup sits to the right of its icon (clear of the selector), top-aligned with it
 			if (m_Popup && m_Popup.GetLocation() == location)
-				m_Popup.SetPosition(x + (m_fIconSize + m_fSelectorPadding) * 0.5 + CLICK_MARGIN, y - m_fIconSize * 0.5);
+				PositionPopup(workspace, x, y);
 		}
 
 		UpdateSelector(mapEntity, workspace);
@@ -585,6 +422,35 @@ class AROR_LocationMapIconsComponent : SCR_BaseGameModeComponent
 		m_PlayerMarkers.Update(m_wIconParent, m_sIconLayout, mapEntity);
 		m_MissionMarkers.Update(m_wIconParent, m_sIconLayout, mapEntity);
 		m_OperationMarkers.Update(m_wIconParent, m_sIconLayout, mapEntity);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Popup sits to the right of its icon (clear of the selector), top-aligned with it. Near the right edge of the
+	//! map it flips to the left of the icon; vertically it is kept inside the map.
+	protected void PositionPopup(notnull WorkspaceWidget workspace, float iconX, float iconY)
+	{
+		float mapWidth, mapHeight;
+		if (m_wIconParent)
+			m_wIconParent.GetScreenSize(mapWidth, mapHeight);
+		mapWidth = workspace.DPIUnscale(mapWidth);
+		mapHeight = workspace.DPIUnscale(mapHeight);
+
+		float offset = (m_fIconSize + m_fSelectorPadding) * 0.5 + CLICK_MARGIN;
+		float width = m_Popup.GetWidth();
+		float height = m_Popup.GetHeight();
+
+		float x = iconX + offset;
+		float y = iconY - m_fIconSize * 0.5;
+		if (mapWidth > 0)
+		{
+			if (x + width > mapWidth - POPUP_EDGE_MARGIN)
+				x = iconX - offset - width;
+			x = Math.Clamp(x, POPUP_EDGE_MARGIN, Math.Max(POPUP_EDGE_MARGIN, mapWidth - width - POPUP_EDGE_MARGIN));
+		}
+		if (mapHeight > 0)
+			y = Math.Clamp(y, POPUP_EDGE_MARGIN, Math.Max(POPUP_EDGE_MARGIN, mapHeight - height - POPUP_EDGE_MARGIN));
+
+		m_Popup.SetPosition(x, y);
 	}
 
 	//------------------------------------------------------------------------------------------------

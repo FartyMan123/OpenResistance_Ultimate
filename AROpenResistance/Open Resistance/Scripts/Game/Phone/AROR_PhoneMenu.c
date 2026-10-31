@@ -13,7 +13,7 @@ class AROR_PhoneButtonHandler : ScriptedWidgetEventHandler
 	override bool OnClick(Widget w, int x, int y, int button)
 	{
 		if (m_Menu)
-			m_Menu.OnPhoneButton(w.GetName());
+			m_Menu.OnPhoneButton(w.GetName(), w);
 
 		return true;
 	}
@@ -30,7 +30,8 @@ enum AROR_EPhoneApp
 	HICOMM,	//!< Landscape: Resistance high command (leaders only, see AROR_HiCommApp)
 	OPS,		//!< Landscape: Resistance mission board (see AROR_OpsApp)
 	MARS,		//!< Landscape: response debugger
-	BLACK_MARKET,	//!< Landscape: port-gated smugglers' shop (see AROR_BlackMarketApp)
+	BLACK_MARKET,	//!< Landscape: items shop paid by import facilities held (see AROR_BlackMarketApp)
+	IMPORTS,	//!< Landscape: vehicle shop, one click per vehicle (see AROR_ImportsApp)
 	FIELD		//!< Landscape: personal map markers and recruits
 }
 
@@ -162,6 +163,10 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	protected RichTextWidget m_wBlackMarketTileGlyph;	//!< Home tile widgets live in the Black Market's own layout
 	protected RichTextWidget m_wBlackMarketTileLabel;
 	protected Widget m_wBlackMarketTileButton;
+	protected ref AROR_ImportsApp m_Imports;
+	protected RichTextWidget m_wImportsTileGlyph;	//!< Imports uses its own copy of the same layout, so its tile widgets are separate
+	protected RichTextWidget m_wImportsTileLabel;
+	protected Widget m_wImportsTileButton;
 
 	//! Home quick dock: slot 0 = garage store; 1–3 empty placeholders
 	protected ImageWidget m_wQuickSlot0;
@@ -220,7 +225,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 
 	//------------------------------------------------------------------------------------------------
 	//! A button inside the phone was clicked
-	void OnPhoneButton(string buttonName)
+	void OnPhoneButton(string buttonName, Widget w = null)
 	{
 		if (m_bClosing || !IsSettled())
 			return;
@@ -236,7 +241,13 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		else if (buttonName == "OpsTileButton")
 			OpenApp(AROR_EPhoneApp.OPS);
 		else if (buttonName == "BlackMarketTileButton")
-			OpenApp(AROR_EPhoneApp.BLACK_MARKET);
+		{
+			// The Imports app is a second copy of the Black Market layout, so both tiles share this name
+			if (w && w == m_wImportsTileButton)
+				OpenApp(AROR_EPhoneApp.IMPORTS);
+			else
+				OpenApp(AROR_EPhoneApp.BLACK_MARKET);
+		}
 		else if (buttonName == "FieldTileButton")
 			OpenApp(AROR_EPhoneApp.FIELD);
 		else if (buttonName == "QuickSlot0Button")
@@ -281,6 +292,8 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			return;
 		if (app == AROR_EPhoneApp.BLACK_MARKET && !m_BlackMarket)
 			return;
+		if (app == AROR_EPhoneApp.IMPORTS && !m_Imports)
+			return;
 		if (app == m_eApp)
 			return;
 
@@ -296,7 +309,7 @@ class AROR_PhoneMenu : ChimeraMenuBase
 	//------------------------------------------------------------------------------------------------
 	protected static bool IsLandscapeApp(AROR_EPhoneApp app)
 	{
-		return app == AROR_EPhoneApp.TEST || app == AROR_EPhoneApp.HICOMM || app == AROR_EPhoneApp.OPS || app == AROR_EPhoneApp.MARS || app == AROR_EPhoneApp.BLACK_MARKET || app == AROR_EPhoneApp.FIELD;
+		return app == AROR_EPhoneApp.TEST || app == AROR_EPhoneApp.HICOMM || app == AROR_EPhoneApp.OPS || app == AROR_EPhoneApp.MARS || app == AROR_EPhoneApp.BLACK_MARKET || app == AROR_EPhoneApp.IMPORTS || app == AROR_EPhoneApp.FIELD;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -389,6 +402,21 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			Print("[AROR] Black Market app layout unavailable; other phone apps remain available", LogLevel.WARNING);
 		}
 
+		m_Imports = new AROR_ImportsApp();
+		if (m_Imports.Init(root))
+		{
+			Widget imports = m_Imports.GetResource();
+			m_wImportsTileGlyph = RichTextWidget.Cast(imports.FindAnyWidget("BlackMarketTileGlyph"));
+			m_wImportsTileLabel = RichTextWidget.Cast(imports.FindAnyWidget("BlackMarketTileLabel"));
+			m_wImportsTileButton = imports.FindAnyWidget("BlackMarketTileButton");
+		}
+		else
+		{
+			m_Imports.Shutdown();
+			m_Imports = null;
+			Print("[AROR] Imports app layout unavailable; other phone apps remain available", LogLevel.WARNING);
+		}
+
 		m_wQuickSlot0 = ImageWidget.Cast(root.FindAnyWidget("QuickSlot0"));
 		m_wQuickSlot0Glyph = RichTextWidget.Cast(root.FindAnyWidget("QuickSlot0Glyph"));
 		m_wQuickSlot0Button = root.FindAnyWidget("QuickSlot0Button");
@@ -446,6 +474,11 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			m_wBlackMarketTileButton.SetColor(Color.FromRGBA(0, 0, 0, 0));
 			buttons.Insert(m_wBlackMarketTileButton);
 		}
+		if (m_wImportsTileButton)
+		{
+			m_wImportsTileButton.SetColor(Color.FromRGBA(0, 0, 0, 0));
+			buttons.Insert(m_wImportsTileButton);
+		}
 		m_RebIntel.CollectButtons(buttons);
 		foreach (Widget button : buttons)
 		{
@@ -486,6 +519,9 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		if (m_BlackMarket)
 			m_BlackMarket.Shutdown();
 		m_BlackMarket = null;
+		if (m_Imports)
+			m_Imports.Shutdown();
+		m_Imports = null;
 		m_BankTransfer = null;
 		if (m_Field)
 			m_Field.Shutdown();
@@ -598,7 +634,10 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		bool showBlackMarket = landscapeSettled && m_eApp == AROR_EPhoneApp.BLACK_MARKET;
 		if (m_BlackMarket)
 			m_BlackMarket.SetVisible(showBlackMarket, contentOpacity);
-		array<Widget> marketTile = {m_wBlackMarketTileGlyph, m_wBlackMarketTileLabel, m_wBlackMarketTileButton};
+		bool showImports = landscapeSettled && m_eApp == AROR_EPhoneApp.IMPORTS;
+		if (m_Imports)
+			m_Imports.SetVisible(showImports, contentOpacity);
+		array<Widget> marketTile = {m_wBlackMarketTileGlyph, m_wBlackMarketTileLabel, m_wBlackMarketTileButton, m_wImportsTileGlyph, m_wImportsTileLabel, m_wImportsTileButton};
 		foreach (Widget marketTileWidget : marketTile)
 		{
 			if (marketTileWidget)
@@ -649,6 +688,8 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			m_Field.Layout(centerX - SCREEN_HEIGHT * scale * 0.5, centerY - SCREEN_WIDTH * scale * 0.5, scale);
 		if (showBlackMarket && m_BlackMarket)
 			m_BlackMarket.Layout(centerX - SCREEN_HEIGHT * scale * 0.5, centerY - SCREEN_WIDTH * scale * 0.5, scale);
+		if (showImports && m_Imports)
+			m_Imports.Layout(centerX - SCREEN_HEIGHT * scale * 0.5, centerY - SCREEN_WIDTH * scale * 0.5, scale);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -733,8 +774,20 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			Place(m_wBlackMarketTileButton, left + tileLeft * scale, top + tileTop * scale, TILE_SIZE * scale, (TILE_SIZE + 60) * scale);
 		}
 
+		// Imports: first tile of the third row
+		float thirdRowTop = TILE_TOP + (TILE_SIZE + TILE_ROW_SPACING) * 2;
+		if (m_wImportsTileGlyph && m_wImportsTileLabel && m_wImportsTileButton)
+		{
+			SetFontSize(m_wImportsTileGlyph, 86 * scale);
+			CentreText(m_wImportsTileGlyph, left + (TILE_LEFT + TILE_SIZE * 0.5) * scale, top + (thirdRowTop + TILE_SIZE * 0.5) * scale);
+			SetFontSize(m_wImportsTileLabel, 32 * scale);
+			CentreText(m_wImportsTileLabel, left + (TILE_LEFT + TILE_SIZE * 0.5) * scale, top + (thirdRowTop + TILE_SIZE + 34) * scale);
+			Place(m_wImportsTileButton, left + TILE_LEFT * scale, top + thirdRowTop * scale, TILE_SIZE * scale, (TILE_SIZE + 60) * scale);
+		}
+
+		// Field: second tile of the third row
 		if (m_Field)
-			m_Field.LayoutTile(left + TILE_LEFT * scale, top + (TILE_TOP + (TILE_SIZE + TILE_ROW_SPACING) * 2) * scale, scale);
+			m_Field.LayoutTile(left + (TILE_LEFT + TILE_SIZE + TILE_SPACING) * scale, top + thirdRowTop * scale, scale);
 
 		DrawRoundedTiles(scale);
 		LayoutQuickDock(scale);
@@ -758,6 +811,10 @@ class AROR_PhoneMenu : ChimeraMenuBase
 		AddRoundedTile(TILE_LEFT + TILE_SIZE + TILE_SPACING, secondRow, AROR_UIColors.SURFACE, pixels);
 		if (m_BlackMarket)
 			AddRoundedTile(TILE_LEFT + (TILE_SIZE + TILE_SPACING) * 2, secondRow, AROR_UIColors.SURFACE, pixels);
+		if (m_Imports)
+			AddRoundedTile(TILE_LEFT, TILE_TOP + (TILE_SIZE + TILE_ROW_SPACING) * 2, AROR_UIColors.SURFACE, pixels);
+		if (m_Field)
+			AddRoundedTile(TILE_LEFT + TILE_SIZE + TILE_SPACING, TILE_TOP + (TILE_SIZE + TILE_ROW_SPACING) * 2, AROR_UIColors.SURFACE, pixels);
 		m_wHomeTileCanvas.SetDrawCommands(m_aTileCommands);
 	}
 
@@ -947,6 +1004,14 @@ class AROR_PhoneMenu : ChimeraMenuBase
 			m_wBlackMarketTileGlyph.SetColor(AROR_UIColors.Get(AROR_UIColors.REBEL));
 			FrameSlot.SetSizeToContent(m_wBlackMarketTileGlyph, true);
 			FrameSlot.SetSizeToContent(m_wBlackMarketTileLabel, true);
+		}
+		StyleText(m_wImportsTileGlyph, "V", true);
+		StyleText(m_wImportsTileLabel, "IMPORTS", false);
+		if (m_wImportsTileGlyph && m_wImportsTileLabel)
+		{
+			m_wImportsTileGlyph.SetColor(AROR_UIColors.Get(AROR_UIColors.REBEL));
+			FrameSlot.SetSizeToContent(m_wImportsTileGlyph, true);
+			FrameSlot.SetSizeToContent(m_wImportsTileLabel, true);
 		}
 		array<TextWidget> glyphs = {m_wTestTileGlyph, m_wRebIntelTileGlyph, m_wHiCommTileGlyph};
 		foreach (TextWidget glyph : glyphs)

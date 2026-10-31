@@ -17,6 +17,12 @@ class AROR_PhonePoolClickHandler : ScriptedWidgetEventHandler
 
 		return true;
 	}
+
+	//------------------------------------------------------------------------------------------------
+	override bool OnMouseWheel(Widget w, int x, int y, int wheel)
+	{
+		return m_App && m_App.OnPoolWheel(w, x, y, wheel);
+	}
 }
 
 //! Base for landscape phone apps drawn immediate-mode from fixed widget pools, as HICOMM does. The layout
@@ -37,7 +43,20 @@ class AROR_PhonePooledApp
 	protected string m_sPrefix;
 	protected Widget m_wRoot;
 	protected ImageWidget m_wBackground;
+	protected Widget m_wWheel;	//!< Optional "<prefix>Wheel" button under everything, so the mouse wheel works over empty areas
 	protected ref AROR_PhonePoolClickHandler m_ClickHandler;
+
+	// Optional picture pool ("<prefix>Pic<i>"): images loaded from a texture, fitted into a box
+	protected ref array<ImageWidget> m_aPictures = {};
+	protected ref array<string> m_aPictureTextures = {};
+	protected ref array<ref AROR_HiCommWidgetCache> m_aPictureCaches = {};
+	protected int m_iPictureCount;
+
+	// Optional item preview pool ("<prefix>Prev<i>"): a prefab rendered by the world's item preview manager
+	protected ref array<ItemPreviewWidget> m_aPreviews = {};
+	protected ref array<string> m_aPreviewPrefabs = {};
+	protected ref array<ref AROR_HiCommWidgetCache> m_aPreviewCaches = {};
+	protected int m_iPreviewCount;
 
 	protected ref array<ImageWidget> m_aPanels = {};
 	protected ref array<RichTextWidget> m_aTexts = {};
@@ -64,7 +83,7 @@ class AROR_PhonePooledApp
 
 	//------------------------------------------------------------------------------------------------
 	//! Finds the root, background and pools; false if the layout lacks any of them
-	protected bool InitPools(Widget phoneRoot, string prefix, int panels, int texts, int buttons)
+	protected bool InitPools(Widget phoneRoot, string prefix, int panels, int texts, int buttons, int pictures = 0, int previews = 0)
 	{
 		m_sPrefix = prefix;
 		m_wRoot = phoneRoot.FindAnyWidget(prefix + "App");
@@ -73,6 +92,35 @@ class AROR_PhonePooledApp
 			return false;
 
 		m_ClickHandler = new AROR_PhonePoolClickHandler(this);
+
+		m_wWheel = phoneRoot.FindAnyWidget(prefix + "Wheel");
+		if (m_wWheel)
+		{
+			m_wWheel.AddHandler(m_ClickHandler);
+			m_wWheel.SetColor(Color.FromRGBA(0, 0, 0, 0));
+		}
+
+		for (int p = 0; p < pictures; p++)
+		{
+			ImageWidget picture = ImageWidget.Cast(phoneRoot.FindAnyWidget(prefix + "Pic" + p));
+			if (!picture)
+				return false;
+
+			m_aPictures.Insert(picture);
+			m_aPictureTextures.Insert(string.Empty);
+			m_aPictureCaches.Insert(new AROR_HiCommWidgetCache());
+		}
+
+		for (int v = 0; v < previews; v++)
+		{
+			ItemPreviewWidget preview = ItemPreviewWidget.Cast(phoneRoot.FindAnyWidget(prefix + "Prev" + v));
+			if (!preview)
+				return false;
+
+			m_aPreviews.Insert(preview);
+			m_aPreviewPrefabs.Insert(string.Empty);
+			m_aPreviewCaches.Insert(new AROR_HiCommWidgetCache());
+		}
 
 		for (int i = 0; i < panels; i++)
 		{
@@ -134,10 +182,13 @@ class AROR_PhonePooledApp
 		m_fInsetY = HEIGHT * (scale - m_fScale) * 0.5;
 		PlaceRaw(m_wRoot, left, top, WIDTH * scale, HEIGHT * scale);
 		PlaceRaw(m_wBackground, 0, 0, WIDTH * scale, HEIGHT * scale);
+		PlaceRaw(m_wWheel, 0, 0, WIDTH * scale, HEIGHT * scale);
 
 		m_iPanelCount = 0;
 		m_iTextCount = 0;
 		m_iButtonCount = 0;
+		m_iPictureCount = 0;
+		m_iPreviewCount = 0;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -147,6 +198,16 @@ class AROR_PhonePooledApp
 		for (int i = m_iPanelCount; i < m_aPanels.Count(); i++)
 		{
 			CachedVisible(m_aPanels[i], m_aPanelCaches[i], false);
+		}
+
+		for (int p = m_iPictureCount; p < m_aPictures.Count(); p++)
+		{
+			CachedVisible(m_aPictures[p], m_aPictureCaches[p], false);
+		}
+
+		for (int v = m_iPreviewCount; v < m_aPreviews.Count(); v++)
+		{
+			CachedVisible(m_aPreviews[v], m_aPreviewCaches[v], false);
 		}
 
 		for (int t = m_iTextCount; t < m_aTexts.Count(); t++)
@@ -185,6 +246,26 @@ class AROR_PhonePooledApp
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! The mouse wheel turned over a pooled button or the wheel catcher. Converts the cursor to app units and asks the
+	//! app (OnWheel); true when the app used it.
+	bool OnPoolWheel(Widget w, int x, int y, int wheel)
+	{
+		if (!m_wRoot || !m_wRoot.IsVisible() || wheel == 0 || m_fScale <= 0)
+			return false;
+
+		float rootX, rootY;
+		m_wRoot.GetScreenPos(rootX, rootY);
+		return OnWheel((x - rootX) / m_fScale, (y - rootY) / m_fScale, wheel);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Mouse wheel at an app-unit position; wheel > 0 is up. Return true when handled.
+	protected bool OnWheel(float x, float y, int wheel)
+	{
+		return false;
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! Handles a button's action string
 	protected void DoAction(string action)
 	{
@@ -204,6 +285,79 @@ class AROR_PhonePooledApp
 		CachedPlace(panel, cache, x * m_fScale, y * m_fScale, width * m_fScale, height * m_fScale);
 		CachedVisible(panel, cache, true);
 		m_iPanelCount++;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! A texture fitted into the box (aspect kept, centred). An empty texture draws nothing.
+	protected void Picture(float x, float y, float width, float height, ResourceName texture)
+	{
+		if (m_iPictureCount >= m_aPictures.Count())
+			return;
+
+		int index = m_iPictureCount;
+		m_iPictureCount++;
+		ImageWidget picture = m_aPictures[index];
+		AROR_HiCommWidgetCache cache = m_aPictureCaches[index];
+		if (texture.IsEmpty())
+		{
+			CachedVisible(picture, cache, false);
+			return;
+		}
+
+		if (m_aPictureTextures[index] != texture)
+		{
+			picture.LoadImageTexture(0, texture);
+			m_aPictureTextures[index] = texture;
+		}
+
+		float fitWidth = width;
+		float fitHeight = height;
+		int imageWidth, imageHeight;
+		picture.GetImageSize(0, imageWidth, imageHeight);
+		if (imageWidth > 0 && imageHeight > 0)
+		{
+			float fit = Math.Min(width / imageWidth, height / imageHeight);
+			fitWidth = imageWidth * fit;
+			fitHeight = imageHeight * fit;
+		}
+
+		CachedColor(picture, cache, Color.FromRGBA(255, 255, 255, 255));
+		CachedPlace(picture, cache, (x + (width - fitWidth) * 0.5) * m_fScale, (y + (height - fitHeight) * 0.5) * m_fScale, fitWidth * m_fScale, fitHeight * m_fScale);
+		CachedVisible(picture, cache, true);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! A prefab rendered as an inventory-style item preview in the box. False when no preview could be shown
+	//! (no preview widget left, or the world has no item preview manager).
+	protected bool ItemPreview(float x, float y, float width, float height, ResourceName prefab)
+	{
+		if (m_iPreviewCount >= m_aPreviews.Count())
+			return false;
+
+		int index = m_iPreviewCount;
+		ItemPreviewWidget preview = m_aPreviews[index];
+		AROR_HiCommWidgetCache cache = m_aPreviewCaches[index];
+		if (prefab.IsEmpty())
+			return false;
+
+		if (m_aPreviewPrefabs[index] != prefab)
+		{
+			ChimeraWorld world = ChimeraWorld.CastFrom(GetGame().GetWorld());
+			ItemPreviewManagerEntity manager;
+			if (world)
+				manager = world.GetItemPreviewManager();
+
+			if (!manager)
+				return false;
+
+			manager.SetPreviewItemFromPrefab(preview, prefab);
+			m_aPreviewPrefabs[index] = prefab;
+		}
+
+		m_iPreviewCount++;
+		CachedPlace(preview, cache, x * m_fScale, y * m_fScale, width * m_fScale, height * m_fScale);
+		CachedVisible(preview, cache, true);
+		return true;
 	}
 
 	//------------------------------------------------------------------------------------------------

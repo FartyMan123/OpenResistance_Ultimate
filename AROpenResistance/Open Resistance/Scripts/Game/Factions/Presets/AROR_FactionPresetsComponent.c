@@ -47,10 +47,19 @@ class AROR_FactionPresetsComponent : SCR_BaseGameModeComponent
 
 	protected ref ScriptInvokerBase<AROR_OnFactionPresetsChanged> m_OnPresetsChanged = new ScriptInvokerBase<AROR_OnFactionPresetsChanged>();
 
+	protected bool m_bCatalogsAugmented;
+
 	//------------------------------------------------------------------------------------------------
 	static AROR_FactionPresetsComponent GetInstance()
 	{
 		return s_Instance;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! True once catalog augmentation has run (a frame after loading); caches of preset entries built before it are stale
+	bool AreCatalogsAugmented()
+	{
+		return m_bCatalogsAugmented;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -100,6 +109,18 @@ class AROR_FactionPresetsComponent : SCR_BaseGameModeComponent
 		}
 
 		return null;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Adds every loaded preset, in registry order (e.g. for shops that sell every faction's equipment)
+	int GetAllPresets(notnull array<AROR_FactionPreset> outPresets)
+	{
+		foreach (AROR_FactionPreset preset : m_aPresets)
+		{
+			outPresets.Insert(preset);
+		}
+
+		return m_aPresets.Count();
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -298,6 +319,7 @@ class AROR_FactionPresetsComponent : SCR_BaseGameModeComponent
 				Print(string.Format("[AROR] Faction preset '%1': %2 entries added from the faction catalogs", preset.GetId(), added), LogLevel.NORMAL);
 		}
 
+		m_bCatalogsAugmented = true;
 		m_OnPresetsChanged.Invoke();
 	}
 

@@ -443,7 +443,7 @@ class AROR_OperationManagerComponent : SCR_BaseGameModeComponent
 	protected bool m_bInvaderOperationsEnabled;
 	[Attribute("0", desc: "Request a QRF for the previous AI owner when a town/city changes to a hostile role during the campaign. Existing Invader gate, cooldowns and capacity still apply.")]
 	protected bool m_bTownCaptureQRFs;
-	[Attribute("0", desc: "Request a QRF for the previous AI owner after a military site (outpost, base, airport, factory, port or resources) is captured. Role gates, money, cooldowns and capacity still apply.")]
+	[Attribute("0", desc: "Request a QRF for the previous AI owner after a military site (outpost, base, airport, factory, port, heliport or resources) is captured. Role gates, money, cooldowns and capacity still apply.")]
 	protected bool m_bOutpostCaptureQRFs;
 	[Attribute("0", desc: "Allow hostile damage/combat reports to request QRFs. Disabled means automatic responses are driven by enabled location captures instead.")]
 	protected bool m_bCombatQRFs;

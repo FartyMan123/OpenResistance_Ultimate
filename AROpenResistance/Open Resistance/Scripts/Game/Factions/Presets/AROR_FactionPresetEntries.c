@@ -12,6 +12,31 @@ class AROR_FactionPresetEntry
 	[Attribute("1", desc: "Readiness at which this asset becomes available", params: "1 5 1")]
 	protected int m_iMinimumReadinessLevel;
 
+	[Attribute("0", UIWidgets.ComboBox, desc: "Special location the role must also hold to import this asset: none, one seaport, or one heliport/airport", enums: ParamEnumArray.FromEnum(AROR_EImportPointRequirement))]
+	protected AROR_EImportPointRequirement m_eImportPointRequirement;
+
+	[Attribute("0", desc: "Import facilities (seaports, heliports and airports together) the role must hold to import this asset", params: "0 inf")]
+	protected int m_iRequiredImportPoints;
+
+	//------------------------------------------------------------------------------------------------
+	AROR_EImportPointRequirement GetImportPointRequirement()
+	{
+		return m_eImportPointRequirement;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	int GetRequiredImportPoints()
+	{
+		return m_iRequiredImportPoints;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! True when the role holds enough import points of the required kind (always true without a requirement)
+	bool HasRequiredImportPoints(AROR_EFactionRole role)
+	{
+		return AROR_ImportPoints.IsMet(role, m_eImportPointRequirement, m_iRequiredImportPoints);
+	}
+
 	//------------------------------------------------------------------------------------------------
 	ResourceName GetPrefab()
 	{
@@ -32,10 +57,13 @@ class AROR_FactionPresetEntry
 
 	//------------------------------------------------------------------------------------------------
 	//! Fills an entry created at runtime (catalog augmentation, see AROR_FactionPreset.AugmentFromCatalogs)
-	void InitGenerated(ResourceName prefab, int type, int minimumReadinessLevel)
+	void InitGenerated(ResourceName prefab, int type, int minimumReadinessLevel, int cost, int requiredImportPoints, AROR_EImportPointRequirement importPointRequirement)
 	{
 		m_sPrefab = prefab;
 		m_iMinimumReadinessLevel = minimumReadinessLevel;
+		m_iCost = cost;
+		m_iRequiredImportPoints = requiredImportPoints;
+		m_eImportPointRequirement = importPointRequirement;
 		SetTypeValue(type);
 	}
 

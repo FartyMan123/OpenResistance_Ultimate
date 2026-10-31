@@ -145,6 +145,8 @@ class AROR_FactionPreset
 
 		set<string> known = new set<string>();
 		set<int> unitTypes = new set<int>();
+		// First listed entry per category and type: added entries copy its price and import requirements
+		map<int, AROR_FactionPresetEntry> templates = new map<int, AROR_FactionPresetEntry>();
 		for (int category = 0; category <= AROR_EFactionPresetCategory.VEHICLE_AMMUNITION; category++)
 		{
 			array<AROR_FactionPresetEntry> entries = {};
@@ -154,15 +156,19 @@ class AROR_FactionPreset
 				known.Insert(entry.GetPrefab());
 				if (category == AROR_EFactionPresetCategory.UNITS)
 					unitTypes.Insert(entry.GetTypeValue());
+
+				int templateKey = TemplateKey(category, entry.GetTypeValue());
+				if (entry.IsKnownType() && !templates.Contains(templateKey))
+					templates.Insert(templateKey, entry);
 			}
 		}
 
-		int added = AugmentFromFaction(factionManager, m_sCatalogFactionKey, false, known, unitTypes);
+		int added = AugmentFromFaction(factionManager, m_sCatalogFactionKey, false, known, unitTypes, templates);
 		if (m_aHandHeldFactionKeys)
 		{
 			foreach (string factionKey : m_aHandHeldFactionKeys)
 			{
-				added += AugmentFromFaction(factionManager, factionKey, true, known, unitTypes);
+				added += AugmentFromFaction(factionManager, factionKey, true, known, unitTypes, templates);
 			}
 		}
 
@@ -170,7 +176,14 @@ class AROR_FactionPreset
 	}
 
 	//------------------------------------------------------------------------------------------------
-	protected int AugmentFromFaction(FactionManager factionManager, string factionKey, bool handHeldOnly, set<string> known, set<int> unitTypes)
+	protected static int TemplateKey(int category, int type)
+	{
+		return category * 1000 + type;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected int AugmentFromFaction(FactionManager factionManager, string factionKey, bool handHeldOnly, set<string> known, set<int> unitTypes,
+		map<int, AROR_FactionPresetEntry> templates)
 	{
 		SCR_Faction faction = SCR_Faction.Cast(factionManager.GetFactionByKey(factionKey));
 		if (!faction)
@@ -215,7 +228,23 @@ class AROR_FactionPreset
 				if (category == AROR_EFactionPresetCategory.UNITS && !unitTypes.Insert(type))
 					continue;
 
-				AddGenerated(category, type, prefab, AROR_CatalogClassifier.DefaultReadiness(category, type));
+				// Price and import requirements: as a listed entry of the same type, else the classifier's default
+				int cost;
+				int importPoints;
+				AROR_EImportPointRequirement importRequirement;
+				AROR_FactionPresetEntry sibling = templates.Get(TemplateKey(category, type));
+				if (sibling)
+				{
+					cost = sibling.GetCost();
+					importPoints = sibling.GetRequiredImportPoints();
+					importRequirement = sibling.GetImportPointRequirement();
+				}
+				else
+				{
+					AROR_CatalogClassifier.DefaultImportTerms(category, type, cost, importPoints, importRequirement);
+				}
+
+				AddGenerated(category, type, prefab, AROR_CatalogClassifier.DefaultReadiness(category, type), cost, importPoints, importRequirement);
 				known.Insert(prefab);
 				added++;
 			}
@@ -256,14 +285,15 @@ class AROR_FactionPreset
 
 	//------------------------------------------------------------------------------------------------
 	//! Adds a runtime-created entry to the category's list
-	protected void AddGenerated(AROR_EFactionPresetCategory category, int type, ResourceName prefab, int minimumReadinessLevel)
+	protected void AddGenerated(AROR_EFactionPresetCategory category, int type, ResourceName prefab, int minimumReadinessLevel,
+		int cost, int importPoints, AROR_EImportPointRequirement importRequirement)
 	{
 		switch (category)
 		{
 			case AROR_EFactionPresetCategory.UNITS:
 			{
 				AROR_FactionPresetUnit unit = new AROR_FactionPresetUnit();
-				unit.InitGenerated(prefab, type, minimumReadinessLevel);
+				unit.InitGenerated(prefab, type, minimumReadinessLevel, cost, importPoints, importRequirement);
 				if (!m_aUnits)
 					m_aUnits = {};
 				m_aUnits.Insert(unit);
@@ -272,7 +302,7 @@ class AROR_FactionPreset
 			case AROR_EFactionPresetCategory.VEHICLES:
 			{
 				AROR_FactionPresetVehicle vehicle = new AROR_FactionPresetVehicle();
-				vehicle.InitGenerated(prefab, type, minimumReadinessLevel);
+				vehicle.InitGenerated(prefab, type, minimumReadinessLevel, cost, importPoints, importRequirement);
 				if (!m_aVehicles)
 					m_aVehicles = {};
 				m_aVehicles.Insert(vehicle);
@@ -281,7 +311,7 @@ class AROR_FactionPreset
 			case AROR_EFactionPresetCategory.GEAR:
 			{
 				AROR_FactionPresetGear gear = new AROR_FactionPresetGear();
-				gear.InitGenerated(prefab, type, minimumReadinessLevel);
+				gear.InitGenerated(prefab, type, minimumReadinessLevel, cost, importPoints, importRequirement);
 				if (!m_aGear)
 					m_aGear = {};
 				m_aGear.Insert(gear);
@@ -290,7 +320,7 @@ class AROR_FactionPreset
 			case AROR_EFactionPresetCategory.EQUIPMENT:
 			{
 				AROR_FactionPresetEquipment equipment = new AROR_FactionPresetEquipment();
-				equipment.InitGenerated(prefab, type, minimumReadinessLevel);
+				equipment.InitGenerated(prefab, type, minimumReadinessLevel, cost, importPoints, importRequirement);
 				if (!m_aEquipment)
 					m_aEquipment = {};
 				m_aEquipment.Insert(equipment);
@@ -299,7 +329,7 @@ class AROR_FactionPreset
 			case AROR_EFactionPresetCategory.WEAPONS:
 			{
 				AROR_FactionPresetWeapon weapon = new AROR_FactionPresetWeapon();
-				weapon.InitGenerated(prefab, type, minimumReadinessLevel);
+				weapon.InitGenerated(prefab, type, minimumReadinessLevel, cost, importPoints, importRequirement);
 				if (!m_aWeapons)
 					m_aWeapons = {};
 				m_aWeapons.Insert(weapon);
@@ -308,7 +338,7 @@ class AROR_FactionPreset
 			case AROR_EFactionPresetCategory.WEAPON_ACCESSORIES:
 			{
 				AROR_FactionPresetWeaponAccessory accessory = new AROR_FactionPresetWeaponAccessory();
-				accessory.InitGenerated(prefab, type, minimumReadinessLevel);
+				accessory.InitGenerated(prefab, type, minimumReadinessLevel, cost, importPoints, importRequirement);
 				if (!m_aWeaponAccessories)
 					m_aWeaponAccessories = {};
 				m_aWeaponAccessories.Insert(accessory);
@@ -317,7 +347,7 @@ class AROR_FactionPreset
 			case AROR_EFactionPresetCategory.AMMUNITION:
 			{
 				AROR_FactionPresetAmmunition ammunition = new AROR_FactionPresetAmmunition();
-				ammunition.InitGenerated(prefab, type, minimumReadinessLevel);
+				ammunition.InitGenerated(prefab, type, minimumReadinessLevel, cost, importPoints, importRequirement);
 				if (!m_aAmmunition)
 					m_aAmmunition = {};
 				m_aAmmunition.Insert(ammunition);
@@ -326,7 +356,7 @@ class AROR_FactionPreset
 			case AROR_EFactionPresetCategory.VEHICLE_AMMUNITION:
 			{
 				AROR_FactionPresetVehicleAmmunition vehicleAmmunition = new AROR_FactionPresetVehicleAmmunition();
-				vehicleAmmunition.InitGenerated(prefab, type, minimumReadinessLevel);
+				vehicleAmmunition.InitGenerated(prefab, type, minimumReadinessLevel, cost, importPoints, importRequirement);
 				if (!m_aVehicleAmmunition)
 					m_aVehicleAmmunition = {};
 				m_aVehicleAmmunition.Insert(vehicleAmmunition);

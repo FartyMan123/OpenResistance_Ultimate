@@ -17,7 +17,7 @@ The systems then use the augmented presets:
 | Patrols | Cars, armed cars and APCs by Readiness (unchanged code: already preset-driven) |
 | Missions | Convoy/supply trucks and escorts, limited to the army's Readiness |
 | Garrisons | Static MGs, armed cars and APCs appended to the manned/static choices |
-| Black Market | Every army vehicle (helicopters and tanks included) and the army firearms the Resistance does not already have, by port tier |
+| Black Market and Imports | Every WCS item (Black Market) and vehicle, helicopters and tanks included (Imports). Each added entry copies the price and import facility requirements of a curated entry of the same type, e.g. attack helicopters 60,000 with 6 facilities, one of them a heliport or airport; IFVs (22,000, 5 + seaport) and tanks (40,000, 6 + seaport) use defaults |
 | Arsenal (admin fill) | The WCS-made firearms in the FIA preset |
 
 ## Dependencies
@@ -32,5 +32,5 @@ The core (`6AA282336705EED2`), RHS: Status Quo, and the WCS content addons: Core
 2. Open the Chicken world and play. The log should show lines like `[AROR] Faction preset 'US_ARMY': N entries added from the faction catalogs` for US_ARMY, USSR_ARMY and FIA.
 3. FIA should add only a few dozen items (WCS-made). If it adds hundreds, the excluded-source check (`$ArmaReforger:` / `$RHS_Core:` file lookups) is not working.
 4. Raise Readiness with MARS and dispatch QRFs: the log shows `Ground package <profile> uses preset vehicle …` or `[AROR REAPER] package uses preset aircraft …`, or a `does not fit` warning with the authored fallback. Check that gunship escorts actually fire; REAPER seats only a pilot, so gunships whose weapons sit on a gunner turret may stay silent.
-5. Open the Black Market with ports held: vehicles and firearms tabs should list WCS items after the curated ones. `[AROR GARRISON] … binding resolved with preset …` shows the garrison choices.
+5. Capture import facilities (the admin menu's capture on map is quickest): Black Market should list WCS weapons (search e.g. "SCAR") and Imports WCS vehicles and helicopters, priced like the curated ones (no 0-cost entries). Helicopters stay locked without a heliport or airport. `[AROR GARRISON] … binding resolved with preset …` shows the garrison choices.
 6. Without WCS (the normal core project), `entries added` lines should be absent or tiny: the base presets were imported from the base catalogs. A large number means the base presets are out of date; re-run the base import plugin.

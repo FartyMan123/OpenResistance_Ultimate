@@ -3,7 +3,7 @@
 //! follows the convoy's last known position.
 class AROR_ConvoyAmbushMission : AROR_Mission
 {
-	protected static const ref array<AROR_ELocationType> ORIGIN_TYPES = {AROR_ELocationType.OUTPOST, AROR_ELocationType.MILITARY_BASE, AROR_ELocationType.FACTORY, AROR_ELocationType.RESOURCES, AROR_ELocationType.PORT, AROR_ELocationType.AIRPORT};
+	protected static const ref array<AROR_ELocationType> ORIGIN_TYPES = {AROR_ELocationType.OUTPOST, AROR_ELocationType.MILITARY_BASE, AROR_ELocationType.FACTORY, AROR_ELocationType.RESOURCES, AROR_ELocationType.PORT, AROR_ELocationType.HELIPORT, AROR_ELocationType.AIRPORT};
 
 	protected static const float MIN_ROUTE = 1500;
 	protected static const float MAX_ROUTE = 5000;
