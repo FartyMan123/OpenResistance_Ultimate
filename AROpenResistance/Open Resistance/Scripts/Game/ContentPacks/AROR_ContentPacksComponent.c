@@ -285,7 +285,7 @@ class AROR_ContentPacksComponent : SCR_BaseGameModeComponent
 		// Replacements first, so a replaced prefab is left out of the catalogue whichever pack lists it
 		foreach (AROR_ContentPack pack : enabled)
 		{
-			for (int category = AROR_EFactionPresetCategory.VEHICLES; category <= AROR_EFactionPresetCategory.VEHICLE_AMMUNITION; category++)
+			for (int category = AROR_EFactionPresetCategory.VEHICLES; category <= AROR_EFactionPresetCategory.AMMUNITION; category++)
 			{
 				array<AROR_ContentPackEntry> entries = {};
 				pack.GetAllEntries(category, entries);
@@ -298,7 +298,7 @@ class AROR_ContentPacksComponent : SCR_BaseGameModeComponent
 
 		foreach (AROR_ContentPack pack : enabled)
 		{
-			for (int category = AROR_EFactionPresetCategory.VEHICLES; category <= AROR_EFactionPresetCategory.VEHICLE_AMMUNITION; category++)
+			for (int category = AROR_EFactionPresetCategory.VEHICLES; category <= AROR_EFactionPresetCategory.AMMUNITION; category++)
 			{
 				array<AROR_ContentPackEntry> entries = {};
 				pack.GetAllEntries(category, entries);

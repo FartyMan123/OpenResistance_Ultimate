@@ -168,7 +168,7 @@ class AROR_FactionPresetWeaponAccessory : AROR_FactionPresetEntry
 	}
 }
 
-//! Ammunition for hand-held weapons
+//! Ammunition, including munitions loaded onto vehicles and aircraft as items (e.g. a helicopter rocket pod)
 [BaseContainerProps(), SCR_BaseContainerCustomTitleEnum(AROR_EAmmunitionType, "m_eType")]
 class AROR_FactionPresetAmmunition : AROR_FactionPresetEntry
 {
@@ -179,26 +179,6 @@ class AROR_FactionPresetAmmunition : AROR_FactionPresetEntry
 	override AROR_EFactionPresetCategory GetCategory()
 	{
 		return AROR_EFactionPresetCategory.AMMUNITION;
-	}
-
-	//------------------------------------------------------------------------------------------------
-	override int GetTypeValue()
-	{
-		return m_eType;
-	}
-}
-
-//! Munition loaded onto a vehicle or aircraft as an item (e.g. a helicopter rocket pod)
-[BaseContainerProps(), SCR_BaseContainerCustomTitleEnum(AROR_EVehicleAmmunitionType, "m_eType")]
-class AROR_FactionPresetVehicleAmmunition : AROR_FactionPresetEntry
-{
-	[Attribute("0", UIWidgets.ComboBox, desc: "Vehicle ammunition type", enums: ParamEnumArray.FromEnum(AROR_EVehicleAmmunitionType))]
-	protected AROR_EVehicleAmmunitionType m_eType;
-
-	//------------------------------------------------------------------------------------------------
-	override AROR_EFactionPresetCategory GetCategory()
-	{
-		return AROR_EFactionPresetCategory.VEHICLE_AMMUNITION;
 	}
 
 	//------------------------------------------------------------------------------------------------

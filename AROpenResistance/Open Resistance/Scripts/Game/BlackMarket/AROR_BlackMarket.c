@@ -25,7 +25,6 @@ class AROR_BlackMarket
 		outNames.Insert("Ammunition");
 		outNames.Insert("Gear");
 		outNames.Insert("Equipment");
-		outNames.Insert("Vehicle ammo");
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -38,10 +37,9 @@ class AROR_BlackMarket
 			case 1: return AROR_EFactionPresetCategory.WEAPON_ACCESSORIES;
 			case 2: return AROR_EFactionPresetCategory.AMMUNITION;
 			case 3: return AROR_EFactionPresetCategory.GEAR;
-			case 4: return AROR_EFactionPresetCategory.EQUIPMENT;
 		}
 
-		return AROR_EFactionPresetCategory.VEHICLE_AMMUNITION;
+		return AROR_EFactionPresetCategory.EQUIPMENT;
 	}
 
 	//------------------------------------------------------------------------------------------------

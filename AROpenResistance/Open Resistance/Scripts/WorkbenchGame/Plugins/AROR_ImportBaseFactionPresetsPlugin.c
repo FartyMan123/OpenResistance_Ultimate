@@ -28,7 +28,6 @@ class AROR_PresetImportResult
 	ref array<string> m_aWeapons = {};
 	ref array<string> m_aAccessories = {};
 	ref array<string> m_aAmmunition = {};
-	ref array<string> m_aVehicleAmmunition = {};
 	ref set<int> m_UnitTypesUsed = new set<int>();
 	ref array<string> m_aSkipped = {};
 }
@@ -137,7 +136,7 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 						AddVehicle(entry, result);
 						break;
 					case EEntityCatalogType.WEAPONS_TRIPOD:
-						AddEntry(result.m_aVehicles, "AROR_FactionPresetVehicle", AROR_EVehicleType, AROR_EVehicleType.STATIC_MG, entry.GetPrefab());
+						AddEntry(result.m_aVehicles, "AROR_FactionPresetVehicle", AROR_EVehicleType, StaticType(LowerName(entry.GetPrefab())), entry.GetPrefab());
 						break;
 					case EEntityCatalogType.ITEM:
 						AddItem(entry, result);
@@ -228,6 +227,18 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Static weapons are told apart by name: mortars, the tall 6T7 tripod (high) and the rest (low)
+	protected int StaticType(string name)
+	{
+		if (name.Contains("mortar"))
+			return AROR_EVehicleType.STATIC_MORTAR;
+		if (name.Contains("6t7"))
+			return AROR_EVehicleType.STATIC_MG_HIGH;
+
+		return AROR_EVehicleType.STATIC_MG_LOW;
+	}
+
+	//------------------------------------------------------------------------------------------------
 	protected int VehicleType(SCR_EntityCatalogEntry entry)
 	{
 		string name = LowerName(entry.GetPrefab());
@@ -236,7 +247,7 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 			return AROR_EVehicleType.BOAT;
 
 		if (entry.HasEditableEntityLabel(EEditableEntityLabel.VEHICLE_TURRET))
-			return AROR_EVehicleType.STATIC_MG;
+			return StaticType(name);
 
 		if (entry.HasEditableEntityLabel(EEditableEntityLabel.VEHICLE_HELICOPTER))
 		{
@@ -260,6 +271,8 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 
 		if (entry.HasEditableEntityLabel(EEditableEntityLabel.VEHICLE_TRUCK))
 		{
+			if (entry.HasEditableEntityLabel(EEditableEntityLabel.TRAIT_ARMED))
+				return AROR_EVehicleType.ARMED_TRUCK;
 			if (entry.HasEditableEntityLabel(EEditableEntityLabel.TRAIT_REFUELING))
 				return AROR_EVehicleType.FUEL_TRUCK;
 			if (entry.HasEditableEntityLabel(EEditableEntityLabel.TRAIT_MEDICAL))
@@ -304,13 +317,13 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 		// Munitions loaded onto aircraft and vehicles as items (e.g. helicopter rocket pods)
 		if (itemMode == SCR_EArsenalItemMode.PYLON || itemType == SCR_EArsenalItemType.HELICOPTER || itemType == SCR_EArsenalItemType.VEHICLE)
 		{
-			int vehicleAmmunition = AROR_EVehicleAmmunitionType.ROCKET;
+			int vehicleAmmunition = AROR_EAmmunitionType.ROCKET;
 			if (name.Contains("missile") || name.Contains("atgm"))
-				vehicleAmmunition = AROR_EVehicleAmmunitionType.MISSILE;
+				vehicleAmmunition = AROR_EAmmunitionType.MISSILE;
 			else if (name.Contains("bomb"))
-				vehicleAmmunition = AROR_EVehicleAmmunitionType.BOMB;
+				vehicleAmmunition = AROR_EAmmunitionType.BOMB;
 
-			AddEntry(result.m_aVehicleAmmunition, "AROR_FactionPresetVehicleAmmunition", AROR_EVehicleAmmunitionType, vehicleAmmunition, prefab);
+			AddEntry(result.m_aAmmunition, "AROR_FactionPresetAmmunition", AROR_EAmmunitionType, vehicleAmmunition, prefab);
 			return;
 		}
 
@@ -332,7 +345,7 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 			return;
 		}
 
-		int weapon = WeaponType(itemType);
+		int weapon = WeaponType(itemType, name);
 		if (weapon >= 0)
 		{
 			AddEntry(result.m_aWeapons, "AROR_FactionPresetWeapon", AROR_EWeaponType, weapon, prefab);
@@ -357,14 +370,14 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 	}
 
 	//------------------------------------------------------------------------------------------------
-	protected int WeaponType(SCR_EArsenalItemType itemType)
+	protected int WeaponType(SCR_EArsenalItemType itemType, string name)
 	{
 		switch (itemType)
 		{
 			case SCR_EArsenalItemType.PISTOL:
 				return AROR_EWeaponType.PISTOL;
 			case SCR_EArsenalItemType.RIFLE:
-				return AROR_EWeaponType.RIFLE;
+				return AROR_EWeaponType.ASSAULT_RIFLE;
 			case SCR_EArsenalItemType.MACHINE_GUN:
 				return AROR_EWeaponType.MACHINEGUN;
 			case SCR_EArsenalItemType.SNIPER_RIFLE:
@@ -373,7 +386,10 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 				return AROR_EWeaponType.LAUNCHER_AT;
 			case SCR_EArsenalItemType.LETHAL_THROWABLE:
 			case SCR_EArsenalItemType.NON_LETHAL_THROWABLE:
-				return AROR_EWeaponType.GRENADE;
+				if (name.Contains("smoke"))
+					return AROR_EWeaponType.SMOKE_GRENADE;
+
+				return AROR_EWeaponType.EXPLOSIVE_GRENADE;
 		}
 
 		return -1;
@@ -510,14 +526,13 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 		WriteList(file, "m_aWeapons", result.m_aWeapons);
 		WriteList(file, "m_aWeaponAccessories", result.m_aAccessories);
 		WriteList(file, "m_aAmmunition", result.m_aAmmunition);
-		WriteList(file, "m_aVehicleAmmunition", result.m_aVehicleAmmunition);
 		file.WriteLine("}");
 		file.Close();
 
 		Print(string.Format("[AROR] Import base faction presets: %1 (%2) -> %3: %4 units, %5 vehicles, %6 gear, %7 equipment, %8 weapons, %9 accessories",
 			factionImport.m_sPresetId, factionImport.m_sFactionKey, path, result.m_aUnits.Count(), result.m_aVehicles.Count(), result.m_aGear.Count(),
 			result.m_aEquipment.Count(), result.m_aWeapons.Count(), result.m_aAccessories.Count()), LogLevel.NORMAL);
-		Print(string.Format("[AROR] Import base faction presets: %1: %2 ammunition, %3 vehicle ammunition, %4 skipped", factionImport.m_sPresetId, result.m_aAmmunition.Count(), result.m_aVehicleAmmunition.Count(), result.m_aSkipped.Count()), LogLevel.NORMAL);
+		Print(string.Format("[AROR] Import base faction presets: %1: %2 ammunition, %3 skipped", factionImport.m_sPresetId, result.m_aAmmunition.Count(), result.m_aSkipped.Count()), LogLevel.NORMAL);
 
 		foreach (string skipped : result.m_aSkipped)
 		{

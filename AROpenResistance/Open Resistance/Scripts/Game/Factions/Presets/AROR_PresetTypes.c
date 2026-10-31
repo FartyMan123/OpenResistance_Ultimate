@@ -16,17 +16,15 @@ class AROR_PresetTypes
 			case AROR_EFactionPresetCategory.VEHICLES:
 				return type <= AROR_EVehicleType.STATIC_ARTILLERY;
 			case AROR_EFactionPresetCategory.GEAR:
-				return type <= AROR_EGearType.FACEWEAR;
+				return type <= AROR_EGearType.OTHER;
 			case AROR_EFactionPresetCategory.EQUIPMENT:
-				return type <= AROR_EEquipmentType.EXPLOSIVE;
+				return type <= AROR_EEquipmentType.OTHER;
 			case AROR_EFactionPresetCategory.WEAPONS:
 				return type <= AROR_EWeaponType.MARKSMAN_RIFLE;
 			case AROR_EFactionPresetCategory.WEAPON_ACCESSORIES:
 				return type <= AROR_EWeaponAccessoryType.LIGHT;
 			case AROR_EFactionPresetCategory.AMMUNITION:
-				return type <= AROR_EAmmunitionType.GRENADE_ROUND;
-			case AROR_EFactionPresetCategory.VEHICLE_AMMUNITION:
-				return type <= AROR_EVehicleAmmunitionType.BOMB;
+				return type <= AROR_EAmmunitionType.BOMB;
 		}
 
 		return false;
@@ -52,8 +50,6 @@ class AROR_PresetTypes
 				return typename.EnumToString(AROR_EWeaponAccessoryType, type);
 			case AROR_EFactionPresetCategory.AMMUNITION:
 				return typename.EnumToString(AROR_EAmmunitionType, type);
-			case AROR_EFactionPresetCategory.VEHICLE_AMMUNITION:
-				return typename.EnumToString(AROR_EVehicleAmmunitionType, type);
 		}
 
 		return string.Empty;

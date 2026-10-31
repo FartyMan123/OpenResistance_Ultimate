@@ -32,12 +32,15 @@ class AROR_Imports
 			case AROR_EVehicleType.AMBULANCE:
 				return 0;
 			case AROR_EVehicleType.MOTOR_TRUCK:
+			case AROR_EVehicleType.ARMED_TRUCK:
 			case AROR_EVehicleType.SUPPLY_TRUCK:
 			case AROR_EVehicleType.FUEL_TRUCK:
 				return 1;
 			case AROR_EVehicleType.APC:
 			case AROR_EVehicleType.IFV:
 			case AROR_EVehicleType.TANK:
+			case AROR_EVehicleType.AA_VEHICLE:
+			case AROR_EVehicleType.RADAR_AA_VEHICLE:
 				return 2;
 			case AROR_EVehicleType.HELI_TRANSPORT:
 			case AROR_EVehicleType.HELI_ATTACK:

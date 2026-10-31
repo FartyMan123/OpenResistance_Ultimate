@@ -32,11 +32,8 @@ class AROR_FactionPreset
 	[Attribute(desc: "Weapon accessories", category: "Weapon accessories")]
 	protected ref array<ref AROR_FactionPresetWeaponAccessory> m_aWeaponAccessories;
 
-	[Attribute(desc: "Ammunition for hand-held weapons", category: "Ammunition")]
+	[Attribute(desc: "Ammunition, including rocket pods and other munitions loaded onto vehicles and aircraft", category: "Ammunition")]
 	protected ref array<ref AROR_FactionPresetAmmunition> m_aAmmunition;
-
-	[Attribute(desc: "Munitions loaded onto vehicles and aircraft as items (e.g. helicopter rocket pods)", category: "Vehicle ammunition")]
-	protected ref array<ref AROR_FactionPresetVehicleAmmunition> m_aVehicleAmmunition;
 
 	//------------------------------------------------------------------------------------------------
 	string GetId()
@@ -139,7 +136,7 @@ class AROR_FactionPreset
 		set<int> unitTypes = new set<int>();
 		int empty;
 
-		for (int category = 0; category <= AROR_EFactionPresetCategory.VEHICLE_AMMUNITION; category++)
+		for (int category = 0; category <= AROR_EFactionPresetCategory.AMMUNITION; category++)
 		{
 			string categoryName = typename.EnumToString(AROR_EFactionPresetCategory, category);
 
@@ -246,17 +243,6 @@ class AROR_FactionPreset
 					{
 						if (ammunition)
 							outEntries.Insert(ammunition);
-					}
-				}
-				break;
-
-			case AROR_EFactionPresetCategory.VEHICLE_AMMUNITION:
-				if (m_aVehicleAmmunition)
-				{
-					foreach (AROR_FactionPresetVehicleAmmunition vehicleAmmunition : m_aVehicleAmmunition)
-					{
-						if (vehicleAmmunition)
-							outEntries.Insert(vehicleAmmunition);
 					}
 				}
 				break;

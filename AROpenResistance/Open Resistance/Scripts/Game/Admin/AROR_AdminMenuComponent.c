@@ -210,7 +210,6 @@ class AROR_AdminMenuComponent : SCR_BaseGameModeComponent
 		CollectCategoryPrefabs(preset, AROR_EFactionPresetCategory.WEAPONS, outPrefabs);
 		CollectCategoryPrefabs(preset, AROR_EFactionPresetCategory.WEAPON_ACCESSORIES, outPrefabs);
 		CollectCategoryPrefabs(preset, AROR_EFactionPresetCategory.AMMUNITION, outPrefabs);
-		CollectCategoryPrefabs(preset, AROR_EFactionPresetCategory.VEHICLE_AMMUNITION, outPrefabs);
 	}
 
 	//------------------------------------------------------------------------------------------------

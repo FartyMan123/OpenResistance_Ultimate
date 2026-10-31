@@ -34,11 +34,8 @@ class AROR_ContentPack
 	[Attribute(desc: "Weapon accessories", category: "Weapon accessories")]
 	protected ref array<ref AROR_ContentPackWeaponAccessory> m_aWeaponAccessories;
 
-	[Attribute(desc: "Ammunition for hand-held weapons", category: "Ammunition")]
+	[Attribute(desc: "Ammunition, including rocket pods and other munitions loaded onto vehicles and aircraft", category: "Ammunition")]
 	protected ref array<ref AROR_ContentPackAmmunition> m_aAmmunition;
-
-	[Attribute(desc: "Munitions loaded onto vehicles and aircraft as items (e.g. helicopter rocket pods)", category: "Vehicle ammunition")]
-	protected ref array<ref AROR_ContentPackVehicleAmmunition> m_aVehicleAmmunition;
 
 	//------------------------------------------------------------------------------------------------
 	string GetId()
@@ -122,7 +119,7 @@ class AROR_ContentPack
 		}
 
 		int empty;
-		for (int category = AROR_EFactionPresetCategory.VEHICLES; category <= AROR_EFactionPresetCategory.VEHICLE_AMMUNITION; category++)
+		for (int category = AROR_EFactionPresetCategory.VEHICLES; category <= AROR_EFactionPresetCategory.AMMUNITION; category++)
 		{
 			array<AROR_ContentPackEntry> entries = {};
 			CollectEntries(category, entries);
@@ -210,17 +207,6 @@ class AROR_ContentPack
 					{
 						if (ammunition)
 							outEntries.Insert(ammunition);
-					}
-				}
-				break;
-
-			case AROR_EFactionPresetCategory.VEHICLE_AMMUNITION:
-				if (m_aVehicleAmmunition)
-				{
-					foreach (AROR_ContentPackVehicleAmmunition vehicleAmmunition : m_aVehicleAmmunition)
-					{
-						if (vehicleAmmunition)
-							outEntries.Insert(vehicleAmmunition);
 					}
 				}
 				break;
