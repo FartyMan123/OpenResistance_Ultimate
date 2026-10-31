@@ -35,6 +35,12 @@ The core (`6AA282336705EED2`), RHS: Status Quo, and the WCS content addons: Core
 5. Capture import facilities (the admin menu's capture on map is quickest): Black Market should list WCS weapons (search e.g. "SCAR") and Imports WCS vehicles and helicopters, priced like the curated ones (no 0-cost entries). Helicopters stay locked without a heliport or airport. `[AROR GARRISON] … binding resolved with preset …` shows the garrison choices.
 6. Without WCS (the normal core project), `entries added` lines should be absent or tiny: the base presets were imported from the base catalogs. A large number means the base presets are out of date; re-run the base import plugin.
 
+## Hosting a WCS server
+
+`server/AROR_Everon_Chicken.wcs.json` is a dedicated-server config for the Chicken world (`Missions/AROR_Everon_Chicken.conf`), listing the core, REAPER, RHS: Status Quo and every WCS addon above. The server and clients download them all from the Workshop, so the Workshop build of the core must contain this mission header and the catalog augmentation code; an older core build fails to find the scenario or runs without WCS assets. The mission header's GUID was written by hand; save it once in Workbench.
+
+Before publishing, use Workbench's multiplayer peer tool from the WCS test project to check the server/client split locally.
+
 ## Review and repeatable checks
 
 See [WCS integration review](../../docs/WCS_REVIEW.md) for the verified dependency/asset scope, fixes and remaining native checks.
