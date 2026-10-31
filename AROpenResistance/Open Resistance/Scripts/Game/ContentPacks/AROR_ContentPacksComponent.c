@@ -168,6 +168,32 @@ class AROR_ContentPacksComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Adds the prefabs the weapon or vehicle is listed as working with, limited to those an enabled pack offers
+	//! (replacements applied, no duplicates); returns how many were added. Nothing uses this yet.
+	int GetCompatible(ResourceName prefab, notnull array<ResourceName> outPrefabs)
+	{
+		AROR_ContentPackCompatibleEntry entry = AROR_ContentPackCompatibleEntry.Cast(FindEntry(prefab));
+		if (!entry)
+			return 0;
+
+		array<ResourceName> listed = {};
+		entry.GetCompatible(listed);
+
+		int added;
+		foreach (ResourceName item : listed)
+		{
+			ResourceName resolved = ResolvePrefab(item);
+			if (!FindEntry(resolved) || outPrefabs.Contains(resolved))
+				continue;
+
+			outPrefabs.Insert(resolved);
+			added++;
+		}
+
+		return added;
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! Adds every enabled entry of the category, in pack order then list order; returns how many were added
 	int GetEnabledEntries(AROR_EFactionPresetCategory category, notnull array<AROR_ContentPackEntry> outEntries)
 	{

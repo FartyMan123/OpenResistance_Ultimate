@@ -108,9 +108,39 @@ class AROR_ContentPackEntry
 	}
 }
 
+//! An entry that can use other items: a weapon (its magazines and attachments) or a vehicle (its ammunition and
+//! munitions). The list is optional and informational: nothing reads it for gameplay yet. Only list what is not
+//! already obvious; a future pass may fill it from the prefabs' own magazine wells and attachment slots.
+[BaseContainerProps(insertable: false)]
+class AROR_ContentPackCompatibleEntry : AROR_ContentPackEntry
+{
+	[Attribute("", UIWidgets.ResourceNamePicker, desc: "Prefabs this entry works with: magazines and attachments for a weapon, ammunition and munitions for a vehicle. Informational for now.", params: "et")]
+	protected ref array<ResourceName> m_aCompatible;
+
+	//------------------------------------------------------------------------------------------------
+	//! Adds the listed compatible prefabs (empty ones skipped); returns how many were added
+	int GetCompatible(notnull array<ResourceName> outPrefabs)
+	{
+		if (!m_aCompatible)
+			return 0;
+
+		int added;
+		foreach (ResourceName prefab : m_aCompatible)
+		{
+			if (!prefab.IsEmpty())
+			{
+				outPrefabs.Insert(prefab);
+				added++;
+			}
+		}
+
+		return added;
+	}
+}
+
 //! Empty vehicle (no crew)
 [BaseContainerProps(), SCR_BaseContainerCustomTitleEnum(AROR_EVehicleType, "m_eType")]
-class AROR_ContentPackVehicle : AROR_ContentPackEntry
+class AROR_ContentPackVehicle : AROR_ContentPackCompatibleEntry
 {
 	[Attribute("0", UIWidgets.ComboBox, desc: "Vehicle type", enums: ParamEnumArray.FromEnum(AROR_EVehicleType))]
 	protected AROR_EVehicleType m_eType;
@@ -170,7 +200,7 @@ class AROR_ContentPackEquipment : AROR_ContentPackEntry
 
 //! Hand-held weapon
 [BaseContainerProps(), SCR_BaseContainerCustomTitleEnum(AROR_EWeaponType, "m_eType")]
-class AROR_ContentPackWeapon : AROR_ContentPackEntry
+class AROR_ContentPackWeapon : AROR_ContentPackCompatibleEntry
 {
 	[Attribute("0", UIWidgets.ComboBox, desc: "Weapon type", enums: ParamEnumArray.FromEnum(AROR_EWeaponType))]
 	protected AROR_EWeaponType m_eType;
