@@ -189,6 +189,18 @@ class AROR_FactionPresetsComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! The starting kit for players spawning in the role, from its preset. Null when the preset has none, so the player
+	//! character keeps its own kit.
+	AROR_PlayerLoadout GetPlayerLoadout(AROR_EFactionRole role)
+	{
+		AROR_FactionPreset preset = GetPreset(role);
+		if (!preset)
+			return null;
+
+		return preset.GetPlayerLoadout();
+	}
+
+	//------------------------------------------------------------------------------------------------
 	//! The role's current Readiness; 1 for roles without one (Resistance, Civilians) or before Operations exists
 	protected static int GetReadiness(AROR_EFactionRole role)
 	{
@@ -446,6 +458,31 @@ class AROR_FactionPresetsComponent : SCR_BaseGameModeComponent
 		AROR_UnitLoadoutImporter.Start();
 	}
 #endif
+
+	//------------------------------------------------------------------------------------------------
+	//! Server: dresses a spawned player from their role's preset player loadout. Only an undressed character is dressed,
+	//! so a kit applied by something else (e.g. a saved arsenal loadout) is never doubled.
+	override void OnPlayerSpawnFinalize_S(SCR_SpawnRequestComponent requestComponent, SCR_SpawnHandlerComponent handlerComponent, SCR_SpawnData data, IEntity entity)
+	{
+		super.OnPlayerSpawnFinalize_S(requestComponent, handlerComponent, data, entity);
+
+		SCR_ChimeraCharacter character = SCR_ChimeraCharacter.Cast(entity);
+		if (!character || !AROR_LoadoutOutfitter.IsUndressed(character))
+			return;
+
+		AROR_FactionRolesComponent roles = AROR_FactionRolesComponent.GetInstance();
+		AROR_EFactionRole role;
+		if (!roles || !roles.GetRoleOfFaction(character.GetFaction(), role))
+			return;
+
+		AROR_PlayerLoadout loadout = GetPlayerLoadout(role);
+		if (!loadout)
+			return;
+
+		int failed = AROR_LoadoutOutfitter.Apply_S(character, loadout);
+		if (failed > 0)
+			Print(string.Format("[AROR] Player loadout of %1 applied with %2 pieces missing", GetPresetId(role), failed), LogLevel.WARNING);
+	}
 
 	//------------------------------------------------------------------------------------------------
 	override void OnDelete(IEntity owner)
