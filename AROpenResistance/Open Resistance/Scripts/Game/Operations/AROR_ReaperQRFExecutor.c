@@ -587,6 +587,41 @@ modded class AROR_OperationExecutorComponent
 		return GetGame().SpawnEntityPrefab(resource, GetGame().GetWorld(), parameters);
 	}
 
+	//! Spawns a package aircraft: the preset-picked one when it differs from the authored one and fits (a pilot seat,
+	//! and passenger seats for a transport), otherwise the authored one. Null on failure.
+	protected IEntity SpawnPresetAircraft(AROR_GroundOperationForce force, ResourceName picked, ResourceName authored, bool transport, vector launch, float height)
+	{
+		if (picked != authored)
+		{
+			Resource pickedResource = Resource.Load(picked);
+			IEntity aircraft;
+			if (pickedResource && pickedResource.IsValid())
+				aircraft = SpawnReaperAircraft(pickedResource, launch, height);
+			if (aircraft)
+			{
+				force.m_Vehicle = aircraft;
+				string misfit;
+				if (force.CountRequiredCrewSeats_S() < 1)
+					misfit = "no pilot seat";
+				else if (transport && force.CountCargoSeats_S() < 1)
+					misfit = "no passenger seats";
+				if (misfit.IsEmpty())
+				{
+					force.m_bPresetVehicle = true;
+					Print(string.Format("[AROR REAPER] package uses preset aircraft %1", picked), LogLevel.NORMAL);
+					return aircraft;
+				}
+				Print(string.Format("[AROR REAPER] preset aircraft %1 does not fit (%2); using the authored one", picked, misfit), LogLevel.WARNING);
+				force.m_Vehicle = null;
+				SCR_EntityHelper.DeleteEntityAndChildren(aircraft);
+			}
+		}
+		Resource resource = Resource.Load(authored);
+		if (!resource || !resource.IsValid())
+			return null;
+		return SpawnReaperAircraft(resource, launch, height);
+	}
+
 	protected bool SpawnReaperPackage(AROR_Operation operation, AROR_ReaperAirForce force, ResourceName pilot)
 	{
 		force.m_iPreparationDeadline = m_iExecutorClock + m_iReaperPreparationTimeout;
@@ -595,10 +630,10 @@ modded class AROR_OperationExecutorComponent
 			return false;
 		if (!force.m_bUnescorted && (!IsLaunchPositionSafe(force.m_vEscortLaunch, force.m_vTown) || !AROR_ReaperFlightGeometry.IsAirspaceClear(force.m_vEscortLaunch, ReaperGunshipHeight(force), 14)))
 			return false;
-		Resource transport = Resource.Load(force.m_Profile.m_sVehicle);
-		if (!transport || !transport.IsValid())
+		int readinessLevel = QRFPoolReadinessLevel(operation);
+		force.m_Vehicle = SpawnPresetAircraft(force, force.m_Profile.PickVehicle(readinessLevel), force.m_Profile.m_sVehicle, true, force.m_vLaunch, m_fReaperInsertionHeight + force.m_iPackageIndex * 15);
+		if (!force.m_Vehicle)
 			return false;
-		force.m_Vehicle = SpawnReaperAircraft(transport, force.m_vLaunch, m_fReaperInsertionHeight + force.m_iPackageIndex * 15);
 		// Own and hold the hull before any later faction/resource failure can abort construction.
 		force.m_bAircraftHeld = true;
 		force.HoldAircraft_S();
@@ -616,10 +651,9 @@ modded class AROR_OperationExecutorComponent
 			ConfigureForceFunding(force.m_Escort, operation, force.m_Profile);
 			force.m_Escort.m_bOwnsPackageQuote = false; // Parent releases the shared air-package margin after both groups are cancelled.
 			force.m_Escort.m_iVehicleLossValue = force.m_Profile.m_iEscortLossValue;
-			Resource gunship = Resource.Load(force.m_Profile.m_sEscortVehicle);
-			if (!gunship || !gunship.IsValid())
+			force.m_Escort.m_Vehicle = SpawnPresetAircraft(force.m_Escort, force.m_Profile.PickEscortVehicle(readinessLevel), force.m_Profile.m_sEscortVehicle, false, force.m_vEscortLaunch, ReaperGunshipHeight(force));
+			if (!force.m_Escort.m_Vehicle)
 				return false;
-			force.m_Escort.m_Vehicle = SpawnReaperAircraft(gunship, force.m_vEscortLaunch, ReaperGunshipHeight(force));
 			force.HoldAircraft_S();
 			if (!force.m_Escort.InitializeSpawnFaction_S(force.m_Escort.m_Vehicle) || !force.m_Escort.m_Vehicle.GetPhysics())
 				return false;

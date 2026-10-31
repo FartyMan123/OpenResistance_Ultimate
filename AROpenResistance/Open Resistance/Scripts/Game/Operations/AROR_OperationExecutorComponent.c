@@ -1121,9 +1121,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		force.m_vApproachPosition = approach;
 		ConvertReservation(reservation, profile);
 		m_aForces.Insert(force);
-		Resource vehicleResource = Resource.Load(profile.m_sVehicle);
-		if (vehicleResource && vehicleResource.IsValid())
-			force.m_Vehicle = SpawnGroundVehicle(vehicleResource, launchPosition, target.GetCenter());
+		SpawnProfileGroundVehicle(force, profile, QRFPoolReadinessLevel(operation), launchPosition, target.GetCenter());
 		if (!force.m_Vehicle)
 		{
 			FailOperation(operation, "Ground-force vehicle resource failed");
@@ -1153,7 +1151,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		if (!force.m_CrewGroup.m_aUnitPrefabSlots)
 			force.m_CrewGroup.m_aUnitPrefabSlots = {};
 		force.m_CrewGroup.m_aUnitPrefabSlots.Clear();
-		for (int c = 0; c < profile.m_iCrewCount; c++)
+		for (int c = 0; c < force.GetCrewCount(); c++)
 			force.m_CrewGroup.m_aUnitPrefabSlots.Insert(profile.m_sCrewCharacter);
 		if ((profile.m_eType == AROR_EForceType.ARMOUR && !profile.m_bFillPassengerSeats))
 			force.m_Group = force.m_CrewGroup;
@@ -1183,7 +1181,7 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		int requested = force.m_Group.m_aUnitPrefabSlots.Count();
 		int totalRequested = requested;
 		if (force.m_Group != force.m_CrewGroup)
-			totalRequested += profile.m_iCrewCount;
+			totalRequested += force.GetCrewCount();
 		if (totalRequested > profile.m_iPersonnelBudget)
 		{
 			FailOperation(operation, "Ground-force members exceed profile reservation");
@@ -1210,8 +1208,68 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			ConfigureGroup(force.m_Group, operation);
 			force.m_Group.RequestSpawn(requested);
 		}
-		force.m_CrewGroup.RequestSpawn(profile.m_iCrewCount);
+		force.m_CrewGroup.RequestSpawn(force.GetCrewCount());
 		Print(string.Format("[AROR] Ground package queued: %1 profile=%2 personnel=%3", operation.GetId(), profile.m_sId, totalRequested), LogLevel.NORMAL);
+	}
+
+	//! Spawns the package hull: picked from the faction preset when the profile asks for it, with the crew raised to the
+	//! hull's driver and turret seats; a picked hull that does not fit the crew and personnel budget is replaced by the
+	//! profile's authored vehicle. Leaves force.m_Vehicle null on failure.
+	protected void SpawnProfileGroundVehicle(AROR_GroundOperationForce force, AROR_ForceProfile profile, int readinessLevel, vector launchPosition, vector targetPosition)
+	{
+		ResourceName picked = profile.PickVehicle(readinessLevel);
+		if (picked != profile.m_sVehicle)
+		{
+			Resource pickedResource = Resource.Load(picked);
+			if (pickedResource && pickedResource.IsValid())
+				force.m_Vehicle = SpawnGroundVehicle(pickedResource, launchPosition, targetPosition);
+			if (force.m_Vehicle)
+			{
+				force.m_bPresetVehicle = true;
+				string misfit = PresetHullMisfit(force, profile);
+				if (misfit.IsEmpty())
+				{
+					Print(string.Format("[AROR] Ground package %1 uses preset vehicle %2 (crew %3)", profile.m_sId, picked, force.GetCrewCount()), LogLevel.NORMAL);
+					return;
+				}
+				Print(string.Format("[AROR] Ground package %1: preset vehicle %2 does not fit (%3); using the authored vehicle", profile.m_sId, picked, misfit), LogLevel.WARNING);
+				SCR_EntityHelper.DeleteEntityAndChildren(force.m_Vehicle);
+				force.m_Vehicle = null;
+				force.m_bPresetVehicle = false;
+				force.m_iCrewCount = -1;
+			}
+		}
+		Resource vehicleResource = Resource.Load(profile.m_sVehicle);
+		if (vehicleResource && vehicleResource.IsValid())
+			force.m_Vehicle = SpawnGroundVehicle(vehicleResource, launchPosition, targetPosition);
+	}
+
+	//! Why a preset-picked hull cannot carry this package, or empty if it can; sets the dispatch crew count
+	protected string PresetHullMisfit(AROR_GroundOperationForce force, AROR_ForceProfile profile)
+	{
+		int required = force.CountRequiredCrewSeats_S();
+		if (required < 1)
+			return "no pilot seat";
+		force.m_iCrewCount = Math.Max(profile.m_iCrewCount, required);
+		bool crewOnly = profile.m_eType == AROR_EForceType.ARMOUR && !profile.m_bFillPassengerSeats;
+		if (crewOnly)
+		{
+			if (force.m_iCrewCount > profile.m_iPersonnelBudget)
+				return string.Format("needs %1 crew, budget %2", force.m_iCrewCount, profile.m_iPersonnelBudget);
+			return string.Empty;
+		}
+		// Without seat filling the infantry group keeps its authored size, so the crew cannot grow
+		if (!profile.m_bFillPassengerSeats)
+		{
+			if (required > profile.m_iCrewCount)
+				return string.Format("needs %1 crew, profile has %2", required, profile.m_iCrewCount);
+			return string.Empty;
+		}
+		if (force.m_iCrewCount + 1 > profile.m_iPersonnelBudget)
+			return string.Format("needs %1 crew, budget %2", force.m_iCrewCount, profile.m_iPersonnelBudget);
+		if (force.CountCargoSeats_S() - (force.m_iCrewCount - required) < 1)
+			return "no passenger seats";
+		return string.Empty;
 	}
 
 	protected void StartInfantryForce(AROR_Operation operation, AROR_ForceProfile profile = null, int packageIndex = 0, AROR_OperationForce reservation = null)

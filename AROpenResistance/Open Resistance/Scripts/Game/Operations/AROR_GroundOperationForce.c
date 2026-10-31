@@ -3,6 +3,11 @@ class AROR_GroundOperationForce : AROR_OperationForce
 	ref AROR_ForceProfile m_Profile;
 	SCR_AIGroup m_CrewGroup;
 	IEntity m_Vehicle;
+	//! The hull was picked from the faction preset rather than authored on the profile
+	bool m_bPresetVehicle;
+	//! Crew for this dispatch: the profile's count, raised to the hull's driver and turret seats when the vehicle was
+	//! picked from the faction preset (-1: use the profile's count)
+	int m_iCrewCount = -1;
 	AIWaypoint m_CrewWaypoint;
 	bool m_bMounted;
 	bool m_bMountRequested;
@@ -177,6 +182,54 @@ class AROR_GroundOperationForce : AROR_OperationForce
 		return slot && (TurretCompartmentSlot.Cast(slot) || slot.GetAttachedTurret());
 	}
 
+	//! Crew used for this dispatch (see m_iCrewCount)
+	int GetCrewCount()
+	{
+		if (m_iCrewCount > 0)
+			return m_iCrewCount;
+		return m_Profile.m_iCrewCount;
+	}
+
+	//! Driver plus required gunner seats of the spawned hull, or -1 if the hull cannot be piloted
+	int CountRequiredCrewSeats_S()
+	{
+		if (!m_Vehicle)
+			return -1;
+		BaseCompartmentManagerComponent compartments = BaseCompartmentManagerComponent.Cast(m_Vehicle.FindComponent(BaseCompartmentManagerComponent));
+		SCR_AIVehicleUsageComponent usage = SCR_AIVehicleUsageComponent.Cast(m_Vehicle.FindComponent(SCR_AIVehicleUsageComponent));
+		if (!compartments || !usage || !usage.GetPilotCompartmentSlot())
+			return -1;
+		array<BaseCompartmentSlot> slots = {};
+		compartments.GetCompartments(slots);
+		int seats = 1;
+		foreach (BaseCompartmentSlot slot : slots)
+		{
+			if (slot && slot != usage.GetPilotCompartmentSlot() && IsRequiredGunnerSeat(slot))
+				seats++;
+		}
+		return seats;
+	}
+
+	//! Accessible passenger seats of the spawned hull (crew seats excluded)
+	int CountCargoSeats_S()
+	{
+		if (!m_Vehicle)
+			return 0;
+		BaseCompartmentManagerComponent compartments = BaseCompartmentManagerComponent.Cast(m_Vehicle.FindComponent(BaseCompartmentManagerComponent));
+		SCR_AIVehicleUsageComponent usage = SCR_AIVehicleUsageComponent.Cast(m_Vehicle.FindComponent(SCR_AIVehicleUsageComponent));
+		if (!compartments || !usage)
+			return 0;
+		array<BaseCompartmentSlot> slots = {};
+		compartments.GetCompartments(slots);
+		int seats;
+		foreach (BaseCompartmentSlot slot : slots)
+		{
+			if (slot && slot != usage.GetPilotCompartmentSlot() && !IsRequiredGunnerSeat(slot) && slot.IsCompartmentAccessible() && CargoCompartmentSlot.Cast(slot))
+				seats++;
+		}
+		return seats;
+	}
+
 	//! Freeze the native hull's passenger roster before either group requests spawning.
 	//! Repeat the authored infantry mix; never turn spare crew into dismount infantry.
 	bool PreparePassengerRoster_S()
@@ -194,7 +247,7 @@ class AROR_GroundOperationForce : AROR_OperationForce
 		array<BaseCompartmentSlot> slots = {};
 		compartments.GetCompartments(slots);
 		bool airborne = m_Profile.m_eType == AROR_EForceType.AIRBORNE;
-		int transportCrew = m_Profile.m_iCrewCount;
+		int transportCrew = GetCrewCount();
 		int escortCrew;
 		if (airborne)
 		{
@@ -218,6 +271,9 @@ class AROR_GroundOperationForce : AROR_OperationForce
 		if (transportCrew < crewSeats)
 			return false;
 		int passengers = cargoSeats - (transportCrew - crewSeats);
+		// A preset-picked hull can seat more than the authored one: fill only within the reserved personnel budget
+		if (m_bPresetVehicle)
+			passengers = Math.Min(passengers, m_iReservedMembers - transportCrew - escortCrew);
 		if (passengers < 1 || passengers + transportCrew + escortCrew > m_iReservedMembers)
 			return false;
 		array<ResourceName> infantryMix = {};

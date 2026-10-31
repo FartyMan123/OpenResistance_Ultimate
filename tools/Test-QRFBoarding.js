@@ -12,7 +12,7 @@ for(const name of ['BaseCompartmentManagerComponent','SCR_AIVehicleUsageComponen
 env.ChimeraCharacter={Cast:x=>x?.character?x:null};
 let deleted=[];env.AIControlComponent={Cast:x=>x};env.SCR_EntityHelper={DeleteEntityAndChildren:x=>deleted.push(x)};
 env.TurretCompartmentSlot={Cast:x=>x?.kind==='turret'?x:null};env.CargoCompartmentSlot={Cast:x=>x?.kind==='cargo'?x:null};
-const methods=['ReplaceUnseated_S','ReplaceIntoSeat','ReplaceIntoSeatEntity','Seat','PreparePassengerRoster_S','Mount_S','IsRequiredGunnerSeat','IsMountComplete','ReseatMissing_S','ReseatMember','RecoverStaleBoarding_S','IsSeatedInOwnVehicle'];
+const methods=['GetCrewCount','ReplaceUnseated_S','ReplaceIntoSeat','ReplaceIntoSeatEntity','Seat','PreparePassengerRoster_S','Mount_S','IsRequiredGunnerSeat','IsMountComplete','ReseatMissing_S','ReseatMember','RecoverStaleBoarding_S','IsSeatedInOwnVehicle'];
 function compile(name){
   const m=source.match(new RegExp('^\\t[^\\r\\n]*\\b'+name+'\\(([^\\r\\n]*)\\)\\r?\\n\\t\\{([\\s\\S]*?)^\\t\\}', 'm'));
   if(!m)throw Error('Missing '+name);

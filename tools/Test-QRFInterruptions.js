@@ -110,11 +110,14 @@ const executor='AROR_OperationExecutorComponent',reaper='AROR_ReaperQRFExecutor'
  const spawn=compile(reaper,'SpawnReaperPackage');
  for(const escorted of [false,true])for(const failure of ['none','transport','gunship','airspace','clearance','transportPhysics','escortPhysics','transportFaction','escortFaction','crew','infantry','escortCrew','slots','waypoint']){
   missing=failure;spawned=[];groups=[];loaded=[];
-  const profile={m_sVehicle:'transport',m_sEscortVehicle:'gunship',m_sInfantryGroup:'infantry',m_iEscortCount:escorted?1:0,m_iEscortLossValue:2000};
+  const profile={m_sVehicle:'transport',m_sEscortVehicle:'gunship',m_sInfantryGroup:'infantry',m_iEscortCount:escorted?1:0,m_iEscortLossValue:2000,
+   PickVehicle(){return this.m_sVehicle},PickEscortVehicle(){return this.m_sEscortVehicle}};
   const force={ground:true,air:true,m_Profile:profile,m_bUnescorted:!escorted,m_iPackageIndex:0,m_iPackageCount:1,m_iReservedMembers:8,
    PreparePassengerRoster_S:()=>true,InitializeSpawnFaction_S:entity=>entity?.allowFaction!==false,TrackDamage_S(){},HoldAircraft_S(){this.held=(this.held||0)+1}};
   const ctx={m_iExecutorClock:10,m_iReaperPreparationTimeout:120,m_fReaperInsertionHeight:100,IsLaunchPositionSafe:()=>failure!=='clearance',ReaperGunshipHeight:()=>200,
-   ConfigureForceFunding(f){f.m_bOwnsPackageQuote=true},SpawnWaypoint:()=>failure==='waypoint'?null:{},
+   ConfigureForceFunding(f){f.m_bOwnsPackageQuote=true},SpawnWaypoint:()=>failure==='waypoint'?null:{},QRFPoolReadinessLevel:()=>3,
+   // Authored aircraft only here (the profile picks no preset hull); preset fitting is covered by its own review
+   SpawnPresetAircraft(owner,picked,authored,transport,launch,height){const r=env.Resource.Load(authored);return r&&r.IsValid()?this.SpawnReaperAircraft(r,launch,height):null},
    SpawnReaperAircraft(resource){const v={name:resource.name,allowFaction:failure!==(resource.name==='gunship'?'escortFaction':'transportFaction'),GetPhysics:()=>failure!==(resource.name==='gunship'?'escortPhysics':'transportPhysics')};spawned.push(v);return v},
    ReaperGroup(owner,prefab,pilot){
     const kind=owner===force?(pilot?'crew':'infantry'):'escortCrew';

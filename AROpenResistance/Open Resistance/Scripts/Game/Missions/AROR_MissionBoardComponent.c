@@ -391,10 +391,16 @@ class AROR_MissionBoardComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! A random vehicle of the type from the role's faction preset, or empty if it has none
+	//! A random vehicle of the type from the role's faction preset available at the army's current Readiness, or
+	//! empty if it has none (presets augmented by mods hold heavier variants that unlock later)
 	ResourceName GetVehiclePrefab_S(AROR_EFactionRole role, AROR_EVehicleType type)
 	{
-		return AROR_ForceSpawner.VehiclePrefab(role, type);
+		int readiness = 5;
+		AROR_OperationManagerComponent operations = AROR_OperationManagerComponent.GetInstance();
+		if (operations)
+			readiness = operations.GetReadinessLevel(role);
+
+		return AROR_ForceSpawner.VehiclePrefab(role, type, readiness);
 	}
 
 	//------------------------------------------------------------------------------------------------
