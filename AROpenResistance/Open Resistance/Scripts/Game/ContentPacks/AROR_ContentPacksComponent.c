@@ -37,6 +37,9 @@ class AROR_ContentPacksComponent : SCR_BaseGameModeComponent
 	[RplProp(onRplName: "OnOverridesReplicated")]
 	protected string m_sEnabledPacks;
 
+	//! Client: a rebuild is queued for the next frame (see OnOverridesReplicated)
+	protected bool m_bRebuildQueued;
+
 	// Built from the enabled packs whenever they change
 	protected ref map<ResourceName, AROR_ContentPackEntry> m_mCatalogue = new map<ResourceName, AROR_ContentPackEntry>();
 	protected ref array<AROR_ContentPackEntry> m_aCatalogueOrder = {};
@@ -286,8 +289,20 @@ class AROR_ContentPacksComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Both override properties use this callback; when both change in one update, rebuild once on the next frame
 	protected void OnOverridesReplicated()
 	{
+		if (m_bRebuildQueued)
+			return;
+
+		m_bRebuildQueued = true;
+		GetGame().GetCallqueue().CallLater(RebuildQueued, 0);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void RebuildQueued()
+	{
+		m_bRebuildQueued = false;
 		Rebuild();
 	}
 
@@ -527,6 +542,7 @@ class AROR_ContentPacksComponent : SCR_BaseGameModeComponent
 		if (s_Instance == this)
 			s_Instance = null;
 
+		GetGame().GetCallqueue().Remove(RebuildQueued);
 		super.OnDelete(owner);
 	}
 }

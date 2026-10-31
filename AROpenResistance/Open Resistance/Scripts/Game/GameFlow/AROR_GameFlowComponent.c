@@ -86,6 +86,8 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	protected int m_iFreshRestartAttempts;
 	protected static const int FRESH_RESTART_RETRY_MS = 2000;
 	protected static const int FRESH_RESTART_MAX_ATTEMPTS = 5;
+	protected static const int FRESH_RESTART_START_TIMEOUT_MS = 60000;
+	protected bool m_bFreshRestartAttempting;	//!< The game has started; attempts are running
 
 	//! Server: players already offered the setup screen (join and role change can both trigger it)
 	protected ref array<int> m_aSetupOfferedPlayerIds = {};
@@ -97,7 +99,9 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	protected ref SaveGameOperationCallback m_InitialSaveCallback;
 	protected ref SaveGameOperationCallback m_AutosaveCallback;
 	protected ref SaveGameOperationCallback m_ManualSaveCallback;
-	protected int m_iManualSaveRequesterId;
+	protected int m_iManualSaveRequesterId;	//!< Admin whose manual save is pending, or 0
+	protected int m_iManualSaveAttempts;
+	protected static const int MANUAL_SAVE_MAX_WAITS = 20;	//!< Busy checks PRUNE_RETRY_MS apart before giving up
 
 	//! Server: the mission's saves at boot, to spot a new playthrough reusing an existing playthrough number
 	protected ref array<SaveGame> m_aKnownSaves = {};
@@ -108,14 +112,16 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	protected ref array<SaveGame> m_aPruneQueue = {};
 	protected static const int PRUNE_RETRY_MS = 500;
 
-	//! Autosave names start with this, followed by the resistance name; manual saves are the resistance name alone
-	static const string AUTOSAVE_PREFIX = "Autosave ";
+	//! Autosave names start with this, followed by the resistance name; manual saves are the resistance name alone.
+	//! The "-" is not allowed in resistance names (AROR_ResistanceName), so no manual save can look like an autosave.
+	static const string AUTOSAVE_PREFIX = "Autosave - ";
 	protected static const string DIGITS = "0123456789";
 	protected static const int ENGINE_NAME_TIME_TOLERANCE_S = 600;
 
 	//! Key-event saves wait this long, so several changes in a row become one save and the world has settled
 	protected static const int AUTOSAVE_EVENT_DELAY_MS = 5000;
 	protected bool m_bAutosavePending;
+	protected bool m_bAutosaveTimerStarted;
 
 	//! After a load, wait this long for the saved entities to restore before checking the garage prop exists
 	protected static const int ENSURE_GARAGE_DELAY_MS = 10000;
@@ -642,10 +648,13 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		vector boundsCentre = (mins + maxs) * 0.5;
 		vector target = flagPosition + direction * (gap + halfExtent);
 
+		// Keep the prop's height above the terrain (its pivot offset) at the new spot
+		BaseWorld world = GetGame().GetWorld();
 		vector origin = prop.GetOrigin();
+		float heightAboveSurface = origin[1] - world.GetSurfaceY(origin[0], origin[2]);
 		origin[0] = origin[0] + (target[0] - boundsCentre[0]);
 		origin[2] = origin[2] + (target[2] - boundsCentre[2]);
-		origin[1] = GetGame().GetWorld().GetSurfaceY(origin[0], origin[2]);
+		origin[1] = world.GetSurfaceY(origin[0], origin[2]) + heightAboveSurface;
 		prop.SetOrigin(origin);
 		prop.Update();
 	}
@@ -787,8 +796,8 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! True for our autosaves, the engine's own saves (shutdown, unnamed) and the old "Start" / "Autosave" names.
-	//! Everything else is a manual save, which is never pruned.
+	//! True for our autosaves and the engine's own saves (shutdown, unnamed). Everything else is a manual save, which
+	//! is never pruned: no resistance name can start with AUTOSAVE_PREFIX or match an engine name.
 	static bool IsAutosave(notnull SaveGame save)
 	{
 		string name = save.GetSavePointName();
@@ -796,12 +805,12 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Names we did not give: empty, the old fixed names, or the engine's own name for its saves (e.g. shutdown
-	//! saves), which is the creation time in Unix seconds. A resistance named only with digits is not mistaken for it.
+	//! Names we did not give: empty, or the engine's own name for its saves (e.g. shutdown saves), which is the
+	//! creation time in Unix seconds. A resistance named only with digits is not mistaken for it.
 	protected static bool IsGeneratedSaveName(notnull SaveGame save)
 	{
 		string name = save.GetSavePointName();
-		if (name.IsEmpty() || name == "Start" || name == "Autosave")
+		if (name.IsEmpty())
 			return true;
 
 		for (int i = 0, length = name.Length(); i < length; i++)
@@ -913,10 +922,14 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Once per world: a playthrough is either created or loaded in it
 	protected void StartAutosaveTimer()
 	{
-		if (m_iAutosaveIntervalSeconds > 0)
-			GetGame().GetCallqueue().CallLater(Autosave_S, m_iAutosaveIntervalSeconds * 1000, true);
+		if (m_bAutosaveTimerStarted || m_iAutosaveIntervalSeconds <= 0)
+			return;
+
+		m_bAutosaveTimerStarted = true;
+		GetGame().GetCallqueue().CallLater(Autosave_S, m_iAutosaveIntervalSeconds * 1000, true);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -946,7 +959,8 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Server: an admin saves the running campaign (phone quick dock). Manual saves are never pruned.
+	//! Server: an admin saves the running campaign (phone quick dock). Manual saves are never pruned. One at a time:
+	//! presses while a manual save is pending are refused.
 	void RequestManualSave_S(int playerId)
 	{
 		if (!Replication.IsServer())
@@ -966,22 +980,50 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 			return;
 		}
 
-		// Another save in progress: try again shortly
+		if (m_iManualSaveRequesterId != 0)
+		{
+			AROR_NotificationManagerComponent.SendHint_S(playerId, "The campaign is already being saved");
+			return;
+		}
+
+		m_iManualSaveRequesterId = playerId;
+		m_iManualSaveAttempts = 0;
+		TryManualSave_S();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Waits a few seconds at most for another save to finish
+	protected void TryManualSave_S()
+	{
+		SaveGameManager saveManager = SaveGameManager.Get();
+		if (!saveManager || !m_bPlaythroughReady)
+		{
+			FinishManualSave_S("Saving is not available right now");
+			return;
+		}
+
 		if (saveManager.IsBusy())
 		{
-			GetGame().GetCallqueue().CallLater(RequestManualSave_S, PRUNE_RETRY_MS, false, playerId);
+			m_iManualSaveAttempts++;
+			if (m_iManualSaveAttempts > MANUAL_SAVE_MAX_WAITS)
+			{
+				FinishManualSave_S("Saving is busy, try again in a moment");
+				return;
+			}
+
+			GetGame().GetCallqueue().CallLater(TryManualSave_S, PRUNE_RETRY_MS);
 			return;
 		}
 
 		if (!saveManager.IsSavingAllowed())
 		{
-			AROR_NotificationManagerComponent.SendHint_S(playerId, "Saving is not available right now");
+			FinishManualSave_S("Saving is not available right now");
 			return;
 		}
 
-		m_iManualSaveRequesterId = playerId;
 		m_ManualSaveCallback = new SaveGameOperationCallback(OnManualSaveCompleted);
-		saveManager.RequestSavePoint(ESaveGameType.SCRIPTED, GetSaveName(false), 0, m_ManualSaveCallback);
+		if (!saveManager.RequestSavePoint(ESaveGameType.SCRIPTED, GetSaveName(false), 0, m_ManualSaveCallback))
+			FinishManualSave_S("Saving failed");
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -990,13 +1032,23 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		if (success)
 		{
 			Print(string.Format("[AROR] Manual save by player %1", m_iManualSaveRequesterId), LogLevel.NORMAL);
-			AROR_NotificationManagerComponent.SendHint_S(m_iManualSaveRequesterId, "Campaign saved");
+			FinishManualSave_S("Campaign saved");
 		}
 		else
 		{
 			Print("[AROR] Manual save failed", LogLevel.ERROR);
-			AROR_NotificationManagerComponent.SendHint_S(m_iManualSaveRequesterId, "Saving failed");
+			FinishManualSave_S("Saving failed");
 		}
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Tells the requester the outcome and allows the next manual save
+	protected void FinishManualSave_S(string message)
+	{
+		int playerId = m_iManualSaveRequesterId;
+		m_iManualSaveRequesterId = 0;
+		if (playerId != 0)
+			AROR_NotificationManagerComponent.SendHint_S(playerId, message);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -1133,30 +1185,38 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	// Fresh boot (server)
 	//------------------------------------------------------------------------------------------------
 	//! The game resumed a save by itself: reload the scenario without it. Requesting the world change during world
-	//! init is ignored by the engine ("No active game state"), so ask once the game has started and retry a few times.
+	//! init is ignored by the engine ("No active game state"), so attempts only begin once the game has started.
 	protected void BeginFreshRestart_S()
 	{
 		WriteMarker(RESTART_MARKER_FILE);
 		m_bFreshRestartPending = true;
+		m_bFreshRestartAttempting = false;
 		m_iFreshRestartAttempts = 0;
 		Print("[AROR] A save was resumed by the game: reloading the scenario fresh once the game has started", LogLevel.NORMAL);
 
 		SCR_BaseGameMode gameMode = SCR_BaseGameMode.Cast(GetOwner());
 		if (gameMode)
-			gameMode.GetOnGameStart().Insert(OnGameStartedFreshRestart);
+			gameMode.GetOnGameStart().Insert(StartFreshRestartAttempts_S);
 
-		GetGame().GetCallqueue().CallLater(TryFreshRestart_S, FRESH_RESTART_RETRY_MS, true);
+		// In case the game-start event never comes: start the attempts anyway rather than stay locked
+		GetGame().GetCallqueue().CallLater(StartFreshRestartAttempts_S, FRESH_RESTART_START_TIMEOUT_MS);
 	}
 
 	//------------------------------------------------------------------------------------------------
-	protected void OnGameStartedFreshRestart()
+	//! Game started (or the timeout passed): first attempt next frame, then retries
+	protected void StartFreshRestartAttempts_S()
 	{
+		if (!m_bFreshRestartPending || m_bFreshRestartAttempting)
+			return;
+
+		m_bFreshRestartAttempting = true;
 		SCR_BaseGameMode gameMode = SCR_BaseGameMode.Cast(GetOwner());
 		if (gameMode)
-			gameMode.GetOnGameStart().Remove(OnGameStartedFreshRestart);
+			gameMode.GetOnGameStart().Remove(StartFreshRestartAttempts_S);
 
-		// Next frame, once the game state has finished starting
+		GetGame().GetCallqueue().Remove(StartFreshRestartAttempts_S);
 		GetGame().GetCallqueue().CallLater(TryFreshRestart_S, 0);
+		GetGame().GetCallqueue().CallLater(TryFreshRestart_S, FRESH_RESTART_RETRY_MS, true);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -1192,9 +1252,10 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 		m_bFreshRestartPending = false;
 		GetGame().GetCallqueue().Remove(TryFreshRestart_S);
 
+		GetGame().GetCallqueue().Remove(StartFreshRestartAttempts_S);
 		SCR_BaseGameMode gameMode = SCR_BaseGameMode.Cast(GetOwner());
 		if (gameMode)
-			gameMode.GetOnGameStart().Remove(OnGameStartedFreshRestart);
+			gameMode.GetOnGameStart().Remove(StartFreshRestartAttempts_S);
 
 		// So a later boot does not mistake it for a restart that just happened
 		if (FileIO.FileExists(RESTART_MARKER_FILE))
@@ -1348,6 +1409,18 @@ class AROR_GameFlowComponent : SCR_BaseGameModeStateComponent
 	{
 		if (s_Instance == this)
 			s_Instance = null;
+
+		// Timers and retries must not outlive the game mode
+		ScriptCallQueue callQueue = GetGame().GetCallqueue();
+		if (callQueue)
+		{
+			callQueue.Remove(Autosave_S);
+			callQueue.Remove(TryManualSave_S);
+			callQueue.Remove(DeleteNextPruned_S);
+			callQueue.Remove(EnsureGarage_S);
+			callQueue.Remove(StartFreshRestartAttempts_S);
+			callQueue.Remove(TryFreshRestart_S);
+		}
 
 		super.OnDelete(owner);
 	}

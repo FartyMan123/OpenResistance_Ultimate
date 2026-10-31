@@ -28,6 +28,9 @@ class AROR_CampaignSettingsComponent : SCR_BaseGameModeComponent
 	//! Every machine: parsed m_sValues
 	protected ref map<string, string> m_mValues = new map<string, string>();
 
+	//! Every defined setting by ID, built on first lookup (FindSetting)
+	protected ref map<string, AROR_CampaignSetting> m_mSettingsById;
+
 	protected ref ScriptInvokerBase<AROR_OnCampaignSettingsChanged> m_OnSettingsChanged = new ScriptInvokerBase<AROR_OnCampaignSettingsChanged>();
 
 	//------------------------------------------------------------------------------------------------
@@ -82,17 +85,22 @@ class AROR_CampaignSettingsComponent : SCR_BaseGameModeComponent
 	}
 
 	//------------------------------------------------------------------------------------------------
+	//! Settings are defined on the component and do not change at runtime, so the lookup is built once
 	AROR_CampaignSetting FindSetting(string settingId)
 	{
-		array<AROR_CampaignSetting> settings = {};
-		GetAllSettings(settings);
-		foreach (AROR_CampaignSetting setting : settings)
+		if (!m_mSettingsById)
 		{
-			if (setting.GetId() == settingId)
-				return setting;
+			m_mSettingsById = new map<string, AROR_CampaignSetting>();
+			array<AROR_CampaignSetting> settings = {};
+			GetAllSettings(settings);
+			foreach (AROR_CampaignSetting setting : settings)
+			{
+				if (setting && !m_mSettingsById.Contains(setting.GetId()))
+					m_mSettingsById.Insert(setting.GetId(), setting);
+			}
 		}
 
-		return null;
+		return m_mSettingsById.Get(settingId);
 	}
 
 	//------------------------------------------------------------------------------------------------
