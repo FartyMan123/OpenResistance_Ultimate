@@ -120,7 +120,7 @@ class AROR_FactionPreset
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! Logs configuration mistakes: missing ID or roles, unknown types, duplicate unit types, empty prefabs.
+	//! Logs configuration mistakes: missing ID or roles, unknown types, duplicate unit types, empty prefabs, loadouts.
 	//! Returns false if the preset is unusable.
 	bool Validate(string source)
 	{
@@ -144,7 +144,8 @@ class AROR_FactionPreset
 			CollectEntries(category, entries);
 			foreach (AROR_FactionPresetEntry entry : entries)
 			{
-				if (entry.GetListedPrefab().IsEmpty())
+				// Units may leave the prefab empty to use the role default
+				if (entry.GetListedPrefab().IsEmpty() && category != AROR_EFactionPresetCategory.UNITS)
 					empty++;
 
 				if (!entry.IsKnownType())
@@ -153,8 +154,13 @@ class AROR_FactionPreset
 					continue;
 				}
 
-				if (category == AROR_EFactionPresetCategory.UNITS && !unitTypes.Insert(entry.GetTypeValue()))
-					Print(string.Format("[AROR] Faction preset '%1' lists unit type %2 more than once; only the first is used", m_sId, entry.GetTypeName()), LogLevel.WARNING);
+				if (category == AROR_EFactionPresetCategory.UNITS)
+				{
+					if (!unitTypes.Insert(entry.GetTypeValue()))
+						Print(string.Format("[AROR] Faction preset '%1' lists unit type %2 more than once; only the first is used", m_sId, entry.GetTypeName()), LogLevel.WARNING);
+
+					AROR_FactionPresetUnit.Cast(entry).ValidateLoadouts(m_sId);
+				}
 			}
 		}
 

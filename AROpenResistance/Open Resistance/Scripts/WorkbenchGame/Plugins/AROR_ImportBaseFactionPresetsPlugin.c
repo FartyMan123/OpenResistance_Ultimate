@@ -38,7 +38,8 @@ class AROR_PresetImportResult
 //! (Game Master labels for characters and vehicles, arsenal item type/mode for items) plus a few file-name hints, and
 //! rewrites the preset files. Prices, readiness and import requirements live in the Base Game content pack, which this
 //! never touches; add new prefabs there by hand. Anything that cannot be placed is listed in the log.
-//! Re-run after game updates; it overwrites the four base preset files.
+//! Re-run after game updates; it overwrites the four base preset files, except their units (hand-authored prefabs and
+//! loadouts), which are kept as they are. Units are generated only for a preset that has none.
 [WorkbenchPluginAttribute(name: "Import base faction presets", description: "Fill the base-game faction presets (US, USSR, FIA, CIV) from the game's faction catalogs.", wbModules: {"WorldEditor", "ResourceManager"}, category: "Open Resistance")]
 class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 {
@@ -494,6 +495,20 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 	protected void WritePreset(AROR_BaseFactionImport factionImport, AROR_PresetImportResult result)
 	{
 		string path = OUTPUT_FOLDER + factionImport.m_sFile;
+
+		// Units carry hand-authored loadouts and prefab choices: keep the existing block, generate only when there is none
+		array<string> existingUnits = {};
+		if (ReadTopLevelList(path, "m_aUnits", existingUnits) > 0)
+		{
+			result.m_aUnits.Clear();
+			result.m_aUnits.InsertAll(existingUnits);
+			Print(string.Format("[AROR] Import base faction presets: %1 kept its existing units (and their loadouts)", factionImport.m_sPresetId), LogLevel.NORMAL);
+		}
+		else
+		{
+			Print(string.Format("[AROR] Import base faction presets: %1 had no units, so they were generated from the base game", factionImport.m_sPresetId), LogLevel.NORMAL);
+		}
+
 		FileHandle file = FileIO.OpenFile(path, FileMode.WRITE);
 		if (!file)
 		{
@@ -552,6 +567,43 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 			file.WriteLine(line);
 		}
 		file.WriteLine(" }");
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Adds the lines inside a top-level list of an existing preset file (between " name {" and its closing " }", both
+	//! at one-space indent as Workbench and this plugin write them), verbatim. Returns how many lines were added; 0 when
+	//! the file or the list does not exist.
+	protected int ReadTopLevelList(string path, string listName, notnull array<string> outLines)
+	{
+		if (!FileIO.FileExists(path))
+			return 0;
+
+		FileHandle file = FileIO.OpenFile(path, FileMode.READ);
+		if (!file)
+			return 0;
+
+		string header = string.Format(" %1 {", listName);
+		bool inside;
+		string line;
+		while (file.ReadLine(line) >= 0)
+		{
+			// Lines may keep the carriage return of CRLF files
+			line.Replace("\r", string.Empty);
+
+			if (!inside)
+			{
+				inside = line == header;
+				continue;
+			}
+
+			if (line == " }")
+				break;
+
+			outLines.Insert(line);
+		}
+
+		file.Close();
+		return outLines.Count();
 	}
 
 	//------------------------------------------------------------------------------------------------

@@ -49,12 +49,60 @@ class AROR_FactionPresetEntry
 	}
 }
 
-//! AI character. A preset has at most one unit per type.
+//! AI character. A preset has at most one unit per type. The prefab is optional: empty uses the role's default for the
+//! type (AROR_DefaultUnitPrefabs), so a preset can give a unit a loadout without naming a character. Loadouts are
+//! Readiness variants of the unit's kit; with none, the character keeps its prefab's own kit.
 [BaseContainerProps(), SCR_BaseContainerCustomTitleEnum(AROR_EUnitType, "m_eType")]
 class AROR_FactionPresetUnit : AROR_FactionPresetEntry
 {
 	[Attribute("0", UIWidgets.ComboBox, desc: "Unit type (one unit per type in a preset)", enums: ParamEnumArray.FromEnum(AROR_EUnitType))]
 	protected AROR_EUnitType m_eType;
+
+	[Attribute(desc: "Kit variants by Readiness. Empty keeps the character prefab's own kit; when set, use a character without gear (e.g. the role default).")]
+	protected ref array<ref AROR_UnitLoadout> m_aLoadouts;
+
+	//------------------------------------------------------------------------------------------------
+	//! True when the unit names its own character instead of the role default
+	bool HasPrefab()
+	{
+		return !m_sPrefab.IsEmpty();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	bool HasLoadouts()
+	{
+		return m_aLoadouts && !m_aLoadouts.IsEmpty();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! The loadout to use at a readiness (see AROR_UnitLoadout.Pick), or null to keep the prefab's own kit
+	AROR_UnitLoadout PickLoadout(int readiness)
+	{
+		return AROR_UnitLoadout.Pick(m_aLoadouts, readiness);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Logs loadout mistakes; presetId names the preset in the log
+	void ValidateLoadouts(string presetId)
+	{
+		if (!m_aLoadouts)
+			return;
+
+		bool hasFirstTier;
+		foreach (int index, AROR_UnitLoadout loadout : m_aLoadouts)
+		{
+			if (!loadout)
+				continue;
+
+			if (loadout.GetMinimumReadiness() <= 1)
+				hasFirstTier = true;
+
+			loadout.Validate(string.Format("Faction preset '%1', %2 loadout %3", presetId, GetTypeName(), index + 1));
+		}
+
+		if (!hasFirstTier && !m_aLoadouts.IsEmpty())
+			Print(string.Format("[AROR] Faction preset '%1': %2 has no readiness 1 loadout; its lowest one is used below that", presetId, GetTypeName()), LogLevel.WARNING);
+	}
 
 	//------------------------------------------------------------------------------------------------
 	override AROR_EFactionPresetCategory GetCategory()
