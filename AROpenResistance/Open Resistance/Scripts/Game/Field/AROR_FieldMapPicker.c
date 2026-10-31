@@ -37,12 +37,12 @@ class AROR_FieldMapPicker
 	{
 		if (!m_bActive)
 			return;
-		SCR_MapEntity map = SCR_MapEntity.GetMapInstance();
+		SCR_MapEntity mapEntity = SCR_MapEntity.GetMapInstance();
 		SCR_PlayerController controller = SCR_PlayerController.Cast(GetGame().GetPlayerController());
-		if (!map || !controller)
+		if (!mapEntity || !controller)
 			return;
 		float x, z;
-		map.GetMapCursorWorldPosition(x, z);
+		mapEntity.GetMapCursorWorldPosition(x, z);
 		vector position = Vector(x, 0, z);
 		if (!AROR_FieldAccess.MapPosition(position))
 			return;

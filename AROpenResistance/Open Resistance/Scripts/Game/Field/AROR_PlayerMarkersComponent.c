@@ -50,9 +50,9 @@ class AROR_PlayerMarkersComponent : SCR_BaseGameModeComponent
 		if (!marker)
 		{
 			int count;
-			foreach (AROR_PlayerMarker owned : m_aMarkers)
+			foreach (AROR_PlayerMarker existing : m_aMarkers)
 			{
-				if (owned.m_sOwnerKey == key)
+				if (existing.m_sOwnerKey == key)
 					count++;
 			}
 			if (count >= m_iPerPlayerLimit || m_aMarkers.Count() >= m_iCampaignLimit)
@@ -179,14 +179,14 @@ class AROR_PlayerMarkersComponent : SCR_BaseGameModeComponent
 			if (marker.m_iId < 1 || marker.m_sOwnerKey.IsEmpty() || (marker.m_iScope != 0 && marker.m_iScope != 2)
 				|| marker.m_iKind < 0 || marker.m_iKind > 4 || remaining < 0 || remaining > 86400 || !AROR_FieldAccess.MapPosition(marker.m_vPosition))
 				continue;
-			int owned;
+			int ownerCount;
 			bool duplicate;
 			foreach (AROR_PlayerMarker restored : m_aMarkers)
 			{
 				if (restored.m_iId == marker.m_iId) duplicate = true;
-				if (restored.m_sOwnerKey == marker.m_sOwnerKey) owned++;
+				if (restored.m_sOwnerKey == marker.m_sOwnerKey) ownerCount++;
 			}
-			if (duplicate || owned >= m_iPerPlayerLimit)
+			if (duplicate || ownerCount >= m_iPerPlayerLimit)
 				continue;
 			if (remaining > 0)
 				marker.m_iExpiresAt = GetGame().GetWorld().GetWorldTime() + remaining * 1000;

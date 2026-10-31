@@ -62,7 +62,7 @@ modded class SCR_PlayerController
 		m_bARORFieldSent = true;
 		m_sARORFieldLastMarkers = markers;
 		m_sARORFieldLastRecruits = recruits;
-		if (AROR_IsLocal())
+		if (GetGame().GetPlayerController() == this)	// AROR_IsLocal() is declared in GameFlow, which compiles after this file
 			AROR_RpcDo_FieldState(markers, recruits);
 		else
 			Rpc(AROR_RpcDo_FieldState, markers, recruits);

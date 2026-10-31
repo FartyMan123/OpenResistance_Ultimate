@@ -25,9 +25,9 @@ class AROR_PlayerMapMarkers
 		m_aColors.Clear();
 	}
 
-	void Update(Widget parent, ResourceName layout, SCR_MapEntity map)
+	void Update(Widget parent, ResourceName layout, SCR_MapEntity mapEntity)
 	{
-		if (!parent || !map)
+		if (!parent || !mapEntity)
 			return;
 		WorkspaceWidget workspace = GetGame().GetWorkspace();
 		int count = AROR_FieldClientState.s_aMarkers.Count();
@@ -102,7 +102,7 @@ class AROR_PlayerMapMarkers
 				FrameSlot.SetSize(caption, 600, 32);
 			}
 			int x, y;
-			map.WorldToScreen(marker.m_vPosition[0], marker.m_vPosition[2], x, y, true);
+			mapEntity.WorldToScreen(marker.m_vPosition[0], marker.m_vPosition[2], x, y, true);
 			if (m_aPlates[index])
 				FrameSlot.SetPos(m_aPlates[index], workspace.DPIUnscale(x) + 15, workspace.DPIUnscale(y));
 			FrameSlot.SetAlignment(root, 0.5, 0.5);
