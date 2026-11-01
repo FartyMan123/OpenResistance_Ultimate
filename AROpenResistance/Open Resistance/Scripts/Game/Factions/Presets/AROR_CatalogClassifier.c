@@ -160,8 +160,8 @@ class AROR_CatalogClassifier
 			case AROR_EWeaponType.MARKSMAN_RIFLE: cost = 1200; importPoints = 2; return;
 			case AROR_EWeaponType.MACHINEGUN: cost = 2200; importPoints = 3; return;
 			case AROR_EWeaponType.SNIPER_RIFLE: cost = 1800; importPoints = 3; return;
-			case AROR_EWeaponType.LAUNCHER_AT: cost = 1800; importPoints = 3; importRequirement = AROR_EImportPointRequirement.PORT; return;
-			case AROR_EWeaponType.LAUNCHER_AA: cost = 2400; importPoints = 4; importRequirement = AROR_EImportPointRequirement.PORT; return;
+			case AROR_EWeaponType.LAUNCHER_AT: cost = 1800; importPoints = 1; importRequirement = AROR_EImportPointRequirement.PORT; return;
+			case AROR_EWeaponType.LAUNCHER_AA: cost = 2400; importPoints = 1; importRequirement = AROR_EImportPointRequirement.PORT; return;
 		}
 
 		// Rifles and carbines
@@ -178,8 +178,8 @@ class AROR_CatalogClassifier
 			case AROR_EAmmunitionType.MAGAZINE: cost = 25; importPoints = 0; return;
 			case AROR_EAmmunitionType.GRENADE_ROUND: cost = 60; return;
 			case AROR_EAmmunitionType.SHELL: cost = 150; importPoints = 3; return;
-			case AROR_EAmmunitionType.ROCKET: cost = 350; importPoints = 3; importRequirement = AROR_EImportPointRequirement.PORT; return;
-			case AROR_EAmmunitionType.MISSILE: cost = 900; importPoints = 4; importRequirement = AROR_EImportPointRequirement.PORT; return;
+			case AROR_EAmmunitionType.ROCKET: cost = 350; importPoints = 1; importRequirement = AROR_EImportPointRequirement.PORT; return;
+			case AROR_EAmmunitionType.MISSILE: cost = 900; importPoints = 1; importRequirement = AROR_EImportPointRequirement.PORT; return;
 		}
 
 		// Belts

@@ -82,6 +82,11 @@ function runWCSIntegrationTests(sources) {
   check(tank.cost === 40000 && tank.importPoints === 6 && tank.importRequirement === requirements.PORT, 'New tanks have non-zero tank pricing and port requirements');
   const gunship = vehicleTerms(types.HELI_ATTACK);
   check(gunship.cost === 60000 && gunship.importRequirement === requirements.AIR, 'Attack helicopters need aircraft pricing and air facilities');
+  const weaponTerms = compile(sources.classifier, 'DefaultWeaponTerms', true);
+  for (const launcher of [weapons.LAUNCHER_AT, weapons.LAUNCHER_AA]) {
+    const terms = weaponTerms(launcher);
+    check(terms.importPoints === 1 && terms.importRequirement === requirements.PORT, 'AT and AA launchers are imported from the first seaport');
+  }
 
   const airMisfit = compile(sources.air, 'PresetAircraftMisfit');
   const aircraft = (crew, cargo, helicopter = true) => ({m_Vehicle: {FindComponent: () => helicopter ? {} : null}, CountRequiredCrewSeats_S: () => crew, CountCargoSeats_S: () => cargo});
