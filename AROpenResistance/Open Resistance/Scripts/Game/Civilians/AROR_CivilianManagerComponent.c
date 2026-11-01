@@ -377,7 +377,7 @@ class AROR_CivilianManagerComponent : SCR_BaseGameModeComponent
 			if (member)
 				SCR_EntityHelper.DeleteEntityAndChildren(member);
 		}
-		if (activity.m_Vehicle && !activity.m_bClaimedVehicle && !AROR_ForceSpawner.HasPlayerAboard(activity.m_Vehicle))
+		if (activity.m_Vehicle && !activity.m_bClaimedVehicle && !AROR_ForceSpawner.HasPlayerAboard(activity.m_Vehicle) && !AROR_ResistanceFleet.IsClaimed(activity.m_Vehicle))
 			SCR_EntityHelper.DeleteEntityAndChildren(activity.m_Vehicle);
 	}
 

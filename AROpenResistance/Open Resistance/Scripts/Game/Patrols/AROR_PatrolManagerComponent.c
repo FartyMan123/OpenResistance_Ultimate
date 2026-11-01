@@ -385,7 +385,7 @@ class AROR_PatrolManagerComponent : SCR_BaseGameModeComponent
 		}
 
 		AROR_ForceSpawner.DeleteGroupAndMembers(patrol.m_Group);
-		if (patrol.m_Vehicle && !AROR_ForceSpawner.HasPlayerAboard(patrol.m_Vehicle))
+		if (patrol.m_Vehicle && !AROR_ForceSpawner.HasPlayerAboard(patrol.m_Vehicle) && !AROR_ResistanceFleet.IsClaimed(patrol.m_Vehicle))
 			SCR_EntityHelper.DeleteEntityAndChildren(patrol.m_Vehicle);
 	}
 
