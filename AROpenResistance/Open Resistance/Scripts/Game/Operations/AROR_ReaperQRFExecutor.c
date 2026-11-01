@@ -689,6 +689,7 @@ modded class AROR_OperationExecutorComponent
 			return false;
 		if (!force.PreparePassengerRoster_S())
 			return false;
+		AROR_InfantryRoster.Apply_S(operation.GetRole(), infantry.m_aUnitPrefabSlots, force.m_Profile.m_sAssetFactionKey);
 		if (infantry.m_aUnitPrefabSlots.Count() + 1 + force.m_Profile.m_iEscortCount > force.m_iReservedMembers)
 			return false;
 		force.m_Waypoint = SpawnWaypoint(m_sQRFWaypointPrefab, force.m_vTown);

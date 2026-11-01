@@ -13,6 +13,12 @@ class AROR_FactionPreset
 	[Attribute("", UIWidgets.ComboBox, desc: "Roles this preset can be chosen for", enums: ParamEnumArray.FromEnum(AROR_EFactionRole))]
 	protected ref array<AROR_EFactionRole> m_aUsableRoles;
 
+	[Attribute("", desc: "Preset ID this one takes over as a role default while it is loaded, e.g. US_ARMY for a content mod's variant of the US Army. Empty: none.")]
+	protected string m_sReplacesPreset;
+
+	[Attribute(desc: "Workbench only: characters whose kits are captured into this preset's unit loadouts (see the presets component's Capture Unit Loadouts)", category: "Units")]
+	protected ref AROR_LoadoutCapture m_LoadoutCapture;
+
 	// One typed list per category, so the config editor only offers the right entry class
 	[Attribute(desc: "AI units: at most one per unit type", category: "Units")]
 	protected ref array<ref AROR_FactionPresetUnit> m_aUnits;
@@ -77,6 +83,30 @@ class AROR_FactionPreset
 	bool IsUsableAs(AROR_EFactionRole role)
 	{
 		return m_aUsableRoles && m_aUsableRoles.Contains(role);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! The preset ID this one takes over as a role default, or empty
+	string GetReplacedPresetId()
+	{
+		return m_sReplacesPreset;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! The Workbench capture settings, or null
+	AROR_LoadoutCapture GetLoadoutCapture()
+	{
+		return m_LoadoutCapture;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! True when the preset dresses its own infantry: its rifleman names no character and has loadouts, so its soldiers
+	//! are the role's gear-less defaults dressed by Readiness (see AROR_AIOutfitter). Spawning systems then build their
+	//! infantry from the preset's units instead of their authored characters.
+	bool DressesInfantry()
+	{
+		AROR_FactionPresetUnit rifleman = GetUnit(AROR_EUnitType.RIFLEMAN);
+		return rifleman && !rifleman.HasPrefab() && rifleman.HasLoadouts();
 	}
 
 	//------------------------------------------------------------------------------------------------

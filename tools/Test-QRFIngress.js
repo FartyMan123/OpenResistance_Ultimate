@@ -137,7 +137,7 @@ function runQRFIngressTests(sources) {
   check(!plan(),'neighbouring packages cannot overlap below minimum spacing');
   // A failed delivery preflight must never construct an empty vehicle or consume
   // an actor reservation. This reproduces the failed Levie launch from the log.
-  env.AROR_GroundOperationForce=function(){};env.AROR_GroundOperationForce.Cast=x=>x;
+  env.AROR_GroundOperationForce=function(){};env.AROR_GroundOperationForce.Cast=x=>x;env.AROR_InfantryRoster={Apply_S(){}};
   env.AROR_EFactionRole={OCCUPIERS:1,INVADERS:2};env.AROR_EForceType={MOTORIZED:0,ARMOUR:2};env.AROR_EOperationType={QRF:1};
   env.AROR_LocationManagerComponent={GetInstance:()=>({GetLocationById:()=>({GetCenter:()=>[0,10,0]})})};
   let createdVehicles=0,converted=0,planningFailures=0;

@@ -72,6 +72,13 @@ class AROR_GarrisonFaction
 				authored = m_aInfantryVariants[i];
 			resolved.m_aInfantryVariants.Insert(PresetUnit(preset, specialist, authored, sameArmy));
 		}
+		// AT and AA specialists (variants 4 and 5) take a team's rifleman place; a preset without AA soldiers uses AT
+		ResourceName antiTank = PresetUnit(preset, AROR_EUnitType.AT, string.Empty, sameArmy);
+		ResourceName antiAir = antiTank;
+		if (preset.GetUnit(AROR_EUnitType.AA))
+			antiAir = PresetUnit(preset, AROR_EUnitType.AA, string.Empty, sameArmy);
+		resolved.m_aInfantryVariants.Insert(antiTank);
+		resolved.m_aInfantryVariants.Insert(antiAir);
 		resolved.m_sMarksman = PresetUnit(preset, AROR_EUnitType.MARKSMAN, PresetUnit(preset, AROR_EUnitType.SNIPER, m_sMarksman, sameArmy), sameArmy);
 		resolved.m_sCrew = PresetUnit(preset, AROR_EUnitType.CREW, m_sCrew, sameArmy);
 
@@ -115,21 +122,34 @@ class AROR_GarrisonFaction
 		return resolved;
 	}
 
-	//! Same army: the authored unit (deliberate picks), the preset's when none is authored. Another army: the
-	//! preset's unit of the type, falling back to its rifleman.
-	protected static ResourceName PresetUnit(AROR_FactionPreset preset, AROR_EUnitType type, ResourceName authored, bool sameArmy)
+	//! Same army: the authored unit (deliberate picks), the preset's when none is authored. Another army, or a preset
+	//! that dresses its own infantry (its soldiers are the role defaults dressed by Readiness): the preset's unit of the
+	//! type, falling back to its rifleman.
+	protected ResourceName PresetUnit(AROR_FactionPreset preset, AROR_EUnitType type, ResourceName authored, bool sameArmy)
 	{
-		if (sameArmy && !authored.IsEmpty())
+		bool keepAuthored = sameArmy && !preset.DressesInfantry();
+		if (keepAuthored && !authored.IsEmpty())
 			return authored;
+		ResourceName character = UnitCharacter(preset, type);
+		if (!character.IsEmpty())
+			return character;
+		if (keepAuthored)
+			return authored;
+		return UnitCharacter(preset, AROR_EUnitType.RIFLEMAN);
+	}
+
+	//! The preset unit's character for this binding's role: its own, or the role default when it names none
+	protected ResourceName UnitCharacter(AROR_FactionPreset preset, AROR_EUnitType type)
+	{
 		AROR_FactionPresetUnit unit = preset.GetUnit(type);
-		if (unit && !unit.GetPrefab().IsEmpty())
+		if (!unit)
+			return string.Empty;
+		if (unit.HasPrefab())
 			return unit.GetPrefab();
-		if (sameArmy)
-			return authored;
-		AROR_FactionPresetUnit rifleman = preset.GetUnit(AROR_EUnitType.RIFLEMAN);
-		if (rifleman)
-			return rifleman.GetPrefab();
-		return string.Empty;
+		AROR_FactionPresetsComponent presets = AROR_FactionPresetsComponent.GetInstance();
+		if (!presets)
+			return string.Empty;
+		return presets.GetDefaultUnitPrefab(m_eRole, type);
 	}
 
 	//! Appends the preset's vehicles of the type, in preset order (stable while the loaded mods stay the same)

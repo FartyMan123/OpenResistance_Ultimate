@@ -490,12 +490,20 @@ class AROR_GarrisonComponent : ScriptComponent
 			m_iLevel = 4;
 		// An outpost override may strengthen infantry/statics, never add armour.
 		int group;
+		// Each team's rifleman is an AT or AA specialist (variants 4 and 5, alternating by team) when presets ask for them
+		bool specialists;
+		AROR_FactionPresetsComponent presets = AROR_FactionPresetsComponent.GetInstance();
+		if (presets)
+			specialists = presets.GetSpecialistCount(4) > 0;
 		for (int team = 0; team < AROR_GarrisonPolicy.InfantryTeams(m_iLevel) + GetExtraInfantryTeams(); team++)
 		{
 			for (int member = 0; member < 4; member++)
 			{
-				int infantry = AddSlot(InfantryPrefab(faction, member), 0, group);
-				m_aSlots[infantry].m_iVariant = member;
+				int variant = member;
+				if (member == 0 && specialists)
+					variant = SPECIALIST_VARIANT + Math.Mod(team, 2);
+				int infantry = AddSlot(InfantryPrefab(faction, variant), 0, group);
+				m_aSlots[infantry].m_iVariant = variant;
 			}
 			group++;
 		}
@@ -589,6 +597,7 @@ class AROR_GarrisonComponent : ScriptComponent
 		}
 	}
 
+	static const int SPECIALIST_VARIANT = 4;	//!< Infantry variant of a team's AT specialist; the next one is AA
 	static const int SENTRY_VARIANT = 1000;	//!< Infantry variants from here are tower marksmen; variant - SENTRY_VARIANT is the post
 	static const int PARKED_ARMOUR_VARIANT = 2000;	//!< Parked variants from here index the binding's parked armour choices
 

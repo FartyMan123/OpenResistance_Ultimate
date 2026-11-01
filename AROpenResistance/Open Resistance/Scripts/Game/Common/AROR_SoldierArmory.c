@@ -118,6 +118,9 @@ class AROR_SoldierArmory
 			return;
 		if (GetGame().GetPlayerManager().GetPlayerIdFromControlledEntity(character) > 0)
 			return;
+		// Soldiers dressed from a preset loadout carry exactly its weapons
+		if (AROR_AIOutfitter.WasDressed(character))
+			return;
 		for (int i = m_aRearmed.Count() - 1; i >= 0; i--)
 		{
 			if (!m_aRearmed[i])

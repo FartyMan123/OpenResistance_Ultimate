@@ -1180,6 +1180,8 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 			FailOperation(operation, "Native passenger capacity or required crew exceeds the reserved full-load profile");
 			return;
 		}
+		if (force.m_Group != force.m_CrewGroup)
+			AROR_InfantryRoster.Apply_S(operation.GetRole(), force.m_Group.m_aUnitPrefabSlots, profile.m_sAssetFactionKey);
 		int requested = force.m_Group.m_aUnitPrefabSlots.Count();
 		int totalRequested = requested;
 		if (force.m_Group != force.m_CrewGroup)
@@ -1353,7 +1355,10 @@ class AROR_OperationExecutorComponent : SCR_BaseGameModeComponent
 		group.GetOnAgentAdded().Insert(force.OnAgentAdded);
 		force.m_bTacticalControlled = operation.m_TacticalCommander != null;
 		if (group.m_aUnitPrefabSlots)
+		{
+			AROR_InfantryRoster.Apply_S(operation.GetRole(), group.m_aUnitPrefabSlots, force.m_sAssetFactionKey);
 			force.m_iReservedMembers = group.m_aUnitPrefabSlots.Count();
+		}
 		int requestedMembers = force.m_iReservedMembers;
 		if (profile && requestedMembers <= profile.m_iPersonnelBudget)
 			force.m_iReservedMembers = profile.m_iPersonnelBudget;

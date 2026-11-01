@@ -107,6 +107,7 @@ const executor='AROR_OperationExecutorComponent',reaper='AROR_ReaperQRFExecutor'
  let missing='',spawned=[],groups=[],loaded=[];
  env.Resource={Load:n=>{loaded.push(n);return n===missing?null:{name:n,IsValid:()=>true}}};
  env.AROR_ReaperFlightGeometry={Direction:()=>[0,0,1],FormationPoint:()=>[75,0,0],IsAirspaceClear:()=>missing!=='airspace'};
+ env.AROR_InfantryRoster={Apply_S(){}};
  const spawn=compile(reaper,'SpawnReaperPackage');
  for(const escorted of [false,true])for(const failure of ['none','transport','gunship','airspace','clearance','transportPhysics','escortPhysics','transportFaction','escortFaction','crew','infantry','escortCrew','slots','waypoint']){
   missing=failure;spawned=[];groups=[];loaded=[];
@@ -125,7 +126,7 @@ const executor='AROR_OperationExecutorComponent',reaper='AROR_ReaperQRFExecutor'
     const g={m_aUnitPrefabSlots:Array(failure==='slots'&&kind==='infantry'?10:4).fill('unit'),requests:0,RequestSpawn(n){this.requests+=n}};
     if(pilot)owner.m_CrewGroup=g;else owner.m_Group=g;groups.push(g);return g;
    }};
-  const ok=spawn.call(ctx,{GetId:()=> 'test'},force,'pilot');
+  const ok=spawn.call(ctx,{GetId:()=> 'test',GetRole:()=>1},force,'pilot');
   check(force.m_iPreparationDeadline===130,'construction freezes a finite per-package preparation deadline');
   const irrelevant=!escorted&&['gunship','escortPhysics','escortFaction','escortCrew'].includes(failure);
   check(ok===(failure==='none'||irrelevant),'optional-escort construction/failure outcome '+[escorted,failure]);
