@@ -69,13 +69,21 @@ class AROR_ContentPack
 	}
 
 	//------------------------------------------------------------------------------------------------
-	//! True when every required addon is in loadedAddons (GUIDs, compared case-insensitively)
+	//! True when every required addon is in loadedAddons (GUIDs, compared case-insensitively). Entries can have their
+	//! own requirements on top (AROR_ContentPackEntry), so one pack can cover many optional mods.
 	bool HasRequiredAddons(notnull array<string> loadedAddons)
 	{
-		if (!m_aRequiredAddons)
+		return AreAddonsLoaded(m_aRequiredAddons, loadedAddons);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! True when every GUID in required (null or empty: none) is in loadedAddons, compared case-insensitively
+	static bool AreAddonsLoaded(array<string> requiredAddons, notnull array<string> loadedAddons)
+	{
+		if (!requiredAddons)
 			return true;
 
-		foreach (string required : m_aRequiredAddons)
+		foreach (string required : requiredAddons)
 		{
 			if (required.IsEmpty())
 				continue;

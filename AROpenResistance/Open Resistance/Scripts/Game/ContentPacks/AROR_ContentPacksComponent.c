@@ -29,6 +29,9 @@ class AROR_ContentPacksComponent : SCR_BaseGameModeComponent
 	//! IDs of the loaded packs whose required addons are all loaded
 	protected ref set<string> m_AvailablePackIds = new set<string>();
 
+	// GUIDs of the addons loaded on this machine; entries can require some of them
+	protected ref array<string> m_aLoadedAddons = {};
+
 	// Pack IDs the admin turned off in this campaign, joined by ID_SEPARATOR (server-owned, replicated)
 	[RplProp(onRplName: "OnOverridesReplicated")]
 	protected string m_sDisabledPacks;
@@ -345,11 +348,14 @@ class AROR_ContentPacksComponent : SCR_BaseGameModeComponent
 				pack.GetAllEntries(category, entries);
 				foreach (AROR_ContentPackEntry entry : entries)
 				{
-					AddReplacements(pack, entry);
+					// An entry for a mod that is not loaded must not hide the item it would replace
+					if (entry.HasRequiredAddons(m_aLoadedAddons))
+						AddReplacements(pack, entry);
 				}
 			}
 		}
 
+		int skipped;
 		foreach (AROR_ContentPack pack : enabled)
 		{
 			for (int category = AROR_EFactionPresetCategory.VEHICLES; category <= AROR_EFactionPresetCategory.AMMUNITION; category++)
@@ -358,6 +364,12 @@ class AROR_ContentPacksComponent : SCR_BaseGameModeComponent
 				pack.GetAllEntries(category, entries);
 				foreach (AROR_ContentPackEntry entry : entries)
 				{
+					if (!entry.HasRequiredAddons(m_aLoadedAddons))
+					{
+						skipped++;
+						continue;
+					}
+
 					ResourceName prefab = entry.GetPrefab();
 					if (prefab.IsEmpty() || m_mReplacements.Contains(prefab) || m_mCatalogue.Contains(prefab))
 						continue;
@@ -369,7 +381,7 @@ class AROR_ContentPacksComponent : SCR_BaseGameModeComponent
 		}
 
 		s_iRevision++;
-		Print(string.Format("[AROR] Content packs enabled: %1 (%2 entries, %3 replacements)", DescribeEnabled(enabled), m_aCatalogueOrder.Count(), m_mReplacements.Count()), LogLevel.NORMAL);
+		Print(string.Format("[AROR] Content packs enabled: %1 (%2 entries, %3 replacements, %4 skipped for missing addons)", DescribeEnabled(enabled), m_aCatalogueOrder.Count(), m_mReplacements.Count(), skipped), LogLevel.NORMAL);
 		m_OnPacksChanged.Invoke();
 	}
 
@@ -487,8 +499,8 @@ class AROR_ContentPacksComponent : SCR_BaseGameModeComponent
 			return;
 		}
 
-		array<string> loadedAddons = {};
-		GameProject.GetLoadedAddons(loadedAddons);
+		m_aLoadedAddons.Clear();
+		GameProject.GetLoadedAddons(m_aLoadedAddons);
 
 		array<ResourceName> paths = {};
 		registry.GetPackPaths(paths);
@@ -511,7 +523,7 @@ class AROR_ContentPacksComponent : SCR_BaseGameModeComponent
 			}
 
 			m_aPacks.Insert(pack);
-			if (pack.HasRequiredAddons(loadedAddons))
+			if (pack.HasRequiredAddons(m_aLoadedAddons))
 				m_AvailablePackIds.Insert(pack.GetId());
 			else
 				Print(string.Format("[AROR] Content pack '%1' needs an addon that is not loaded; it is unavailable", pack.GetId()), LogLevel.NORMAL);
