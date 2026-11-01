@@ -274,4 +274,75 @@ class AROR_ImportBaseFactionPresetsPlugin : WorkbenchPlugin
 		}
 		file.WriteLine(" }");
 	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Adds the lines inside a top-level list of an existing preset file (between " name {" and its closing " }", both
+	//! at one-space indent as Workbench and this plugin write them), verbatim. Returns how many lines were added; 0 when
+	//! the file or the list does not exist.
+	protected int ReadTopLevelList(string path, string listName, notnull array<string> outLines)
+	{
+		if (!FileIO.FileExists(path))
+			return 0;
+
+		FileHandle file = FileIO.OpenFile(path, FileMode.READ);
+		if (!file)
+			return 0;
+
+		string header = string.Format(" %1 {", listName);
+		bool inside;
+		string line;
+		while (file.ReadLine(line) >= 0)
+		{
+			// Lines may keep the carriage return of CRLF files
+			line.Replace("\r", string.Empty);
+
+			if (!inside)
+			{
+				inside = line == header;
+				continue;
+			}
+
+			if (line == " }")
+				break;
+
+			outLines.Insert(line);
+		}
+
+		file.Close();
+		return outLines.Count();
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Adds a whole top-level object member of an existing preset file, verbatim: its " name Class {" line, its body and
+	//! its closing " }". Returns how many lines were added; 0 when the file or the member does not exist.
+	protected int ReadTopLevelBlock(string path, string memberName, notnull array<string> outLines)
+	{
+		if (!FileIO.FileExists(path))
+			return 0;
+
+		FileHandle file = FileIO.OpenFile(path, FileMode.READ);
+		if (!file)
+			return 0;
+
+		string prefix = string.Format(" %1 ", memberName);
+		bool inside;
+		string line;
+		while (file.ReadLine(line) >= 0)
+		{
+			line.Replace("\r", string.Empty);
+			if (!inside)
+			{
+				inside = line.IndexOf(prefix) == 0;
+				if (!inside)
+					continue;
+			}
+
+			outLines.Insert(line);
+			if (line == " }")
+				break;
+		}
+
+		file.Close();
+		return outLines.Count();
+	}
 }
